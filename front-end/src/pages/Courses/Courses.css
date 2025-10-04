@@ -1,0 +1,14 @@
+.courses-page {
+  padding: 2rem;
+  min-height: calc(100vh - 80px);
+}
+
+.courses-page h1 {
+  font-size: 2rem;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.courses-content {
+  margin-top: 2rem;
+}
