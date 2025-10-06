@@ -16,6 +16,10 @@ import Classroom from "@pages/Classroom/Classroom";
 import Profile from "@pages/Profile/Profile";
 import Forum from "@pages/Forum/Forum";
 import NotFound from "@pages/NotFound/NotFound";
+import Instructors from "@pages/Instructors/Instructors";
+import RegisterLearner from "@pages/RegisterLearner/RegisterLearner";
+import InstructorProfile from "@pages/InstructorProfile/InstructorProfile";
+import Settings from "@pages/Settings/Settings";
 
 function App() {
   const { loading } = useAuth();
@@ -38,6 +42,10 @@ function App() {
         <Route path="register" element={<Register />} />
         <Route path="courses" element={<Courses />} />
         <Route path="courses/:id" element={<CourseDetail />} />
+        <Route path="register-learner" element={<RegisterLearner />} />
+        <Route path="instructors" element={<Instructors />} />
+        <Route path="instructors/:id" element={<InstructorProfile />} />
+        <Route path="settings" element={<Settings />} />
 
         {/* Private routes */}
         <Route element={<PrivateRoute />}>
