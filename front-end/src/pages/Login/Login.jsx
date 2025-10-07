@@ -1,117 +1,136 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@hooks/useAuth";
+import { loginSchema } from "@/lib/validations/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
-import "./Login.css";
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    rememberMe: false,
-  });
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    const value =
-      e.target.type === "checkbox" ? e.target.checked : e.target.value;
-    setFormData({
-      ...formData,
-      [e.target.name]: value,
-    });
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    const result = await login(formData.email, formData.password);
-
+  const onSubmit = async (data) => {
+    const result = await login(data.email, data.password);
     if (result.success) {
       navigate("/dashboard");
     }
-
-    setLoading(false);
   };
 
   return (
-    <div className="login-page">
-      <div className="login-container">
-        <div className="login-form-section">
-          <h2>Sign in</h2>
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 min-h-[600px] shadow-2xl rounded-2xl overflow-hidden">
+        {/* Form Section */}
+        <div className="p-8 lg:p-12 flex flex-col justify-center bg-white">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">Sign in</h2>
 
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
-              <input
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
                 id="email"
                 type="email"
-                name="email"
                 placeholder="example.email@gmail.com"
-                value={formData.email}
-                onChange={handleChange}
-                required
+                className="bg-gray-50"
+                {...register("email")}
               />
+              {errors.email && (
+                <p className="text-sm text-red-500">{errors.email.message}</p>
+              )}
             </div>
 
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <div className="password-input-wrapper">
-                <input
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  name="password"
                   placeholder="Enter at least 8+ characters"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
+                  className="bg-gray-50 pr-10"
+                  {...register("password")}
                 />
                 <button
                   type="button"
-                  className="password-toggle"
                   onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
               </div>
+              {errors.password && (
+                <p className="text-sm text-red-500">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
 
-            <div className="form-options">
-              <label className="remember-me">
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                 <input
                   type="checkbox"
-                  name="rememberMe"
-                  checked={formData.rememberMe}
-                  onChange={handleChange}
+                  className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                 />
                 Remember me
               </label>
-              <Link to="/forgot-password" className="forgot-link">
+              <Link
+                to="/forgot-password"
+                className="text-sm font-medium text-primary hover:underline"
+              >
                 Forgot password?
               </Link>
             </div>
 
-            <button type="submit" className="submit-btn" disabled={loading}>
-              {loading ? "Signing in..." : "Sign in"}
-            </button>
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Signing in..." : "Sign in"}
+            </Button>
 
-            <div className="divider">Or sign in with</div>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">
+                  Or sign in with
+                </span>
+              </div>
+            </div>
 
-            <button type="button" className="google-btn">
-              <FcGoogle size={20} />
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full bg-transparent"
+              size="lg"
+            >
+              <FcGoogle className="mr-2 h-5 w-5" />
               Sign up with Google
-            </button>
+            </Button>
           </form>
         </div>
 
-        <div className="login-illustration">
+        {/* Illustration Section */}
+        <div className="hidden lg:flex bg-gradient-to-br from-indigo-600 to-purple-600 items-center justify-center p-8">
           <img
-            src="/online-learning-illustration-woman-at-desk.jpg"
+            src="/login.png"
             alt="Online learning"
+            className="w-full max-w-md rounded-2xl"
           />
         </div>
       </div>

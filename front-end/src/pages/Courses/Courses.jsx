@@ -1,5 +1,6 @@
 import { useState } from "react";
-import "./Courses.css";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 const Courses = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -79,60 +80,83 @@ const Courses = () => {
       : courses.filter((c) => c.category === selectedCategory);
 
   return (
-    <div className="courses-page">
-      <div className="container">
-        <h1>Browse Courses</h1>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container mx-auto px-4">
+        <h1 className="text-4xl font-bold text-gray-900 mb-8">
+          Browse Courses
+        </h1>
 
-        <div className="categories-section">
-          <h2>Categories</h2>
-          <div className="categories-pills">
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Categories</h2>
+          <div className="flex flex-wrap gap-2">
             {categories.map((category) => (
-              <button
+              <Button
                 key={category}
-                className={`category-pill ${
-                  selectedCategory === category ? "active" : ""
-                }`}
+                variant={selectedCategory === category ? "default" : "outline"}
                 onClick={() => setSelectedCategory(category)}
+                className={
+                  selectedCategory === category
+                    ? "bg-indigo-600 hover:bg-indigo-700"
+                    : ""
+                }
               >
                 {category}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
 
-        <div className="courses-grid">
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
           {filteredCourses.map((course) => (
-            <div key={course.id} className="course-card">
-              <div className="course-image">
-                <img
-                  src={course.image || "/placeholder.svg"}
-                  alt={course.title}
-                />
-              </div>
-              <div className="course-content">
-                <h3>{course.title}</h3>
-                <p className="course-instructor">{course.instructor}</p>
-                <div className="course-footer">
-                  <div className="course-rating">
-                    <span className="stars">⭐⭐⭐⭐⭐</span>
-                    <span className="rating-value">({course.rating})</span>
+            <Card
+              key={course.id}
+              className="overflow-hidden hover:shadow-xl transition-shadow"
+            >
+              <img
+                src={course.image || "/placeholder.svg"}
+                alt={course.title}
+                className="w-full h-48 object-cover"
+              />
+              <CardContent className="p-6">
+                <h3 className="text-xl font-semibold mb-2">{course.title}</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  {course.instructor}
+                </p>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-1">
+                    <span className="text-yellow-400">⭐⭐⭐⭐⭐</span>
+                    <span className="text-sm text-gray-600">
+                      ({course.rating})
+                    </span>
                   </div>
-                  <p className="course-price">${course.price}</p>
+                  <span className="text-lg font-bold text-indigo-600">
+                    ${course.price}
+                  </span>
                 </div>
-                <button className="enroll-btn">Enroll</button>
-              </div>
-            </div>
+                <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+                  Enroll
+                </Button>
+              </CardContent>
+            </Card>
           ))}
         </div>
 
-        <div className="pagination">
-          <button className="pagination-btn" disabled={currentPage === 1}>
+        <div className="flex justify-center items-center gap-4">
+          <Button
+            variant="outline"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(1)}
+          >
             Previous
-          </button>
-          <span className="page-info">Page {currentPage} of 2</span>
-          <button className="pagination-btn" disabled={currentPage === 2}>
+          </Button>
+          <span className="text-sm text-gray-600">Page {currentPage} of 2</span>
+          <Button
+            variant="outline"
+            disabled={currentPage === 2}
+            onClick={() => setCurrentPage(2)}
+          >
             Next
-          </button>
+          </Button>
         </div>
       </div>
     </div>

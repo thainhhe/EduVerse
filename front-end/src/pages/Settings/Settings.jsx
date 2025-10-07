@@ -1,6 +1,17 @@
 import { useState } from "react";
-import { FaLock, FaPencilAlt, FaTrash } from "react-icons/fa";
-import "./Settings.css";
+import { Lock, Pencil, Trash2, Mail, Bell, Lightbulb } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 const Settings = () => {
   const [profile, setProfile] = useState({
@@ -23,146 +34,146 @@ const Settings = () => {
   };
 
   return (
-    <div className="settings-page">
-      <div className="container">
-        <div className="settings-header">
-          <h1>User Settings</h1>
-          <p className="subtitle">
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container mx-auto px-4 max-w-4xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            User Settings
+          </h1>
+          <p className="text-gray-600">
             Manage your CourseFlow account, preferences, and notification
             settings.
           </p>
         </div>
 
-        <section className="settings-section">
-          <h2>Account Information</h2>
-          <p className="section-description">
-            Manage your profile details and preferences.
-          </p>
-
-          <div className="account-info">
-            <div className="profile-photo-section">
-              <img
-                src={profile.avatar || "/placeholder.svg"}
-                alt="Profile"
-                className="profile-photo"
-              />
-              <div>
-                <label className="form-label">Full Name</label>
-                <input
-                  type="text"
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Account Information</CardTitle>
+            <CardDescription>
+              Manage your profile details and preferences.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex items-center gap-4">
+              <Avatar className="w-20 h-20">
+                <AvatarImage
+                  src={profile.avatar || "/placeholder.svg"}
+                  alt={profile.fullName}
+                />
+                <AvatarFallback>{profile.fullName.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
                   value={profile.fullName}
-                  className="form-input"
                   readOnly
+                  className="bg-gray-50"
                 />
               </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Email Address</label>
-              <input
+            <div>
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
                 type="email"
                 value={profile.email}
-                className="form-input disabled"
                 disabled
+                className="bg-gray-100"
               />
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Password</label>
-              <div className="password-field">
-                <input
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="password"
                   type="password"
                   value="********"
-                  className="form-input"
                   readOnly
+                  className="bg-gray-50"
                 />
-                <button className="change-btn">
-                  <FaLock /> Change
-                </button>
+                <Button variant="outline">
+                  <Lock className="mr-2 h-4 w-4" />
+                  Change
+                </Button>
               </div>
             </div>
 
-            <button className="edit-profile-btn">
-              <FaPencilAlt /> Edit Profile
-            </button>
-          </div>
-        </section>
+            <Button className="bg-indigo-600 hover:bg-indigo-700">
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit Profile
+            </Button>
+          </CardContent>
+        </Card>
 
-        <section className="settings-section">
-          <h2>Notification Settings</h2>
-          <p className="section-description">
-            Control how you receive alerts and updates.
-          </p>
-
-          <div className="notification-options">
-            <div className="notification-item">
-              <div className="notification-info">
-                <span className="notification-icon email">📧</span>
-                <span className="notification-label">Email Notifications</span>
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Notification Settings</CardTitle>
+            <CardDescription>
+              Control how you receive alerts and updates.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Mail className="h-5 w-5 text-pink-500" />
+                <span className="font-medium">Email Notifications</span>
               </div>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={notifications.email}
-                  onChange={() => handleNotificationToggle("email")}
-                />
-                <span className="toggle-slider"></span>
-              </label>
+              <Switch
+                checked={notifications.email}
+                onCheckedChange={() => handleNotificationToggle("email")}
+              />
             </div>
 
-            <div className="notification-item">
-              <div className="notification-info">
-                <span className="notification-icon bell">🔔</span>
-                <span className="notification-label">In-App Notifications</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Bell className="h-5 w-5 text-pink-500" />
+                <span className="font-medium">In-App Notifications</span>
               </div>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={notifications.inApp}
-                  onChange={() => handleNotificationToggle("inApp")}
-                />
-                <span className="toggle-slider"></span>
-              </label>
+              <Switch
+                checked={notifications.inApp}
+                onCheckedChange={() => handleNotificationToggle("inApp")}
+              />
             </div>
 
-            <div className="notification-item">
-              <div className="notification-info">
-                <span className="notification-icon marketing">💡</span>
-                <span className="notification-label">
-                  Marketing & Promotions
-                </span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Lightbulb className="h-5 w-5 text-pink-500" />
+                <span className="font-medium">Marketing & Promotions</span>
               </div>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={notifications.marketing}
-                  onChange={() => handleNotificationToggle("marketing")}
-                />
-                <span className="toggle-slider"></span>
-              </label>
+              <Switch
+                checked={notifications.marketing}
+                onCheckedChange={() => handleNotificationToggle("marketing")}
+              />
             </div>
-          </div>
-        </section>
+          </CardContent>
+        </Card>
 
-        <section className="settings-section danger-zone">
-          <h2>⚠️ Danger Zone</h2>
-          <p className="section-description">
-            Proceed with caution. These actions are irreversible.
-          </p>
-
-          <div className="danger-content">
-            <div>
-              <h3>Delete Account</h3>
-              <p>
-                Permanently delete your CourseFlow account and all associated
-                data.
-              </p>
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="text-red-600">⚠️ Danger Zone</CardTitle>
+            <CardDescription>
+              Proceed with caution. These actions are irreversible.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-gray-900">Delete Account</h3>
+                <p className="text-sm text-gray-600">
+                  Permanently delete your CourseFlow account and all associated
+                  data.
+                </p>
+              </div>
+              <Button variant="destructive">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Account
+              </Button>
             </div>
-            <button className="delete-btn">
-              <FaTrash /> Delete Account
-            </button>
-          </div>
-        </section>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

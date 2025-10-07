@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-// import { useAuth } from "@hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import {
   FaCalendarAlt,
   FaBook,
@@ -9,10 +9,12 @@ import {
   FaBolt,
 } from "react-icons/fa";
 import { MdDashboard } from "react-icons/md";
-import "./Dashboard.css";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 
 const Dashboard = () => {
-  //const { user } = useAuth();
+  const { user } = useAuth();
 
   const enrolledCourses = [
     {
@@ -68,102 +70,143 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="dashboard-page">
-      <div className="dashboard-container">
-        <div className="dashboard-header">
-          <h1>Welcome Back, User!</h1>
-          <p>Here's an overview of your progress and upcoming activities.</p>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container mx-auto px-4">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            Welcome Back, {user.name}!
+          </h1>
+          <p className="text-gray-600">
+            Here's an overview of your progress and upcoming activities.
+          </p>
         </div>
 
         {/* Enrolled Courses */}
-        <section className="enrolled-courses">
-          <h2 className="section-title">Your Enrolled Courses</h2>
-          <div className="courses-grid">
+        <section className="mb-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Your Enrolled Courses
+          </h2>
+          <div className="grid md:grid-cols-3 gap-6">
             {enrolledCourses.map((course) => (
-              <div key={course.id} className="enrolled-course-card">
+              <Card
+                key={course.id}
+                className="overflow-hidden hover:shadow-lg transition-shadow"
+              >
                 <img
                   src={course.image || "/placeholder.svg"}
                   alt={course.title}
-                  className="course-image"
+                  className="w-full h-40 object-cover"
                 />
-                <div className="course-info">
-                  <h3 className="course-title">{course.title}</h3>
-                  <p className="course-instructor">{course.instructor}</p>
-                  <div className="progress-section">
-                    <div className="progress-label">
-                      <span>Progress: {course.progress}%</span>
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-2">{course.title}</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    {course.instructor}
+                  </p>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">
+                        Progress: {course.progress}%
+                      </span>
                     </div>
-                    <div className="progress-bar">
-                      <div
-                        className="progress-fill"
-                        style={{ width: `${course.progress}%` }}
-                      />
-                    </div>
+                    <Progress value={course.progress} className="h-2" />
                   </div>
-                  <button className="continue-btn">Continue Learning</button>
-                </div>
-              </div>
+                  <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+                    Continue Learning
+                  </Button>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </section>
 
         {/* Dashboard Grid */}
-        <div className="dashboard-grid">
+        <div className="grid md:grid-cols-2 gap-6 mb-12">
           {/* Upcoming Deadlines */}
-          <div className="deadlines-section">
-            <div className="section-header">
-              <FaCalendarAlt className="section-icon" />
-              <h3>Upcoming Deadlines</h3>
-            </div>
-            <div className="deadline-list">
-              {upcomingDeadlines.map((deadline, index) => (
-                <div key={index} className="deadline-item">
-                  <span className="deadline-title">{deadline.title}</span>
-                  <span className="deadline-date">{deadline.date}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FaCalendarAlt className="text-indigo-600" />
+                Upcoming Deadlines
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {upcomingDeadlines.map((deadline, index) => (
+                  <div
+                    key={index}
+                    className="flex justify-between items-center py-2 border-b last:border-0"
+                  >
+                    <span className="text-sm font-medium">
+                      {deadline.title}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      {deadline.date}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Quick Links */}
-          <div className="quick-links-section">
-            <div className="section-header">
-              <FaBolt className="section-icon" />
-              <h3>Quick Links</h3>
-            </div>
-            <div className="quick-links-grid">
-              <Link to="/courses" className="quick-link-card">
-                <FaBook className="quick-link-icon" />
-                <span>Browse Courses</span>
-              </Link>
-              <Link to="/instructors" className="quick-link-card">
-                <FaUserTie className="quick-link-icon" />
-                <span>Find Instructors</span>
-              </Link>
-              <Link to="/settings" className="quick-link-card">
-                <FaCog className="quick-link-icon" />
-                <span>Manage Settings</span>
-              </Link>
-              <Link to="/progress" className="quick-link-card">
-                <MdDashboard className="quick-link-icon" />
-                <span>View Progress</span>
-              </Link>
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FaBolt className="text-indigo-600" />
+                Quick Links
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <Link
+                  to="/courses"
+                  className="flex flex-col items-center gap-2 p-4 rounded-lg border hover:bg-gray-50 transition-colors"
+                >
+                  <FaBook className="text-2xl text-indigo-600" />
+                  <span className="text-sm font-medium">Browse Courses</span>
+                </Link>
+                <Link
+                  to="/instructors"
+                  className="flex flex-col items-center gap-2 p-4 rounded-lg border hover:bg-gray-50 transition-colors"
+                >
+                  <FaUserTie className="text-2xl text-indigo-600" />
+                  <span className="text-sm font-medium">Find Instructors</span>
+                </Link>
+                <Link
+                  to="/settings"
+                  className="flex flex-col items-center gap-2 p-4 rounded-lg border hover:bg-gray-50 transition-colors"
+                >
+                  <FaCog className="text-2xl text-indigo-600" />
+                  <span className="text-sm font-medium">Manage Settings</span>
+                </Link>
+                <Link
+                  to="/progress"
+                  className="flex flex-col items-center gap-2 p-4 rounded-lg border hover:bg-gray-50 transition-colors"
+                >
+                  <MdDashboard className="text-2xl text-indigo-600" />
+                  <span className="text-sm font-medium">View Progress</span>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Recent Activity */}
-        <section className="activity-section">
-          <div className="section-header">
-            <FaChartLine className="section-icon" />
-            <h3>Recent Activity</h3>
-          </div>
-          <div className="chart-container">
-            <div className="chart-placeholder">
-              Activity chart will be displayed here
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FaChartLine className="text-indigo-600" />
+              Recent Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
+              <p className="text-gray-500">
+                Activity chart will be displayed here
+              </p>
             </div>
-          </div>
-        </section>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

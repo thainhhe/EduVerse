@@ -1,14 +1,16 @@
 import { Link, useParams } from "react-router-dom";
+import { ArrowLeft, Mail, Phone, Globe, MapPin } from "lucide-react";
+import { FaLinkedin, FaTwitter } from "react-icons/fa";
+import { Button } from "@/components/ui/button";
 import {
-  FaArrowLeft,
-  FaEnvelope,
-  FaPhone,
-  FaGlobe,
-  FaMapMarkerAlt,
-  FaLinkedin,
-  FaTwitter,
-} from "react-icons/fa";
-import "./InstructorProfile.css";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 
 const InstructorProfile = () => {
   const { id } = useParams();
@@ -56,84 +58,120 @@ const InstructorProfile = () => {
   };
 
   return (
-    <div className="instructor-profile-page">
-      <div className="container">
-        <Link to="/instructors" className="back-link">
-          <FaArrowLeft /> Back to Instructors
-        </Link>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container mx-auto px-4 max-w-5xl">
+        <Button variant="ghost" asChild className="mb-6">
+          <Link to="/instructors">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Instructors
+          </Link>
+        </Button>
 
-        <div className="profile-header">
-          <div className="profile-avatar">
-            <img
-              src={instructor.image || "/placeholder.svg"}
-              alt={instructor.name}
-            />
+        <div className="bg-white rounded-lg shadow-sm p-8 mb-6">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8">
+            <Avatar className="w-32 h-32">
+              <AvatarImage
+                src={instructor.image || "/placeholder.svg"}
+                alt={instructor.name}
+              />
+              <AvatarFallback>{instructor.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="text-3xl font-bold text-indigo-600 mb-2">
+                {instructor.name}
+              </h1>
+              <p className="text-lg text-gray-600 mb-4">{instructor.title}</p>
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                {instructor.specialties.map((specialty, index) => (
+                  <Badge
+                    key={index}
+                    variant="secondary"
+                    className="bg-gray-100"
+                  >
+                    {specialty}
+                  </Badge>
+                ))}
+              </div>
+            </div>
           </div>
-          <div className="profile-info">
-            <h1>{instructor.name}</h1>
-            <p className="profile-title">{instructor.title}</p>
-            <div className="specialties">
-              {instructor.specialties.map((specialty, index) => (
-                <span key={index} className="specialty-tag">
-                  {specialty}
-                </span>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Biography</h2>
+            <p className="text-gray-700 leading-relaxed">
+              {instructor.biography}
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Contact Information
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center gap-3 text-gray-700">
+                <Mail className="h-5 w-5 text-indigo-600" />
+                <span>{instructor.contact.email}</span>
+              </div>
+              <div className="flex items-center gap-3 text-gray-700">
+                <Phone className="h-5 w-5 text-indigo-600" />
+                <span>{instructor.contact.phone}</span>
+              </div>
+              <div className="flex items-center gap-3 text-gray-700">
+                <Globe className="h-5 w-5 text-indigo-600" />
+                <span>{instructor.contact.website}</span>
+              </div>
+              <div className="flex items-center gap-3 text-gray-700">
+                <MapPin className="h-5 w-5 text-indigo-600" />
+                <span>{instructor.contact.location}</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Courses Taught
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {instructor.courses.map((course) => (
+                <Card key={course.id}>
+                  <CardHeader>
+                    <CardTitle className="text-lg text-indigo-600">
+                      {course.title}
+                    </CardTitle>
+                    <CardDescription>
+                      Duration: {course.duration}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600 mb-4">
+                      {course.description}
+                    </p>
+                    <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+                      View Course Details
+                    </Button>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-          </div>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Connect Online
+            </h2>
+            <div className="flex gap-4">
+              <Button variant="outline" size="icon" asChild>
+                <a href="#" target="_blank" rel="noopener noreferrer">
+                  <FaLinkedin className="h-5 w-5 text-indigo-600" />
+                </a>
+              </Button>
+              <Button variant="outline" size="icon" asChild>
+                <a href="#" target="_blank" rel="noopener noreferrer">
+                  <FaTwitter className="h-5 w-5 text-indigo-600" />
+                </a>
+              </Button>
+            </div>
+          </section>
         </div>
-
-        <section className="biography-section">
-          <h2>Biography</h2>
-          <p>{instructor.biography}</p>
-        </section>
-
-        <section className="contact-section">
-          <h2>Contact Information</h2>
-          <div className="contact-grid">
-            <div className="contact-item">
-              <FaEnvelope className="contact-icon" />
-              <span>{instructor.contact.email}</span>
-            </div>
-            <div className="contact-item">
-              <FaPhone className="contact-icon" />
-              <span>{instructor.contact.phone}</span>
-            </div>
-            <div className="contact-item">
-              <FaGlobe className="contact-icon" />
-              <span>{instructor.contact.website}</span>
-            </div>
-            <div className="contact-item">
-              <FaMapMarkerAlt className="contact-icon" />
-              <span>{instructor.contact.location}</span>
-            </div>
-          </div>
-        </section>
-
-        <section className="courses-section">
-          <h2>Courses Taught</h2>
-          <div className="courses-grid">
-            {instructor.courses.map((course) => (
-              <div key={course.id} className="course-card">
-                <h3>{course.title}</h3>
-                <p className="course-duration">Duration: {course.duration}</p>
-                <p className="course-description">{course.description}</p>
-                <button className="view-course-btn">View Course Details</button>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="connect-section">
-          <h2>Connect Online</h2>
-          <div className="social-links">
-            <a href="#" className="social-link">
-              <FaLinkedin />
-            </a>
-            <a href="#" className="social-link">
-              <FaTwitter />
-            </a>
-          </div>
-        </section>
       </div>
     </div>
   );

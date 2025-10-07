@@ -13,24 +13,26 @@ import {
   FaArrowRight,
 } from "react-icons/fa";
 import { MdAccessTime, MdVerified, MdForum } from "react-icons/md";
-import "./Home.css";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const Home = () => {
   const features = [
     {
-      icon: <FaClock />,
+      icon: <FaClock className="w-8 h-8" />,
       title: "Flexible Learning",
       description:
         "Study at your own pace with lifetime access to courses. Learn anytime, anywhere in the world.",
     },
     {
-      icon: <FaUserGraduate />,
+      icon: <FaUserGraduate className="w-8 h-8" />,
       title: "Expert Instructors",
       description:
         "Learn from industry professionals with years of real-world experience and expertise.",
     },
     {
-      icon: <FaCertificate />,
+      icon: <FaCertificate className="w-8 h-8" />,
       title: "Accredited Certifications",
       description:
         "Earn recognized certificates upon completion to boost your career prospects.",
@@ -234,192 +236,283 @@ const Home = () => {
   ];
 
   return (
-    <div className="home-page">
+    <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="hero">
-        <div className="hero-container">
-          <div className="hero-content">
-            <h1>Eduverse–Learn Anytime, Anywhere</h1>
-            <p>
-              Unlock your potential with our extensive range of expert-led
-              courses. Designed for flexibility, designed for you.
-            </p>
-            <div className="hero-actions">
-              <Link to="/courses" className="btn btn-primary btn-large">
-                Get Started Today
-              </Link>
+      <section className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-20">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="space-y-6">
+              <h1 className="text-5xl font-bold text-gray-900 leading-tight">
+                Eduverse–Learn Anytime, Anywhere
+              </h1>
+              <p className="text-lg text-gray-600">
+                Unlock your potential with our extensive range of expert-led
+                courses. Designed for flexibility, designed for you.
+              </p>
+              <Button
+                asChild
+                size="lg"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              >
+                <Link to="/courses">Get Started Today</Link>
+              </Button>
             </div>
-          </div>
-          <div className="hero-image">
-            <img
-              src="/students-learning-online-illustration.jpg"
-              alt="Students learning"
-            />
+            <div className="relative">
+              <img
+                src="/students-learning-online-illustration.jpg"
+                alt="Students learning"
+                className="w-full h-auto rounded-2xl shadow-2xl"
+              />
+            </div>
           </div>
         </div>
       </section>
 
       {/* Why Choose Section */}
-      <section className="why-choose">
-        <div className="section-header">
-          <h2>Why Choose Our Platform?</h2>
-          <p>
-            We offer a world-class learning experience designed to fit your
-            schedule and goals. Unlock your potential with our expert-led
-            courses.
-          </p>
-        </div>
-        <div className="features-grid">
-          {features.map((feature, index) => (
-            <div key={index} className="feature-card">
-              <div className="feature-icon">{feature.icon}</div>
-              <h3>{feature.title}</h3>
-              <p>{feature.description}</p>
-            </div>
-          ))}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Why Choose Our Platform?
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              We offer a world-class learning experience designed to fit your
+              schedule and goals. Unlock your potential with our expert-led
+              courses.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <Card
+                key={index}
+                className="text-center hover:shadow-lg transition-shadow"
+              >
+                <CardContent className="pt-8 pb-6">
+                  <div className="flex justify-center mb-4 text-indigo-600">
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-600">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Categories Section */}
-      <section className="categories">
-        <div className="section-header">
-          <h2>Explore Our Top Categories</h2>
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900">
+              Explore Our Top Categories
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {categories.map((category, index) => (
+              <Card
+                key={index}
+                className="hover:shadow-lg transition-shadow cursor-pointer"
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="flex justify-center mb-4 text-indigo-600 text-4xl">
+                    {category.icon}
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">
+                    {category.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 text-sm">
+                    {category.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <Button variant="outline" size="lg">
+              View All Courses <FaArrowRight className="ml-2" />
+            </Button>
+          </div>
         </div>
-        <div className="categories-grid">
-          {categories.map((category, index) => (
-            <div key={index} className="category-card">
-              <div className="category-icon">{category.icon}</div>
-              <h3>{category.title}</h3>
-              <p>{category.description}</p>
-            </div>
-          ))}
-        </div>
-        <button className="view-all-btn">
-          View All Courses <FaArrowRight />
-        </button>
       </section>
 
       {/* Popular Courses Section */}
-      <section className="popular-courses">
-        <div className="section-header">
-          <h2>Popular Courses</h2>
-        </div>
-        <div className="courses-grid">
-          {courses.map((course) => (
-            <div key={course.id} className="course-card">
-              <img
-                src={course.image || "/placeholder.svg"}
-                alt={course.title}
-                className="course-image"
-              />
-              <div className="course-content">
-                <span className="course-category">{course.category}</span>
-                <h3 className="course-title">{course.title}</h3>
-                <p className="course-instructor">by {course.instructor}</p>
-                <div className="course-footer">
-                  <div className="course-rating">
-                    <FaStar />
-                    <span>{course.rating}</span>
-                    <span>({course.students})</span>
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900">
+              Popular Courses
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {courses.map((course) => (
+              <Card
+                key={course.id}
+                className="overflow-hidden hover:shadow-xl transition-shadow"
+              >
+                <img
+                  src={course.image || "/placeholder.svg"}
+                  alt={course.title}
+                  className="w-full h-48 object-cover"
+                />
+                <CardContent className="p-6">
+                  <Badge className="mb-3">{course.category}</Badge>
+                  <h3 className="text-xl font-semibold mb-2">{course.title}</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    by {course.instructor}
+                  </p>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-1 text-sm">
+                      <FaStar className="text-yellow-400" />
+                      <span className="font-semibold">{course.rating}</span>
+                      <span className="text-gray-500">({course.students})</span>
+                    </div>
+                    <span className="text-lg font-bold text-indigo-600">
+                      {course.price}
+                    </span>
                   </div>
-                  <span className="course-price">{course.price}</span>
-                </div>
-                <button className="btn btn-primary course-btn">
-                  Newest Sale
-                </button>
-              </div>
-            </div>
-          ))}
+                  <Button className="w-full bg-indigo-500 hover:bg-indigo-700 text-white">
+                    Newest Sale
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Instructors Section */}
-      <section className="instructors">
-        <div className="section-header">
-          <h2>Meet Our Expert Instructors</h2>
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900">
+              Meet Our Expert Instructors
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-4 gap-6">
+            {instructors.map((instructor) => (
+              <Card
+                key={instructor.id}
+                className="text-center hover:shadow-lg transition-shadow"
+              >
+                <CardContent className="pt-8 pb-6">
+                  <img
+                    src={instructor.avatar || "/placeholder.svg"}
+                    alt={instructor.name}
+                    className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
+                  />
+                  <h3 className="text-lg font-semibold mb-1">
+                    {instructor.name}
+                  </h3>
+                  <p className="text-sm text-indigo-600">{instructor.title}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <Button variant="outline" size="lg">
+              View All Instructors <FaArrowRight className="ml-2" />
+            </Button>
+          </div>
         </div>
-        <div className="instructors-grid">
-          {instructors.map((instructor) => (
-            <div key={instructor.id} className="instructor-card">
-              <img
-                src={instructor.avatar || "/placeholder.svg"}
-                alt={instructor.name}
-                className="instructor-avatar"
-              />
-              <h3 className="instructor-name">{instructor.name}</h3>
-              <p className="instructor-title">{instructor.title}</p>
-            </div>
-          ))}
-        </div>
-        <button className="view-all-btn">
-          View All Instructors <FaArrowRight />
-        </button>
       </section>
 
       {/* Benefits Section */}
-      <section className="benefits">
-        <div className="section-header">
-          <h2>Benefits of Learning With Us</h2>
-        </div>
-        <div className="benefits-grid">
-          {benefits.map((benefit, index) => (
-            <div key={index} className="benefit-card">
-              <div className="benefit-icon">{benefit.icon}</div>
-              <h3>{benefit.title}</h3>
-              <p>{benefit.description}</p>
-            </div>
-          ))}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900">
+              Benefits of Learning With Us
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-4 gap-6">
+            {benefits.map((benefit, index) => (
+              <Card
+                key={index}
+                className="text-center hover:shadow-lg transition-shadow"
+              >
+                <CardContent className="pt-8 pb-6">
+                  <div className="flex justify-center mb-4 text-secondary-500 text-4xl">
+                    {benefit.icon}
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">
+                    {benefit.title}
+                  </h3>
+                  <p className="text-sm text-gray-600">{benefit.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Testimonials Section */}
-      <section className="testimonials">
-        <div className="section-header">
-          <h2>What Our Students Say</h2>
-        </div>
-        <div className="testimonials-grid">
-          {testimonials.map((testimonial, index) => (
-            <div key={index} className="testimonial-card">
-              <p className="testimonial-text">"{testimonial.text}"</p>
-              <div className="testimonial-author">
-                <img
-                  src={testimonial.avatar || "/placeholder.svg"}
-                  alt={testimonial.author}
-                  className="author-avatar"
-                />
-                <div>
-                  <p className="author-name">{testimonial.author}</p>
-                  <p className="author-role">{testimonial.role}</p>
-                </div>
-              </div>
-            </div>
-          ))}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900">
+              What Our Students Say
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {testimonials.map((testimonial, index) => (
+              <Card key={index} className="hover:shadow-lg transition-shadow">
+                <CardContent className="p-6">
+                  <p className="text-gray-700 mb-6 italic">
+                    "{testimonial.text}"
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={testimonial.avatar || "/placeholder.svg"}
+                      alt={testimonial.author}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                    <div>
+                      <p className="font-semibold">{testimonial.author}</p>
+                      <p className="text-sm text-gray-600">
+                        {testimonial.role}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Blog Section */}
-      <section className="blog">
-        <div className="section-header">
-          <h2>Latest From Our Blog</h2>
-        </div>
-        <div className="blog-grid">
-          {blogPosts.map((post) => (
-            <div key={post.id} className="blog-card">
-              <img
-                src={post.image || "/placeholder.svg"}
-                alt={post.title}
-                className="blog-image"
-              />
-              <div className="blog-content">
-                <p className="blog-date">{post.date}</p>
-                <h3 className="blog-title">{post.title}</h3>
-                <p className="blog-excerpt">{post.excerpt}</p>
-                <a href="#" className="read-more">
-                  Read more <FaArrowRight />
-                </a>
-              </div>
-            </div>
-          ))}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900">
+              Latest From Our Blog
+            </h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {blogPosts.map((post) => (
+              <Card
+                key={post.id}
+                className="overflow-hidden hover:shadow-xl transition-shadow"
+              >
+                <img
+                  src={post.image || "/placeholder.svg"}
+                  alt={post.title}
+                  className="w-full h-48 object-cover"
+                />
+                <CardContent className="p-6">
+                  <p className="text-sm text-gray-500 mb-2">{post.date}</p>
+                  <h3 className="text-xl font-semibold mb-3">{post.title}</h3>
+                  <p className="text-gray-600 mb-4">{post.excerpt}</p>
+                  <Button variant="link" className="p-0 text-indigo-600">
+                    Read more <FaArrowRight className="ml-1" />
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
     </div>

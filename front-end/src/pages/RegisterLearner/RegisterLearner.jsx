@@ -1,48 +1,35 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
-import "./RegisterLearner.css";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { learnerRegisterSchema } from "@/lib/validations";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const RegisterLearner = () => {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    agreeTerms: false,
-  });
   const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
+  const { register: registerUser } = useAuth();
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    const value =
-      e.target.type === "checkbox" ? e.target.checked : e.target.value;
-    setFormData({
-      ...formData,
-      [e.target.name]: value,
-    });
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm({
+    resolver: zodResolver(learnerRegisterSchema),
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
-      return;
-    }
-
-    if (!formData.agreeTerms) {
-      alert("Please agree to the Terms of Use and Privacy Policy");
-      return;
-    }
-
+  const onSubmit = async (data) => {
     setLoading(true);
 
-    const result = await register({
-      name: formData.fullName,
-      email: formData.email,
-      password: formData.password,
+    const result = await registerUser({
+      name: data.fullName,
+      email: data.email,
+      password: data.password,
       role: "student",
     });
 
@@ -54,97 +41,124 @@ const RegisterLearner = () => {
   };
 
   return (
-    <div className="register-learner-page">
-      <div className="register-learner-container">
-        <div className="register-learner-illustration">
-          <img
-            src="/images/register-learner-illustration.png"
-            alt="Students learning together"
-          />
-        </div>
+    <div className="min-h-screen flex">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-50 to-purple-50 items-center justify-center p-12">
+        <img
+          src="/Selection.png"
+          alt="Students learning together"
+          className="max-w-full h-auto"
+        />
+      </div>
 
-        <div className="register-learner-form-section">
-          <h2>Create Your Learner Account</h2>
-          <p className="subtitle">
-            Fill out the form below to start building and sharing your courses
-            with students across the globe
-          </p>
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-indigo-600 mb-2">
+              Create Your Learner Account
+            </h2>
+            <p className="text-gray-600">
+              Fill out the form below to start building and sharing your courses
+              with students across the globe
+            </p>
+          </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="fullName">Full Name</label>
-              <input
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
                 id="fullName"
-                type="text"
-                name="fullName"
                 placeholder="Full Name"
-                value={formData.fullName}
-                onChange={handleChange}
-                required
+                {...register("fullName")}
               />
+              {errors.fullName && (
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.fullName.message}
+                </p>
+              )}
             </div>
 
-            <div className="form-group">
-              <label htmlFor="email">Email Address</label>
-              <input
+            <div>
+              <Label htmlFor="email">Email Address</Label>
+              <Input
                 id="email"
                 type="email"
-                name="email"
                 placeholder="Email Address"
-                value={formData.email}
-                onChange={handleChange}
-                required
+                {...register("email")}
               />
+              {errors.email && (
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="password">Password</label>
-                <input
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
                   id="password"
                   type="password"
-                  name="password"
                   placeholder="Password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
+                  {...register("password")}
                 />
+                {errors.password && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
 
-              <div className="form-group">
-                <label htmlFor="confirmPassword">Confirm Password</label>
-                <input
+              <div>
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
                   id="confirmPassword"
                   type="password"
-                  name="confirmPassword"
                   placeholder="Password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  required
+                  {...register("confirmPassword")}
                 />
+                {errors.confirmPassword && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {errors.confirmPassword.message}
+                  </p>
+                )}
               </div>
             </div>
 
-            <label className="terms-checkbox">
-              <input
-                type="checkbox"
-                name="agreeTerms"
-                checked={formData.agreeTerms}
-                onChange={handleChange}
-              />
-              <span>
+            <div className="flex items-center space-x-2">
+              <Checkbox id="agreeTerms" {...register("agreeTerms")} />
+              <label htmlFor="agreeTerms" className="text-sm text-gray-700">
                 By signing up, I agree with the{" "}
-                <Link to="/terms">Terms of Use</Link> &{" "}
-                <Link to="/privacy">Privacy Policy</Link>
-              </span>
-            </label>
+                <Link to="/terms" className="text-indigo-600 hover:underline">
+                  Terms of Use
+                </Link>{" "}
+                &{" "}
+                <Link to="/privacy" className="text-indigo-600 hover:underline">
+                  Privacy Policy
+                </Link>
+              </label>
+            </div>
+            {errors.agreeTerms && (
+              <p className="text-sm text-red-600">
+                {errors.agreeTerms.message}
+              </p>
+            )}
 
-            <button type="submit" className="submit-btn" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full bg-indigo-600 hover:bg-indigo-700"
+              disabled={loading}
+            >
               {loading ? "Signing up..." : "Sign up"}
-            </button>
+            </Button>
 
-            <p className="login-link">
-              Already have an account? <Link to="/login">Sign in</Link>
+            <p className="text-center text-sm text-gray-600">
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                className="text-indigo-600 hover:underline font-medium"
+              >
+                Sign in
+              </Link>
             </p>
           </form>
         </div>

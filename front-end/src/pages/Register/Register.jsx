@@ -1,211 +1,229 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@hooks/useAuth";
+import { registerInstructorSchema } from "@/lib/validations/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import "./Register.css";
 
 const Register = () => {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    subject: "Marketing",
-    jobTitle: "Manager",
-    agreeTerms: false,
-  });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
+  const { register: registerUser } = useAuth();
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    const value =
-      e.target.type === "checkbox" ? e.target.checked : e.target.value;
-    setFormData({
-      ...formData,
-      [e.target.name]: value,
-    });
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(registerInstructorSchema),
+    defaultValues: {
+      subjects: [],
+    },
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
-      return;
-    }
-
-    if (!formData.agreeTerms) {
-      alert("Please agree to the Terms of Use and Privacy Policy");
-      return;
-    }
-
-    setLoading(true);
-
-    const result = await register({
-      name: formData.fullName,
-      email: formData.email,
-      password: formData.password,
+  const onSubmit = async (data) => {
+    const result = await registerUser({
+      name: data.fullName,
+      email: data.email,
+      password: data.password,
       role: "instructor",
-      subject: formData.subject,
-      jobTitle: formData.jobTitle,
+      subjects: data.subjects,
+      jobTitle: data.jobTitle,
     });
 
     if (result.success) {
       navigate("/login");
     }
-
-    setLoading(false);
   };
 
   return (
-    <div className="register-page">
-      <div className="register-container">
-        <div className="register-illustration">
+    <div className="min-h-screen flex items-center justify-center bg-white py-12 px-4">
+      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+        {/* Illustration Section */}
+        <div className="hidden lg:flex items-center justify-center">
           <img
-            src="/students-studying-together-with-books-and-laptops-.jpg"
+            src="/Selection.png"
             alt="Students learning together"
+            className="w-full max-w-lg rounded-2xl"
           />
         </div>
 
-        <div className="register-form-section">
-          <h2>Create Your Instructor Account</h2>
-          <p className="subtitle">
+        {/* Form Section */}
+        <div className="bg-white p-8 lg:p-12 rounded-2xl shadow-xl">
+          <h2 className="text-3xl font-bold text-primary text-center mb-2">
+            Create Your Instructor Account
+          </h2>
+          <p className="text-gray-600 text-center mb-8 text-sm">
             Fill out the form below to start building and sharing your courses
             with students across the globe
           </p>
 
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="fullName">Full Name</label>
-              <input
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
                 id="fullName"
-                type="text"
-                name="fullName"
                 placeholder="Full Name"
-                value={formData.fullName}
-                onChange={handleChange}
-                required
+                className="bg-gray-50"
+                {...register("fullName")}
               />
+              {errors.fullName && (
+                <p className="text-sm text-red-500">
+                  {errors.fullName.message}
+                </p>
+              )}
             </div>
 
-            <div className="form-group">
-              <label htmlFor="email">Email Address</label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input
                 id="email"
                 type="email"
-                name="email"
                 placeholder="Email Address"
-                value={formData.email}
-                onChange={handleChange}
-                required
+                className="bg-gray-50"
+                {...register("email")}
               />
+              {errors.email && (
+                <p className="text-sm text-red-500">{errors.email.message}</p>
+              )}
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="password">Password</label>
-                <div className="password-input-wrapper">
-                  <input
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    name="password"
                     placeholder="Password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
+                    className="bg-gray-50 pr-10"
+                    {...register("password")}
                   />
                   <button
                     type="button"
-                    className="password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
                   >
                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
                 </div>
+                {errors.password && (
+                  <p className="text-sm text-red-500">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
 
-              <div className="form-group">
-                <label htmlFor="confirmPassword">Confirm Password</label>
-                <div className="password-input-wrapper">
-                  <input
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <div className="relative">
+                  <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
-                    name="confirmPassword"
                     placeholder="Password"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    required
+                    className="bg-gray-50 pr-10"
+                    {...register("confirmPassword")}
                   />
                   <button
                     type="button"
-                    className="password-toggle"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
                   >
                     {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
                 </div>
+                {errors.confirmPassword && (
+                  <p className="text-sm text-red-500">
+                    {errors.confirmPassword.message}
+                  </p>
+                )}
               </div>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="subject">Subject(s) You Want to Teach</label>
+            <div className="space-y-2">
+              <Label htmlFor="subjects">Subject(s) You Want to Teach</Label>
               <select
-                id="subject"
-                name="subject"
-                value={formData.subject}
-                onChange={handleChange}
+                id="subjects"
+                className="flex h-10 w-full rounded-md border border-input bg-gray-50 px-3 py-2 text-sm"
+                {...register("subjects")}
+                multiple
               >
                 <option value="Marketing">Marketing</option>
                 <option value="Programming">Programming</option>
                 <option value="Design">Design</option>
                 <option value="Business">Business</option>
-                <option value="Languages">Languages</option>
-                <option value="Music">Music</option>
-                <option value="Other">Other</option>
               </select>
+              {errors.subjects && (
+                <p className="text-sm text-red-500">
+                  {errors.subjects.message}
+                </p>
+              )}
             </div>
 
-            <div className="form-group">
-              <label htmlFor="jobTitle">Job Title</label>
+            <div className="space-y-2">
+              <Label htmlFor="jobTitle">Job Title</Label>
               <select
                 id="jobTitle"
-                name="jobTitle"
-                value={formData.jobTitle}
-                onChange={handleChange}
+                className="flex h-10 w-full rounded-md border border-input bg-gray-50 px-3 py-2 text-sm"
+                {...register("jobTitle")}
               >
                 <option value="Manager">Manager</option>
-                <option value="Director">Director</option>
                 <option value="Professor">Professor</option>
                 <option value="Instructor">Instructor</option>
-                <option value="Consultant">Consultant</option>
-                <option value="Freelancer">Freelancer</option>
-                <option value="Other">Other</option>
               </select>
+              {errors.jobTitle && (
+                <p className="text-sm text-red-500">
+                  {errors.jobTitle.message}
+                </p>
+              )}
             </div>
 
-            <label className="terms-checkbox">
+            <label className="flex items-start gap-3 text-sm text-gray-600 cursor-pointer">
               <input
                 type="checkbox"
-                name="agreeTerms"
-                checked={formData.agreeTerms}
-                onChange={handleChange}
+                className="mt-1 w-4 h-4 rounded border-gray-300 text-primary"
+                required
               />
               <span>
                 By signing up, I agree with the{" "}
-                <Link to="/terms">Terms of Use</Link> &{" "}
-                <Link to="/privacy">Privacy Policy</Link>
+                <Link
+                  to="/terms"
+                  className="text-primary font-medium hover:underline"
+                >
+                  Terms of Use
+                </Link>{" "}
+                &{" "}
+                <Link
+                  to="/privacy"
+                  className="text-primary font-medium hover:underline"
+                >
+                  Privacy Policy
+                </Link>
               </span>
             </label>
 
-            <button type="submit" className="submit-btn" disabled={loading}>
-              {loading ? "Signing up..." : "Sign up"}
-            </button>
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Signing up..." : "Sign up"}
+            </Button>
 
-            <p className="login-link">
-              Already have an account? <Link to="/login">Sign in</Link>
+            <p className="text-center text-sm text-gray-600">
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                className="text-primary font-semibold hover:underline"
+              >
+                Sign in
+              </Link>
             </p>
           </form>
         </div>
