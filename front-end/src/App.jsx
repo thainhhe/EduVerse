@@ -21,7 +21,7 @@ import RegisterLearner from "@pages/RegisterLearner/RegisterLearner";
 import InstructorProfile from "@pages/InstructorProfile/InstructorProfile";
 import Settings from "@pages/Settings/Settings";
 import Quiz from "./pages/Quiz/Quiz";
-import MyCourse from "./pages/MyCourse/MyCourse";
+import MyCourse from "@pages/MyCourse/MyCourse";
 
 function App() {
   const { loading } = useAuth();

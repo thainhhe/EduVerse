@@ -3,7 +3,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Filter, Plus } from "lucide-react"
-import { CourseCard } from "./CourseCard"
+import CourseCard from "./CourseCard"
 
 // Mock data for courses
 const courses = Array.from({ length: 12 }, (_, i) => ({
@@ -16,7 +16,7 @@ const courses = Array.from({ length: 12 }, (_, i) => ({
     image: `/placeholder.svg?height=200&width=300&query=course+thumbnail`,
 }))
 
-export function MyCourse() {
+const MyCourse = () => {
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 10
     const totalPages = Math.ceil(courses.length / itemsPerPage)
@@ -105,3 +105,4 @@ export function MyCourse() {
         </div>
     )
 }
+export default MyCourse

@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 
 
-export const CourseCard = ({ course, role }) => {
+const CourseCard = ({ course, role }) => {
     const navigate = useNavigate()
     const [visible, setVisible] = useState(true);
     const handleEdit = () => {
@@ -57,3 +57,4 @@ export const CourseCard = ({ course, role }) => {
         </Card>
     )
 }
+export default CourseCard
