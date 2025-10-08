@@ -11,6 +11,7 @@ import {
   FaChartLine,
   FaStar,
   FaArrowRight,
+  FaRegStar, // Import FaRegStar
 } from "react-icons/fa";
 import { MdAccessTime, MdVerified, MdForum } from "react-icons/md";
 import { Button } from "@/components/ui/button";
@@ -238,32 +239,37 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-20">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <h1 className="text-5xl font-bold text-gray-900 leading-tight">
-                Eduverse–Learn Anytime, Anywhere
-              </h1>
-              <p className="text-lg text-gray-600">
-                Unlock your potential with our extensive range of expert-led
-                courses. Designed for flexibility, designed for you.
-              </p>
-              <Button
-                asChild
-                size="lg"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white"
-              >
-                <Link to="/courses">Get Started Today</Link>
-              </Button>
-            </div>
-            <div className="relative">
-              <img
-                src="/students-learning-online-illustration.jpg"
-                alt="Students learning"
-                className="w-full h-auto rounded-2xl shadow-2xl"
-              />
-            </div>
+
+      <section className="flex justify-center items-center min-h-[80vh] py-12">
+        <div className="bg-[#f4f4ff] rounded-3xl w-full max-w-7xl flex flex-col md:flex-row items-center justify-between p-8 md:p-12 shadow-lg">
+          {/* Left */}
+          <div className="flex-1 md:pr-12">
+            <h1 className="text-3xl md:text-5xl font-black font-sans text-gray-900 leading-tight mb-8">
+              Eduverse–Learn Anytime,
+              <br />
+              Anywhere
+            </h1>
+            <p className="text-lg text-gray-700 mb-8 max-w-xl">
+              Unlock your potential with our extensive range of expert-led
+              courses. Designed for flexibility, designed for you.
+            </p>
+            <Button
+              asChild
+              size="lg"
+              className="bg-[#6c63ff] hover:bg-[#554ee6] text-white font-bold text-lg px-8 py-3 rounded-full flex items-center gap-2 shadow-none"
+            >
+              <Link to="/courses">
+                Start Learning Now <FaArrowRight className="ml-2 text-xl" />
+              </Link>
+            </Button>
+          </div>
+          {/* Right */}
+          <div className="flex-1 flex justify-center mt-10 md:mt-0">
+            <img
+              src="/students-learning-online-illustration.jpg"
+              alt="Students learning"
+              className="w-full max-w-[420px] h-auto rounded-2xl bg-white"
+            />
           </div>
         </div>
       </section>
@@ -339,45 +345,59 @@ const Home = () => {
       </section>
 
       {/* Popular Courses Section */}
-      <section className="py-20">
+      <section className="py-20 bg-[#f8f8ff]">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900">
+            <h2 className="text-4xl font-extrabold text-gray-900">
               Popular Courses
             </h2>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-8">
             {courses.map((course) => (
-              <Card
+              <div
                 key={course.id}
-                className="overflow-hidden hover:shadow-xl transition-shadow"
+                className="bg-white rounded-2xl border border-gray-200 flex flex-col overflow-hidden"
               >
                 <img
                   src={course.image || "/placeholder.svg"}
                   alt={course.title}
-                  className="w-full h-48 object-cover"
+                  className="w-full h-48 object-cover rounded-t-2xl"
                 />
-                <CardContent className="p-6">
-                  <Badge className="mb-3">{course.category}</Badge>
-                  <h3 className="text-xl font-semibold mb-2">{course.title}</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    by {course.instructor}
+                <div className="flex-1 flex flex-col p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">
+                    {course.title}
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-2">
+                    By {course.instructor}
                   </p>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-1 text-sm">
-                      <FaStar className="text-yellow-400" />
-                      <span className="font-semibold">{course.rating}</span>
-                      <span className="text-gray-500">({course.students})</span>
-                    </div>
-                    <span className="text-lg font-bold text-indigo-600">
-                      {course.price}
+                  {/* Star Rating and Reviews */}
+                  <div className="flex items-center mb-2">
+                    {[...Array(5)].map((_, index) => {
+                      const ratingValue = index + 1;
+                      return ratingValue <= course.rating ? (
+                        <FaRegStar
+                          key={index}
+                          className="text-yellow-400 text-base"
+                        />
+                      ) : (
+                        <FaRegStar
+                          key={index}
+                          className="text-gray-400 text-base"
+                        />
+                      );
+                    })}
+                    <span className="ml-2 text-gray-500 text-sm">
+                      ({course.students} reviews)
                     </span>
                   </div>
-                  <Button className="w-full bg-indigo-500 hover:bg-indigo-700 text-white">
-                    Newest Sale
+                  <div className="text-indigo-600 font-bold text-lg mb-4">
+                    {course.price}
+                  </div>
+                  <Button className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-lg shadow-none mt-auto">
+                    Register Now
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -420,29 +440,27 @@ const Home = () => {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20">
+      <section className="py-20 bg-[#f8f8ff]">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900">
-              Benefits of Learning With Us
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray">
+              Benefits of Learning with Us
             </h2>
           </div>
-          <div className="grid md:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-4 gap-8">
             {benefits.map((benefit, index) => (
-              <Card
+              <div
                 key={index}
-                className="text-center hover:shadow-lg transition-shadow"
+                className="bg-white text-center p-8 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
               >
-                <CardContent className="pt-8 pb-6">
-                  <div className="flex justify-center mb-4 text-secondary-500 text-4xl">
-                    {benefit.icon}
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">
-                    {benefit.title}
-                  </h3>
-                  <p className="text-sm text-gray-600">{benefit.description}</p>
-                </CardContent>
-              </Card>
+                <div className="flex justify-center items-center mb-4 text-pink-500 text-4xl h-12 w-12 mx-auto">
+                  {benefit.icon}
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                  {benefit.title}
+                </h3>
+                <p className="text-gray-500 text-sm">{benefit.description}</p>
+              </div>
             ))}
           </div>
         </div>
@@ -460,7 +478,7 @@ const Home = () => {
             {testimonials.map((testimonial, index) => (
               <Card key={index} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
-                  <p className="text-gray-700 mb-6 italic">
+                  <p className="text-gray-700 mb-6 italic ">
                     "{testimonial.text}"
                   </p>
                   <div className="flex items-center gap-3">
@@ -471,9 +489,6 @@ const Home = () => {
                     />
                     <div>
                       <p className="font-semibold">{testimonial.author}</p>
-                      <p className="text-sm text-gray-600">
-                        {testimonial.role}
-                      </p>
                     </div>
                   </div>
                 </CardContent>

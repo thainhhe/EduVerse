@@ -9,7 +9,7 @@ const Footer = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="grid md:grid-cols-5 gap-8">
           <div>
-            <h3 className="text-2xl font-bold mb-4">Eduvers</h3>
+            <h3 className="text-2xl font-bold mb-4">EduVerse</h3>
           </div>
 
           <div>
