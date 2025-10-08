@@ -393,8 +393,11 @@ const Home = () => {
                   <div className="text-indigo-600 font-bold text-lg mb-4">
                     {course.price}
                   </div>
-                  <Button className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-lg shadow-none mt-auto">
+                  {/* <Button className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-lg shadow-none mt-auto">
                     Register Now
+                  </Button> */}
+                  <Button className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-lg shadow-none mt-auto ">
+                    Register Now <FaArrowRight className="ml-2" />
                   </Button>
                 </div>
               </div>
