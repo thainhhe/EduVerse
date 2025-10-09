@@ -5,22 +5,22 @@ import PrivateRoute from "@routes/PrivateRoute";
 import RoleBasedRoute from "@routes/RoleBasedRoute";
 
 // Pages
-import Home from "@pages/Home/Home";
-import Login from "@pages/Login/Login";
-import Register from "@pages/Register/Register";
-import Dashboard from "@pages/Dashboard/Dashboard";
-import Courses from "@pages/Courses/Courses";
-import CourseDetail from "@pages/CourseDetail/CourseDetail";
-import Learning from "@pages/Learning/Learning";
+import Home from "@/pages/common/Home/Home";
+import Login from "@/pages/auth/Login/Login";
+import Register from "@/pages/auth/RegisterInstructor/RegisterInstructor";
+import Dashboard from "@/pages/learner/LearnerDashboard/LearnerDashboard";
+import Courses from "@/pages/common/Courses/Courses";
+import CourseDetail from "@/pages/common/CourseDetail/CourseDetail";
+import Learning from "@/pages/learner/Learning/Learning";
 import Classroom from "@pages/Classroom/Classroom";
 import Profile from "@pages/Profile/Profile";
 import Forum from "@pages/Forum/Forum";
-import NotFound from "@pages/NotFound/NotFound";
-import Instructors from "@pages/Instructors/Instructors";
-import RegisterLearner from "@pages/RegisterLearner/RegisterLearner";
-import InstructorProfile from "@pages/InstructorProfile/InstructorProfile";
-import Settings from "@pages/Settings/Settings";
-import Quiz from "./pages/Quiz/Quiz";
+import NotFound from "@/pages/common/NotFound/NotFound";
+import Instructors from "@/pages/common/Instructors/Instructors";
+import RegisterLearner from "@/pages/auth/RegisterLearner/RegisterLearner";
+import InstructorProfile from "@/pages/common/InstructorProfile/InstructorProfile";
+import Settings from "@/pages/common/Settings/Settings";
+import Quiz from "./pages/learner/Quiz/Quiz";
 import MyCourse from "@pages/MyCourse/MyCourse";
 
 function App() {
