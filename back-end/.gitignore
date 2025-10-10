@@ -1,0 +1,59 @@
+# =========================
+# Node.js / Express Backend
+# =========================
+
+# Node modules
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Environment variables
+.env
+.env.*.local
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Build output
+dist/
+build/
+.tmp/
+temp/
+
+# IDE and editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# System files
+.DS_Store
+Thumbs.db
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Docker
+docker-compose.override.yml
+.env.docker
+
+# Mongoose / Mongo memory storage (if used)
+mongo-data/
+data/
+database/
+
+# Misc
+*.bak
+*.orig
