@@ -1,7 +1,7 @@
-import RegisterLearner from "../pages/RegisterLearner/RegisterLearner";
-import Instructors from "../pages/Instructors/Instructors";
-import InstructorProfile from "../pages/InstructorProfile/InstructorProfile";
-import Settings from "../pages/Settings/Settings";
+import RegisterLearner from "../pages/auth/RegisterLearner/RegisterLearner";
+import Instructors from "../pages/common/Instructors/Instructors";
+import InstructorProfile from "../pages/common/InstructorProfile/InstructorProfile";
+import Settings from "../pages/common/Settings/Settings";
 import PrivateRoute from "../components/PrivateRoute/PrivateRoute"; // Declared PrivateRoute
 
 const routes = [
