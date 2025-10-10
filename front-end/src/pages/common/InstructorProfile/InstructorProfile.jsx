@@ -132,7 +132,8 @@ const InstructorProfile = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {instructor.courses.map((course) => (
-                <Card key={course.id}>
+                <Card key={course.id} className="flex flex-col">
+                  {" "}
                   <CardHeader>
                     <CardTitle className="text-lg text-indigo-600">
                       {course.title}
@@ -141,11 +142,13 @@ const InstructorProfile = () => {
                       Duration: {course.duration}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="flex flex-col flex-grow p-6 pt-0">
+                    {" "}
                     <p className="text-sm text-gray-600 mb-4">
                       {course.description}
                     </p>
-                    <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+                    <Button className="w-full bg-indigo-600 hover:bg-indigo-700 mt-auto">
+                      {" "}
                       View Course Details
                     </Button>
                   </CardContent>

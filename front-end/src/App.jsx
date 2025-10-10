@@ -21,7 +21,9 @@ import RegisterLearner from "@/pages/auth/RegisterLearner/RegisterLearner";
 import InstructorProfile from "@/pages/common/InstructorProfile/InstructorProfile";
 import Settings from "@/pages/common/Settings/Settings";
 import Quiz from "./pages/learner/Quiz/Quiz";
-import MyCourse from "@pages/MyCourse/MyCourse";
+import MyCourse from "@/pages/instructor/MyCourse/MyCourse";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 
 function App() {
   const { loading } = useAuth();
@@ -50,6 +52,8 @@ function App() {
         <Route path="instructors/:id" element={<InstructorProfile />} />
         <Route path="settings" element={<Settings />} />
         <Route path="quiz" element={<Quiz />} />
+        <Route path="forgot-password" element={<ForgotPassword />} />
+        <Route path="reset-password/:token" element={<ResetPassword />} />
 
         {/* Private routes */}
         <Route element={<PrivateRoute />}>
