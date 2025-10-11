@@ -54,6 +54,7 @@ function App() {
         <Route path="quiz" element={<Quiz />} />
         <Route path="forgot-password" element={<ForgotPassword />} />
         <Route path="reset-password/:token" element={<ResetPassword />} />
+        <Route path="learning-test" element={<Learning />} />
 
         {/* Private routes */}
         <Route element={<PrivateRoute />}>
