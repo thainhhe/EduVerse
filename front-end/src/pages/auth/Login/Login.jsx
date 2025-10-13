@@ -31,13 +31,15 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 min-h-[600px] shadow-2xl rounded-2xl overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 bg-white shadow-xl rounded-2xl overflow-hidden">
         {/* Form Section */}
-        <div className="p-8 lg:p-12 flex flex-col justify-center bg-white">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">Sign in</h2>
+        <div className="p-6 sm:p-8 lg:p-12 flex flex-col justify-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 text-center lg:text-left">
+            Sign in
+          </h2>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -77,7 +79,7 @@ const Login = () => {
               )}
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                 <input
                   type="checkbox"
@@ -102,7 +104,7 @@ const Login = () => {
               {isSubmitting ? "Signing in..." : "Sign in"}
             </Button>
 
-            <div className="relative">
+            <div className="relative py-2">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-gray-200" />
               </div>
@@ -120,8 +122,18 @@ const Login = () => {
               size="lg"
             >
               <FcGoogle className="mr-2 h-5 w-5" />
-              Sign up with Google
+              Sign in with Google
             </Button>
+
+            <p className="text-center text-sm text-gray-600 pt-2">
+              Don't have an account?{" "}
+              <Link
+                to="/register-learner"
+                className="text-primary font-semibold hover:underline"
+              >
+                Sign up
+              </Link>
+            </p>
           </form>
         </div>
 
@@ -130,7 +142,7 @@ const Login = () => {
           <img
             src="/login.png"
             alt="Online learning"
-            className="w-full max-w-md rounded-2xl"
+            className="w-full max-w-md"
           />
         </div>
       </div>
