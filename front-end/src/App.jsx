@@ -24,6 +24,8 @@ import Quiz from "./pages/learner/Quiz/Quiz";
 import MyCourse from "@/pages/instructor/MyCourse/MyCourse";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
+import PaymentPage from "@/pages/checkout/PaymentPage";
+import PaymentConfirmationPage from "@/pages/checkout/PaymentConfirmationPage";
 
 function App() {
   const { loading } = useAuth();
@@ -63,6 +65,12 @@ function App() {
           <Route path="classroom/:roomId" element={<Classroom />} />
           <Route path="profile" element={<Profile />} />
           <Route path="forum" element={<Forum />} />
+
+          <Route path="checkout" element={<PaymentPage />} />
+          <Route
+            path="checkout/success"
+            element={<PaymentConfirmationPage />}
+          />
         </Route>
 
         {/* Role-based routes */}
