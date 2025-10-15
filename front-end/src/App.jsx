@@ -2,7 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import { useAuth } from "@hooks/useAuth";
 import MainLayout from "@components/layout/MainLayout";
 import PrivateRoute from "@routes/PrivateRoute";
-import RoleBasedRoute from "@routes/RoleBasedRoute";
+import PermissionBasedRoute from "@routes/PermissionBasedRoute";
 
 // Pages
 import Home from "@/pages/common/Home/Home";
@@ -26,6 +26,9 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import PaymentPage from "@/pages/checkout/PaymentPage";
 import PaymentConfirmationPage from "@/pages/checkout/PaymentConfirmationPage";
+import AdminLayout from "./components/layout/AdminLayout/AdminLayout";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import UserManagementPage from "./pages/admin/UserManagementPage";
 
 function App() {
   const { loading } = useAuth();
@@ -73,9 +76,13 @@ function App() {
           />
         </Route>
 
-        {/* Role-based routes */}
+        {/* Permission-based routes */}
         <Route
-          element={<RoleBasedRoute allowedRoles={["instructor", "admin"]} />}
+          element={
+            <PermissionBasedRoute
+              allowedPermissions={["create:courses", "edit:courses"]}
+            />
+          }
         >
           <Route
             path="instructor/*"
@@ -83,8 +90,14 @@ function App() {
           />
         </Route>
 
-        <Route element={<RoleBasedRoute allowedRoles={["admin"]} />}>
+        <Route
+          element={
+            <PermissionBasedRoute allowedPermissions={["manage:users"]} />
+          }
+        >
           <Route path="admin/*" element={<div>Admin Dashboard</div>} />
+          <Route path="admin/dashboard" element={<AdminDashboardPage />} />
+          <Route path="admin/users" element={<UserManagementPage />} />
         </Route>
       </Route>
 

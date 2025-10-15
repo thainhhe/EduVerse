@@ -1,8 +1,10 @@
+// src/routes/PermissionBasedRoute.jsx
+
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@hooks/useAuth";
 
-const RoleBasedRoute = ({ allowedRoles }) => {
-  const { user, isAuthenticated, loading } = useAuth();
+const PermissionBasedRoute = ({ allowedPermissions }) => {
+  const { user, isAuthenticated, loading, hasPermission } = useAuth();
 
   if (loading) {
     return (
@@ -16,11 +18,12 @@ const RoleBasedRoute = ({ allowedRoles }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (!allowedRoles.includes(user?.role)) {
+  if (!hasPermission(allowedPermissions)) {
+    // Chuyển hướng về trang dashboard nếu không có quyền
     return <Navigate to="/dashboard" replace />;
   }
 
   return <Outlet />;
 };
 
-export default RoleBasedRoute;
+export default PermissionBasedRoute;

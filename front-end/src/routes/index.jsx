@@ -1,8 +1,11 @@
+// src/routes/index.jsx
+
 import RegisterLearner from "../pages/auth/RegisterLearner/RegisterLearner";
 import Instructors from "../pages/common/Instructors/Instructors";
 import InstructorProfile from "../pages/common/InstructorProfile/InstructorProfile";
 import Settings from "../pages/common/Settings/Settings";
-import PrivateRoute from "../components/PrivateRoute/PrivateRoute"; // Declared PrivateRoute
+import PrivateRoute from "./PrivateRoute";
+import PermissionBasedRoute from "./PermissionBasedRoute";
 
 const routes = [
   {
@@ -23,6 +26,15 @@ const routes = [
       <PrivateRoute>
         <Settings />
       </PrivateRoute>
+    ),
+  },
+  // Ví dụ về route yêu cầu quyền
+  {
+    path: "/admin/users",
+    element: (
+      <PermissionBasedRoute allowedPermissions={["manage:users"]}>
+        <UserManagementPage />
+      </PermissionBasedRoute>
     ),
   },
 ];
