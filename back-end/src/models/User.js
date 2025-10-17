@@ -6,9 +6,11 @@ const userSchema = new mongoose.Schema(
         email: { type: String, required: true, unique: true },
         password: { type: String, required: true },
         role: { type: String, enum: ["learner", "instructor", "admin"], default: "learner" },
-        permissions: { type: [String], default: ["read"], enum: ["read", "write", "delete"] },
+        isSuperAdmin: { type: Boolean, default: false },
+        permissions: [{ type: mongoose.Schema.ObjectId, ref: "Permission" }],
         status: { type: String, enum: ["active", "inactive", "banned"], default: "active" },
         createdAt: { type: Date, default: Date.now },
+        updatedAt: { type: Date, default: Date.now },
     },
     {
         timestamps: true,

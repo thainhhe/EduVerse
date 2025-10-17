@@ -3,9 +3,6 @@ const mongoose = require("mongoose");
 const scoreSchema = new mongoose.Schema(
     {
         userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-        courseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true },
-        moduleId: { type: mongoose.Schema.Types.ObjectId, ref: "Module" },
-        lessonId: { type: mongoose.Schema.Types.ObjectId, ref: "Lesson" },
         quizId: { type: mongoose.Schema.Types.ObjectId, ref: "Quiz" },
         score: { type: Number, required: true },
         timeTaken: { type: Number, default: 0 },

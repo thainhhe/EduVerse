@@ -9,7 +9,6 @@ const materialSchema = new mongoose.Schema(
         uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
         lessonId: { type: mongoose.Schema.Types.ObjectId, ref: "Lesson", required: true },
         uploadedAt: { type: Date, default: Date.now },
-        tags: { type: [String], default: [] },
         accessLevel: { type: String, enum: ["public", "private", "restricted"], default: "private" },
         downloadCount: { type: Number, default: 0, min: 0 },
         status: { type: String, enum: ["active", "inactive", "archived"], default: "active" },
