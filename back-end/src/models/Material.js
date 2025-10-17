@@ -7,7 +7,6 @@ const materialSchema = new mongoose.Schema(
         url: { type: String, required: true },
         type: { type: String, enum: ["document", "video", "link"], default: "document" },
         uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-        lessonId: { type: mongoose.Schema.Types.ObjectId, ref: "Lesson", required: true },
         uploadedAt: { type: Date, default: Date.now },
         accessLevel: { type: String, enum: ["public", "private", "restricted"], default: "private" },
         downloadCount: { type: Number, default: 0, min: 0 },
