@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Button } from "@/components/ui/button";

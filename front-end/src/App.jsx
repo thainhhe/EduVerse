@@ -89,17 +89,17 @@ function App() {
             element={<div>Instructor Dashboard</div>}
           />
         </Route>
-
-        <Route
+      </Route>
+      {/* <Route
           element={
             <PermissionBasedRoute allowedPermissions={["manage:users"]} />
           }
-        >
-          <Route path="admin/*" element={<div>Admin Dashboard</div>} />
-          <Route path="admin/dashboard" element={<AdminDashboardPage />} />
-          <Route path="admin/users" element={<UserManagementPage />} />
-        </Route>
+        > */}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route path="dashboard" element={<AdminDashboardPage />} />
+        <Route path="users" element={<UserManagementPage />} />
       </Route>
+      {/* </Route> */}
 
       <Route path="*" element={<NotFound />} />
     </Routes>
