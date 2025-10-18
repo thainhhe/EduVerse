@@ -16,7 +16,7 @@ import { MdAutoAwesome } from "react-icons/md";
 const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "User Management", href: "/admin/users", icon: Users },
-  { name: "Course Management", href: "#", icon: Book },
+  { name: "Course Management", href: "/admin/courses", icon: Book },
   { name: "Comment Management", href: "#", icon: MessageSquare },
   { name: "Notifications", href: "#", icon: Bell },
   { name: "Analytics", href: "#", icon: BarChart2 },

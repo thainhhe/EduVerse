@@ -14,7 +14,7 @@ import CourseDetail from "@/pages/common/CourseDetail/CourseDetail";
 import Learning from "@/pages/learner/Learning/Learning";
 import Classroom from "@pages/Classroom/Classroom";
 import Profile from "@pages/Profile/Profile";
-import Forum from "@pages/Forum/Forum";
+import Forum from "@/pages/common/Forum/Forum";
 import NotFound from "@/pages/common/NotFound/NotFound";
 import Instructors from "@/pages/common/Instructors/Instructors";
 import RegisterLearner from "@/pages/auth/RegisterLearner/RegisterLearner";
@@ -24,11 +24,15 @@ import Quiz from "./pages/learner/Quiz/Quiz";
 import MyCourse from "@/pages/instructor/MyCourse/MyCourse";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
-import PaymentPage from "@/pages/checkout/PaymentPage";
-import PaymentConfirmationPage from "@/pages/checkout/PaymentConfirmationPage";
+import PaymentPage from "@/pages/common/checkout/PaymentPage";
+import PaymentConfirmationPage from "@/pages/common/checkout/PaymentConfirmationPage";
 import AdminLayout from "./components/layout/AdminLayout/AdminLayout";
-import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
-import UserManagementPage from "./pages/admin/UserManagementPage";
+import AdminDashboardPage from "./pages/admin/AdminDashboard/AdminDashboardPage";
+import UserManagementPage from "./pages/admin/UserManagement/UserManagementPage";
+import InstructorProfileDetail from "./pages/admin/UserManagement/InstructorProfileDetail";
+import LearnerProfileDetail from "./pages/admin/UserManagement/LearnerProfileDetail";
+import CourseManagementPage from "./pages/admin/CourseManagement/CourseManagementPage";
+import CourseDetailPage from "./pages/admin/CourseManagement/CourseDetailPage";
 
 function App() {
   const { loading } = useAuth();
@@ -98,6 +102,16 @@ function App() {
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="users" element={<UserManagementPage />} />
+        <Route
+          path="users/instructor/:userId"
+          element={<InstructorProfileDetail />}
+        />
+        <Route
+          path="users/learner/:userId"
+          element={<LearnerProfileDetail />}
+        />
+        <Route path="courses" element={<CourseManagementPage />} />
+        <Route path="courses/:id" element={<CourseDetailPage />} />
       </Route>
       {/* </Route> */}
 
