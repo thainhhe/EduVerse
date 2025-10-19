@@ -23,10 +23,10 @@ const RegisterLearner = () => {
 
   const onSubmit = async (data) => {
     const result = await registerUser({
-      name: data.fullName,
+      username: data.fullName, // send username to match backend validator
       email: data.email,
       password: data.password,
-      role: "student",
+      role: "learner",
     });
 
     if (result.success) {
@@ -121,7 +121,10 @@ const RegisterLearner = () => {
             <div className="flex items-start space-x-3 pt-2">
               <Checkbox
                 id="agreeTerms"
-                {...register("agreeTerms")}
+                {...register("agreeTerms", {
+                  // normalize checkbox value to boolean (handles "on" / "true" / true)
+                  setValueAs: (v) => v === "on" || v === "true" || v === true,
+                })}
                 className="mt-1"
               />
               <label htmlFor="agreeTerms" className="text-sm text-gray-700">

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const RegisterInstructor = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -28,7 +29,7 @@ const RegisterInstructor = () => {
 
   const onSubmit = async (data) => {
     const result = await registerUser({
-      name: data.fullName,
+      username: data.fullName, // send username to match backend validator
       email: data.email,
       password: data.password,
       role: "instructor",
@@ -184,29 +185,25 @@ const RegisterInstructor = () => {
               )}
             </div>
 
-            <label className="flex items-start gap-3 text-sm text-gray-600 cursor-pointer pt-2">
-              <input
-                type="checkbox"
-                className="mt-1 w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-                required
+            <div className="flex items-start space-x-3 pt-2">
+              <Checkbox
+                id="agreeTerms"
+                {...register("agreeTerms", {
+                  setValueAs: (v) => v === "on" || v === "true" || v === true,
+                })}
+                className="mt-1"
               />
-              <span>
-                I agree with the{" "}
-                <Link
-                  to="/terms"
-                  className="text-primary font-medium hover:underline"
-                >
+              <label htmlFor="agreeTerms" className="text-sm text-gray-700">
+                By signing up, I agree with the{" "}
+                <Link to="/terms" className="text-indigo-600 hover:underline">
                   Terms of Use
                 </Link>{" "}
                 &{" "}
-                <Link
-                  to="/privacy"
-                  className="text-primary font-medium hover:underline"
-                >
+                <Link to="/privacy" className="text-indigo-600 hover:underline">
                   Privacy Policy
                 </Link>
-              </span>
-            </label>
+              </label>
+            </div>
 
             <Button
               type="submit"
