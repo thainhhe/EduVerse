@@ -5,7 +5,7 @@ const quizSchema = new mongoose.Schema(
         title: { type: String, required: true },
         description: { type: String },
         questions: {
-            type: [
+            content: [
                 {
                     questionText: { type: String, required: true },
                     options: { type: [String], required: true },
@@ -16,6 +16,11 @@ const quizSchema = new mongoose.Schema(
                 },
             ],
             default: [],
+            questionType: {
+                type: String,
+                enum: ["multiple_choice", "checkbox", "true_false"],
+                default: "multiple_choice",
+            },
         },
         timeLimit: { type: Number, default: 0, min: 0 },
         passingScore: { type: Number, default: 0, min: 0, max: 100 },

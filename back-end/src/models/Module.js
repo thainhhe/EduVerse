@@ -8,6 +8,7 @@ const moduleSchema = new mongoose.Schema(
         lessons: [{ type: mongoose.Schema.Types.ObjectId, ref: "Lesson" }],
         content: { type: String },
         order: { type: Number, required: true },
+        status: { type: String, enum: ["draft", "published", "hidden"], default: "draft" },
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date, default: Date.now },
     },

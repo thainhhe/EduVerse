@@ -10,6 +10,7 @@ const lessonSchema = new mongoose.Schema(
         user_completed: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
         materials: [{ type: mongoose.Schema.Types.ObjectId, ref: "Material" }],
         quiz: { type: mongoose.Schema.Types.ObjectId, ref: "Quiz" },
+        status: { type: String, enum: ["published", "hidden"], default: "hidden" },
         resources: { type: [String], default: [] },
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date, default: Date.now },

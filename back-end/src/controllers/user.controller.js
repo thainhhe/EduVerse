@@ -1,239 +1,133 @@
 const User = require("../models/User");
-const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-class UserController {
-    // Create a new user
-    async createUser(req, res) {
-        try {
-            const { username, email, password, role } = req.body;
+const jwt = require("jsonwebtoken");
 
-            // Check if user exists
-            const userExists = await User.findOne({ $or: [{ email }, { username }] });
-            if (userExists) {
-                return res.status(400).json({
-                    success: false,
-                    message: "User already exists with this email or username",
-                });
-            }
+const register = async (req, res) => {
+    try {
+        const data = req.body;
+        if (
+            !data.username ||
+            !data.email ||
+            !data.password ||
+            data.username.trim() === "" ||
+            data.email.trim() === "" ||
+            data.password.trim() === ""
+        )
+            return res.status(400).json({ message: "Vui lòng điền đầy đủ thông tin" });
 
-            // Hash password
-            const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash(password, salt);
-
-            // Create user
-            const user = await User.create({
-                username,
-                email,
-                password: hashedPassword,
-                role,
-                created_by: req.user?._id,
-            });
-
-            // Remove password from response
-            user.password = undefined;
-
-            return res.status(201).json({
-                success: true,
-                message: "User created successfully",
-                data: user,
-            });
-        } catch (error) {
-            return res.status(500).json({
-                success: false,
-                message: "Error creating user",
-                error: error.message,
-            });
+        const existedEmail = await User.findOne({ email: data.email.trim() }).exec();
+        if (existedEmail) {
+            return res.status(500).json("Email đã tồn tại");
         }
+        const hashPassword = await bcrypt.hash(data.password, parseInt(process.env.SALT_JWT));
+        const newUser = await User.create({
+            username: data.username.trim(),
+            password: hashPassword,
+            email: data.email.trim(),
+            avatar: req.file ? req.file.path : null,
+        });
+        const userData = {
+            ...newUser._doc,
+            password: "xxxxxx",
+        };
+        return res.status(201).json(userData);
+    } catch (error) {
+        return res.status(500).json({ message: error.toString() });
     }
+};
 
-    // Get all users with pagination and filters
-    async getUsers(req, res) {
-        try {
-            const page = parseInt(req.query.page) || 1;
-            const limit = parseInt(req.query.limit) || 10;
-            const search = req.query.search || "";
-            const role = req.query.role;
-            const status = req.query.status;
-
-            const query = {};
-
-            // Add filters
-            if (search) {
-                query.$or = [
-                    { username: { $regex: search, $options: "i" } },
-                    { email: { $regex: search, $options: "i" } },
-                ];
-            }
-            if (role) query.role = role;
-            if (status) query.status = status;
-
-            // Execute query with pagination
-            const users = await User.find(query)
-                .select("-password")
-                .skip((page - 1) * limit)
-                .limit(limit)
-                .sort({ createdAt: -1 });
-
-            // Get total count
-            const total = await User.countDocuments(query);
-
-            return res.status(200).json({
-                success: true,
-                data: users,
-                pagination: {
-                    page,
-                    limit,
-                    total,
-                    pages: Math.ceil(total / limit),
-                },
-            });
-        } catch (error) {
-            return res.status(500).json({
-                success: false,
-                message: "Error fetching users",
-                error: error.message,
-            });
+const login = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(500).json({ message: "Người dùng không tồn tại" });
         }
-    }
-
-    // Get user by ID
-    async getUserById(req, res) {
-        try {
-            const user = await User.findById(req.params.id).select("-password");
-
-            if (!user) {
-                return res.status(404).json({
-                    success: false,
-                    message: "User not found",
-                });
-            }
-
-            return res.status(200).json({
-                success: true,
-                data: user,
-            });
-        } catch (error) {
-            return res.status(500).json({
-                success: false,
-                message: "Error fetching user",
-                error: error.message,
-            });
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(500).json({ message: "Sai mật khẩu" });
         }
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+            expiresIn: "1h",
+        });
+        const userData = {
+            ...user._doc,
+            password: "xxxxxx",
+            token: token,
+        };
+        return res.status(200).json(userData);
+    } catch (error) {
+        return res.status(500).json({ message: error.toString() });
     }
+};
 
-    // Update user
-    async updateUser(req, res) {
-        try {
-            const { username, email, role, status } = req.body;
-            const userId = req.params.id;
-
-            // Check if user exists
-            const user = await User.findById(userId);
-            if (!user) {
-                return res.status(404).json({
-                    success: false,
-                    message: "User not found",
-                });
-            }
-
-            // Update fields
-            if (username) user.username = username;
-            if (email) user.email = email;
-            if (role) user.role = role;
-            if (status) user.status = status;
-
-            user.updated_by = req.user._id;
-
-            // Save changes
-            await user.save();
-
-            // Remove password from response
-            user.password = undefined;
-
-            return res.status(200).json({
-                success: true,
-                message: "User updated successfully",
-                data: user,
-            });
-        } catch (error) {
-            return res.status(500).json({
-                success: false,
-                message: "Error updating user",
-                error: error.message,
-            });
+const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find().select("-password");
+        if (users === null) {
+            throw new Error("List user is empty");
         }
+        return res.status(200).json(users);
+    } catch (error) {
+        return res.status(500).json({ message: error.toString() });
     }
+};
 
-    // Delete user
-    async deleteUser(req, res) {
-        try {
-            const user = await User.findById(req.params.id);
-
-            if (!user) {
-                return res.status(404).json({
-                    success: false,
-                    message: "User not found",
-                });
-            }
-
-            // Soft delete by updating status
-            user.status = "inactive";
-            user.updated_by = req.user._id;
-            await user.save();
-
-            return res.status(200).json({
-                success: true,
-                message: "User deleted successfully",
-            });
-        } catch (error) {
-            return res.status(500).json({
-                success: false,
-                message: "Error deleting user",
-                error: error.message,
-            });
+const updateProfile = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const data = req.body;
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            {
+                username: data.name,
+                avatar: req.file ? req.file.path : data.avatar,
+            },
+            { new: true }
+        ).select("-password");
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found" });
         }
+        return res.status(200).json(updatedUser);
+    } catch (error) {
+        return res.status(500).json({ message: error.toString() });
     }
+};
 
-    // Change password
-    async changePassword(req, res) {
-        try {
-            const { currentPassword, newPassword } = req.body;
-            const userId = req.user._id;
-
-            const user = await User.findById(userId);
-            if (!user) {
-                return res.status(404).json({
-                    success: false,
-                    message: "User not found",
-                });
-            }
-
-            // Verify current password
-            const isMatch = await bcrypt.compare(currentPassword, user.password);
-            if (!isMatch) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Current password is incorrect",
-                });
-            }
-
-            // Hash new password
-            const salt = await bcrypt.genSalt(10);
-            user.password = await bcrypt.hash(newPassword, salt);
-            await user.save();
-
-            return res.status(200).json({
-                success: true,
-                message: "Password changed successfully",
-            });
-        } catch (error) {
-            return res.status(500).json({
-                success: false,
-                message: "Error changing password",
-                error: error.message,
-            });
+const getProfile = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const user = await User.findById(userId).select("-password");
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
         }
+        return res.status(200).json(user);
+    } catch (error) {
+        return res.status(500).json({ message: error.toString() });
     }
-}
+};
 
-module.exports = new UserController();
+const assignPermissions = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { permissions } = req.body;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        user.permissions = permissions;
+        await user.save();
+        return res.status(200).json({ message: "Permissions assigned successfully", user });
+    } catch (error) {
+        return res.status(500).json({ message: error.toString() });
+    }
+};
+
+module.exports = {
+    register,
+    login,
+    getAllUsers,
+    updateProfile,
+    getProfile,
+    assignPermissions,
+};
