@@ -11,6 +11,8 @@ const userSchema = new mongoose.Schema(
         permissions: [{ type: mongoose.Schema.ObjectId, ref: "Permission" }],
         status: { type: String, enum: ["active", "inactive", "banned"], default: "active" },
         googleId: { type: String, unique: true, sparse: true },
+        emailNotifications: { type: Boolean, default: true },
+        systemNotifications: { type: Boolean, default: true },
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date, default: Date.now },
     },
