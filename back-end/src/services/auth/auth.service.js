@@ -1,14 +1,16 @@
 const { auth_enum } = require("../../config/enum/auth.constants");
-const { system_enum } = require("../../config/enum/system.constant");
+const system_enum = require("../../config/enum/system.constant");
 const { userRepository } = require("../../repositories/user.repository");
 const { authHelper } = require("./auth.helper");
 
 const authService = {
   async register(data) {
+    console.log("[AUTH SERVICE][REGISTER] Input data:", data);
     try {
       const existedEmail = await userRepository.findByEmail_Duplicate(
         data.email
       );
+      console.log("[AUTH SERVICE] status::", existedEmail);
       if (existedEmail) {
         return {
           status: system_enum.STATUS_CODE.CONFLICT,
@@ -27,6 +29,7 @@ const authService = {
       throw new Error(error);
     }
   },
+
   async login(email, password) {
     try {
       const user = await userRepository.findByEmail(email);

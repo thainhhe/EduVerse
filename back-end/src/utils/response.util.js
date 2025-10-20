@@ -1,6 +1,7 @@
 const { system_enum } = require("../config/enum/system.constant");
 
 const response = (res, result) => {
+  console.log("Response Utility - Result:", result);
   return res.status(result.status || 200).json({
     success: result.success ?? result.status < 400,
     message: result.message || "",

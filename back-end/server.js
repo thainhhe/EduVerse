@@ -11,27 +11,27 @@ const { system_enum } = require("./src/config/enum/system.constant.js");
 
 // securityMiddleware(app);
 app.get("/", async (req, res) => {
-    try {
-        res.send({ message: "Welcome to Eduverse!" });
-    } catch (error) {
-        res.send({ error: error.message });
-    }
+  try {
+    res.send({ message: "Welcome to Eduverse!" });
+  } catch (error) {
+    res.send({ error: error.message });
+  }
 });
 
 app.use(
-    cors({
-        origin: process.env.FRONTEND_URL,
-        credentials: true,
-    })
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    credentials: true,
+  })
 );
 
 app.use(
-    session({
-        secret: process.env.SESSION_SECRET || "secret123",
-        resave: false,
-        saveUninitialized: false,
-        cookie: { secure: false },
-    })
+  session({
+    secret: process.env.SESSION_SECRET || "secret123",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false },
+  })
 );
 
 app.use(passport.initialize());
@@ -43,10 +43,10 @@ app.use("/api/v1", router);
 
 const PORT = process.env.PORT || 9999;
 app.listen(PORT, async () => {
-    try {
-        await connectDB();
-        console.log(`Server running on port ${PORT}`);
-    } catch (error) {
-        console.log(system_enum.SYSTEM_MESSAGE.DB_CONNECTION_FAILED);
-    }
+  try {
+    await connectDB();
+    console.log(`Server running on port ${PORT}`);
+  } catch (error) {
+    console.log(system_enum.SYSTEM_MESSAGE.DB_CONNECTION_FAILED);
+  }
 });
