@@ -3,11 +3,14 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Filter, Plus } from "lucide-react"
-import CourseCard from "./CourseCard"
+import CourseCardPublish from "./CourseCardPublish"
+import { Link } from "react-router-dom"
+import { Card } from "@/components/ui/card"
+import CourseCardUnPublish from "./CourseCardUnPublish"
 
 // Mock data for courses
 const courses = Array.from({ length: 12 }, (_, i) => ({
-    id: `ABC${i + 1}`,
+    _id: `ABC${i + 1}`,
     title: `ABC${i + 1}`,
     rating: 4.5,
     reviewCount: 123,
@@ -36,7 +39,7 @@ const MyCourse = () => {
                         </Button>
                         <Button size="default" className="gap-2">
                             <Plus className="h-4 w-4" />
-                            Create Course
+                            <Link to='/create-course'> Create Course</Link>
                         </Button>
                     </div>
                 </div>
@@ -52,7 +55,7 @@ const MyCourse = () => {
                         {/* Course Grid */}
                         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {paginatedCourses.map((course) => (
-                                <CourseCard key={course.id} course={course} />
+                                <CourseCardPublish key={course.id} course={course} />
                             ))}
                         </div>
 
@@ -96,8 +99,49 @@ const MyCourse = () => {
                     </TabsContent>
 
                     <TabsContent value="unpublished">
-                        <div className="flex min-h-[400px] items-center justify-center rounded-lg border border-dashed border-border">
-                            <p className="text-muted-foreground">No unpublished courses yet</p>
+                        {/* Course Grid */}
+                        <div className="grid gap-6 grid-cols-1">
+                            {paginatedCourses.map((course) => (
+                                <CourseCardUnPublish key={course.id} course={course} />
+                            ))}
+                        </div>
+
+                        {/* Pagination */}
+                        <div className="flex items-center justify-between border-t border-border pt-6">
+                            <p className="text-sm text-muted-foreground">
+                                Show 1 to {Math.min(itemsPerPage, courses.length)} of {courses.length} results
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    Previous
+                                </Button>
+                                <div className="flex items-center gap-1">
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                        <Button
+                                            key={page}
+                                            variant={currentPage === page ? "default" : "ghost"}
+                                            size="sm"
+                                            onClick={() => setCurrentPage(page)}
+                                            className="h-8 w-8 p-0"
+                                        >
+                                            {page}
+                                        </Button>
+                                    ))}
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Next
+                                </Button>
+                            </div>
                         </div>
                     </TabsContent>
                 </Tabs>

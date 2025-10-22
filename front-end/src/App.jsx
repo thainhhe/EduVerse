@@ -21,7 +21,13 @@ import RegisterLearner from "@/pages/auth/RegisterLearner/RegisterLearner";
 import InstructorProfile from "@/pages/common/InstructorProfile/InstructorProfile";
 import Settings from "@/pages/common/Settings/Settings";
 import Quiz from "./pages/learner/Quiz/Quiz";
-import MyCourse from "@pages/MyCourse/MyCourse";
+import MyCourse from "@pages/instructor/MyCourse/MyCourse";
+import CreateCourse from "./pages/instructor/MyCourse/CreateCourse";
+import ModulesPage from "./pages/instructor/MyCourse/Modules/ModulesPage";
+import CourseBuilderLayout from "./pages/instructor/MyCourse/CourseBuilderLayout";
+import AnnouncementsPage from "./pages/instructor/MyCourse/Announcements/AnnouncementsPage";
+import GradesPage from "./pages/instructor/MyCourse/Grades/GradesPage";
+import RoomMeeting from "./pages/instructor/RoomMeeting/RoomMeeting";
 
 function App() {
   const { loading } = useAuth();
@@ -50,6 +56,18 @@ function App() {
         <Route path="instructors/:id" element={<InstructorProfile />} />
         <Route path="settings" element={<Settings />} />
         <Route path="quiz" element={<Quiz />} />
+
+        {/* 1️⃣ Trang tạo khóa học (không có sidebar) */}
+        <Route path="create-course" element={<CreateCourse />} />
+
+        {/* 2️⃣ Các bước sau khi tạo khóa học (có sidebar) */}
+        <Route path="create-course" element={<CourseBuilderLayout />}>
+          <Route path="modules" element={<ModulesPage />} />
+          <Route path="announcements" element={<AnnouncementsPage />} />
+          <Route path="grades" element={<GradesPage />} />
+          <Route path="room-meeting" element={<RoomMeeting />} />
+        </Route>
+
 
         {/* Private routes */}
         <Route element={<PrivateRoute />}>
