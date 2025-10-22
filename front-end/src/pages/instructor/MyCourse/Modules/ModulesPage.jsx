@@ -67,11 +67,9 @@ const ModulesPage = () => {
             <div className='flex justify-between'>
                 <h1 className="text-2xl font-semibold"></h1>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" className=" border-2 border-indigo-600 text-indigo-600">
-                        Save as draft
-                    </Button>
+
                     <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                        Publish Course
+                        Submit Course
                     </Button>
                 </div>
             </div>

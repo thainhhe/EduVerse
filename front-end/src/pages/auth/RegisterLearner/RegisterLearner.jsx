@@ -10,22 +10,18 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const RegisterLearner = () => {
-  const [loading, setLoading] = useState(false);
   const { register: registerUser } = useAuth();
   const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
-    watch,
+    formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(learnerRegisterSchema),
   });
 
   const onSubmit = async (data) => {
-    setLoading(true);
-
     const result = await registerUser({
       name: data.fullName,
       email: data.email,
@@ -36,12 +32,10 @@ const RegisterLearner = () => {
     if (result.success) {
       navigate("/login");
     }
-
-    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-gray-50">
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-50 to-purple-50 items-center justify-center p-12">
         <img
           src="/Selection.png"
@@ -50,15 +44,14 @@ const RegisterLearner = () => {
         />
       </div>
 
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8">
+        <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-xl shadow-lg">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-indigo-600 mb-2">
+            <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-2">
               Create Your Learner Account
             </h2>
-            <p className="text-gray-600">
-              Fill out the form below to start building and sharing your courses
-              with students across the globe
+            <p className="text-gray-600 text-sm sm:text-base">
+              Start your learning journey with us today!
             </p>
           </div>
 
@@ -92,8 +85,9 @@ const RegisterLearner = () => {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+            {/* Responsive grid for passwords */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
                 <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
@@ -108,7 +102,7 @@ const RegisterLearner = () => {
                 )}
               </div>
 
-              <div>
+              <div className="space-y-1">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
                 <Input
                   id="confirmPassword"
@@ -124,8 +118,12 @@ const RegisterLearner = () => {
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Checkbox id="agreeTerms" {...register("agreeTerms")} />
+            <div className="flex items-start space-x-3 pt-2">
+              <Checkbox
+                id="agreeTerms"
+                {...register("agreeTerms")}
+                className="mt-1"
+              />
               <label htmlFor="agreeTerms" className="text-sm text-gray-700">
                 By signing up, I agree with the{" "}
                 <Link to="/terms" className="text-indigo-600 hover:underline">
@@ -146,12 +144,12 @@ const RegisterLearner = () => {
             <Button
               type="submit"
               className="w-full bg-indigo-600 hover:bg-indigo-700"
-              disabled={loading}
+              disabled={isSubmitting}
             >
-              {loading ? "Signing up..." : "Sign up"}
+              {isSubmitting ? "Signing up..." : "Sign up"}
             </Button>
 
-            <p className="text-center text-sm text-gray-600">
+            <p className="text-center text-sm text-gray-600 pt-2">
               Already have an account?{" "}
               <Link
                 to="/login"

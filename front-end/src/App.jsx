@@ -2,7 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import { useAuth } from "@hooks/useAuth";
 import MainLayout from "@components/layout/MainLayout";
 import PrivateRoute from "@routes/PrivateRoute";
-import RoleBasedRoute from "@routes/RoleBasedRoute";
+import PermissionBasedRoute from "@routes/PermissionBasedRoute";
 
 // Pages
 import Home from "@/pages/common/Home/Home";
@@ -21,10 +21,17 @@ import RegisterLearner from "@/pages/auth/RegisterLearner/RegisterLearner";
 import InstructorProfile from "@/pages/common/InstructorProfile/InstructorProfile";
 import Settings from "@/pages/common/Settings/Settings";
 import Quiz from "./pages/learner/Quiz/Quiz";
-import MyCourse from "@pages/instructor/MyCourse/MyCourse";
+import MyCourse from "@/pages/instructor/MyCourse/MyCourse";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
+import PaymentPage from "@/pages/checkout/PaymentPage";
+import PaymentConfirmationPage from "@/pages/checkout/PaymentConfirmationPage";
+import AdminLayout from "./components/layout/AdminLayout/AdminLayout";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import UserManagementPage from "./pages/admin/UserManagementPage";
 import CreateCourse from "./pages/instructor/MyCourse/CreateCourse";
-import ModulesPage from "./pages/instructor/MyCourse/Modules/ModulesPage";
 import CourseBuilderLayout from "./pages/instructor/MyCourse/CourseBuilderLayout";
+import ModulesPage from "./pages/instructor/MyCourse/Modules/ModulesPage";
 import AnnouncementsPage from "./pages/instructor/MyCourse/Announcements/AnnouncementsPage";
 import GradesPage from "./pages/instructor/MyCourse/Grades/GradesPage";
 import RoomMeeting from "./pages/instructor/RoomMeeting/RoomMeeting";
@@ -56,10 +63,14 @@ function App() {
         <Route path="instructors/:id" element={<InstructorProfile />} />
         <Route path="settings" element={<Settings />} />
         <Route path="quiz" element={<Quiz />} />
+        <Route path="forgot-password" element={<ForgotPassword />} />
+        <Route path="reset-password/:token" element={<ResetPassword />} />
+        <Route path="learning-test" element={<Learning />} />
 
-        {/* 1️⃣ Trang tạo khóa học (không có sidebar) */}
         <Route path="create-course" element={<CreateCourse />} />
-
+        <Route path="admin/*" element={<div>Admin Dashboard</div>} />
+        <Route path="admin/dashboard" element={<AdminDashboardPage />} />
+        <Route path="admin/users" element={<UserManagementPage />} />
         {/* 2️⃣ Các bước sau khi tạo khóa học (có sidebar) */}
         <Route path="create-course" element={<CourseBuilderLayout />}>
           <Route path="modules" element={<ModulesPage />} />
@@ -67,8 +78,6 @@ function App() {
           <Route path="grades" element={<GradesPage />} />
           <Route path="room-meeting" element={<RoomMeeting />} />
         </Route>
-
-
         {/* Private routes */}
         <Route element={<PrivateRoute />}>
           <Route path="dashboard" element={<Dashboard />} />
@@ -76,11 +85,21 @@ function App() {
           <Route path="classroom/:roomId" element={<Classroom />} />
           <Route path="profile" element={<Profile />} />
           <Route path="forum" element={<Forum />} />
+
+          <Route path="checkout" element={<PaymentPage />} />
+          <Route
+            path="checkout/success"
+            element={<PaymentConfirmationPage />}
+          />
         </Route>
 
-        {/* Role-based routes */}
+        {/* Permission-based routes */}
         <Route
-          element={<RoleBasedRoute allowedRoles={["instructor", "admin"]} />}
+          element={
+            <PermissionBasedRoute
+              allowedPermissions={["create:courses", "edit:courses"]}
+            />
+          }
         >
           <Route
             path="instructor/*"
@@ -88,8 +107,12 @@ function App() {
           />
         </Route>
 
-        <Route element={<RoleBasedRoute allowedRoles={["admin"]} />}>
-          <Route path="admin/*" element={<div>Admin Dashboard</div>} />
+        <Route
+          element={
+            <PermissionBasedRoute allowedPermissions={["manage:users"]} />
+          }
+        >
+
         </Route>
       </Route>
 

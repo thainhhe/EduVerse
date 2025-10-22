@@ -1,4 +1,6 @@
-import { createContext, useState, useEffect } from "react";
+// src/context/AuthContext.jsx
+
+import { createContext, useState, useEffect, useCallback } from "react";
 import { authService } from "@services/authService";
 import { toast } from "react-toastify";
 
@@ -9,75 +11,86 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkAuth();
+    setLoading(false);
   }, []);
 
-  const checkAuth = async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        const userData = await authService.getCurrentUser();
-        setUser(userData);
-      }
-    } catch (error) {
-      console.error("Auth check failed:", error);
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const login = async (email, password) => {
-    try {
-      const response = await authService.login(email, password);
-      const { accessToken, refreshToken, user: userData } = response;
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
-      setUser(userData);
+    let mockUserData = null;
 
+    if (email === "learner@eduverse.com" && password === "password123") {
+      mockUserData = {
+        name: "Test Learner",
+        email: "learner@eduverse.com",
+        role: "student",
+        permissions: ["read:courses", "access_dashboard"],
+      };
+    } else if (
+      email === "instructor@eduverse.com" &&
+      password === "password123"
+    ) {
+      mockUserData = {
+        name: "Test Instructor",
+        email: "instructor@eduverse.com",
+        role: "instructor",
+        permissions: [
+          "read:courses",
+          "create:courses",
+          "edit:courses",
+          "access_dashboard",
+        ],
+      };
+    } else if (email === "admin@eduverse.com" && password === "password123") {
+      mockUserData = {
+        name: "Test Admin",
+        email: "admin@eduverse.com",
+        role: "admin",
+        permissions: [
+          "read:courses",
+          "create:courses",
+          "edit:courses",
+          "delete:courses",
+          "manage:users",
+          "access_dashboard",
+        ],
+      };
+    }
+
+    if (mockUserData) {
+      setUser(mockUserData);
       toast.success("Đăng nhập thành công!");
       return { success: true };
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Đăng nhập thất bại");
-      return { success: false, error };
+    } else {
+      toast.error("Sai email hoặc mật khẩu.");
+      return { success: false, error: "Invalid credentials" };
     }
   };
 
-  const register = async (userData) => {
-    try {
-      const response = await authService.register(userData);
-      toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
-      return { success: true, data: response };
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Đăng ký thất bại");
-      return { success: false, error };
-    }
-  };
+  const hasPermission = useCallback(
+    (requiredPermissions) => {
+      if (!user || !user.permissions) {
+        return false;
+      }
+      return requiredPermissions.every((permission) =>
+        user.permissions.includes(permission)
+      );
+    },
+    [user]
+  );
 
   const logout = async () => {
-    try {
-      await authService.logout();
-      setUser(null);
-      toast.success("Đăng xuất thành công!");
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
-
-  const updateUser = (userData) => {
-    setUser((prev) => ({ ...prev, ...userData }));
+    setUser(null);
+    toast.success("Đăng xuất thành công!");
   };
 
   const value = {
     user,
     loading,
     login,
-    register,
     logout,
-    updateUser,
     isAuthenticated: !!user,
+    hasPermission,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
