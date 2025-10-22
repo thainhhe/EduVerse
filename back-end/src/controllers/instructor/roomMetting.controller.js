@@ -1,4 +1,4 @@
-const Room = require("../models/RoomMeeting");
+const Room = require("../../models/RoomMeeting");
 
 const createRoom = async (req, res) => {
     try {
@@ -7,8 +7,10 @@ const createRoom = async (req, res) => {
             return res.status(400).json({ message: "Vui lòng điền tên phòng họp" });
         const newRoom = new Room({
             name: data.name.trim(),
-            description: data.description || "",
+            description: data.description || null,
+            courseId: data.courseId || null,
             createdBy: req.userId,
+            link: data.link || null,
         });
         await newRoom.save();
         return res.status(201).json(newRoom);
