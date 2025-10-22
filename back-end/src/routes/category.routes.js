@@ -1,5 +1,5 @@
 const express = require('express');
-const { createCategory, getAllCategories, getCategoryById, updateCategory, deleteCategory } = require('../controllers/category.controller.js');
+const { createCategory, getAllCategories, getCategoryById, updateCategory, deleteCategory, getCoursesByCategory } = require('../controllers/category.controller.js');
 
 const categoryRouter = express.Router();
 
@@ -17,6 +17,9 @@ categoryRouter.put('/update/:id', updateCategory);
 
 // Delete a category by ID
 categoryRouter.delete('/delete/:id', deleteCategory);
+
+// Get courses by category ID
+categoryRouter.get('/:id/courses', getCoursesByCategory);
 
 // Export the categoryRouter
 module.exports = categoryRouter;

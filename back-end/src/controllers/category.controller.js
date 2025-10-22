@@ -1,12 +1,23 @@
 const Category = require("../models/Category");
+const Course = require("../models/Course");
 
 // Create a new category
 const createCategory = async (req, res) => {
     try {
         const { name, description } = req.body;
+        if (!name) {
+            return res.status(400).json({ message: "Category name is required" });
+        }
+
+        // Check if category existed
+        const existingCategory = await Category.findOne({ name: name });
+        if (existingCategory) {
+            return res.status(400).json({ message: "Category name already exists" });
+        }
+
         const newCategory = new Category({ name, description });
         const savedCategory = await newCategory.save();
-        res.status(201).json(savedCategory, message="Category created successfully");
+        res.status(201).json(savedCategory);
     } catch (error) {
         res.status(500).json({ message: "Error creating category", error });
     }
@@ -56,6 +67,13 @@ const updateCategory = async (req, res) => {
 const deleteCategory = async (req, res) => {
     try {
         const categoryId = req.params.id;
+
+        // Check if any course references this category
+        const courseUsingCategory = await Course.findOne({ category: categoryId });
+        if (courseUsingCategory) {
+            return res.status(400).json({ message: "Cannot delete category: have one or more courses are assigned to it" });
+        }
+
         const deletedCategory = await Category.findByIdAndDelete(categoryId);
         if (!deletedCategory) {
             return res.status(404).json({ message: "Category not found" });
@@ -67,10 +85,29 @@ const deleteCategory = async (req, res) => {
     }
 };
 
+// Get list courses by category ID
+const getCoursesByCategory = async (req, res) => {
+    try {
+        const categoryId = req.params.id;
+        const courses = await Course.find({ category: categoryId });
+
+        const quantityCourse = courses.length;
+        if (quantityCourse === 0) {
+            return res.status(404).json({ message: "No courses found for this category" });
+        }
+
+        res.status(200).json({ quantityCourse, courses });
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching courses for category", error });
+    }
+};
+
+
 module.exports = {
     createCategory,
     getAllCategories,
     getCategoryById,
     updateCategory,
     deleteCategory,
+    getCoursesByCategory,
 };

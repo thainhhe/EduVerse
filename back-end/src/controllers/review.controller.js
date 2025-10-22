@@ -12,7 +12,7 @@ const createReview = async (req, res) => {
     }
 };
 
-// Get all reviews for a specific course
+// Get all reviews for a course
 const getReviewsByCourse = async (req, res) => {
     try {
         const { courseId } = req.params;
