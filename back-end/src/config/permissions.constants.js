@@ -7,6 +7,7 @@ const PERMISSIONS = {
     MANAGE_REPORTS: "manage_reports",
     MANAGE_CATEGORIES: "manage_categories",
     ACCESS_PERMISSION_SETTINGS: "access_permission_settings",
+    VIEW_LOGS: "view_logs",
     ///Course
     MANAGE_OWN_COURSES: "manage_own_courses",
     MANAGE_FORUM: "manage_forum",

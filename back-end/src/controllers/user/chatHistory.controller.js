@@ -1,4 +1,4 @@
-const ChatHistory = require("../models/ChatHistory");
+const ChatHistory = require("../../models/ChatHistory");
 
 const getAllChatHistories = async (req, res) => {
     try {
