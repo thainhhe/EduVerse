@@ -1,8 +1,5 @@
 const express = require("express");
-const googleRouter = require("./googleAuth");
-const userRouter = require("./user.routes");
-const permissionRouter = require("./permission.routes");
-const logRouter = require("./log.routes");
+const authRouter = require("./auth.routes");
 const router = express.Router();
 const categoryRouter = require("./category.routes.js");
 const reviewRouter = require("./review.routes.js");
@@ -19,5 +16,6 @@ router.use("/users", userRouter);
 router.use("/auth-google", googleRouter);
 router.use("/permissions", permissionRouter);
 router.use("/logs", logRouter);
+router.use("/auth", authRouter);
 
 module.exports = router;

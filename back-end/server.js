@@ -5,8 +5,10 @@ const connectDB = require("./src/config/db.js");
 const session = require("express-session");
 const passport = require("passport");
 const cors = require("cors");
-const Logger = require("./src/middlewares/loggerMiddleware.js");
+// const Logger = require("./src/middlewares/loggerMiddleware.js");
+const securityMiddleware = require("./src/middlewares/system/securityMiddleware");
 
+// securityMiddleware(app);
 app.get("/", async (req, res) => {
     try {
         res.send({ message: "Welcome to Eduverse!" });
@@ -35,7 +37,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(express.json());
-app.use(Logger);
+// app.use(Logger);
 app.use("/api/v1", router);
 
 const PORT = process.env.PORT || 9999;

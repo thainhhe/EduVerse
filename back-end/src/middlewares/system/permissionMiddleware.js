@@ -1,4 +1,4 @@
-const User = require("../models/User");
+const User = require("../../models/User");
 
 const checkPermission = (requiredRoles = [], requiredPermissions = []) => {
     return async (req, res, next) => {

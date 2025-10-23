@@ -1,6 +1,9 @@
-const authUtils = {
-    async comparePasswords(plainPassword, hashedPassword) {
-        return await bcrypt.compare(plainPassword, hashedPassword);
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
+const authHelper = {
+    comparePasswords(plainPassword, hashedPassword) {
+        return bcrypt.compare(plainPassword, hashedPassword);
     },
     async hashPassword(password) {
         const salt = await bcrypt.genSalt(parseInt(process.env.SALT_JWT));
@@ -12,3 +15,5 @@ const authUtils = {
         });
     },
 };
+
+module.exports = { authHelper };

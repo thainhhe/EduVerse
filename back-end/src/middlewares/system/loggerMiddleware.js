@@ -1,5 +1,5 @@
 const morgan = require("morgan");
-const Log = require("../models/Log");
+const Log = require("../../models/Log");
 
 const Logger = (req, res, next) => {
     const start = process.hrtime();
