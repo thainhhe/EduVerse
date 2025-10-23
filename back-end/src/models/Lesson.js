@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
+const Module = require("./Module");
 
 const lessonSchema = new mongoose.Schema(
     {
+        moduleId: { type: mongoose.Schema.Types.ObjectId, ref: "Module" },
         title: { type: String, required: true },
         content: { type: String },
         type: { type: String, enum: ["video", "article", "quiz"], default: "article" },

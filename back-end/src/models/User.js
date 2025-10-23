@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const Permission = require("./Permission");
 
 const userSchema = new mongoose.Schema(
     {
