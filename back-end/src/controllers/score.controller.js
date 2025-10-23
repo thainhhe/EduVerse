@@ -3,7 +3,7 @@ const Score = require('../models/Score');
 const Quiz = require('../models/Quiz');
 const Enrollment = require('../models/Enrollment');
 
-// Store quiz score and update user's grade in the course
+// Nộp bài quiz và tính điểm
 const submitQuiz = async (req, res) => {
     try {
         const { userId, quizId, answers, timeTaken } = req.body;

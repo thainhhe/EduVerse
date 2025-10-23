@@ -39,4 +39,6 @@ const INPUT_ERROR = {
     INVALID_INPUT: "Invalid input data",
 };
 
+
+
 module.exports = { STATUS_CODE, USER_ERROR_MESSAGE, SYSTEM_ERROR_MESSAGE, INPUT_ERROR, AUTH_ERROR_MESSAGE };

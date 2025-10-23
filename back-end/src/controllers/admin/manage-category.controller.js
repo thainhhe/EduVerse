@@ -1,5 +1,4 @@
-const Category = require("../models/Category");
-const Course = require("../models/Course");
+const Category = require('../../models/category.model');
 
 // Create a new category
 const createCategory = async (req, res) => {
@@ -20,30 +19,6 @@ const createCategory = async (req, res) => {
         res.status(201).json(savedCategory);
     } catch (error) {
         res.status(500).json({ message: "Error creating category", error });
-    }
-};
-
-// Get all categories
-const getAllCategories = async (req, res) => {
-    try {
-        const categories = await Category.find();
-        res.status(200).json(categories);
-    } catch (error) {
-        res.status(500).json({ message: "Error fetching categories", error });
-    }
-};
-
-// Get category by ID
-const getCategoryById = async (req, res) => {
-    try {
-        const categoryId = req.params.id;
-        const category = await Category.findById(categoryId);
-        if (!category) {
-            return res.status(404).json({ message: "Category not found" });
-        }
-        res.status(200).json(category);
-    } catch (error) {
-        res.status(500).json({ message: "Error fetching category", error });
     }
 };
 
@@ -85,29 +60,8 @@ const deleteCategory = async (req, res) => {
     }
 };
 
-// Get list courses by category ID
-const getCoursesByCategory = async (req, res) => {
-    try {
-        const categoryId = req.params.id;
-        const courses = await Course.find({ category: categoryId });
-
-        const quantityCourse = courses.length;
-        if (quantityCourse === 0) {
-            return res.status(404).json({ message: "No courses found for this category" });
-        }
-
-        res.status(200).json({ quantityCourse, courses });
-    } catch (error) {
-        res.status(500).json({ message: "Error fetching courses for category", error });
-    }
-};
-
-
 module.exports = {
     createCategory,
-    getAllCategories,
-    getCategoryById,
     updateCategory,
     deleteCategory,
-    getCoursesByCategory,
 };
