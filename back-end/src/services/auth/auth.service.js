@@ -5,12 +5,10 @@ const { authHelper } = require("./auth.helper");
 
 const authService = {
   async register(data) {
-    console.log("[AUTH SERVICE][REGISTER] Input data:", data);
     try {
       const existedEmail = await userRepository.findByEmail_Duplicate(
         data.email
       );
-      console.log("[AUTH SERVICE] status::", existedEmail);
       if (existedEmail) {
         return {
           status: system_enum.STATUS_CODE.CONFLICT,
@@ -18,8 +16,19 @@ const authService = {
         };
       }
       const hashPass = await authHelper.hashPassword(data.password);
-      data.password = hashPass;
-      const newUser = await userRepository.create(data);
+
+      // Build explicit create payload and ensure role is respected (fallback to learner)
+      const createPayload = {
+        username: data.username,
+        email: data.email,
+        password: hashPass,
+        role: data.role || "learner",
+        // include optional fields if provided
+        ...(data.avatar !== undefined && { avatar: data.avatar }),
+        ...(data.subjects !== undefined && { subjects: data.subjects }),
+        ...(data.jobTitle !== undefined && { jobTitle: data.jobTitle }),
+      };
+      const newUser = await userRepository.create(createPayload);
       return {
         status: system_enum.STATUS_CODE.OK,
         message: auth_enum.AUTH_MESSAGE.REGISTER_SUCCESS,

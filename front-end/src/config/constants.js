@@ -3,7 +3,7 @@ export const WS_URL = import.meta.env.VITE_WS_URL;
 export const APP_NAME = import.meta.env.VITE_APP_NAME;
 
 export const USER_ROLES = {
-  STUDENT: "student",
+  LEARNER: "learner",
   INSTRUCTOR: "instructor",
   ADMIN: "admin",
 };
