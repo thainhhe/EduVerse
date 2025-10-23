@@ -19,7 +19,6 @@ const userRepository = {
             username: data.username,
             email: data.email,
             password: data.password,
-            created_by: data.user?._id || null,
         });
     },
 
