@@ -1,0 +1,14 @@
+const VALIDATOR_SCHEMA = {
+    MIN_USERNAME: "",
+    MAX_USERNAME: "",
+    REQUIRED_PASSWORD: "",
+
+    INVALID_EMAIL: "",
+    REQUIRED_EMAIL: "",
+
+    MIN_PASSWORD: "",
+    MAX_PASSWORD: "",
+    REQUIRED_PASSWORD: "",
+};
+
+const AUTH_MESSAGE = {};

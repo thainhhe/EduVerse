@@ -1,3 +1,4 @@
+const { ROLE } = require("../config/enum/permissions.constants");
 const User = require("../models/User");
 
 const userRepository = {
@@ -17,8 +18,7 @@ const userRepository = {
         return await User.create({
             username: data.username,
             email: data.email,
-            password: hashPassword,
-            role: data.role || ROLE.LEARNER,
+            password: data.password,
             created_by: data.user?._id || null,
         });
     },
