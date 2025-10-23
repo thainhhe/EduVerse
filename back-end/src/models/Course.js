@@ -4,16 +4,27 @@ const courseSchema = new mongoose.Schema(
     {
         title: { type: String, required: true },
         description: { type: String },
-        instructor: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+        main_instructor: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+        instructors: [
+            {
+                id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+                permission: [{ type: mongoose.Schema.Types.ObjectId, ref: "Permission" }],
+            },
+        ],
         category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
-        isPublished: { type: Boolean, default: false },
+        thumbnail: { type: String, default: "" },
         price: { type: Number, default: 0, min: 0 },
         rating: { type: Number, default: 0, min: 0, max: 5 },
+        duration: {
+            value: { type: Number, default: 0 },
+            unit: { type: String, enum: ["day", "month", "year"], default: "day" },
+        },
+        isPublished: { type: Boolean, default: false },
         totalEnrollments: { type: Number, default: 0, min: 0 },
-        tags: { type: [String], default: [] },
-        status: { type: String, enum: ["draft", "published", "archived"], default: "draft" },
+        status: { type: String, enum: ["pending", "approve", "reject"], default: "pending" },
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date, default: Date.now },
+        isDeleted: { type: Boolean, default: false },
     },
     {
         timestamps: true,

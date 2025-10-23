@@ -5,8 +5,7 @@ const favoriteSchema = new mongoose.Schema(
         userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
         courseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true },
         addedAt: { type: Date, default: Date.now },
-        materialId: { type: mongoose.Schema.Types.ObjectId, ref: "Material" },
-        type: { type: String, enum: ["course", "material"], required: true },
+        updatedAt: { type: Date, default: Date.now },
     },
     {
         timestamps: true,
