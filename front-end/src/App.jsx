@@ -35,6 +35,7 @@ import ModulesPage from "./pages/instructor/MyCourse/Modules/ModulesPage";
 import AnnouncementsPage from "./pages/instructor/MyCourse/Announcements/AnnouncementsPage";
 import GradesPage from "./pages/instructor/MyCourse/Grades/GradesPage";
 import RoomMeeting from "./pages/instructor/RoomMeeting/RoomMeeting";
+import PermissionsPage from "./pages/Permissions/PermissionsPage";
 
 function App() {
   const { loading } = useAuth();
@@ -78,6 +79,7 @@ function App() {
           <Route path="grades" element={<GradesPage />} />
           <Route path="room-meeting" element={<RoomMeeting />} />
         </Route>
+        <Route path="permission" element={<PermissionsPage />} />
         {/* Private routes */}
         <Route element={<PrivateRoute />}>
           <Route path="dashboard" element={<Dashboard />} />
