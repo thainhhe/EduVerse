@@ -1,20 +1,16 @@
 const mongoose = require("mongoose");
 
-const moduleSchema = new mongoose.Schema(
+const forumSchema = new mongoose.Schema(
     {
         title: { type: String, required: true },
         description: { type: String },
         courseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true },
-        content: { type: String },
-        order: { type: Number, required: true },
-        status: { type: String, enum: ["draft", "published", "hidden"], default: "draft" },
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date, default: Date.now },
     },
     {
         timestamps: true,
-        collection: "modules",
+        collection: "forums",
     }
 );
-
-module.exports = mongoose.model("Module", moduleSchema);
+module.exports = mongoose.model("Forum", forumSchema);
