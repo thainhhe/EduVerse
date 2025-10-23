@@ -5,7 +5,7 @@ const {
     USER_ERROR_MESSAGE,
     AUTH_ERROR_MESSAGE,
 } = require("../../config/enum/index");
-const { ROLE } = require("../../config/permissions.constants");
+const { ROLE } = require("../../config/enum/permissions.constants");
 const { userRepository } = require("../../repositories/user.repository");
 const { authHelper } = require("./auth.helper");
 
@@ -16,8 +16,8 @@ const authService = {
             if (existedEmail) {
                 return { status: STATUS_CODE.CONFLICT, message: INPUT_ERROR.EXISTING_EMAIL };
             }
-            const hashPassword = await authHelper.hashPassword(data.password);
-            data.password = hashPassword;
+            const hashPass = await authHelper.hashPassword(data.password);
+            data.password = hashPass;
             const newUser = await userRepository.createUser(data);
             const userData = {
                 ...newUser._doc,

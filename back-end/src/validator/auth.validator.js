@@ -16,10 +16,6 @@ const registerSchema = yup.object({
         .min(6, "Mật khẩu phải có ít nhất 6 ký tự")
         .max(50, "Mật khẩu không được vượt quá 50 ký tự")
         .required("Mật khẩu không được để trống"),
-    // confirmPassword: yup
-    //     .string()
-    //     .oneOf([yup.ref("password"), null], "Mật khẩu xác nhận không khớp")
-    //     .required("Vui lòng xác nhận mật khẩu"),
 });
 
 const loginSchema = yup.object({
