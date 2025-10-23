@@ -1,37 +1,50 @@
 const yup = require("yup");
-const { INPUT_ERROR, AUTH_VALIDATE_MESSAGE } = require("../config/enum");
+const { auth_enum } = require("../config/enum/auth.constants");
 
 const registerSchema = yup.object({
     username: yup
         .string()
         .trim()
-        .min(2, "Tên phải có ít nhất 2 ký tự")
-        .max(50, "Tên không được vượt quá 50 ký tự")
-        .required("Tên không được để trống"),
+        .min(2, auth_enum.VALIDATOR_SCHEMA.MIN_USERNAME)
+        .max(50, auth_enum.VALIDATOR_SCHEMA.MAX_USERNAME)
+        .required(auth_enum.VALIDATOR_SCHEMA.REQUIRED_USERNAME),
 
-    email: yup.string().trim().email("Email không hợp lệ").required("Email không được để trống"),
+    email: yup
+        .string()
+        .trim()
+        .email(auth_enum.VALIDATOR_SCHEMA.INVALID_EMAIL)
+        .required(auth_enum.VALIDATOR_SCHEMA.REQUIRED_EMAIL),
 
     password: yup
         .string()
-        .min(6, "Mật khẩu phải có ít nhất 6 ký tự")
-        .max(50, "Mật khẩu không được vượt quá 50 ký tự")
-        .required("Mật khẩu không được để trống"),
-    // confirmPassword: yup
-    //     .string()
-    //     .oneOf([yup.ref("password"), null], "Mật khẩu xác nhận không khớp")
-    //     .required("Vui lòng xác nhận mật khẩu"),
+        .min(6, auth_enum.VALIDATOR_SCHEMA.MIN_PASSWORD)
+        .max(50, auth_enum.VALIDATOR_SCHEMA.MAX_PASSWORD)
+        .required(auth_enum.VALIDATOR_SCHEMA.REQUIRED_PASSWORD),
 });
 
 const loginSchema = yup.object({
-    email: yup.string().trim().email(INPUT_ERROR.INVALID_EMAIL).required(INPUT_ERROR.MISSING_FIELDS),
+    email: yup
+        .string()
+        .trim()
+        .email(auth_enum.VALIDATOR_SCHEMA.INVALID_EMAIL)
+        .required(auth_enum.VALIDATOR_SCHEMA.REQUIRED_EMAIL),
     password: yup
         .string()
-        .required(INPUT_ERROR.MISSING_FIELDS)
-        .min(6, AUTH_VALIDATE_MESSAGE.PASSWORD_MIN)
-        .max(50, AUTH_VALIDATE_MESSAGE.PASSWORD_MAX),
+        .min(6, auth_enum.VALIDATOR_SCHEMA.MIN_PASSWORD)
+        .max(50, auth_enum.VALIDATOR_SCHEMA.MAX_PASSWORD)
+        .required(auth_enum.VALIDATOR_SCHEMA.REQUIRED_PASSWORD),
+});
+
+const changePassSchema = yup.object({
+    newPassword: yup
+        .string()
+        .min(6, auth_enum.VALIDATOR_SCHEMA.MIN_PASSWORD)
+        .max(50, auth_enum.VALIDATOR_SCHEMA.MAX_PASSWORD)
+        .required(auth_enum.VALIDATOR_SCHEMA.REQUIRED_PASSWORD),
 });
 
 module.exports = {
     registerSchema,
     loginSchema,
+    changePassSchema,
 };

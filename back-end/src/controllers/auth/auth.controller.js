@@ -20,6 +20,16 @@ const authController = {
             return error_response(res, error);
         }
     },
+    changePassword: async (req, res) => {
+        try {
+            const id = req.params.id;
+            const data = req.body;
+            const result = await authService.changePassword(id, data.newPassword);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
 };
 
 module.exports = { authController };

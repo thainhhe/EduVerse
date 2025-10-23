@@ -1,11 +1,11 @@
-const { STATUS_CODE, INPUT_ERROR } = require("../config/enum");
+const { system_enum } = require("../config/enum/system.constant");
 
 const response = (res, result) => {
     return res.status(result.status).json({ success: result.success, message: result.message, data: result.data });
 };
 
 const error_response = (res, error) => {
-    return res.status(STATUS_CODE.INTERNAL_SERVER_ERROR).json({
+    return res.status(system_enum.STATUS_CODE.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: error.message || "Internal server error",
     });
@@ -16,8 +16,8 @@ const validate_schema = (schema) => async (req, res, next) => {
         await schema.validate(req.body, { abortEarly: false });
         next();
     } catch (err) {
-        return res.status(STATUS_CODE.BAD_REQUEST).json({
-            message: INPUT_ERROR.INVALID_INPUT,
+        return res.status(system_enum.STATUS_CODE.BAD_REQUEST).json({
+            message: system_enum.SYSTEM_MESSAGE.INVALID_INPUT,
             errors: err.errors,
         });
     }
