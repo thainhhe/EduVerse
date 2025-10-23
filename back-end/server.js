@@ -7,6 +7,7 @@ const passport = require("passport");
 const cors = require("cors");
 // const Logger = require("./src/middlewares/loggerMiddleware.js");
 const securityMiddleware = require("./src/middlewares/system/securityMiddleware");
+const { system_enum } = require("./src/config/enum/system.constant.js");
 
 // securityMiddleware(app);
 app.get("/", async (req, res) => {
@@ -42,6 +43,10 @@ app.use("/api/v1", router);
 
 const PORT = process.env.PORT || 9999;
 app.listen(PORT, async () => {
-    await connectDB();
-    console.log(`Server running on port ${PORT}`);
+    try {
+        await connectDB();
+        console.log(`Server running on port ${PORT}`);
+    } catch (error) {
+        console.log(system_enum.SYSTEM_MESSAGE.DB_CONNECTION_FAILED);
+    }
 });
