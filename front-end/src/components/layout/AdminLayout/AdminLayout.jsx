@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Search, Bell, Menu } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);

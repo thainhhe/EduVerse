@@ -36,6 +36,7 @@ import AnnouncementsPage from "./pages/instructor/MyCourse/Announcements/Announc
 import GradesPage from "./pages/instructor/MyCourse/Grades/GradesPage";
 import RoomMeeting from "./pages/instructor/RoomMeeting/RoomMeeting";
 import PermissionsPage from "./pages/Permissions/PermissionsPage";
+import CommentThread from "./pages/CommentThread/CommentThread";
 
 function App() {
   const { loading } = useAuth();
@@ -69,9 +70,6 @@ function App() {
         <Route path="learning-test" element={<Learning />} />
 
         <Route path="create-course" element={<CreateCourse />} />
-        <Route path="admin/*" element={<div>Admin Dashboard</div>} />
-        <Route path="admin/dashboard" element={<AdminDashboardPage />} />
-        <Route path="admin/users" element={<UserManagementPage />} />
         {/* 2️⃣ Các bước sau khi tạo khóa học (có sidebar) */}
         <Route path="create-course" element={<CourseBuilderLayout />}>
           <Route path="modules" element={<ModulesPage />} />
@@ -80,6 +78,7 @@ function App() {
           <Route path="room-meeting" element={<RoomMeeting />} />
         </Route>
         <Route path="permission" element={<PermissionsPage />} />
+        <Route path="comment-thread" element={<CommentThread />} />
         {/* Private routes */}
         <Route element={<PrivateRoute />}>
           <Route path="dashboard" element={<Dashboard />} />
@@ -116,6 +115,12 @@ function App() {
         >
 
         </Route>
+      </Route>
+
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route path="admin/*" element={<div>Admin Dashboard</div>} />
+        <Route path="dashboard" element={<AdminDashboardPage />} />
+        <Route path="users" element={<UserManagementPage />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

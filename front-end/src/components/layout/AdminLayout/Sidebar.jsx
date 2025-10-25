@@ -10,6 +10,7 @@ import {
   Settings,
   Bell,
   UserCircle,
+  Flag,
 } from "lucide-react";
 import { MdAutoAwesome } from "react-icons/md";
 
@@ -17,6 +18,7 @@ const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "User Management", href: "/admin/users", icon: Users },
   { name: "Course Management", href: "#", icon: Book },
+  { name: "Report Management", href: "/admin/reports", icon: Flag },
   { name: "Comment Management", href: "#", icon: MessageSquare },
   { name: "Notifications", href: "#", icon: Bell },
   { name: "Analytics", href: "#", icon: BarChart2 },
