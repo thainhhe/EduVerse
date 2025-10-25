@@ -7,7 +7,6 @@ const moduleSchema = new mongoose.Schema(
         courseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true },
         content: { type: String },
         order: { type: Number, required: true },
-        status: { type: String, enum: ["draft", "published", "hidden"], default: "draft" },
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date, default: Date.now },
     },

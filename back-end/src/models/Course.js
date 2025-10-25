@@ -1,4 +1,7 @@
 const mongoose = require("mongoose");
+const User = require("./User");
+const Permission = require("./Permission");
+const Category = require("./Category");
 
 const courseSchema = new mongoose.Schema(
     {

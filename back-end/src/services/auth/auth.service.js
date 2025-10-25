@@ -6,21 +6,17 @@ const { authHelper } = require("./auth.helper");
 const authService = {
     async register(data) {
         try {
-            const existedEmail = await userRepository.findByEmail(data.email);
+            const existedEmail = await userRepository.findByEmail_Duplicate(data.email);
             if (existedEmail) {
-                return { status: system_enum.STATUS_CODE.OK, message: auth_enum.AUTH_MESSAGE.EXISTING_EMAIL };
+                return { status: system_enum.STATUS_CODE.CONFLICT, message: auth_enum.AUTH_MESSAGE.EXISTING_EMAIL };
             }
             const hashPass = await authHelper.hashPassword(data.password);
             data.password = hashPass;
-            const newUser = await userRepository.createUser(data);
-            const userData = {
-                ...newUser._doc,
-                password: "xxxxxx",
-            };
+            const newUser = await userRepository.create(data);
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: auth_enum.AUTH_MESSAGE.REGISTER_SUCCESS,
-                data: userData,
+                data: authHelper.format_user_data(newUser),
             };
         } catch (error) {
             throw new Error(error);
@@ -37,15 +33,10 @@ const authService = {
                 return { status: system_enum.STATUS_CODE.CONFLICT, message: auth_enum.AUTH_MESSAGE.WRONG_PASSWORD };
             }
             const token = authHelper.token(user._id);
-            const userData = {
-                ...user._doc,
-                password: "xxxxxx",
-                token: token,
-            };
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: auth_enum.AUTH_MESSAGE.LOGIN_SUCCESS,
-                data: userData,
+                data: authHelper.format_user_data(user, token),
             };
         } catch (error) {
             throw new Error(error);
@@ -68,7 +59,7 @@ const authService = {
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: auth_enum.AUTH_MESSAGE.CHANGE_PASSWORD_SUCCESS,
-                data: user,
+                data: authHelper.format_user_data(user),
             };
         } catch (error) {
             throw new Error(error);
