@@ -1,27 +1,62 @@
-const { STATUS_CODE, USER_ERROR_MESSAGE, SYSTEM_MESSAGE } = require("../../config/enum");
+const { system_enum } = require("../../config/enum/system.constant");
+const { user_enum } = require("../../config/enum/user.constants");
 const { userRepository } = require("../../repositories/user.repository");
-const { authHelper } = require("../auth/auth.helper");
+const { userHelper } = require("./user.helper");
 
 const userService = {
-    async getProfile(id) {
+    getProfile: async (id) => {
         try {
+            if (!id) return { status: system_enum.STATUS_CODE.CONFLICT, message: user_enum.USER_MESSAGE.FAIL_GET_DATA };
             const result = await userRepository.findById(id);
-            if (!result) return { status: STATUS_CODE.NOT_FOUND, message: USER_ERROR_MESSAGE.USER_NOT_FOUND };
-            return { status: STATUS_CODE.OK, message: SYSTEM_MESSAGE.SUCCESS, data: result };
+            if (!result)
+                return { status: system_enum.STATUS_CODE.NOT_FOUND, message: user_enum.USER_MESSAGE.USER_NOT_FOUND };
+            return {
+                status: system_enum.STATUS_CODE.OK,
+                message: user_enum.USER_MESSAGE.GET_PROFILE_SUCCESS,
+                data: userHelper.format_user_information(result),
+            };
         } catch (error) {
-            throw new Error(error.toString());
+            throw new Error(error);
         }
     },
-    async changePassword(id, new_password) {
+    updateProfile: async (id, data) => {
         try {
-            const user = await userRepository.findById(id);
-            if (!user) return { status: STATUS_CODE.NOT_FOUND, message: USER_ERROR_MESSAGE.USER_NOT_FOUND };
-            const newPassword = await authHelper.hashPassword(new_password);
-            result.password = newPassword;
-            await userRepository.save(user);
-            return { status: STATUS_CODE.OK, message: SYSTEM_MESSAGE.SUCCESS, data: user };
+            if (!id) {
+                return {
+                    status: system_enum.STATUS_CODE.BAD_REQUEST,
+                    message: user_enum.USER_MESSAGE.FAIL_GET_DATA,
+                };
+            }
+            const result = await userRepository.update(id, data);
+            if (!result) {
+                return {
+                    status: system_enum.STATUS_CODE.NOT_FOUND,
+                    message: user_enum.USER_MESSAGE.USER_NOT_FOUND,
+                };
+            }
+            return {
+                status: system_enum.STATUS_CODE.OK,
+                message: user_enum.USER_MESSAGE.UPDATE_PROFILE_SUCCESS,
+                data: userHelper.format_user_information(result),
+            };
         } catch (error) {
-            throw new Error(error.toString());
+            throw new Error(error);
+        }
+    },
+
+    closeAccount: async (id) => {
+        try {
+            if (!id) return { status: system_enum.STATUS_CODE.CONFLICT, message: user_enum.USER_MESSAGE.FAIL_GET_DATA };
+            const user = await userRepository.close(id);
+            if (!user)
+                return { status: system_enum.STATUS_CODE.NOT_FOUND, message: user_enum.USER_MESSAGE.USER_NOT_FOUND };
+            return {
+                status: system_enum.STATUS_CODE.OK,
+                message: user_enum.USER_MESSAGE.CLOSE_ACCOUNT_SUCCESS,
+                data: userHelper.format_user_information(user),
+            };
+        } catch (error) {
+            throw new Error(error);
         }
     },
 };

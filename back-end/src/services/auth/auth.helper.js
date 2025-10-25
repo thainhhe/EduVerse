@@ -14,6 +14,15 @@ const authHelper = {
             expiresIn: "1h",
         });
     },
+    format_user_data(data, token_) {
+        return {
+            _id: data._id,
+            username: data.username,
+            email: data.email,
+            avatar: data.avatar !== null ? data.avatar : "",
+            token: token_,
+        };
+    },
 };
 
 module.exports = { authHelper };

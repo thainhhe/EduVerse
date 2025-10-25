@@ -1,7 +1,11 @@
 const { system_enum } = require("../config/enum/system.constant");
 
 const response = (res, result) => {
-    return res.status(result.status).json({ success: result.success, message: result.message, data: result.data });
+    return res.status(result.status || 200).json({
+        success: result.success ?? result.status < 400,
+        message: result.message || "",
+        data: result.data ?? null,
+    });
 };
 
 const error_response = (res, error) => {
