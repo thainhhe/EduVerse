@@ -217,6 +217,7 @@ const commentService = {
 
       return {
         status: STATUS_CODE.OK,
+        success: true,
         message: "Cập nhật comment thành công",
         data: comment,
       };
