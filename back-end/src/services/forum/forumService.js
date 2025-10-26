@@ -1,9 +1,8 @@
 const {
   STATUS_CODE,
   SYSTEM_MESSAGE,
-  INPUT_ERROR,
-  FORUM_ERROR_MESSAGE,
-} = require("../../config/enum/index");
+} = require("../../config/enum/system.constant");
+const { FORUM_ERROR_MESSAGE } = require("../../config/enum/forum.constants");
 const Forum = require("../../models/Forum");
 const Course = require("../../models/Course");
 

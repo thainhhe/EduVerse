@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema(
         username: { type: String, required: true },
         email: { type: String, required: true, unique: true },
         password: { type: String, required: true },
-        avatar: { type: String },
+        avatar: { type: String, default: null },
         role: { type: String, enum: ["learner", "instructor", "admin"], default: "learner" },
         isSuperAdmin: { type: Boolean, default: false },
         permissions: [{ type: mongoose.Schema.ObjectId, ref: "Permission" }],

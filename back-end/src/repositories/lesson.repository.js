@@ -1,4 +1,4 @@
-const Lesson = require("../models/lessonModel");
+const Lesson = require("../models/Lesson");
 
 const lessonRepository = {
     findAll: async () => {
@@ -9,8 +9,8 @@ const lessonRepository = {
         return await Lesson.findById(id).populate("moduleId", "title").exec();
     },
 
-    findByCourseId: async (courseId) => {
-        return await Lesson.find({ courseId }).exec();
+    findByModuleId: async (moduleId) => {
+        return await Lesson.find({ moduleId }).exec();
     },
 
     createLesson: async (data) => {

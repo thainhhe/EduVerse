@@ -4,8 +4,10 @@ const User = require("../../models/User");
 const {
   STATUS_CODE,
   SYSTEM_MESSAGE,
+} = require("../../config/enum/system.constant");
+const {
   COMMENT_ERROR_MESSAGE,
-} = require("../../config/enum/index");
+} = require("../../config/enum/comment.constants");
 const flattenToLevel3 = (comment, level = 1) => {
   // Nếu đang ở cấp 3
   if (level === 2) {
