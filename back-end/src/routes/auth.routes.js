@@ -4,10 +4,10 @@ const { loginSchema, registerSchema, changePassSchema } = require("../validator/
 const { authController } = require("../controllers/auth/auth.controller");
 const { verifyToken } = require("../middlewares/auth/authMiddleware");
 
-// const authRouter = express.Router();
+const authRouter = express.Router();
 
 authRouter.post("/login", validate_schema(loginSchema), authController.login);
 authRouter.post("/register", validate_schema(registerSchema), authController.register);
 authRouter.post("/change-password/:id", verifyToken, validate_schema(changePassSchema), authController.changePassword);
 
-// module.exports = authRouter;
+module.exports = authRouter;
