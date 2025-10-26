@@ -5,7 +5,7 @@ import { Send } from "lucide-react"
 import CommentItem from "./CommentItem"
 
 // export default function CommentThread({ forumId, userId }) {
-export default function CommentThread({ forumId = "68fa572f5f8ebe11af185547", userId = "68fc9c79e9b3adbc7801ad9e" }) {
+export default function CommentThread({ forumId = "68fa572f5f8ebe11af185547", userId = "68fc9c68e9b3adbc7801ad98" }) {
     const [comments, setComments] = useState([])
     const [loading, setLoading] = useState(false)
     const [newComment, setNewComment] = useState("")
@@ -28,7 +28,7 @@ export default function CommentThread({ forumId = "68fa572f5f8ebe11af185547", us
         if (forumId) fetchComments()
     }, [forumId])
 
-    // 🔹 Thêm bình luận gốc
+
     const handleCreateComment = async () => {
         if (!newComment.trim()) return
 

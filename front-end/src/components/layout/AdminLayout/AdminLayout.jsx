@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Search, Bell, Menu } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);

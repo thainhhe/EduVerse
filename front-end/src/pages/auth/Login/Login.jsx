@@ -12,7 +12,7 @@ import { FcGoogle } from "react-icons/fc";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
 
   const {
@@ -26,7 +26,12 @@ const Login = () => {
   const onSubmit = async (data) => {
     const result = await login(data.email, data.password);
     if (result.success) {
-      navigate("/dashboard");
+      const role = result.user?.role || user?.role || "learner"; // fallback
+      if (role === "instructor") {
+        navigate("/mycourses");
+      } else {
+        navigate("/dashboard");
+      }
     }
   };
 
