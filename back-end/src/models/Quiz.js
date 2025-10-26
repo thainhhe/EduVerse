@@ -4,35 +4,37 @@ const quizSchema = new mongoose.Schema(
     {
         title: { type: String, required: true },
         description: { type: String },
-        questions: {
-            content: [
-                {
-                    questionText: { type: String, required: true },
-                    options: { type: [String], required: true },
-                    correctAnswer: { type: [String], required: true },
-                    explanation: { type: String },
-                    points: { type: Number, default: 1, min: 0 },
-                    order: { type: Number, required: true },
+        questions: [
+            {
+                questionText: { type: String, required: true },
+                questionType: {
+                    type: String,
+                    enum: ["multiple_choice", "checkbox", "true_false"],
+                    default: "multiple_choice",
+                    required: true
                 },
-            ],
-            default: [],
-            questionType: {
-                type: String,
-                enum: ["multiple_choice", "checkbox", "true_false"],
-                default: "multiple_choice",
+                options: { type: [String], required: true },
+                correctAnswer: { type: [String], required: true },
+                explanation: { type: String },
+                points: { type: Number, default: 1, min: 0 },
+                order: { type: Number, required: true },
             },
-        },
+        ],
         timeLimit: { type: Number, default: 0, min: 0 },
-        passingScore: { type: Number, default: 0, min: 0, max: 100 },
+        passingScore: { type: Number, default: 70, min: 0, max: 100 },
         attemptsAllowed: { type: Number, default: 1, min: 1 },
+        randomizeQuestions: { type: Boolean, default: false },
+        showCorrectAnswers: { type: Boolean, default: true },
         isPublished: { type: Boolean, default: false },
-        createdAt: { type: Date, default: Date.now },
-        updatedAt: { type: Date, default: Date.now },
+        createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     },
     {
         timestamps: true,
         collection: "quizzes",
     }
 );
+
+quizSchema.index({ isPublished: 1 });
+quizSchema.index({ createdBy: 1 });
 
 module.exports = mongoose.model("Quiz", quizSchema);

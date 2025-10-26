@@ -12,10 +12,17 @@ const PERMISSIONS = {
     MANAGE_OWN_COURSES: "manage_own_courses",
     MANAGE_FORUM: "manage_forum",
     ACCESS_ANALYTICS: "access_analytics",
-    ///Student
+    MANAGE_ENROLLMENTS: "manage_enrollments",
+    ///Instructor
+    MANAGE_ENROLLMENTS: "manage_enrollments",
+    ///Learner
     ACCESS_COURSE_MATERIALS: "access_course_materials",
     PARTICIPATE_IN_FORUMS: "participate_in_forums",
     VIEW_GRADES: "view_grades",
+    MANAGE_REVIEWS: "manage_reviews",
+    SEND_REPORTS: "send_reports",
+    CREATE_ENROLLMENT: "create_enrollment",
+    MANAGE_FAVORITES: "manage_favorites",
 };
 
 const ROLE = {
