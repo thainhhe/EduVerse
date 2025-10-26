@@ -5,7 +5,7 @@ import { Send } from "lucide-react"
 import CommentItem from "./CommentItem"
 
 // export default function CommentThread({ forumId, userId }) {
-export default function CommentThread({ forumId = "68fa572f5f8ebe11af185547", userId = "68fc9c68e9b3adbc7801ad98" }) {
+export default function CommentThread({ forumId = "68fa572f5f8ebe11af185547", userId = "68fc9c79e9b3adbc7801ad9e" }) {
     const [comments, setComments] = useState([])
     const [loading, setLoading] = useState(false)
     const [newComment, setNewComment] = useState("")
@@ -58,40 +58,52 @@ export default function CommentThread({ forumId = "68fa572f5f8ebe11af185547", us
 
     console.log("comment", comments)
     return (
-        <div className="max-w-3xl mx-auto space-y-5">
-            {/* Ô nhập bình luận gốc */}
-            <div className="flex items-center gap-2">
-                <input
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Viết bình luận của bạn..."
-                    className="flex-1 rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-                <Button
-                    size="sm"
-                    onClick={handleCreateComment}
-                    className="bg-blue-500 hover:bg-blue-600 text-white"
-                >
-                    <Send className="w-4 h-4" />
-                </Button>
+        <main className="min-h-screen bg-background">
+            <div className="border-b border-gray-200 dark:border-gray-800 bg-background sticky top-0 z-10 backdrop-blur-sm bg-background/95">
+                <div className="max-w-2xl mx-auto px-4 py-5">
+                    <h1 className="text-3xl font-bold text-foreground">Bình luận</h1>
+                    <p className="text-sm text-muted-foreground mt-1.5">Thảo luận trên diễn đàn</p>
+                </div>
+            </div>
+            <div className="max-w-3xl mx-auto space-y-5 mt-5">
+                {/* Ô nhập bình luận gốc */}
+                <div className="flex items-center gap-2">
+                    <input
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Viết bình luận của bạn..."
+                        className="flex-1 rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                    <Button
+                        size="sm"
+                        onClick={handleCreateComment}
+                        className="bg-blue-500 hover:bg-blue-600 text-white"
+                    >
+                        <Send className="w-4 h-4" />
+                    </Button>
+                </div>
+
+                {/* Danh sách bình luận */}
+                {loading ? (
+                    <p className="text-gray-500 text-sm italic">Đang tải bình luận...</p>
+                ) : comments.length > 0 ? (
+                    comments.map((c) => (
+                        <CommentItem
+                            key={c._id}
+                            comment={c}
+                            level={0}
+                            forumId={forumId}
+                            userId={userId}
+                            refresh={fetchComments}
+
+                        />
+                    ))
+                ) : (
+                    <p className="text-gray-500 text-sm italic">Chưa có bình luận nào</p>
+                )}
             </div>
 
-            {/* Danh sách bình luận */}
-            {loading ? (
-                <p className="text-gray-500 text-sm italic">Đang tải bình luận...</p>
-            ) : comments.length > 0 ? (
-                comments.map((c) => (
-                    <CommentItem
-                        key={c._id}
-                        comment={c}
-                        level={0}
-                        forumId={forumId}
-                        userId={userId}
-                    />
-                ))
-            ) : (
-                <p className="text-gray-500 text-sm italic">Chưa có bình luận nào</p>
-            )}
-        </div>
+        </main>
+
     )
 }
