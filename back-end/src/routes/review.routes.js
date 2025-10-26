@@ -1,17 +1,17 @@
 const express = require('express');
-const userReviewController = require('../controllers/user/review.controller.js');
-const commonReviewController = require('../controllers/common/review.controller.js');
-const { verifyToken } = require('../middlewares/authMiddleware');
-const { checkPermission } = require('../middlewares/permissionMiddleware');
-
+const reviewController = require('../controllers/course/review.controller');
+const { verifyToken } = require('../middlewares/auth/authMiddleware');
 const reviewRouter = express.Router();
 
-// User routes
-reviewRouter.post('/:courseId', verifyToken, checkPermission(['user'], ['manage_reviews']), userReviewController.createReview);
-reviewRouter.put('/:reviewId', verifyToken, checkPermission(['user'], ['manage_reviews']), userReviewController.updateReview);
-reviewRouter.delete('/:reviewId', verifyToken, checkPermission(['user'], ['manage_reviews']), userReviewController.deleteReview);
-
-// Public routes
-reviewRouter.get('/course/:courseId', commonReviewController.getReviewsByCourse);
+// get all reviews
+reviewRouter.get('/', reviewController.getAllReviews);
+// get review by id
+reviewRouter.get('/:id', reviewController.getReviewById);
+// create review
+reviewRouter.post('/', reviewController.createReview);
+// update review
+reviewRouter.put('/:id', reviewController.updateReview);
+// delete review
+reviewRouter.delete('/:id', reviewController.deleteReview);
 
 module.exports = reviewRouter;

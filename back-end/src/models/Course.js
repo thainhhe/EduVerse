@@ -1,4 +1,7 @@
 const mongoose = require("mongoose");
+const User = require("./User");
+const Permission = require("./Permission");
+const Category = require("./Category");
 
 const courseSchema = new mongoose.Schema(
     {
@@ -21,8 +24,7 @@ const courseSchema = new mongoose.Schema(
         },
         isPublished: { type: Boolean, default: false },
         totalEnrollments: { type: Number, default: 0, min: 0 },
-        tags: { type: [String], default: [] },
-        status: { type: String, enum: ["draft", "published", "archived"], default: "draft" },
+        status: { type: String, enum: ["pending", "approve", "reject"], default: "pending" },
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date, default: Date.now },
         isDeleted: { type: Boolean, default: false },
