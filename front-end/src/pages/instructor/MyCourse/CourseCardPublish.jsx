@@ -28,6 +28,13 @@ const CourseCardPublish = ({ course, role }) => {
     setVisible(!visible);
     console.log(`🔁 Course ${course.id} visibility: ${!visible}`);
   };
+  const handleOpenCourseQuiz = () => {
+    const id = course?._id || course?.id;
+    if (!id)
+      return console.warn("Missing course id when trying to open quiz", course);
+    navigate("/create-course/modules", { state: { id, openQuiz: true } });
+  };
+
   return (
     <Card className="group overflow-hidden transition-all hover:shadow-lg">
       <div className="relative aspect-video overflow-hidden bg-muted">
@@ -57,6 +64,11 @@ const CourseCardPublish = ({ course, role }) => {
         <div className="flex items-center gap-2 text-muted-foreground">
           <Clock className="h-4 w-4" />
           <span>Last Updated: {course.lastUpdated}</span>
+        </div>
+        <div className="flex gap-2 mt-2">
+          <Button variant="ghost" size="sm" onClick={handleOpenCourseQuiz}>
+            Add Quiz
+          </Button>
         </div>
       </CardFooter>
     </Card>

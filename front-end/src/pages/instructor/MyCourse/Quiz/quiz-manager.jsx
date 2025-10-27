@@ -113,9 +113,14 @@ const QuizManager = ({
     if (normalizedQuestions.length === 0)
       return alert("Please add at least one valid question with options.");
 
-    // only include course/module/lesson ids if they look like ObjectId strings
+    // choose single scope id only
     const isObjectId = (id) =>
       typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
+    const scope = {};
+    if (isObjectId(lessonId)) scope.lessonId = lessonId;
+    else if (isObjectId(moduleId)) scope.moduleId = moduleId;
+    else if (isObjectId(courseId)) scope.courseId = courseId;
+
     const payload = {
       title,
       description: (quizInfo.description ?? "").trim() || undefined,
@@ -124,10 +129,8 @@ const QuizManager = ({
       attemptsAllowed: Number(quizInfo.attemptsAllowed) || 1,
       isPublished: !!quizInfo.isPublished,
       questions: normalizedQuestions,
+      ...scope, // only one of courseId/moduleId/lessonId will be included
     };
-    if (isObjectId(courseId)) payload.courseId = courseId;
-    if (isObjectId(moduleId)) payload.moduleId = moduleId;
-    if (isObjectId(lessonId)) payload.lessonId = lessonId;
 
     try {
       const res =

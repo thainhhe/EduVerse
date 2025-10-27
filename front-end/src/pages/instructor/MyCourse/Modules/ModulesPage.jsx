@@ -37,12 +37,22 @@ const ModulesPage = () => {
   const [addOptionsIds, setAddOptionsIds] = useState([]);
   const [isQuizManagerOpen, setIsQuizManagerOpen] = useState(false);
   const [currentQuizContext, setCurrentQuizContext] = useState({
-    courseId: 1, // hoặc lấy từ context
+    courseId: null,
     moduleId: null,
     lessonId: null,
   });
+
   const location = useLocation();
   const courseIdFromState = location?.state?.id ?? null;
+
+  // if opened from course card with openQuiz flag, set context and open modal
+  useEffect(() => {
+    if (!courseIdFromState) return;
+    setCurrentQuizContext((prev) => ({ ...prev, courseId: courseIdFromState }));
+    if (location?.state?.openQuiz) {
+      setIsQuizManagerOpen(true);
+    }
+  }, [courseIdFromState, location?.state?.openQuiz]);
 
   // modules fetched from backend
   const [modules, setModules] = useState([]);
@@ -153,6 +163,24 @@ const ModulesPage = () => {
                     >
                       <Plus className="h-4 w-4" />
                       Add Lesson
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-2 text-indigo-600 hover:bg-indigo-50"
+                      onClick={() => {
+                        // open module-level quiz: only moduleId (omit courseId)
+                        setCurrentQuizContext({
+                          courseId: null,
+                          moduleId: module.id,
+                          lessonId: null,
+                        });
+                        setIsQuizManagerOpen(true);
+                      }}
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Quiz
                     </Button>
                   </div>
 

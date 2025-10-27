@@ -16,6 +16,13 @@ const CourseCardUnPublish = ({ course }) => {
     navigate("/create-course", { state: { id } });
   };
 
+  const handleOpenCourseQuiz = () => {
+    const id = course?._id || course?.id;
+    if (!id)
+      return console.warn("Missing course id when trying to open quiz", course);
+    navigate("/create-course/modules", { state: { id, openQuiz: true } });
+  };
+
   return (
     <Card className="flex flex-col sm:flex-row items-center gap-4 p-4 hover:shadow-md transition-all border border-border">
       {/* Image */}
@@ -55,6 +62,13 @@ const CourseCardUnPublish = ({ course }) => {
             onClick={handleEdit}
           >
             Continue update
+          </Button>
+          <Button
+            className="mt-2 ml-2 text-sm"
+            variant="ghost"
+            onClick={handleOpenCourseQuiz}
+          >
+            Add Quiz
           </Button>
         </div>
       </CardContent>
