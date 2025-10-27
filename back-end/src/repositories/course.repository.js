@@ -37,14 +37,23 @@ const courseRepository = {
   },
 
   findByInstructor: async (instructorId) => {
-    // trả về các course do instructor tạo (chỉ active)
-    return await Course.find({ instructor: instructorId, status: "active" })
-      .select("-__v")
-      .populate({
-        path: "modules",
-        populate: { path: "lessons", model: "Lesson" },
+    try {
+      // Sử dụng đúng trường main_instructor và isDeleted
+      const courses = await Course.find({
+        main_instructor: instructorId,
+        isDeleted: false,
       })
-      .exec();
+        .populate("category", "name") // Chỉ populate những trường cần thiết
+        // Bỏ populate modules/lessons ở đây
+        .select("-__v -isDeleted") // Loại bỏ các trường không cần thiết
+        .sort({ createdAt: -1 }) // Sắp xếp nếu muốn
+        .lean() // Dùng lean() để trả về plain JS objects
+        .exec();
+      return courses; // Trả về danh sách khóa học tìm được
+    } catch (err) {
+      console.error("Lỗi trong repository findByInstructor:", err);
+      throw err; // Ném lỗi để service/controller xử lý
+    }
   },
 };
 

@@ -1,11 +1,19 @@
-import { useEffect, useState } from "react"
-import { QuestionForm } from "./question-form"
-import { QuestionGrid } from "./question-grid"
-import { ImportSection } from "./import-section"
-import { Button } from "@/components/ui/button"
-import { notifySuccess } from "@/lib/toastHelper"
+import { useEffect, useState } from "react";
+import { QuestionForm } from "./question-form";
+import { QuestionGrid } from "./question-grid";
+import { ImportSection } from "./import-section";
+import { Button } from "@/components/ui/button";
+import { notifySuccess } from "@/lib/toastHelper";
+import { createQuiz, updateQuiz } from "@/services/courseService";
 
-const QuizManager = ({ mode = "add", quizData = null, courseId, moduleId, lessonId, onClose }) => {
+const QuizManager = ({
+  mode = "add",
+  quizData = null,
+  courseId,
+  moduleId,
+  lessonId,
+  onClose,
+}) => {
   const [quizInfo, setQuizInfo] = useState({
     title: "",
     description: "",
@@ -15,11 +23,10 @@ const QuizManager = ({ mode = "add", quizData = null, courseId, moduleId, lesson
     isPublished: false,
   });
 
-  console.log({ quizData, courseId, moduleId, lessonId })
+  console.log({ quizData, courseId, moduleId, lessonId });
   const [questions, setQuestions] = useState([]);
 
   useEffect(() => {
-
     if (mode === "edit" && quizData) {
       setQuizInfo({
         title: quizData.title || "",
@@ -30,78 +37,148 @@ const QuizManager = ({ mode = "add", quizData = null, courseId, moduleId, lesson
         isPublished: quizData.isPublished || false,
       });
 
-      setQuestions(quizData.questions?.map((q, idx) => ({
-        id: `Q-${idx + 1}`,
-        text: q.questionText,
-        type: q.questionType || "multiple_choice",
-        options: q.options.map(opt => ({
-          id: crypto.randomUUID(),
-          text: opt,
-          isCorrect: q.correctAnswer.includes(opt),
-        })),
-        explanation: q.explanation || "",
-        points: q.points || 1,
-      })) || [])
+      setQuestions(
+        quizData.questions?.map((q, idx) => ({
+          id: `Q-${idx + 1}`,
+          text: q.questionText,
+          type: q.questionType || "multiple_choice",
+          options: q.options.map((opt) => ({
+            id: crypto.randomUUID(),
+            text: opt,
+            isCorrect: q.correctAnswer.includes(opt),
+          })),
+          explanation: q.explanation || "",
+          points: q.points || 1,
+        })) || []
+      );
     }
-  }, [mode, quizData])
+  }, [mode, quizData]);
 
   const handleAddQuestion = (question) => {
     const newQuestion = {
       ...question,
       id: `Q-${String(
-        Math.max(...questions.map((q) => Number.parseInt(q.id.split("-")[1])), 1000) + 1
+        Math.max(
+          ...questions.map((q) => Number.parseInt(q.id.split("-")[1])),
+          1000
+        ) + 1
       )}`,
-    }
-    setQuestions([...questions, newQuestion])
-  }
+    };
+    setQuestions([...questions, newQuestion]);
+  };
 
-  const handleDeleteQuestion = (id) => setQuestions(questions.filter(q => q.id !== id))
-  const handleEditQuestion = (id, updatedQuestion) => setQuestions(questions.map(q => q.id === id ? updatedQuestion : q))
+  const handleDeleteQuestion = (id) =>
+    setQuestions(questions.filter((q) => q.id !== id));
+  const handleEditQuestion = (id, updatedQuestion) =>
+    setQuestions(questions.map((q) => (q.id === id ? updatedQuestion : q)));
 
-  // ✅ Gửi toàn bộ quiz lên backend
+  // ✅ Gửi toàn bộ quiz lên backend (sử dụng courseService API)
   const handleSaveQuiz = async () => {
-    if (!quizInfo.title) return alert("Please enter quiz title!")
+    const title = (quizInfo.title ?? "").trim();
+    if (!title) return alert("Please enter quiz title!");
 
+    // normalize question type from UI -> backend enum (multiple_choice / true_false / checkbox)
+    const normalizeType = (t) =>
+      (t ?? "").toString().replace(/[-\s]/g, "_").toLowerCase();
+
+    const normalizedQuestions = (questions || [])
+      .map((q, idx) => {
+        const questionText = ((q.text ?? q.questionText) + "").trim();
+        const optionsArr = (q.options || [])
+          .map((opt) =>
+            typeof opt === "string" ? opt : (opt?.text ?? "").trim()
+          )
+          .filter(Boolean);
+        const correct = (q.options || [])
+          .filter((opt) => opt?.isCorrect)
+          .map((opt) =>
+            typeof opt === "string" ? opt : (opt?.text ?? "").trim()
+          )
+          .filter(Boolean);
+
+        if (!questionText || optionsArr.length === 0) return null;
+
+        return {
+          questionText,
+          questionType: normalizeType(q.type) || "multiple_choice",
+          options: optionsArr,
+          correctAnswer: correct.length ? correct : [],
+          explanation: (q.explanation ?? "").trim() || undefined,
+          points: Number(q.points) || 1,
+          order: idx + 1,
+        };
+      })
+      .filter(Boolean);
+
+    if (normalizedQuestions.length === 0)
+      return alert("Please add at least one valid question with options.");
+
+    // only include course/module/lesson ids if they look like ObjectId strings
+    const isObjectId = (id) =>
+      typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
     const payload = {
-      ...quizInfo,
-      courseId,
-      moduleId,
-      lessonId,
-      questions: questions.map((q, index) => ({
-        questionText: q.text,
-        questionType: q.type || "multiple_choice",
-        options: q.options.map(opt => opt.text),
-        correctAnswer: q.options.filter(opt => opt.isCorrect).map(opt => opt.text),
-        explanation: q.explanation,
-        points: q.points || 1,
-        order: index + 1,
-      })),
+      title,
+      description: (quizInfo.description ?? "").trim() || undefined,
+      timeLimit: Number(quizInfo.timeLimit) || 0,
+      passingScore: Number(quizInfo.passingScore) || 0,
+      attemptsAllowed: Number(quizInfo.attemptsAllowed) || 1,
+      isPublished: !!quizInfo.isPublished,
+      questions: normalizedQuestions,
+    };
+    if (isObjectId(courseId)) payload.courseId = courseId;
+    if (isObjectId(moduleId)) payload.moduleId = moduleId;
+    if (isObjectId(lessonId)) payload.lessonId = lessonId;
+
+    try {
+      const res =
+        mode === "edit" && quizData?.id
+          ? await updateQuiz(quizData.id, payload)
+          : await createQuiz(payload);
+
+      // normalize/detect success for various response shapes:
+      const normalizeSuccess = (r) => {
+        if (!r) return false;
+        // axios response with HTTP status
+        if (typeof r.status === "number")
+          return r.status >= 200 && r.status < 300;
+        // axios response with .data wrapper
+        if (r.data && typeof r.data === "object") {
+          if (typeof r.data.success === "boolean")
+            return r.data.success === true;
+          if (r.data.id || r.data._id) return true;
+        }
+        // direct object returned (no wrapper)
+        if (typeof r.success === "boolean") return r.success === true;
+        if (r.id || r._id) return true;
+        return false;
+      };
+
+      if (normalizeSuccess(res)) {
+        notifySuccess("Thêm quizzz thành công!");
+        onClose();
+      } else {
+        console.error("Save quiz failed:", res?.data ?? res);
+        alert("❌ Failed to save quiz. See console/server response.");
+      }
+    } catch (err) {
+      console.error("Save quiz error:", err.response?.data ?? err);
+      const serverMsg =
+        err.response?.data?.message ?? err.response?.data ?? err.message;
+      alert(
+        "Failed to save quiz: " +
+          (typeof serverMsg === "string"
+            ? serverMsg
+            : JSON.stringify(serverMsg))
+      );
     }
-    console.log("payload", payload)
-    setTimeout(() => {
-      notifySuccess("Thêm quizzz thành công!");
-      onClose(); // Gọi prop để đóng modal
-    }, 1000);
-    // try {
-    //   const res = await fetch("http://localhost:5678/api/quizzes", {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify(payload),
-    //   })
-    //   const data = await res.json()
-    //   alert("✅ Quiz saved successfully!")
-    //   console.log("Created quiz:", data)
-    // } catch (err) {
-    //   console.error(err)
-    //   alert("❌ Failed to save quiz")
-    // }
-  }
+  };
 
   return (
     <div className="p-6 bg-background">
       <div className="max-w-7xl mx-auto">
-        <h1 className="mb-6 text-2xl font-bold text-foreground">Quiz Builder</h1>
-
+        <h1 className="mb-6 text-2xl font-bold text-foreground">
+          Quiz Builder
+        </h1>
 
         {/* --- Quiz Metadata Form --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -112,7 +189,9 @@ const QuizManager = ({ mode = "add", quizData = null, courseId, moduleId, lesson
               className="w-full border rounded-lg p-2 mt-1"
               placeholder="Enter quiz title..."
               value={quizInfo.title}
-              onChange={(e) => setQuizInfo({ ...quizInfo, title: e.target.value })}
+              onChange={(e) =>
+                setQuizInfo({ ...quizInfo, title: e.target.value })
+              }
             />
           </div>
           <div>
@@ -121,7 +200,9 @@ const QuizManager = ({ mode = "add", quizData = null, courseId, moduleId, lesson
               type="number"
               className="w-full border rounded-lg p-2 mt-1"
               value={quizInfo.timeLimit}
-              onChange={(e) => setQuizInfo({ ...quizInfo, timeLimit: Number(e.target.value) })}
+              onChange={(e) =>
+                setQuizInfo({ ...quizInfo, timeLimit: Number(e.target.value) })
+              }
             />
           </div>
           <div>
@@ -130,7 +211,12 @@ const QuizManager = ({ mode = "add", quizData = null, courseId, moduleId, lesson
               type="number"
               className="w-full border rounded-lg p-2 mt-1"
               value={quizInfo.passingScore}
-              onChange={(e) => setQuizInfo({ ...quizInfo, passingScore: Number(e.target.value) })}
+              onChange={(e) =>
+                setQuizInfo({
+                  ...quizInfo,
+                  passingScore: Number(e.target.value),
+                })
+              }
             />
           </div>
           <div>
@@ -139,7 +225,12 @@ const QuizManager = ({ mode = "add", quizData = null, courseId, moduleId, lesson
               type="number"
               className="w-full border rounded-lg p-2 mt-1"
               value={quizInfo.attemptsAllowed}
-              onChange={(e) => setQuizInfo({ ...quizInfo, attemptsAllowed: Number(e.target.value) })}
+              onChange={(e) =>
+                setQuizInfo({
+                  ...quizInfo,
+                  attemptsAllowed: Number(e.target.value),
+                })
+              }
             />
           </div>
           <div className="md:col-span-2">
@@ -149,7 +240,9 @@ const QuizManager = ({ mode = "add", quizData = null, courseId, moduleId, lesson
               rows={2}
               placeholder="Short description about this quiz..."
               value={quizInfo.description}
-              onChange={(e) => setQuizInfo({ ...quizInfo, description: e.target.value })}
+              onChange={(e) =>
+                setQuizInfo({ ...quizInfo, description: e.target.value })
+              }
             />
           </div>
         </div>
@@ -167,19 +260,26 @@ const QuizManager = ({ mode = "add", quizData = null, courseId, moduleId, lesson
             />
           </div>
           <div className="lg:col-span-1">
-            <ImportSection onImportQuestions={(imported) => setQuestions([...questions, ...imported])} />
+            <ImportSection
+              onImportQuestions={(imported) =>
+                setQuestions([...questions, ...imported])
+              }
+            />
           </div>
         </div>
 
         {/* --- Save Button --- */}
         <div className="mt-8 flex justify-end">
-          <Button onClick={handleSaveQuiz} className="bg-indigo-600 text-white hover:bg-indigo-700">
+          <Button
+            onClick={handleSaveQuiz}
+            className="bg-indigo-600 text-white hover:bg-indigo-700"
+          >
             Save Quiz
           </Button>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default QuizManager
+export default QuizManager;

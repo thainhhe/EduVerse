@@ -1,10 +1,23 @@
 // src/context/AuthContext.jsx
 
-import { createContext, useState, useEffect, useCallback } from "react";
-import { authService } from "@services/authService";
+import React, { createContext, useCallback, useEffect, useState } from "react";
+import { authService } from "@/services/authService"; // adjust path if needed
 import { toast } from "react-toastify";
 
 export const AuthContext = createContext(null);
+
+function parseJwt(token) {
+  try {
+    const [, payloadBase64] = token.split(".");
+    if (!payloadBase64) return null;
+    const payload = JSON.parse(
+      atob(payloadBase64.replace(/-/g, "+").replace(/_/g, "/"))
+    );
+    return payload;
+  } catch (e) {
+    return null;
+  }
+}
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -15,17 +28,30 @@ export const AuthProvider = ({ children }) => {
     const init = async () => {
       const accessToken = localStorage.getItem("accessToken");
       if (accessToken) {
+        // decode token to extract user id (try common keys)
+        const payload = parseJwt(accessToken);
+        const userId = payload?.id ?? payload?._id ?? payload?.sub ?? null;
+
         try {
-          // Try to get current user from backend (if implemented)
-          const res = await authService.getCurrentUser();
-          // authService returns response.data (api wrapper), so handle multiple shapes
-          const currentUser =
-            res?.user || res?.data?.user || res?.data?.data?.user || res;
-          if (currentUser) setUser(currentUser);
+          let currentUser;
+          if (userId) {
+            currentUser = await authService.getCurrentUser(userId);
+          } else {
+            currentUser = await authService.getCurrentUser();
+          }
+          // normalize: authService/api may return raw data or wrapper
+          const normalized =
+            currentUser?.data?.user ?? currentUser?.data ?? currentUser;
+          if (normalized) setUser(normalized);
         } catch (err) {
-          // failed to restore session -> clear tokens
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
+          const status = err?.response?.status;
+          // only clear tokens on auth errors
+          if (status === 401 || status === 403) {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+          } else {
+            console.warn("getCurrentUser failed (non-auth):", err);
+          }
         }
       }
       setLoading(false);
@@ -147,9 +173,7 @@ export const AuthProvider = ({ children }) => {
 
   const hasPermission = useCallback(
     (requiredPermissions) => {
-      if (!user || !user.permissions) {
-        return false;
-      }
+      if (!user || !user.permissions) return false;
       return requiredPermissions.every((permission) =>
         user.permissions.includes(permission)
       );

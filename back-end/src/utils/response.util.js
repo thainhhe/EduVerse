@@ -10,9 +10,26 @@ const response = (res, result) => {
 };
 
 const error_response = (res, error) => {
-  return res.status(system_enum.STATUS_CODE.INTERNAL_SERVER_ERROR).json({
+  // Thêm fallback phòng trường hợp system_enum bị undefined
+  const statusCode =
+    error?.status || system_enum?.STATUS_CODE?.INTERNAL_SERVER_ERROR || 500;
+  const message =
+    error?.message ||
+    system_enum?.SYSTEM_MESSAGE?.SERVER_ERROR ||
+    "Lỗi máy chủ nội bộ.";
+
+  // Log chi tiết lỗi 500 ở server để debug
+  if (statusCode === 500) {
+    console.error("Chi tiết lỗi Internal Server Error:", error);
+  }
+
+  return res.status(statusCode).json({
     success: false,
-    message: error.message || "Internal server error",
+    message: message,
+    // Tùy chọn: chỉ trả về stack trace ở môi trường development
+    ...(process.env.NODE_ENV === "development" &&
+      error?.stack && { stack: error.stack }),
+    ...(error?.errors && { errors: error.errors }), // Bao gồm lỗi validation nếu có
   });
 };
 
@@ -21,8 +38,14 @@ const validate_schema = (schema) => async (req, res, next) => {
     await schema.validate(req.body, { abortEarly: false });
     next();
   } catch (err) {
-    return res.status(system_enum.STATUS_CODE.BAD_REQUEST).json({
-      message: system_enum.SYSTEM_MESSAGE.INVALID_INPUT,
+    // Đảm bảo có fallback nếu system_enum không tồn tại
+    const statusCode = system_enum?.STATUS_CODE?.BAD_REQUEST || 400;
+    const message =
+      system_enum?.SYSTEM_MESSAGE?.INVALID_INPUT ||
+      "Dữ liệu đầu vào không hợp lệ.";
+    return res.status(statusCode).json({
+      success: false, // Thêm success: false
+      message: message,
       errors: err.errors,
     });
   }
