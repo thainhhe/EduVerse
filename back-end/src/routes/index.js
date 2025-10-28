@@ -12,6 +12,10 @@ const userRouter = require("./user.routes");
 const moduleRouter = require("./module.routes");
 const lessonRouter = require("./lesson.routes");
 const courseRouter = require("./course.routes");
+const materialRouter = require("./material.routes");
+
+// Use material routes
+router.use("/material", materialRouter);
 
 // Use category routes
 router.use("/category", categoryRouter);

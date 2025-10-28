@@ -36,6 +36,18 @@ const enrollmentRepository = {
         }
     },
 
+    getAllEnrollmentByUser: async (userId) => {
+        try {
+            return await Enrollment.find({ userId })
+            .populate('userId', 'name username email')
+                .populate('courseId', 'title description')
+                .exec();
+        } catch (error) {
+            console.error('Repository Error - getAllEnrollmentByUser:', error);
+            throw error;
+        }
+    },
+
     createEnrollment: async (data) => {
         try {
             console.log('💾 Repository: Creating enrollment...', data);
