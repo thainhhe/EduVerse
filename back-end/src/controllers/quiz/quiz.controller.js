@@ -66,10 +66,55 @@ const deleteQuiz = async (req, res) => {
   }
 };
 
+// Get quizzes by course
+const getQuizzesByCourse = async (req, res) => {
+  try {
+    const courseId = req.params.courseId;
+    const filters = { courseId };
+    if (req.query.isPublished)
+      filters.isPublished = req.query.isPublished === "true";
+    const result = await quizServices.getAllQuizzes(filters);
+    return response(res, result);
+  } catch (error) {
+    return error_response(res, error);
+  }
+};
+
+// Get quizzes by module
+const getQuizzesByModule = async (req, res) => {
+  try {
+    const moduleId = req.params.moduleId;
+    const filters = { moduleId };
+    if (req.query.isPublished)
+      filters.isPublished = req.query.isPublished === "true";
+    const result = await quizServices.getAllQuizzes(filters);
+    return response(res, result);
+  } catch (error) {
+    return error_response(res, error);
+  }
+};
+
+// Get quizzes by lesson
+const getQuizzesByLesson = async (req, res) => {
+  try {
+    const lessonId = req.params.lessonId;
+    const filters = { lessonId };
+    if (req.query.isPublished)
+      filters.isPublished = req.query.isPublished === "true";
+    const result = await quizServices.getAllQuizzes(filters);
+    return response(res, result);
+  } catch (error) {
+    return error_response(res, error);
+  }
+};
+
 module.exports = {
   getAllQuizzes,
   getQuizById,
   createQuiz,
   updateQuiz,
   deleteQuiz,
+  getQuizzesByCourse,
+  getQuizzesByModule,
+  getQuizzesByLesson,
 };
