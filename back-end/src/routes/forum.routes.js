@@ -6,6 +6,9 @@ const { createForumSchema } = require("../validator/forum.validator");
 const { forumController } = require("../controllers/forum/forum.controller");
 
 const forumRouter = express.Router();
+forumRouter.get("/", forumController.getAllForums);
+forumRouter.get("/:forumId", forumController.getForumById);
+forumRouter.get("/course/:courseId", forumController.getForumByCourseId);
 
 forumRouter.post(
   "/create-forum",

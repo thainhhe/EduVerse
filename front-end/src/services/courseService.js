@@ -1,8 +1,10 @@
 import api from "./api";
 
 // Courses
+export const getAllCoursePublished = () => api.get(`/courses`);
+
 export const getMyCourses = () => api.get("/courses/mine");
-export const getCourse = (id) => api.get(`/courses/${id}`);
+export const getCourseById = (id) => api.get(`/courses/${id}`);
 export const createCourse = (payload) => api.post("/courses/create", payload);
 export const updateCourse = (id, payload) =>
   api.put(`/courses/update/${id}`, payload);
