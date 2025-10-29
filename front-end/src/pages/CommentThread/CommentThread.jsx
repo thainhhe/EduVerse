@@ -59,20 +59,16 @@ export default function CommentThread({ forumId = "68fa572f5f8ebe11af185547", us
     console.log("comment", comments)
     return (
         <main className="min-h-screen bg-background">
-            <div className="border-b border-gray-200 dark:border-gray-800 bg-background sticky top-0 z-10 backdrop-blur-sm bg-background/95">
-                <div className="max-w-2xl mx-auto px-4 py-5">
-                    <h1 className="text-3xl font-bold text-foreground">Bình luận</h1>
-                    <p className="text-sm text-muted-foreground mt-1.5">Thảo luận trên diễn đàn</p>
-                </div>
-            </div>
+
             <div className="max-w-3xl mx-auto space-y-5 mt-5">
                 {/* Ô nhập bình luận gốc */}
                 <div className="flex items-center gap-2">
-                    <input
+                    <textarea
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
                         placeholder="Viết bình luận của bạn..."
-                        className="flex-1 rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        rows={3}
+                        className="flex-1 resize-none rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                     <Button
                         size="sm"

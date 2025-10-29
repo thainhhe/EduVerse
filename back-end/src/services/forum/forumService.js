@@ -5,6 +5,7 @@ const {
 const { FORUM_ERROR_MESSAGE } = require("../../config/enum/forum.constants");
 const Forum = require("../../models/Forum");
 const Course = require("../../models/Course");
+const { mongoose } = require("mongoose");
 
 const forumService = {
   async createForum(data) {
@@ -42,7 +43,8 @@ const forumService = {
   async getAllForums() {
     try {
       const forums = await Forum.find()
-        .populate("courseId", "name code description")
+        // .populate("courseId", "name code description")
+        .populate("courseId", "title description")
         .sort({ createdAt: -1 });
 
       return {
@@ -67,6 +69,33 @@ const forumService = {
           status: STATUS_CODE.NOT_FOUND,
           message:
             FORUM_ERROR_MESSAGE.FORUM_NOT_FOUND || "Không tìm thấy forum",
+        };
+      }
+
+      return {
+        status: STATUS_CODE.OK,
+        message: SYSTEM_MESSAGE.SUCCESS,
+        data: forum,
+      };
+    } catch (error) {
+      throw new Error(error);
+    }
+  },
+  async getForumByCourseId(courseId) {
+    console.log("courseId", courseId);
+    try {
+      const forum = await Forum.findOne({
+        courseId: new mongoose.Types.ObjectId(courseId),
+      });
+      // .populate("courseId", "title description")
+      // .sort({ createdAt: -1 });
+
+      if (!forum) {
+        return {
+          status: STATUS_CODE.NOT_FOUND,
+          message:
+            FORUM_ERROR_MESSAGE.FORUM_NOT_FOUND ||
+            "Không tìm thấy forum cho khóa học này",
         };
       }
 

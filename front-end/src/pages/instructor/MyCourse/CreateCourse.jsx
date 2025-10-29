@@ -3,7 +3,7 @@ import Basics from "./Basics";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate } from "react-router-dom";
-import { getCourse } from "@/services/courseService";
+import { getCourseById } from "@/services/courseService";
 
 const CreateCourse = () => {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ const CreateCourse = () => {
     const fetchCourse = async () => {
       setLoading(true);
       try {
-        const res = await getCourse(courseId);
+        const res = await getCourseById(courseId);
         const data = res?.data ?? res;
         setCourseData(data);
       } catch (err) {

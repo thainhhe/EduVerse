@@ -31,6 +31,15 @@ const forumController = {
     }
   },
 
+  getForumByCourseId: async (req, res) => {
+    try {
+      const courseId = req.params.courseId;
+      const result = await forumService.getForumByCourseId(courseId);
+      return response(res, result);
+    } catch (error) {
+      return error_response(res, error);
+    }
+  },
   updateForum: async (req, res) => {
     try {
       const id = req.params.id;

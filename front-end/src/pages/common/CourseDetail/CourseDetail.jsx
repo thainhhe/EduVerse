@@ -4,86 +4,90 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { FaCheckCircle, FaPlayCircle, FaFileAlt, FaStar } from "react-icons/fa";
+import { getCourseById } from "@/services/courseService";
+import { use, useEffect, useState } from "react";
+import CommentThread from "@/pages/CommentThread/CommentThread";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { getForumByCourseId } from "@/services/forumService";
 
 const CourseDetail = () => {
   const { id } = useParams();
-
-  // Dữ liệu giả lập
-  const course = {
-    id: 1,
-    title: "Mastering Advanced React: Hooks, Context & Performance",
-    instructor: {
-      name: "Dr. Evelyn Reed",
-      avatar: "/professional-woman-diverse.png",
-    },
-    price: 99.99,
-    rating: 4.8,
-    reviewsCount: 120,
-    whatYoullLearn: [
-      "Master advanced React Hooks for state management.",
-      "Utilize the Context API for efficient state propagation.",
-      "Optimize React components for maximum performance.",
-      "Implement advanced patterns for reusable components.",
-    ],
-    overview:
-      "This course is designed for React developers looking to deepen their understanding of advanced concepts...",
-    curriculum: [
-      {
-        title: "Intro to the Course",
-        lessons: [
-          { title: "Course Overview", type: "video", duration: "2 min" },
-        ],
-      },
-      {
-        title: "React Hooks in-depth",
-        lessons: [
-          {
-            title: "useState and useEffect",
-            type: "video",
-            duration: "15 min",
-          },
-          { title: "Custom Hooks", type: "document", duration: "10 min read" },
-        ],
-      },
-    ],
-    reviews: [
-      {
-        id: 1,
-        name: "Alice",
-        avatar: "/student-woman.png",
-        rating: 5,
-        text: "Excellent course! The instructor explains complex topics clearly.",
-      },
-      {
-        id: 2,
-        name: "Bob",
-        avatar: "/student-man.jpg",
-        rating: 4,
-        text: "Very helpful for advancing my React skills.",
-      },
-    ],
-    discussion: [
-      {
-        id: 1,
-        author: { name: "Mr A", avatar: "/student-man-2.jpg" },
-        date: "May 12, 2024, 2:30 PM",
-        text: "When should I prioritize memoizing functions vs just letting them re-render if the performance impact is minimal?",
-      },
-      {
-        id: 2,
-        author: {
-          name: "Dr. Evelyn Reed",
-          avatar: "/professional-woman-diverse.png",
-        },
-        date: "May 12, 2024, 3:00 PM",
-        text: "Great question! It's a balance. Start by measuring. If you identify a bottleneck, then apply memoization.",
-      },
-    ],
+  const [course, setCourses] = useState();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [expandedModules, setExpandedModules] = useState([]);
+  const [forum, setForum] = useState();
+  const toggleModule = (id) => {
+    setExpandedModules((prev) =>
+      prev.includes(id)
+        ? prev.filter((m) => m !== id)
+        : [...prev, id]
+    );
   };
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true);
+        const res = await getCourseById(id);
+        if (res?.success) {
+          // ✅ Khi thành công
+          const data = res.data || [];
+          setCourses(data);
+          console.log("Dữ liệu khóa học:", data);
+        } else {
+          // ⚠️ Khi API trả về success = false
+          console.error("Lỗi từ server:", res?.message || "Không xác định");
+          alert(res?.message || "Đã xảy ra lỗi khi lấy danh sách khóa học!");
+        }
+        // const uniqueCategories = [
+        //   "All",
+        //   ...new Set(data.map((course) => course.category || "Unknown")),
+        // ];
+        // setCategories(uniqueCategories);
+      } catch (err) {
+        setError("Failed to fetch courses.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
 
   if (!course) {
     return <div>Loading...</div>;
   }
+
+  useEffect(() => {
+    const fetchForum = async () => {
+      try {
+        setLoading(true);
+        const res = await getForumByCourseId(course._id);
+        console.log("res", res)
+        if (res?.success) {
+          // ✅ Khi thành công
+          const data = res.data || [];
+          setForum(data);
+          console.log("Dữ liệu khóa học:", data);
+        } else {
+          // ⚠️ Khi API trả về success = false
+          console.error("Lỗi từ server:", res?.message || "Không xác định");
+          alert(res?.message || "Đã xảy ra lỗi khi lấy danh sách khóa học!");
+        }
+        // const uniqueCategories = [
+        //   "All",
+        //   ...new Set(data.map((course) => course.category || "Unknown")),
+        // ];
+        // setCategories(uniqueCategories);
+      } catch (err) {
+        setError("Failed to fetch courses.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchForum();
+  }, []);
 
   return (
     <div className="bg-gray-50 py-8 sm:py-12">
@@ -115,7 +119,7 @@ const CourseDetail = () => {
                     to="#"
                     className="font-semibold text-indigo-600 hover:underline"
                   >
-                    {course.instructor.name}
+                    {course.main_instructor.username}
                   </Link>
                 </p>
               </div>
@@ -129,12 +133,12 @@ const CourseDetail = () => {
               </CardHeader>
               <CardContent>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
-                  {course.whatYoullLearn.map((item, index) => (
+                  {/* {course.whatYoullLearn.map((item, index) => (
                     <li key={index} className="flex items-start gap-3">
                       <FaCheckCircle className="text-indigo-500 mt-1 flex-shrink-0" />
                       <span className="text-gray-700">{item}</span>
                     </li>
-                  ))}
+                  ))} */}
                 </ul>
               </CardContent>
             </Card>
@@ -148,7 +152,7 @@ const CourseDetail = () => {
               <h2 className="text-xl sm:text-2xl font-bold mb-4">
                 Course Overview
               </h2>
-              <p className="text-gray-700 leading-relaxed">{course.overview}</p>
+              <p className="text-gray-700 leading-relaxed">{course.description}</p>
             </section>
 
             <section>
@@ -156,36 +160,62 @@ const CourseDetail = () => {
                 Course Curriculum
               </h2>
               <div className="space-y-4">
-                {course.curriculum.map((section, index) => (
-                  <div key={index} className="border rounded-lg">
-                    <h3 className="font-semibold p-4 bg-gray-100 rounded-t-lg">
-                      {section.title}
-                    </h3>
-                    <ul className="divide-y">
-                      {section.lessons.map((lesson, lessonIndex) => (
-                        <li
-                          key={lessonIndex}
-                          className="flex items-center justify-between p-3 sm:p-4 hover:bg-gray-50"
-                        >
-                          <div className="flex items-center gap-3">
-                            {lesson.type === "video" ? (
-                              <FaPlayCircle className="text-gray-500" />
-                            ) : (
-                              <FaFileAlt className="text-gray-500" />
-                            )}
-                            <span className="text-gray-800 text-sm sm:text-base">
-                              {lesson.title}
-                            </span>
-                          </div>
-                          <span className="text-xs sm:text-sm text-gray-500">
-                            {lesson.duration}
+                {course.modules.map((module, index) => {
+                  const isExpanded = expandedModules.includes(module._id);
+
+                  return (
+                    <div key={module._id} className="border rounded-lg shadow-sm bg-white">
+                      {/* --- Header module --- */}
+                      <button
+                        onClick={() => toggleModule(module._id)}
+                        className="w-full flex items-center justify-between px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-t-lg"
+                      >
+                        <div className="flex items-center gap-2 text-left">
+                          <span className="font-semibold text-gray-800">
+                            {module.title}
                           </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+                          <span className="text-gray-500 text-sm">
+                            ({module.lessons.length} bài học)
+                          </span>
+                        </div>
+                        {isExpanded ? (
+                          <ChevronDown className="h-5 w-5 text-gray-500" />
+                        ) : (
+                          <ChevronRight className="h-5 w-5 text-gray-500" />
+                        )}
+                      </button>
+
+                      {/* --- Danh sách bài học --- */}
+                      {isExpanded && (
+                        <ul className="divide-y">
+                          {module.lessons.map((lesson, lessonIndex) => (
+                            <li
+                              key={lesson.id}
+                              className="flex items-center justify-between p-3 sm:p-4 hover:bg-gray-50"
+                            >
+                              <div className="flex items-center gap-3">
+                                {lesson.type === "video" ? (
+                                  <FaPlayCircle className="text-gray-500" />
+                                ) : (
+                                  <FaFileAlt className="text-gray-500" />
+                                )}
+                                <span className="text-gray-800 text-sm sm:text-base">
+                                  {lesson.title}
+                                </span>
+                              </div>
+                              <span className="text-xs sm:text-sm text-gray-500">
+                                {lesson.duration || ""}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
+
+
             </section>
 
             <section>
@@ -193,7 +223,8 @@ const CourseDetail = () => {
                 Student Reviews
               </h2>
               <div className="space-y-6">
-                {course.reviews.map((review) => (
+                Review
+                {/* {course.reviews.map((review) => (
                   <div key={review.id} className="flex items-start gap-4">
                     <Avatar>
                       <AvatarImage src={review.avatar} alt={review.name} />
@@ -216,14 +247,18 @@ const CourseDetail = () => {
                       <p className="text-gray-700">{review.text}</p>
                     </div>
                   </div>
-                ))}
+                ))} */}
               </div>
             </section>
 
             <section>
               <h2 className="text-xl sm:text-2xl font-bold mb-4">
-                Course Discussion
+                Thảo luận trên diễn đàn
               </h2>
+              <CommentThread
+                forumId="68fa572f5f8ebe11af185547"
+                userId="68fc9c79e9b3adbc7801ad9e"
+              />
               <Card>
                 <CardContent className="pt-6">
                   <div className="space-y-4">
@@ -240,36 +275,6 @@ const CourseDetail = () => {
                   </div>
                 </CardContent>
               </Card>
-              <div className="space-y-6 mt-6">
-                {course.discussion.map((comment) => (
-                  <Card key={comment.id}>
-                    <CardContent className="pt-6 flex gap-4">
-                      <Avatar>
-                        <AvatarImage
-                          src={comment.author.avatar}
-                          alt={comment.author.name}
-                        />
-                        <AvatarFallback>
-                          {comment.author.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
-                          <h4 className="font-semibold text-gray-900">
-                            {comment.author.name}
-                          </h4>
-                          <p className="text-xs text-gray-500 mt-1 sm:mt-0">
-                            {comment.date}
-                          </p>
-                        </div>
-                        <p className="text-gray-700 leading-relaxed">
-                          {comment.text}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
             </section>
           </div>
 
