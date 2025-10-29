@@ -13,6 +13,7 @@ const lessonRouter = require("./lesson.routes");
 const courseRouter = require("./course.routes");
 const forumRouter = require("./forum.routes");
 const commentRouter = require("./comment.routes");
+const chatbotRouter = require("./chatbot.routes");
 const router = express.Router();
 
 // Use category routes
@@ -37,4 +38,5 @@ router.use("/lessons", lessonRouter);
 router.use("/courses", courseRouter);
 router.use("/forum", forumRouter);
 router.use("/comment", commentRouter);
+router.use("/chatbot", chatbotRouter);
 module.exports = router;
