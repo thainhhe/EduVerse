@@ -3,6 +3,27 @@ const Course = require("../models/Course");
 const courseRepository = {
     getAll: async () => {
         return await Course.find()
+            .sort({ createdAt: -1 })
+            .populate("category")
+            .populate("main_instructor")
+            .populate("instructors.id")
+            .populate("instructors.permission")
+            .exec();
+    },
+
+    getAllForLearner: async () => {
+        return await Course.find({ isPublished: true })
+            .sort({ createdAt: -1 })
+            .populate("category")
+            .populate("main_instructor")
+            .populate("instructors.id")
+            .populate("instructors.permission")
+            .exec();
+    },
+
+    getAllByMainInstructor: async (id) => {
+        return await Course.find({ main_instructor: id })
+            .sort({ createdAt: -1 })
             .populate("category")
             .populate("main_instructor")
             .populate("instructors.id")

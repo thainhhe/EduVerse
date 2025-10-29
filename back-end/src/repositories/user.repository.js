@@ -6,6 +6,10 @@ const userRepository = {
         return await User.findOne({ email: email, status: "active" }).populate("permissions", "name").exec();
     },
 
+    findInstructor: async () => {
+        return await User.find({ role: "instructor" }).populate("permissions", "name").exec();
+    },
+
     findByEmail_Duplicate: async (email) => {
         return await User.findOne({ email: email }).exec();
     },
