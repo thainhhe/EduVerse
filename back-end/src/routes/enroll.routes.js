@@ -8,5 +8,6 @@ enrollRouter.get('/:id', verifyToken, enrollmentController.getEnrollmentById);
 enrollRouter.post('/', verifyToken, enrollmentController.createEnrollment);
 enrollRouter.put('/:id', verifyToken, enrollmentController.updateEnrollment);
 enrollRouter.delete('/:id', verifyToken, enrollmentController.deleteEnrollment);
+enrollRouter.get('/user/:userId', verifyToken, enrollmentController.getAllEnrollmentByUser);
 
 module.exports = enrollRouter;
