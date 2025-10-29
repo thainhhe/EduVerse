@@ -41,6 +41,20 @@ const enrollmentServices = {
         }
     },
 
+    getAllEnrollmentByUser: async (userId) => {
+        try {
+            const enrollments = await enrollmentRepository.getAllEnrollmentByUser(userId);
+            return {
+                status: system_enum.STATUS_CODE.OK,
+                message: system_enum.SYSTEM_MESSAGE.SUCCESS,
+                data: enrollmentHelper.formatEnrollments(enrollments),
+            };
+        } catch (error) {
+            console.error('Service Error - getAllEnrollmentByUser:', error);
+            throw error;
+        }
+    },
+
     createEnrollment: async (enrollData) => {
         try {
             const validatedData = enrollValidator.validateEnrollData(enrollData, false);

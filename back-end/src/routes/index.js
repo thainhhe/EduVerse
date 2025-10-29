@@ -14,6 +14,10 @@ const courseRouter = require("./course.routes");
 const forumRouter = require("./forum.routes");
 const commentRouter = require("./comment.routes");
 const router = express.Router();
+const materialRouter = require("./material.routes");
+
+// Use material routes
+router.use("/material", materialRouter);
 
 // Use category routes
 router.use("/category", categoryRouter);
