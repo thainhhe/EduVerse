@@ -15,7 +15,17 @@ const userController = {
         try {
             const id = req.params.id;
             const data = req.body;
-            const result = await userService.updateProfile(id, data);
+            const file = req.file;
+            console.log(file);
+            const result = await userService.updateProfile(id, data, file);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
+    getInstructor: async (req, res) => {
+        try {
+            const result = await userService.getInstructorProfile();
             return response(res, result);
         } catch (error) {
             return error_response(res, error);

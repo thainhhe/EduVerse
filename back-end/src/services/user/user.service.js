@@ -1,6 +1,7 @@
 const { system_enum } = require("../../config/enum/system.constant");
 const { user_enum } = require("../../config/enum/user.constants");
 const { userRepository } = require("../../repositories/user.repository");
+const { upLoadImage } = require("../../utils/response.util");
 const { userHelper } = require("./user.helper");
 
 const userService = {
@@ -19,7 +20,21 @@ const userService = {
             throw new Error(error);
         }
     },
-    updateProfile: async (id, data) => {
+    getInstructorProfile: async () => {
+        try {
+            const result = await userRepository.findInstructor();
+            if (!result)
+                return { status: system_enum.STATUS_CODE.NOT_FOUND, message: user_enum.USER_MESSAGE.USER_NOT_FOUND };
+            return {
+                status: system_enum.STATUS_CODE.OK,
+                message: user_enum.USER_MESSAGE.GET_PROFILE_SUCCESS,
+                data: userHelper.format_user_information(result),
+            };
+        } catch (error) {
+            throw new Error(error);
+        }
+    },
+    updateProfile: async (id, data, file) => {
         try {
             if (!id) {
                 return {
@@ -27,6 +42,12 @@ const userService = {
                     message: user_enum.USER_MESSAGE.FAIL_GET_DATA,
                 };
             }
+
+            if (file !== null) {
+                const img = await upLoadImage(file);
+                data.avatar = img;
+            }
+
             const result = await userRepository.update(id, data);
             if (!result) {
                 return {

@@ -1,4 +1,3 @@
-// helpers/course.helper.js
 const courseHelper = {
     cleanCourseData: (data) => {
         if (!data) return data;

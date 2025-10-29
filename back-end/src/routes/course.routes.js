@@ -8,6 +8,8 @@ const courseRouter = express.Router();
 
 courseRouter.get("/", courseController.getAllCourse);
 courseRouter.get("/:id", courseController.getCourseById);
+courseRouter.get("/common", courseController.getAllCourseForLearner);
+courseRouter.get("/instructor/:id", verifyToken, courseController.getAllCourseInstructor);
 courseRouter.post(
     "/create",
     verifyToken,

@@ -28,7 +28,7 @@ const moduleService = {
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: module_enum.MODULE_MESSAGE.GET_DATA_SUCCESS,
-                data: modulesWithLessons,
+                data: moduleHelper.sortModuleByOrder(modulesWithLessons),
             };
         } catch (error) {
             throw new Error(error.message || error);

@@ -11,6 +11,25 @@ const courseController = {
         }
     },
 
+    getAllCourseForLearner: async (req, res) => {
+        try {
+            const result = await courseService.getAllCourseForLearner();
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
+
+    getAllCourseInstructor: async (req, res) => {
+        try {
+            const id = req.params.id;
+            const result = await courseService.getAllCourseInstructor(id);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
+
     getCourseById: async (req, res) => {
         try {
             const id = req.params.id;
@@ -24,7 +43,8 @@ const courseController = {
     createCourse: async (req, res) => {
         try {
             const data = req.body;
-            const result = await courseService.createCourse(data);
+            const file = req.file;
+            const result = await courseService.createCourse(data, file);
             return response(res, result);
         } catch (error) {
             return error_response(res, error);
@@ -35,7 +55,8 @@ const courseController = {
         try {
             const id = req.params.id;
             const data = req.body;
-            const result = await courseService.updateCourse(id, data);
+            const file = req.file;
+            const result = await courseService.updateCourse(id, data, file);
             return response(res, result);
         } catch (error) {
             return error_response(res, error);
