@@ -9,8 +9,6 @@ const courseRouter = express.Router();
 courseRouter.get("/mine", verifyToken, courseController.getMyCourses);
 
 courseRouter.get("/", courseController.getAllCourse);
-//get course published
-courseRouter.get("/published", courseController.getCoursePublished);
 courseRouter.get("/:id", courseController.getCourseById);
 courseRouter.post(
   "/create",
