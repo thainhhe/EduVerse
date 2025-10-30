@@ -6,6 +6,13 @@ const materialSchema = new mongoose.Schema(
         description: { type: String },
         url: { type: String, required: true },
         type: { type: String, enum: ["document", "video", "link"], default: "document" },
+
+        // Google Drive specific fields
+        fileId: { type: String }, // Google Drive file ID
+        fileName: { type: String }, // Original file name
+        fileSize: { type: Number }, // File size in bytes
+        mimeType: { type: String }, // MIME type
+
         uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
         uploadedAt: { type: Date, default: Date.now },
         accessLevel: { type: String, enum: ["public", "private", "restricted"], default: "private" },

@@ -14,6 +14,13 @@ const userRepository = {
         return await User.findOne({ email: email }).exec();
     },
 
+    findDuplicateEmailExceptSelf: async (email, userId) => {
+        return await User.findOne({
+            email: email,
+            _id: { $ne: userId },
+        }).exec();
+    },
+
     findById: async (id) => {
         return await User.findOne({ _id: id, status: "active" })
             .populate("permissions", "name")
@@ -36,6 +43,13 @@ const userRepository = {
     update: async (id, update) => {
         return await User.findOneAndUpdate({ _id: id, status: "active" }, update, { new: true })
             .select("-password")
+            .populate("permissions", "name")
+            .exec();
+    },
+
+    update_by_email: async (email, update) => {
+        return await User.findOneAndUpdate({ email: email, status: "active" }, update, { new: true })
+            .select("-password")
             .exec();
     },
 
@@ -45,11 +59,15 @@ const userRepository = {
             .exec();
     },
 
+    banned: async (id) => {
+        return await User.findOneAndUpdate({ _id: id, status: "active" }, { status: "banned" }, { new: true })
+            .select("-password")
+            .exec();
+    },
+
     save: async (user) => {
         return await user.save();
     },
 };
-
-module.exports = userRepository;
 
 module.exports = { userRepository };

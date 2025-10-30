@@ -11,7 +11,7 @@ const lessonSchema = new mongoose.Schema(
         order: { type: Number, required: true },
         user_completed: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
         materials: [{ type: mongoose.Schema.Types.ObjectId, ref: "Material" }],
-        quiz: { type: mongoose.Schema.Types.ObjectId, ref: "Quiz", default: "" },
+        quiz: { type: mongoose.Schema.Types.ObjectId, ref: "Quiz", default: null },
         status: { type: String, enum: ["published", "hidden"], default: "hidden" },
         resources: { type: [String], default: [] },
         createdAt: { type: Date, default: Date.now },

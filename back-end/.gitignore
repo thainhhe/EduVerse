@@ -19,6 +19,9 @@ pids
 *.seed
 *.pid.lock
 
+# Google Drive Credentials
+credentials.json
+
 # Environment variables
 .env
 .env.*.local
