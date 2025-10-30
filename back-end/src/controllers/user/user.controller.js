@@ -16,7 +16,6 @@ const userController = {
             const id = req.params.id;
             const data = req.body;
             const file = req.file;
-            console.log(file);
             const result = await userService.updateProfile(id, data, file);
             return response(res, result);
         } catch (error) {
@@ -39,6 +38,31 @@ const userController = {
         } catch (error) {
             return error_response(res, error);
         }
+    },
+
+    request_reset_password: async (req, res) => {
+        try {
+            const { email } = req.body;
+            const result = await userService.requestResetPassword(email);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
+
+    verify_otp_client: async (req, res) => {
+        try {
+            const { email, otp } = req.body;
+            const result = await userService.verify_otp(email, otp);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
+
+    assignPermission: async (req, res) => {
+        try {
+        } catch (error) {}
     },
 };
 

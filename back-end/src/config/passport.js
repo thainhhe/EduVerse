@@ -1,6 +1,6 @@
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const googleService = require("../services/googleService");
+const googleService = require("../services/google/google.service");
 
 passport.use(
     new GoogleStrategy(
@@ -10,6 +10,8 @@ passport.use(
             callbackURL: process.env.GOOGLE_CALLBACK_URL,
         },
         async (accessToken, refreshToken, profile, done) => {
+            console.log("ACCESS TOKEN:", accessToken);
+            console.log("PROFILE:", profile);
             try {
                 const user = await googleService.findOrCreate(profile);
                 done(null, user);

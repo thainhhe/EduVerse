@@ -13,6 +13,7 @@ const moduleRouter = require("./module.routes");
 const lessonRouter = require("./lesson.routes");
 const courseRouter = require("./course.routes");
 const materialRouter = require("./material.routes");
+const logRouter = require("./log.routes.js");
 
 // Use material routes
 router.use("/material", materialRouter);
@@ -37,5 +38,6 @@ router.use("/users", userRouter);
 router.use("/modules", moduleRouter);
 router.use("/lessons", lessonRouter);
 router.use("/courses", courseRouter);
+router.use("/logs", logRouter);
 
 module.exports = router;

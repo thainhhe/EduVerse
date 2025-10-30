@@ -169,7 +169,7 @@ const courseService = {
         }
     },
 
-    updateCourse: async (id, data) => {
+    updateCourse: async (id, data, file) => {
         try {
             if (!id)
                 return {

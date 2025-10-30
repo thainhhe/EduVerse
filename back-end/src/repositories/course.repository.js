@@ -5,8 +5,8 @@ const courseRepository = {
         return await Course.find()
             .sort({ createdAt: -1 })
             .populate("category")
-            .populate("main_instructor")
-            .populate("instructors.id")
+            .populate("main_instructor", "_id username email")
+            .populate("instructors.id", "_id username email permission")
             .populate("instructors.permission")
             .exec();
     },
@@ -15,8 +15,8 @@ const courseRepository = {
         return await Course.find({ isPublished: true })
             .sort({ createdAt: -1 })
             .populate("category")
-            .populate("main_instructor")
-            .populate("instructors.id")
+            .populate("main_instructor", "_id username email")
+            .populate("instructors.id", "_id username email")
             .populate("instructors.permission")
             .exec();
     },
@@ -25,8 +25,8 @@ const courseRepository = {
         return await Course.find({ main_instructor: id })
             .sort({ createdAt: -1 })
             .populate("category")
-            .populate("main_instructor")
-            .populate("instructors.id")
+            .populate("main_instructor", "_id username email")
+            .populate("instructors.id", "_id username email")
             .populate("instructors.permission")
             .exec();
     },

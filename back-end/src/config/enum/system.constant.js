@@ -6,6 +6,13 @@ const system_enum = {
         UNKNOWN_ERROR: "An unknown error occurred.",
         SUCCESS: "Operation successful.",
         INVALID_INPUT: "Input data invalid.",
+        SEND_MAIL_OTP_SUCCESS: "Send OTP by email successfully.",
+        SEND_MAIL_OTP_FAIL: "Send OTP by email fail.",
+        NOT_FOUND_OTP: "OTP not found.",
+        INVALID_OTP: "Invalid or expired OTP",
+        OTP_EXPIRED: "OTP expired",
+        TOO_MANY_ATTEMPT_OTP: "Too many attempts, request a new OTP",
+        RESET_PASSWORD_SUCCESS: "Your password was reset. New password is 123456",
     },
 
     STATUS_CODE: {

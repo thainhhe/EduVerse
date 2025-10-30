@@ -43,7 +43,7 @@ const courseController = {
     createCourse: async (req, res) => {
         try {
             const data = req.body;
-            const file = req.file;
+            const file = req.file || null;
             const result = await courseService.createCourse(data, file);
             return response(res, result);
         } catch (error) {
@@ -55,7 +55,7 @@ const courseController = {
         try {
             const id = req.params.id;
             const data = req.body;
-            const file = req.file;
+            const file = req.file || null;
             const result = await courseService.updateCourse(id, data, file);
             return response(res, result);
         } catch (error) {

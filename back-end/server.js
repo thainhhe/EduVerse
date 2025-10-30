@@ -5,9 +5,9 @@ const app = express();
 const router = require("./src/routes/index.js");
 const connectDB = require("./src/config/db.js");
 const session = require("express-session");
-const passport = require("passport");
+const passport = require("./src/config/passport.js");
 const cors = require("cors");
-// const Logger = require("./src/middlewares/loggerMiddleware.js");
+const Logger = require("./src/middlewares/system/loggerMiddleware.js");
 const securityMiddleware = require("./src/middlewares/system/securityMiddleware");
 const { system_enum } = require("./src/config/enum/system.constant.js");
 
@@ -31,7 +31,7 @@ app.use(
     session({
         secret: process.env.SESSION_SECRET || "secret123",
         resave: false,
-        saveUninitialized: false,
+        saveUninitialized: true,
         cookie: { secure: false },
     })
 );
@@ -40,7 +40,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(express.json());
-// app.use(Logger);
+app.use(Logger);
 app.use("/api/v1", router);
 
 const PORT = process.env.PORT || 9999;
