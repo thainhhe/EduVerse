@@ -1,13 +1,22 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
+import { useEnrollment } from "@/context/EnrollmentContext";
 
 const PaymentConfirmationPage = () => {
+  const navigate = useNavigate()
+
+  const { refreshEnrollments } = useEnrollment();
   // Dữ liệu này sẽ được truyền từ trang trước hoặc lấy từ API
   const transactionDetails = {
     courseName: "Advanced React Development",
     transactionId: "TXN-83749201-XYZ",
     amountPaid: 199.99,
+  };
+  const handleContinue = () => {
+    // Có thể gọi refresh 1 lần nữa trước khi đi
+    refreshEnrollments();
+    navigate("/dashboard");
   };
 
   return (
@@ -45,10 +54,10 @@ const PaymentConfirmationPage = () => {
 
         <Button
           size="lg"
-          asChild
+          onClick={handleContinue}
           className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700"
         >
-          <Link to="/learning/1">Continue Learning</Link>
+          Continue Learning
         </Button>
       </div>
     </div>

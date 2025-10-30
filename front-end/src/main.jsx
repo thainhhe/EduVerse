@@ -7,6 +7,7 @@ import App from "./App";
 import { AuthProvider } from "@context/AuthContext";
 import "react-toastify/dist/ReactToastify.css";
 import "./styles/global.css";
+import { EnrollmentProvider } from "./context/EnrollmentContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,18 +23,22 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <App />
-          <ToastContainer
-            position="top-right"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-          />
+          <EnrollmentProvider>
+
+
+            <App />
+            <ToastContainer
+              position="top-right"
+              autoClose={3000}
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+            />
+          </EnrollmentProvider>
         </AuthProvider>
       </QueryClientProvider>
     </BrowserRouter>

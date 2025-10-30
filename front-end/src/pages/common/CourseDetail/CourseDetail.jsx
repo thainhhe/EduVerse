@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -9,14 +9,36 @@ import { use, useEffect, useState } from "react";
 import CommentThread from "@/pages/CommentThread/CommentThread";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { getForumByCourseId } from "@/services/forumService";
+import { useAuth } from "@/hooks/useAuth";
+import { useEnrollment } from "@/context/EnrollmentContext";
 
 const CourseDetail = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { enrollments } = useEnrollment();
+  console.log("enrollments", enrollments)
+
+  const handleEnroll = () => {
+    if (!user) {
+      navigate("/login");
+    } else {
+      navigate("/checkout", {
+        state: {
+          courseId: course._id,
+          courseTitle: course.title,
+          coursePrice: course.price,
+        },
+      });
+    }
+  };
+
   const { id } = useParams();
   const [course, setCourses] = useState();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [expandedModules, setExpandedModules] = useState([]);
   const [forum, setForum] = useState();
+  const [isEnrolled, setIsEnrolled] = useState(false); // 👈 thêm state này
   const toggleModule = (id) => {
     setExpandedModules((prev) =>
       prev.includes(id)
@@ -25,69 +47,56 @@ const CourseDetail = () => {
     );
   };
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await getCourseById(id);
-        if (res?.success) {
-          // ✅ Khi thành công
-          const data = res.data || [];
-          setCourses(data);
-          console.log("Dữ liệu khóa học:", data);
+
+        // 🔹 1️⃣ Gọi API lấy thông tin khóa học
+        const resCourse = await getCourseById(id);
+        if (resCourse?.success) {
+          const courseData = resCourse.data;
+          setCourses(courseData);
+
+          console.log("📘 Course:", courseData);
+
+          // 🔹 2️⃣ Sau khi có course, gọi API lấy forum theo courseId
+          const resForum = await getForumByCourseId(courseData._id);
+          if (resForum?.success) {
+            setForum(resForum.data);
+            console.log("💬 Forum:", resForum.data);
+          } else {
+            console.warn("Không tìm thấy forum:", resForum?.message);
+          }
         } else {
-          // ⚠️ Khi API trả về success = false
-          console.error("Lỗi từ server:", res?.message || "Không xác định");
-          alert(res?.message || "Đã xảy ra lỗi khi lấy danh sách khóa học!");
+          console.error("Lỗi khi lấy khóa học:", resCourse?.message);
+          setError(resCourse?.message || "Không thể tải khóa học.");
         }
-        // const uniqueCategories = [
-        //   "All",
-        //   ...new Set(data.map((course) => course.category || "Unknown")),
-        // ];
-        // setCategories(uniqueCategories);
       } catch (err) {
-        setError("Failed to fetch courses.");
+        console.error("❌ Lỗi khi fetch dữ liệu:", err);
+        setError("Đã xảy ra lỗi khi tải dữ liệu.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCourses();
-  }, []);
-
-  if (!course) {
-    return <div>Loading...</div>;
-  }
+    if (id) fetchData();
+  }, [id]);
 
   useEffect(() => {
-    const fetchForum = async () => {
-      try {
-        setLoading(true);
-        const res = await getForumByCourseId(course._id);
-        console.log("res", res)
-        if (res?.success) {
-          // ✅ Khi thành công
-          const data = res.data || [];
-          setForum(data);
-          console.log("Dữ liệu khóa học:", data);
-        } else {
-          // ⚠️ Khi API trả về success = false
-          console.error("Lỗi từ server:", res?.message || "Không xác định");
-          alert(res?.message || "Đã xảy ra lỗi khi lấy danh sách khóa học!");
-        }
-        // const uniqueCategories = [
-        //   "All",
-        //   ...new Set(data.map((course) => course.category || "Unknown")),
-        // ];
-        // setCategories(uniqueCategories);
-      } catch (err) {
-        setError("Failed to fetch courses.");
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (!user?._id || !id || !enrollments) return;
+    const found = enrollments.some((e) => e.courseId === id);
+    console.log("found", found)
+    if (found) {
+      setIsEnrolled(true);
+    }
 
-    fetchForum();
-  }, []);
+  }, [user?._id, id, enrollments]);
+  // ⏳ Loading
+  if (loading) return <div>Đang tải dữ liệu...</div>;
+
+  // ⚠️ Lỗi
+  if (error) return <div className="text-red-500">{error}</div>;
+
 
   return (
     <div className="bg-gray-50 py-8 sm:py-12">
@@ -145,7 +154,13 @@ const CourseDetail = () => {
 
             {/* Sidebar for Mobile/Tablet */}
             <div className="lg:hidden">
-              <EnrollCard price={course.price} />
+              <EnrollCard
+                price={course.price}
+                onEnroll={handleEnroll}
+                isEnrolled={isEnrolled}
+                course={course}
+              />
+
             </div>
 
             <section>
@@ -256,32 +271,31 @@ const CourseDetail = () => {
                 Thảo luận trên diễn đàn
               </h2>
               <CommentThread
-                forumId="68fa572f5f8ebe11af185547"
-                userId="68fc9c79e9b3adbc7801ad9e"
+                forumId={forum?._id || "68fa572f5f8ebe11af185547"}
+                userId={user?._id}
+                courseId={course?._id}
+                canComment={isEnrolled}
               />
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold">
-                      Post a Question or Comment
-                    </h3>
-                    <Textarea
-                      placeholder="Type your question or comment here..."
-                      rows={3}
-                    />
-                    <div className="flex justify-end">
-                      <Button>Post Comment</Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+
+
             </section>
           </div>
 
           {/* Sidebar for Desktop */}
           <div className="hidden lg:block lg:col-span-1">
             <div className="sticky top-24">
-              <EnrollCard price={course.price} />
+              <div className="hidden lg:block lg:col-span-1">
+                <div className="sticky top-24">
+
+                  <EnrollCard
+                    price={course.price}
+                    onEnroll={handleEnroll}
+                    isEnrolled={isEnrolled}
+                    course={course}
+                  />
+
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -291,20 +305,45 @@ const CourseDetail = () => {
 };
 
 // Tách card ra để tái sử dụng cho mobile và desktop
-const EnrollCard = ({ price }) => (
-  <Card>
-    <CardHeader>
-      <CardTitle className="text-3xl">${price}</CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      <Button size="lg" className="w-full bg-indigo-600 hover:bg-indigo-700">
-        Enroll Now
-      </Button>
-      <Button size="lg" variant="outline" className="w-full">
-        Add to Cart
-      </Button>
-    </CardContent>
-  </Card>
-);
+const EnrollCard = ({ price, onEnroll, isEnrolled, course }) => {
+  console.log({ price, onEnroll, isEnrolled, course })
+  const navigate = useNavigate();
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-3xl">
+          {new Intl.NumberFormat("vi-VN", {
+            style: "currency",
+            currency: "VND",
+          }).format(price)}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {isEnrolled ? (
+          <Button
+            size="lg"
+            className="w-full bg-green-600 hover:bg-green-700"
+            onClick={() => navigate(`/learn/${course._id}`)}
+          >
+            Đi đến khóa học
+          </Button>
+        ) : (
+          <Button
+            size="lg"
+            className="w-full bg-indigo-600 hover:bg-indigo-700"
+            onClick={onEnroll}
+          >
+            Enroll Now
+          </Button>
+        )}
+        {/* <Button size="lg" variant="outline" className="w-full">
+          Add to Cart
+        </Button> */}
+      </CardContent>
+    </Card>
+  );
+};
+
+
 
 export default CourseDetail;

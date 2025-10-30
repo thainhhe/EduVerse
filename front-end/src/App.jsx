@@ -71,7 +71,7 @@ function App() {
         <Route path="quiz" element={<Quiz />} />
         <Route path="forgot-password" element={<ForgotPassword />} />
         <Route path="reset-password/:token" element={<ResetPassword />} />
-        <Route path="learning-test" element={<Learning />} />
+        <Route path="learning/:courseId" element={<Learning />} />
         <Route path="dashboard-test" element={<Dashboard />} />
 
         <Route path="create-course" element={<CreateCourse />} />
@@ -84,6 +84,12 @@ function App() {
         </Route>
         <Route path="permission" element={<PermissionsPage />} />
         <Route path="comment-thread" element={<CommentThread />} />
+
+        <Route path="checkout" element={<PaymentPage />} />
+        <Route
+          path="checkout/success"
+          element={<PaymentConfirmationPage />}
+        />
         {/* Private routes */}
         <Route element={<PrivateRoute />}>
           <Route path="dashboard" element={<Dashboard />} />
