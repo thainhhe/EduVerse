@@ -123,11 +123,38 @@ const deleteEnrollment = async (req, res) => {
     }
 };
 
+const getDetailedEnrollmentByUser = async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const result = await enrollmentServices.getDetailedEnrollmentByUser(userId);
+        return res.status(result.status).json({
+            message: result.message,
+            data: result.data,
+            ...(result.error && { error: result.error, stack: result.stack }),
+        });
+    } catch (error) {
+        console.error("Controller Error - getDetailedEnrollmentByUser:", {
+            message: error.message,
+            stack: error.stack,
+            userId,
+        });
+        return res.status(system_enum.STATUS_CODE.INTERNAL_SERVER_ERROR).json({
+            message: system_enum.SYSTEM_MESSAGE.INTERNAL_SERVER_ERROR,
+            ...(process.env.NODE_ENV === "development" && {
+                error: error.message,
+                stack: error.stack,
+            }),
+        });
+    }
+};
+
+
 module.exports = {
     getAllEnrollments,
     getEnrollmentById,
     createEnrollment,
     updateEnrollment,
     deleteEnrollment,
-    getAllEnrollmentByUser
+    getAllEnrollmentByUser,
+    getDetailedEnrollmentByUser,
 };
