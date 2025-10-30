@@ -1,25 +1,18 @@
 const googleDriveConfig = require('../../config/googleDrive.config');
-const fs = require('fs');
 const { Readable } = require('stream');
 
 const googleDriveService = {
-    /**
-     * Upload file to Google Drive
-     * @param {Object} file - Multer file object
-     * @param {String} type - 'video' or 'document'
-     * @returns {Object} { fileId, fileUrl, fileName, fileSize, mimeType }
-     */
     uploadFile: async (file, type) => {
         try {
             console.log('📤 Starting upload to Google Drive...');
             console.log('File:', file.originalname);
             console.log('Type:', type);
             console.log('Size:', (file.size / (1024 * 1024)).toFixed(2), 'MB');
+            console.log('Buffer size:', file.buffer ? file.buffer.length : 'NO BUFFER');
 
             const drive = googleDriveConfig.getDrive();
             
-            // Determine folder ID based on type
-            const folderId = type === 'video'
+            const folderId = type === 'video' 
                 ? process.env.GOOGLE_DRIVE_FOLDER_VIDEO 
                 : process.env.GOOGLE_DRIVE_FOLDER_DOCUMENT;
 
@@ -27,7 +20,12 @@ const googleDriveService = {
                 throw new Error(`Google Drive folder ID for ${type} not configured`);
             }
 
-            // Create readable stream from buffer
+            // ✅ CHECK buffer tồn tại
+            if (!file.buffer) {
+                throw new Error('File buffer is empty!');
+            }
+
+            // ✅ Tạo stream từ buffer
             const bufferStream = Readable.from(file.buffer);
 
             const fileMetadata = {
@@ -46,37 +44,62 @@ const googleDriveService = {
                 requestBody: fileMetadata,
                 media: media,
                 fields: 'id, name, mimeType, size, webViewLink, webContentLink',
+                supportsAllDrives: true,
             });
 
-            // Set file permissions to 'anyone with link can view'
+            console.log('✅ Upload response:', {
+                id: response.data.id,
+                size: response.data.size,
+                name: response.data.name
+            });
+
+            // ✅ KIỂM TRA file size
+            const uploadedSize = parseInt(response.data.size || '0');
+            console.log('📦 Uploaded file size:', uploadedSize, 'bytes');
+
+            if (uploadedSize === 0) {
+                throw new Error('Upload failed: File size is 0 bytes on Google Drive');
+            }
+
+            // Set permissions
             await drive.permissions.create({
                 fileId: response.data.id,
                 requestBody: {
                     role: 'reader',
                     type: 'anyone',
                 },
+                supportsAllDrives: true,
             });
 
             console.log('✅ Upload successful! File ID:', response.data.id);
 
+            // Tạo preview URLs
+            const fileId = response.data.id;
+            const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+            const embedUrl = `https://drive.google.com/file/d/${fileId}/preview?embedded=true`;
+
             return {
-                fileId: response.data.id,
-                fileUrl: response.data.webViewLink,
+                fileId: fileId,
+                fileUrl: previewUrl,
+                embedUrl: embedUrl,
                 downloadUrl: response.data.webContentLink,
+                viewUrl: response.data.webViewLink,
                 fileName: response.data.name,
-                fileSize: parseInt(response.data.size),
+                fileSize: uploadedSize,
                 mimeType: response.data.mimeType,
             };
         } catch (error) {
             console.error('❌ Google Drive upload error:', error);
+            console.error('Error details:', {
+                name: error.name,
+                message: error.message,
+                code: error.code,
+                status: error.status
+            });
             throw new Error(`Failed to upload file to Google Drive: ${error.message}`);
         }
     },
 
-    /**
-     * Delete file from Google Drive
-     * @param {String} fileId - Google Drive file ID
-     */
     deleteFile: async (fileId) => {
         try {
             console.log('🗑️ Deleting file from Google Drive:', fileId);
@@ -85,6 +108,7 @@ const googleDriveService = {
             
             await drive.files.delete({
                 fileId: fileId,
+                supportsAllDrives: true,
             });
 
             console.log('✅ File deleted successfully');
@@ -92,50 +116,6 @@ const googleDriveService = {
         } catch (error) {
             console.error('❌ Google Drive delete error:', error);
             throw new Error(`Failed to delete file from Google Drive: ${error.message}`);
-        }
-    },
-
-    /**
-     * Get file metadata from Google Drive
-     * @param {String} fileId - Google Drive file ID
-     */
-    getFileMetadata: async (fileId) => {
-        try {
-            const drive = googleDriveConfig.getDrive();
-            
-            const response = await drive.files.get({
-                fileId: fileId,
-                fields: 'id, name, mimeType, size, webViewLink, createdTime',
-            });
-
-            return response.data;
-        } catch (error) {
-            console.error('❌ Get file metadata error:', error);
-            throw new Error(`Failed to get file metadata: ${error.message}`);
-        }
-    },
-
-    /**
-     * Update file permissions
-     * @param {String} fileId - Google Drive file ID
-     * @param {String} role - 'reader', 'writer', 'commenter'
-     */
-    updateFilePermissions: async (fileId, role = 'reader') => {
-        try {
-            const drive = googleDriveConfig.getDrive();
-            
-            await drive.permissions.create({
-                fileId: fileId,
-                requestBody: {
-                    role: role,
-                    type: 'anyone',
-                },
-            });
-
-            return { success: true, message: 'Permissions updated' };
-        } catch (error) {
-            console.error('❌ Update permissions error:', error);
-            throw new Error(`Failed to update permissions: ${error.message}`);
         }
     },
 };
