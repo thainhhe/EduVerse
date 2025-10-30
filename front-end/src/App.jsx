@@ -72,6 +72,7 @@ function App() {
         <Route path="forgot-password" element={<ForgotPassword />} />
         <Route path="reset-password/:token" element={<ResetPassword />} />
         <Route path="learning-test" element={<Learning />} />
+        <Route path="dashboard-test" element={<Dashboard />} />
 
         <Route path="create-course" element={<CreateCourse />} />
         {/* 2️⃣ Các bước sau khi tạo khóa học (có sidebar) */}
