@@ -80,6 +80,16 @@ const courseController = {
       return error_response(res, error);
     }
   },
+
+  getCourseByCategory: async (req, res) => {
+    try {
+      const categoryId = req.params.categoryId;
+      const result = await courseService.getCourseByCategory(categoryId);
+      return response(res, result);
+    } catch (error) {
+      return error_response(res, error);
+    }
+  },
 };
 
 module.exports = { courseController };
