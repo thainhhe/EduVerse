@@ -56,6 +56,21 @@ const courseRepository = {
     }
   },
 
+  getCoursePublished: async () => {
+    try {
+      const courses = await Course.find({
+        isPublished: true,
+        isDeleted: false,
+      })
+        .populate("main_instructor", "name email")
+        .select("-__v -isDeleted");
+      return courses;
+    } catch (err) {
+      console.error("Lỗi trong repository getCoursePublished:", err);
+      throw err;
+    }
+  },
+
   getCourseByCategory: async (categoryId) => {
     try {
       const courses = await Course.find({

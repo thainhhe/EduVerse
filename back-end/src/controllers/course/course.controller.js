@@ -1,3 +1,4 @@
+const { get } = require("mongoose");
 const { courseService } = require("../../services/course/course.service");
 const { response, error_response } = require("../../utils/response.util");
 
@@ -77,6 +78,15 @@ const courseController = {
         error
       );
       // Gọi hàm error_response chuẩn
+      return error_response(res, error);
+    }
+  },
+
+  getCoursePublished: async (req, res) => {
+    try {
+      const result = await courseService.getCoursePublished();
+      return response(res, result);
+    } catch (error) {
       return error_response(res, error);
     }
   },

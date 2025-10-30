@@ -9,6 +9,8 @@ const courseRouter = express.Router();
 courseRouter.get("/mine", verifyToken, courseController.getMyCourses);
 
 courseRouter.get("/", courseController.getAllCourse);
+//get course published
+courseRouter.get("/published", courseController.getCoursePublished);
 courseRouter.get("/:id", courseController.getCourseById);
 courseRouter.post(
   "/create",
@@ -26,6 +28,8 @@ courseRouter.delete("/delete/:id", verifyToken, courseController.deleteCourse);
 // Get courses of current authenticated instructor
 // courseRouter.get("/mine", verifyToken, courseController.getMyCourses);
 
+
+//get course by category
 courseRouter.get(
   "/category/:categoryId",
   courseController.getCourseByCategory
