@@ -5,6 +5,7 @@ const { generateOtp, hashOtp, sendOtpEmail, compareOtp } = require("../../utils/
 const { upLoadImage } = require("../../utils/response.util");
 const { userHelper } = require("./user.helper");
 const { authHelper } = require("../auth/auth.helper");
+const courseRepository = require("../../repositories/course.repository");
 
 const userService = {
     getProfile: async (id) => {
@@ -24,13 +25,13 @@ const userService = {
     },
     getInstructorProfile: async () => {
         try {
-            const result = await userRepository.findInstructor();
+            const result = await courseRepository.getInstructor_sort_by_rating();
             if (!result)
                 return { status: system_enum.STATUS_CODE.NOT_FOUND, message: user_enum.USER_MESSAGE.USER_NOT_FOUND };
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: user_enum.USER_MESSAGE.GET_PROFILE_SUCCESS,
-                data: userHelper.format_user_information(result),
+                data: result,
             };
         } catch (error) {
             throw new Error(error);

@@ -10,8 +10,6 @@ passport.use(
             callbackURL: process.env.GOOGLE_CALLBACK_URL,
         },
         async (accessToken, refreshToken, profile, done) => {
-            console.log("ACCESS TOKEN:", accessToken);
-            console.log("PROFILE:", profile);
             try {
                 const user = await googleService.findOrCreate(profile);
                 done(null, user);

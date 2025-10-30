@@ -15,7 +15,7 @@ const userController = {
         try {
             const id = req.params.id;
             const data = req.body;
-            const file = req.file;
+            const file = req.file || null;
             const result = await userService.updateProfile(id, data, file);
             return response(res, result);
         } catch (error) {
@@ -58,11 +58,6 @@ const userController = {
         } catch (error) {
             return error_response(res, error);
         }
-    },
-
-    assignPermission: async (req, res) => {
-        try {
-        } catch (error) {}
     },
 };
 

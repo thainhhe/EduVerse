@@ -37,4 +37,31 @@ const sendOtpEmail = (toEmail, otp) => {
     return transporter.sendMail(mailOptions);
 };
 
-module.exports = { generateOtp, hashOtp, compareOtp, sendOtpEmail };
+const sendInviteInstructorEmail = (toEmail, inviteLink, inviterName = "EduVerse Team", courseName) => {
+    const mailOptions = {
+        from: process.env.EMAIL_FROM || `"${inviterName}" <no-reply@eduverse.com>`,
+        to: toEmail,
+        subject: "🎓 Lời mời tham gia giảng dạy cùng EduVerse",
+        text: `Xin chào!\n\n${inviterName} đã mời bạn tham gia đội ngũ giảng viên của EduVerse.\n\nHãy nhấp vào liên kết dưới đây để chấp nhận lời mời:\n${inviteLink}\n\nNếu bạn không mong đợi email này, vui lòng bỏ qua.`,
+        html: `
+            <div style="font-family: Arial, sans-serif; color: #333;">
+                <h2>🎓 Lời mời trở thành Giảng viên tại <span style="color:#007BFF;">EduVerse</span></h2>
+                <p>Xin chào,</p>
+                <p><strong>${inviterName}</strong> đã mời bạn tham gia đội ngũ giảng viên của nền tảng EduVerse trong khoá học ${courseName}</p>
+                <p>Nhấp vào nút bên dưới để chấp nhận lời mời và hoàn tất đăng ký giảng viên:</p>
+                <div style="text-align:center; margin: 30px 0;">
+                    <a href="${inviteLink}" style="background-color:#007BFF;color:white;padding:12px 20px;text-decoration:none;border-radius:5px;font-weight:bold;">
+                        Chấp nhận lời mời
+                    </a>
+                </div>
+                <p>Nếu bạn không mong đợi email này, vui lòng bỏ qua.</p>
+                <hr>
+                <p style="font-size: 12px; color: #777;">EduVerse - Nền tảng học tập thông minh.</p>
+            </div>
+        `,
+    };
+
+    return transporter.sendMail(mailOptions);
+};
+
+module.exports = { generateOtp, hashOtp, compareOtp, sendOtpEmail, sendInviteInstructorEmail };
