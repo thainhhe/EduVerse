@@ -3,7 +3,6 @@ const { verifyToken } = require("../middlewares/auth/authMiddleware");
 const { userController } = require("../controllers/user/user.controller");
 const upload = require("../middlewares/system/upload.middleware");
 const { permissionController } = require("../controllers/permission/permission.controller");
-
 const userRouter = express.Router();
 userRouter.get("/profile/:id", verifyToken, userController.getProfile);
 userRouter.get("/instructor", userController.getInstructor);
