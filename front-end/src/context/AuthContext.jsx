@@ -1,166 +1,185 @@
-// import { createContext, useState, useEffect } from "react";
-// import { authService } from "@services/authService";
-// import { toast } from "react-toastify";
+// src/context/AuthContext.jsx
 
-// export const AuthContext = createContext(null);
-
-// export const AuthProvider = ({ children }) => {
-//   const [user, setUser] = useState(null);
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     checkAuth();
-//   }, []);
-
-//   const checkAuth = async () => {
-//     try {
-//       const token = localStorage.getItem("accessToken");
-//       if (token) {
-//         const userData = await authService.getCurrentUser();
-//         setUser(userData);
-//       }
-//     } catch (error) {
-//       console.error("Auth check failed:", error);
-//       localStorage.removeItem("accessToken");
-//       localStorage.removeItem("refreshToken");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const login = async (email, password) => {
-//     try {
-//       const response = await authService.login(email, password);
-//       const { accessToken, refreshToken, user: userData } = response;
-
-//       localStorage.setItem("accessToken", accessToken);
-//       localStorage.setItem("refreshToken", refreshToken);
-//       setUser(userData);
-
-//       toast.success("Đăng nhập thành công!");
-//       return { success: true };
-//     } catch (error) {
-//       toast.error(error.response?.data?.message || "Đăng nhập thất bại");
-//       return { success: false, error };
-//     }
-//   };
-
-//   const register = async (userData) => {
-//     try {
-//       const response = await authService.register(userData);
-//       toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
-//       return { success: true, data: response };
-//     } catch (error) {
-//       toast.error(error.response?.data?.message || "Đăng ký thất bại");
-//       return { success: false, error };
-//     }
-//   };
-
-//   const logout = async () => {
-//     try {
-//       await authService.logout();
-//       setUser(null);
-//       toast.success("Đăng xuất thành công!");
-//     } catch (error) {
-//       console.error("Logout failed:", error);
-//     }
-//   };
-
-//   const updateUser = (userData) => {
-//     setUser((prev) => ({ ...prev, ...userData }));
-//   };
-
-//   const value = {
-//     user,
-//     loading,
-//     login,
-//     register,
-//     logout,
-//     updateUser,
-//     isAuthenticated: !!user,
-//   };
-
-//   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-// };
-
-// ============================
-import { createContext, useState, useEffect } from "react";
-// authService không còn cần thiết cho việc đăng nhập tĩnh, nhưng giữ lại cho các hàm khác
-import { authService } from "@services/authService";
+import React, { createContext, useCallback, useEffect, useState } from "react";
+import { authService } from "@/services/authService"; // adjust path if needed
 import { toast } from "react-toastify";
 
 export const AuthContext = createContext(null);
+
+function parseJwt(token) {
+  try {
+    const [, payloadBase64] = token.split(".");
+    if (!payloadBase64) return null;
+    const payload = JSON.parse(
+      atob(payloadBase64.replace(/-/g, "+").replace(/_/g, "/"))
+    );
+    return payload;
+  } catch (e) {
+    return null;
+  }
+}
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Try to restore session on mount
   useEffect(() => {
-    // Tạm thời không gọi checkAuth() vì không có backend
-    // checkAuth();
-    setLoading(false); // Bỏ qua việc kiểm tra và cho phép ứng dụng chạy ngay
+    const init = async () => {
+      const accessToken = localStorage.getItem("accessToken");
+      if (accessToken) {
+        // decode token to extract user id (try common keys)
+        const payload = parseJwt(accessToken);
+        const userId = payload?.id ?? payload?._id ?? payload?.sub ?? null;
+
+        try {
+          let currentUser;
+          if (userId) {
+            currentUser = await authService.getCurrentUser(userId);
+          } else {
+            currentUser = await authService.getCurrentUser();
+          }
+          // normalize: authService/api may return raw data or wrapper
+          const normalized =
+            currentUser?.data?.user ?? currentUser?.data ?? currentUser;
+          if (normalized) setUser(normalized);
+        } catch (err) {
+          const status = err?.response?.status;
+          // only clear tokens on auth errors
+          if (status === 401 || status === 403) {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+          } else {
+            console.warn("getCurrentUser failed (non-auth):", err);
+          }
+        }
+      }
+      setLoading(false);
+    };
+    init();
   }, []);
 
-  const checkAuth = async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        // Hàm này sẽ gây lỗi nếu không có backend, nên chúng ta không gọi nó trong useEffect
-        const userData = await authService.getCurrentUser();
-        setUser(userData);
-      }
-    } catch (error) {
-      console.error("Auth check failed:", error);
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ===== BẮT ĐẦU PHẦN CHỈNH SỬA =====
   const login = async (email, password) => {
-    // Giả lập độ trễ của API
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    try {
+      const res = await authService.login(email, password);
 
-    if (email === "learner@eduverse.com" && password === "password123") {
-      const mockUserData = {
-        name: "Test Learner",
-        email: "learner@eduverse.com",
-        role: "student",
-      };
+      const accessToken =
+        res?.accessToken ||
+        res?.token ||
+        res?.data?.accessToken ||
+        res?.data?.token ||
+        res?.data?.data?.accessToken ||
+        res?.data?.data?.token;
 
-      setUser(mockUserData);
+      const refreshToken =
+        res?.refreshToken ||
+        res?.data?.refreshToken ||
+        res?.data?.data?.refreshToken;
 
-      toast.success("Đăng nhập thành công!");
-      return { success: true };
-    } else {
-      toast.error("Sai email hoặc mật khẩu.");
-      return { success: false, error: "Invalid credentials" };
+      const userFromRes =
+        res?.user ||
+        res?.data?.user ||
+        res?.data?.data?.user ||
+        res?.data ||
+        null;
+
+      if (accessToken) localStorage.setItem("accessToken", accessToken);
+      if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+
+      if (userFromRes) {
+        setUser(userFromRes);
+        toast.success("Đăng nhập thành công!");
+        return { success: true, user: userFromRes };
+      }
+
+      if (accessToken) {
+        setUser(null);
+        toast.success("Đăng nhập thành công!");
+        return { success: true, user: null };
+      }
+
+      return { success: false, error: "Invalid response from server" };
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Đăng nhập thất bại";
+      toast.error(message);
+      return { success: false, error: message };
     }
   };
-  // ===== KẾT THÚC PHẦN CHỈNH SỬA =====
 
   const register = async (userData) => {
     try {
-      const response = await authService.register(userData);
+      const res = await authService.register(userData);
+
+      // same extraction as login
+      const accessToken =
+        res?.accessToken ||
+        res?.token ||
+        res?.data?.accessToken ||
+        res?.data?.token ||
+        res?.data?.data?.accessToken ||
+        res?.data?.data?.token;
+
+      const refreshToken =
+        res?.refreshToken ||
+        res?.data?.refreshToken ||
+        res?.data?.data?.refreshToken;
+
+      const userFromRes =
+        res?.user ||
+        res?.data?.user ||
+        res?.data?.data?.user ||
+        res?.data ||
+        null;
+
+      if (accessToken) localStorage.setItem("accessToken", accessToken);
+      if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+
+      if (userFromRes) {
+        setUser(userFromRes);
+        toast.success("Đăng ký thành công!");
+        return { success: true };
+      }
+
+      // If no user returned, consider registration success (some backends don't auto-login)
       toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
-      return { success: true, data: response };
+      return { success: true };
     } catch (error) {
-      toast.error(error.response?.data?.message || "Đăng ký thất bại");
-      return { success: false, error };
+      const message =
+        error?.response?.data?.message || error?.message || "Đăng ký thất bại";
+      toast.error(message);
+      return { success: false, error: message };
     }
   };
 
   const logout = async () => {
-    // Khi không có backend, chỉ cần xóa user state là đủ
-    setUser(null);
-    toast.success("Đăng xuất thành công!");
+    try {
+      // call backend logout if endpoint exists, otherwise just clear local
+      try {
+        await authService.logout();
+      } catch (e) {
+        // ignore network errors on logout
+      }
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      setUser(null);
+      toast.success("Đăng xuất thành công!");
+    } catch (error) {
+      toast.error("Đăng xuất thất bại");
+    }
   };
 
-  const updateUser = (userData) => {
-    setUser((prev) => ({ ...prev, ...userData }));
-  };
+  const hasPermission = useCallback(
+    (requiredPermissions) => {
+      if (!user || !user.permissions) return false;
+      return requiredPermissions.every((permission) =>
+        user.permissions.includes(permission)
+      );
+    },
+    [user]
+  );
 
   const value = {
     user,
@@ -168,8 +187,8 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    updateUser,
     isAuthenticated: !!user,
+    hasPermission,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

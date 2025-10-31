@@ -1,46 +1,43 @@
 import api from "./api";
 
-export const courseService = {
-  getAllCourses: async (params) => {
-    const response = await api.get("/courses", { params });
-    return response;
-  },
+// Courses
+export const getAllCoursePublished = () => api.get(`/courses`);
 
-  getCourseById: async (id) => {
-    const response = await api.get(`/courses/${id}`);
-    return response;
-  },
+export const getMyCourses = () => api.get("/courses/mine");
+export const getCourseById = (id) => api.get(`/courses/${id}`);
+export const createCourse = (payload) => api.post("/courses/create", payload);
+export const updateCourse = (id, payload) =>
+  api.put(`/courses/update/${id}`, payload);
+export const deleteCourse = (id) => api.delete(`/courses/delete/${id}`);
 
-  createCourse: async (courseData) => {
-    const response = await api.post("/courses", courseData);
-    return response;
-  },
-
-  updateCourse: async (id, courseData) => {
-    const response = await api.put(`/courses/${id}`, courseData);
-    return response;
-  },
-
-  deleteCourse: async (id) => {
-    const response = await api.delete(`/courses/${id}`);
-    return response;
-  },
-
-  enrollCourse: async (courseId) => {
-    const response = await api.post(`/courses/${courseId}/enroll`);
-    return response;
-  },
-
-  getMyCourses: async () => {
-    const response = await api.get("/courses/my-courses");
-    return response;
-  },
-
-  rateCourse: async (courseId, rating, review) => {
-    const response = await api.post(`/courses/${courseId}/rate`, {
-      rating,
-      review,
-    });
-    return response;
-  },
+// Modules
+export const getModulesInCourse = async (courseId) => {
+  try {
+    return await api.get(`/modules/course-module/${courseId}`);
+  } catch (err) {
+    if (err?.response?.status === 404) {
+      // normalize to successful empty response shape expected by UI
+      return { data: { data: [] } };
+    }
+    throw err;
+  }
 };
+export const getModuleById = (id) => api.get(`/modules/${id}`);
+export const createModule = (payload) => api.post("/modules/create", payload);
+export const updateModule = (id, payload) =>
+  api.put(`/modules/update/${id}`, payload);
+export const deleteModule = (id) => api.delete(`/modules/delete/${id}`);
+
+// Lessons
+export const getLessonsInModule = (moduleId) => api.get(`/lessons/${moduleId}`);
+export const createLesson = (payload) => api.post(`/lessons/create`, payload);
+export const updateLesson = (id, payload) =>
+  api.put(`/lessons/update/${id}`, payload);
+export const deleteLesson = (id) => api.delete(`/lessons/delete/${id}`);
+
+// Quiz
+export const getQuizById = (id) => api.get(`/quiz/${id}`);
+export const getAllQuizzes = () => api.get(`/quiz`);
+export const createQuiz = (payload) => api.post(`/quiz`, payload);
+export const updateQuiz = (id, payload) => api.put(`/quiz/${id}`, payload);
+export const deleteQuiz = (id) => api.delete(`/quiz/${id}`);

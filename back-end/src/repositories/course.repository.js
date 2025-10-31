@@ -120,6 +120,59 @@ const courseRepository = {
     save: async (data) => {
         return data.save();
     },
+
+    findByInstructor: async (instructorId) => {
+        try {
+            // Sử dụng đúng trường main_instructor và isDeleted
+            const courses = await Course.find({
+                main_instructor: instructorId,
+                isDeleted: false,
+            })
+                .populate("category", "name") // Chỉ populate những trường cần thiết
+                // Bỏ populate modules/lessons ở đây
+                .select("-__v -isDeleted") // Loại bỏ các trường không cần thiết
+                .sort({ createdAt: -1 }) // Sắp xếp nếu muốn
+                .lean() // Dùng lean() để trả về plain JS objects
+                .exec();
+            return courses; // Trả về danh sách khóa học tìm được
+        } catch (err) {
+            console.error("Lỗi trong repository findByInstructor:", err);
+            throw err; // Ném lỗi để service/controller xử lý
+        }
+    },
+
+    getCoursePublished: async () => {
+        try {
+            const courses = await Course.find({
+                isPublished: true,
+                isDeleted: false,
+            })
+                .populate("main_instructor", "name email")
+                .select("-__v -isDeleted");
+            return courses;
+        } catch (err) {
+            console.error("Lỗi trong repository getCoursePublished:", err);
+            throw err;
+        }
+    },
+
+    getCourseByCategory: async (categoryId) => {
+        try {
+            const courses = await Course.find({
+                category: categoryId,
+                isDeleted: false,
+            })
+                .populate("main_instructor", "name email")
+                .select("-__v -isDeleted")
+                .sort({ createdAt: -1 })
+                .lean()
+                .exec();
+            return courses;
+        } catch (err) {
+            console.error("Lỗi trong repository getCourseByCategory:", err);
+            throw err;
+        }
+    },
 };
 
-module.exports = courseRepository;
+module.exports = { courseRepository };

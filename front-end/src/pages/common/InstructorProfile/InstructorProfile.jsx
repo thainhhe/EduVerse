@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 const InstructorProfile = () => {
   const { id } = useParams();
 
+  // Dữ liệu giả lập
   const instructor = {
     name: "Dr. Eleanor Vance",
     title: "Quantum Computing & Advanced Algorithms",
@@ -25,7 +26,7 @@ const InstructorProfile = () => {
     ],
     image: "/female-professor.png",
     biography:
-      "Dr. Eleanor Vance is a distinguished professor and researcher with over 15 years of experience in the field of theoretical computer science. Her groundbreaking work in quantum algorithms has been published in numerous top-tier journals and recognized with prestigious awards. She is passionate about making complex topics accessible to a wider audience and has a unique ability to simplify challenging concepts. Dr. Vance believes in a hands-on approach to learning, encouraging students to actively explore and experiment with the material. She is also a mentor to several budding scientists and engineers, guiding them in their research endeavors.",
+      "Dr. Eleanor Vance is a distinguished professor and researcher with over 15 years of experience...",
     contact: {
       email: "eleanor.vance@educonnect.com",
       phone: "+1 (555) 123-4567",
@@ -58,7 +59,7 @@ const InstructorProfile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-8 sm:py-12">
       <div className="container mx-auto px-4 max-w-5xl">
         <Button variant="ghost" asChild className="mb-6">
           <Link to="/instructors">
@@ -67,9 +68,9 @@ const InstructorProfile = () => {
           </Link>
         </Button>
 
-        <div className="bg-white rounded-lg shadow-sm p-8 mb-6">
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-8 mb-6">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8">
-            <Avatar className="w-32 h-32">
+            <Avatar className="w-24 h-24 sm:w-32 sm:h-32">
               <AvatarImage
                 src={instructor.image || "/placeholder.svg"}
                 alt={instructor.name}
@@ -77,10 +78,12 @@ const InstructorProfile = () => {
               <AvatarFallback>{instructor.name.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 text-center md:text-left">
-              <h1 className="text-3xl font-bold text-indigo-600 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-2">
                 {instructor.name}
               </h1>
-              <p className="text-lg text-gray-600 mb-4">{instructor.title}</p>
+              <p className="text-md sm:text-lg text-gray-600 mb-4">
+                {instructor.title}
+              </p>
               <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                 {instructor.specialties.map((specialty, index) => (
                   <Badge
@@ -96,17 +99,19 @@ const InstructorProfile = () => {
           </div>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Biography</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
+              Biography
+            </h2>
             <p className="text-gray-700 leading-relaxed">
               {instructor.biography}
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
               Contact Information
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex items-center gap-3 text-gray-700">
                 <Mail className="h-5 w-5 text-indigo-600" />
                 <span>{instructor.contact.email}</span>
@@ -127,13 +132,12 @@ const InstructorProfile = () => {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
               Courses Taught
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {instructor.courses.map((course) => (
                 <Card key={course.id} className="flex flex-col">
-                  {" "}
                   <CardHeader>
                     <CardTitle className="text-lg text-indigo-600">
                       {course.title}
@@ -143,12 +147,10 @@ const InstructorProfile = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="flex flex-col flex-grow p-6 pt-0">
-                    {" "}
-                    <p className="text-sm text-gray-600 mb-4">
+                    <p className="text-sm text-gray-600 mb-4 flex-grow">
                       {course.description}
                     </p>
                     <Button className="w-full bg-indigo-600 hover:bg-indigo-700 mt-auto">
-                      {" "}
                       View Course Details
                     </Button>
                   </CardContent>
@@ -158,7 +160,7 @@ const InstructorProfile = () => {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
               Connect Online
             </h2>
             <div className="flex gap-4">

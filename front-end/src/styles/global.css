@@ -5,7 +5,7 @@
 @plugin "tailwindcss-animate";
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));  
+@custom-variant dark (&:is(.dark *));
 
 @layer base {
   :root {
@@ -58,6 +58,7 @@
   * {
     border-color: hsl(var(--border));
   }
+
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
@@ -175,6 +176,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }

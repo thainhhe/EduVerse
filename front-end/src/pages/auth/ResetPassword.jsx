@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authService } from "@services/authService";
 import { toast } from "react-toastify";
-import { FaCheckCircle } from "react-icons/fa";
 
 const resetPasswordSchema = z
   .object({
@@ -23,7 +22,6 @@ const resetPasswordSchema = z
 const ResetPassword = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const { token } = useParams();
-  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -44,29 +42,31 @@ const ResetPassword = () => {
     }
   };
 
-  if (isSuccess) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <div className="mb-6">
-          <img
-            src="/password-changed.png"
-            alt="Success"
-            className="w-24 h-24 mx-auto"
-          />
+  const renderContent = () => {
+    if (isSuccess) {
+      return (
+        <div className="text-center">
+          <div className="mb-6">
+            <img
+              src="/password-changed.png"
+              alt="Success"
+              className="w-24 h-24 mx-auto"
+            />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+            Password changed!
+          </h1>
+          <p className="text-gray-600 mb-6">
+            You've successfully completed your password reset.
+          </p>
+          <Button size="lg" className="w-full max-w-xs" asChild>
+            <Link to="/login">Log In Now</Link>
+          </Button>
         </div>
-        <h1 className="text-3xl font-bold mb-2">Password changed!</h1>
-        <p className="text-gray-600 mb-6">
-          You've successfully completed your password reset.
-        </p>
-        <Button size="lg" className="w-full max-w-xs" asChild>
-          <Link to="/login">Log In Now</Link>
-        </Button>
-      </div>
-    );
-  }
+      );
+    }
 
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh]">
+    return (
       <div className="w-full max-w-md text-center">
         <div className="mb-6">
           <img
@@ -75,17 +75,19 @@ const ResetPassword = () => {
             className="w-24 h-24 mx-auto"
           />
         </div>
-        <h1 className="text-3xl font-bold mb-2">Reset password</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Reset password</h1>
         <p className="text-gray-600 mb-8">
           Please kindly set your new password.
         </p>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 text-left">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 text-left">
           <div className="space-y-2">
             <Label htmlFor="password">New password</Label>
             <Input id="password" type="password" {...register("password")} />
             {errors.password && (
-              <p className="text-sm text-red-500">{errors.password.message}</p>
+              <p className="text-sm text-red-500 mt-1">
+                {errors.password.message}
+              </p>
             )}
           </div>
           <div className="space-y-2">
@@ -96,7 +98,7 @@ const ResetPassword = () => {
               {...register("confirmPassword")}
             />
             {errors.confirmPassword && (
-              <p className="text-sm text-red-500">
+              <p className="text-sm text-red-500 mt-1">
                 {errors.confirmPassword.message}
               </p>
             )}
@@ -110,6 +112,14 @@ const ResetPassword = () => {
             {isSubmitting ? "Resetting..." : "Reset Password"}
           </Button>
         </form>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="w-full max-w-lg bg-white p-6 sm:p-10 rounded-xl shadow-lg">
+        {renderContent()}
       </div>
     </div>
   );

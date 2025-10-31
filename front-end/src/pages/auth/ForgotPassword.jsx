@@ -20,7 +20,6 @@ const ForgotPassword = () => {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    getValues,
   } = useForm({
     resolver: zodResolver(forgotPasswordSchema),
   });
@@ -35,33 +34,35 @@ const ForgotPassword = () => {
     }
   };
 
-  if (isEmailSent) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <div className="mb-6">
-          <img
-            src="/check-mail.png"
-            alt="Check Email"
-            className="w-24 h-24 mx-auto"
-          />
+  const renderContent = () => {
+    if (isEmailSent) {
+      return (
+        <div className="text-center">
+          <div className="mb-6">
+            <img
+              src="/check-mail.png"
+              alt="Check Email"
+              className="w-24 h-24 mx-auto"
+            />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+            Check your email!
+          </h1>
+          <p className="text-gray-600 max-w-sm mb-6">
+            An email was sent that will ask you to click on a link to verify
+            that you own this account.
+          </p>
+          <Button size="lg" className="w-full max-w-xs mb-4">
+            Open email inbox
+          </Button>
+          <Button variant="link" className="text-gray-600">
+            Resend email
+          </Button>
         </div>
-        <h1 className="text-3xl font-bold mb-2">Check your email!</h1>
-        <p className="text-gray-600 max-w-sm mb-6">
-          An email was sent that will ask you to click on a link to verify that
-          you own this account.
-        </p>
-        <Button size="lg" className="w-full max-w-xs mb-4">
-          Open email inbox
-        </Button>
-        <Button variant="link" className="text-gray-600">
-          Resend email
-        </Button>
-      </div>
-    );
-  }
+      );
+    }
 
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh]">
+    return (
       <div className="w-full max-w-md text-center">
         <div className="mb-6">
           <img
@@ -70,7 +71,9 @@ const ForgotPassword = () => {
             className="w-24 h-24 mx-auto"
           />
         </div>
-        <h1 className="text-3xl font-bold mb-2">Forgot your password?</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+          Forgot your password?
+        </h1>
         <p className="text-gray-600 mb-8">
           Enter your email so that we can send you a password reset link.
         </p>
@@ -103,6 +106,14 @@ const ForgotPassword = () => {
             <FaArrowLeft className="mr-2" /> Back to Login
           </Link>
         </Button>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="w-full max-w-lg bg-white p-6 sm:p-10 rounded-xl shadow-lg">
+        {renderContent()}
       </div>
     </div>
   );

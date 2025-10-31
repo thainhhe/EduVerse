@@ -8,6 +8,8 @@ const { checkPermission } = require("../middlewares/system/permissionMiddleware"
 
 const courseRouter = express.Router();
 
+courseRouter.get("/mine", verifyToken, courseController.getMyCourses);
+
 courseRouter.get("/", courseController.getAllCourse);
 courseRouter.get("/common", courseController.getAllCourseForLearner);
 courseRouter.get("/:id", courseController.getCourseById);
