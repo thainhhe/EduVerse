@@ -1,11 +1,10 @@
-// src/routes/index.jsx
-
 import RegisterLearner from "../pages/auth/RegisterLearner/RegisterLearner";
 import Instructors from "../pages/common/Instructors/Instructors";
 import InstructorProfile from "../pages/common/InstructorProfile/InstructorProfile";
 import Settings from "../pages/common/Settings/Settings";
 import PrivateRoute from "./PrivateRoute";
 import PermissionBasedRoute from "./PermissionBasedRoute";
+import GoogleCallback from "@/pages/auth/GoogleCallback";
 
 const routes = [
   {
@@ -36,5 +35,9 @@ const routes = [
         <UserManagementPage />
       </PermissionBasedRoute>
     ),
+  },
+  {
+    path: "/auth/google/callback",
+    element: <GoogleCallback />,
   },
 ];

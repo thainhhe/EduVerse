@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authService } from "@services/authService";
+import authService from "@/services/authService";
 import { toast } from "react-toastify";
 
 const resetPasswordSchema = z
@@ -21,7 +21,14 @@ const resetPasswordSchema = z
 
 const ResetPassword = () => {
   const [isSuccess, setIsSuccess] = useState(false);
-  const { token } = useParams();
+  const { token: paramToken } = useParams();
+  const { search } = useLocation();
+  const navigate = useNavigate();
+
+  // support token from path or query
+  const qp = new URLSearchParams(search);
+  const token = paramToken || qp.get("token") || qp.get("t");
+
   const {
     register,
     handleSubmit,
@@ -34,7 +41,7 @@ const ResetPassword = () => {
     try {
       await authService.resetPassword(token, data.password);
       toast.success("Password changed successfully!");
-      setIsSuccess(true);
+      navigate("/login");
     } catch (error) {
       toast.error(error.response?.data?.message || "Invalid or expired link.");
     }

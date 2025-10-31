@@ -1,7 +1,7 @@
 // src/context/AuthContext.jsx
 
 import React, { createContext, useCallback, useEffect, useState } from "react";
-import { authService } from "@/services/authService"; // adjust path if needed
+import authService from "@/services/authService";
 import { toast } from "react-toastify";
 
 export const AuthContext = createContext(null);
@@ -23,12 +23,10 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Try to restore session on mount
   useEffect(() => {
     const init = async () => {
       const accessToken = localStorage.getItem("accessToken");
       if (accessToken) {
-        // decode token to extract user id (try common keys)
         const payload = parseJwt(accessToken);
         const userId = payload?.id ?? payload?._id ?? payload?.sub ?? null;
 
@@ -39,13 +37,11 @@ export const AuthProvider = ({ children }) => {
           } else {
             currentUser = await authService.getCurrentUser();
           }
-          // normalize: authService/api may return raw data or wrapper
           const normalized =
             currentUser?.data?.user ?? currentUser?.data ?? currentUser;
           if (normalized) setUser(normalized);
         } catch (err) {
           const status = err?.response?.status;
-          // only clear tokens on auth errors
           if (status === 401 || status === 403) {
             localStorage.removeItem("accessToken");
             localStorage.removeItem("refreshToken");
@@ -143,7 +139,6 @@ export const AuthProvider = ({ children }) => {
         return { success: true };
       }
 
-      // If no user returned, consider registration success (some backends don't auto-login)
       toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
       return { success: true };
     } catch (error) {
@@ -156,12 +151,9 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      // call backend logout if endpoint exists, otherwise just clear local
       try {
         await authService.logout();
-      } catch (e) {
-        // ignore network errors on logout
-      }
+      } catch (e) {}
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       setUser(null);
