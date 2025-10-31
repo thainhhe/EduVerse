@@ -139,40 +139,56 @@ const enrollmentRepository = {
                 console.log("No modules found for courses:", courseIds);
             }
 
-            // 4️⃣ Lấy lessons + populate quiz + materials
+            // 4️⃣ Lấy lessons + populate materials (BỎ populate quiz vì không có field này)
             const lessons = await Lesson.find({ moduleId: { $in: moduleIds } })
                 .populate({
                     path: "materials",
                     populate: { path: "uploadedBy", select: "name email role" },
                 })
-                .populate({
-                    path: "quiz",
-                    select: "title passingScore questions", // Populate các trường cần thiết
-                })
                 .lean();
 
-            // Log để kiểm tra dữ liệu lesson sau populate
             console.log("Lessons after populate:", JSON.stringify(lessons, null, 2));
 
-            // 5️⃣ Lấy quizIds từ lessons và course-level quizzes
-            const lessonQuizIds = lessons
-                .map((l) => l.quiz?._id?.toString())
-                .filter(Boolean);
+            // 5️⃣ Lấy tất cả lessonIds
+            const lessonIds = lessons.map((l) => l._id?.toString()).filter(Boolean);
 
-            // Lấy các quiz ở cấp độ khóa học
+            // Lấy quiz ở cấp lesson
+            const lessonQuizzes = await Quiz.find({
+                lessonId: { $in: lessonIds },
+            })
+                .select("title passingScore questions lessonId")
+                .lean();
+
+            // Lấy quiz ở cấp module
+            const moduleQuizzes = await Quiz.find({
+                moduleId: { $in: moduleIds },
+                lessonId: null,
+            })
+                .select("title passingScore questions moduleId")
+                .lean();
+
+            // Lấy quiz ở cấp course
             const courseQuizzes = await Quiz.find({
                 courseId: { $in: courseIds },
                 moduleId: null,
                 lessonId: null,
             })
-                .select("title passingScore questions")
+                .select("title passingScore questions courseId")
                 .lean();
 
-            const courseQuizIds = courseQuizzes.map((q) => q._id?.toString()).filter(Boolean);
-            const allQuizIds = [...new Set([...lessonQuizIds, ...courseQuizIds])];
+            console.log("Lesson Quizzes found:", lessonQuizzes.length);
+            console.log("Module Quizzes found:", moduleQuizzes.length);
+            console.log("Course Quizzes found:", courseQuizzes.length);
+
+            // Gom tất cả quiz IDs
+            const allQuizIds = [
+                ...lessonQuizzes.map(q => q._id.toString()),
+                ...moduleQuizzes.map(q => q._id.toString()),
+                ...courseQuizzes.map(q => q._id.toString())
+            ].filter(Boolean);
 
             if (!allQuizIds.length) {
-                console.log("No quiz IDs found for lessons or courses");
+                console.log("No quiz IDs found for lessons, modules, or courses");
             }
 
             // 6️⃣ Lấy điểm số (score) của user
@@ -183,6 +199,8 @@ const enrollmentRepository = {
                 .populate("quizId", "title passingScore")
                 .lean();
 
+            console.log("Scores found:", scores.length);
+
             // Gom score theo quizId và attemptNumber để tránh trùng lặp
             const scoresByQuiz = {};
             scores.forEach((s) => {
@@ -192,19 +210,44 @@ const enrollmentRepository = {
                 }
             });
 
-            // 7️⃣ Gắn quizScores vào lesson
-            lessons.forEach((lesson) => {
-                if (lesson.quiz?._id) {
-                    const quizId = lesson.quiz._id.toString();
-                    lesson.quizScores = Object.values(scoresByQuiz).filter(
-                        (s) => s.quizId?._id?.toString() === quizId
-                    );
-                } else {
-                    lesson.quizScores = [];
+            // 7️⃣ Gắn quiz và scores vào lesson
+            const quizByLesson = {};
+            lessonQuizzes.forEach(q => {
+                const lessonId = q.lessonId?.toString();
+                if (lessonId) {
+                    if (!quizByLesson[lessonId]) quizByLesson[lessonId] = [];
+                    const quizId = q._id.toString();
+                    quizByLesson[lessonId].push({
+                        ...q,
+                        quizScores: Object.values(scoresByQuiz).filter(
+                            (s) => s.quizId?._id?.toString() === quizId
+                        ),
+                    });
                 }
             });
 
-            // 8️⃣ Gom lessons theo moduleId
+            lessons.forEach((lesson) => {
+                const lessonId = lesson._id?.toString();
+                lesson.quizzes = quizByLesson[lessonId] || [];
+            });
+
+            // 8️⃣ Gắn quiz vào module
+            const quizByModule = {};
+            moduleQuizzes.forEach(q => {
+                const moduleId = q.moduleId?.toString();
+                if (moduleId) {
+                    if (!quizByModule[moduleId]) quizByModule[moduleId] = [];
+                    const quizId = q._id.toString();
+                    quizByModule[moduleId].push({
+                        ...q,
+                        quizScores: Object.values(scoresByQuiz).filter(
+                            (s) => s.quizId?._id?.toString() === quizId
+                        ),
+                    });
+                }
+            });
+
+            // 9️⃣ Gom lessons theo moduleId
             const lessonsByModule = {};
             lessons.forEach((l) => {
                 const mid = l.moduleId?.toString();
@@ -214,12 +257,14 @@ const enrollmentRepository = {
                 }
             });
 
-            // 9️⃣ Gắn lessons vào modules
+            // 🔟 Gắn lessons và moduleQuizzes vào modules
             modules.forEach((m) => {
-                m.lessons = lessonsByModule[m._id?.toString()] || [];
+                const moduleId = m._id?.toString();
+                m.lessons = lessonsByModule[moduleId] || [];
+                m.moduleQuizzes = quizByModule[moduleId] || [];
             });
 
-            // 🔟 Gom modules theo courseId
+            // 11️⃣ Gom modules theo courseId
             const modulesByCourse = {};
             modules.forEach((m) => {
                 const cid = m.courseId?.toString();
@@ -229,7 +274,7 @@ const enrollmentRepository = {
                 }
             });
 
-            // 11️⃣ Gắn courseQuizzes vào course
+            // 12️⃣ Gắn courseQuizzes với scores
             const courseQuizzesByCourse = {};
             courseQuizzes.forEach((q) => {
                 const cid = q.courseId?.toString();
@@ -245,30 +290,37 @@ const enrollmentRepository = {
                 }
             });
 
-            // 12️⃣ Tổng hợp kết quả cho từng enrollment
+            // 13️⃣ Tổng hợp kết quả cho từng enrollment
             const result = enrollments.map((en) => {
                 const course = en.courseId || {};
                 const courseModules = modulesByCourse[course?._id?.toString()] || [];
 
-                // Gom tất cả quizScores trong course
+                // Gom tất cả quizzes và scores trong course
                 const allLessons = courseModules.flatMap((m) => m.lessons || []);
-                const allLessonScores = allLessons.flatMap((l) => l.quizScores || []);
-                const courseQuizScores = (courseQuizzesByCourse[course?._id?.toString()] || []).flatMap(
-                    (q) => q.quizScores || []
-                );
+                const allLessonQuizzes = allLessons.flatMap((l) => l.quizzes || []);
+                const allModuleQuizzes = courseModules.flatMap((m) => m.moduleQuizzes || []);
+                const courseQuizList = courseQuizzesByCourse[course?._id?.toString()] || [];
 
-                const totalQuizzes =
-                    allLessons.filter((l) => l.quiz?._id).length +
-                    (courseQuizzesByCourse[course?._id?.toString()]?.length || 0);
+                const allLessonScores = allLessonQuizzes.flatMap((q) => q.quizScores || []);
+                const allModuleScores = allModuleQuizzes.flatMap((q) => q.quizScores || []);
+                const courseQuizScores = courseQuizList.flatMap((q) => q.quizScores || []);
+
+                const totalQuizzes = allLessonQuizzes.length + allModuleQuizzes.length + courseQuizList.length;
                 const completedQuizzes =
                     allLessonScores.filter((s) => s.status === "passed").length +
+                    allModuleScores.filter((s) => s.status === "passed").length +
                     courseQuizScores.filter((s) => s.status === "passed").length;
-                const allScores = [...new Set([...allLessonScores, ...courseQuizScores].map((s) => JSON.stringify(s)))].map(
-                    (s) => JSON.parse(s)
-                ); // Loại bỏ trùng lặp
+
+                const allScores = [...allLessonScores, ...allModuleScores, ...courseQuizScores];
+                const uniqueScores = [...new Set(allScores.map((s) => JSON.stringify(s)))].map((s) =>
+                    JSON.parse(s)
+                );
                 const averageScore =
-                    allScores.length > 0
-                        ? Math.round(allScores.reduce((acc, s) => acc + (s.percentage || 0), 0) / allScores.length)
+                    uniqueScores.length > 0
+                        ? Math.round(
+                              uniqueScores.reduce((acc, s) => acc + (s.percentage || 0), 0) /
+                                  uniqueScores.length
+                          )
                         : 0;
 
                 const calculatedProgress =
@@ -276,7 +328,9 @@ const enrollmentRepository = {
 
                 // Gắn modules và courseQuizzes vào course
                 course.modules = courseModules;
-                course.courseQuizzes = courseQuizzesByCourse[course?._id?.toString()] || [];
+                course.courseQuizzes = courseQuizList;
+
+                console.log(`Course ${course._id}: Total Quizzes = ${totalQuizzes}, Completed = ${completedQuizzes}`);
 
                 return {
                     _id: en._id,
@@ -289,7 +343,7 @@ const enrollmentRepository = {
                     completedQuizzes,
                     averageScore,
                     courseId: course,
-                    allScores,
+                    allScores: uniqueScores,
                 };
             });
 
