@@ -1,4 +1,4 @@
-const courseManagementService = require("../../repositories/admin/courseManagement.repository");
+const {courseManagementService} = require("../../services/admin/courseManagement.services");
 const { response, error_response } = require("../../utils/response.util");
 
 const adminCourseManagementController = {
@@ -9,7 +9,17 @@ const adminCourseManagementController = {
         } catch (error) {
             return error_response(res, error);
         }
-    }
+    },
+
+    getCourseDetailsById: async (req, res) => {
+        try {
+            const courseId = req.params.id;
+            const result = await courseManagementService.getCourseDetailsById(courseId);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
 };
 
 module.exports = { adminCourseManagementController };
