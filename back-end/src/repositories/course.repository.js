@@ -55,6 +55,24 @@ const courseRepository = {
       throw err; // Ném lỗi để service/controller xử lý
     }
   },
+
+  getCourseByCategory: async (categoryId) => {
+    try {
+      const courses = await Course.find({
+        category: categoryId,
+        isDeleted: false,
+      })
+        .populate("main_instructor", "name email")
+        .select("-__v -isDeleted")
+        .sort({ createdAt: -1 })
+        .lean()
+        .exec();
+      return courses;
+    } catch (err) {
+      console.error("Lỗi trong repository getCourseByCategory:", err);
+      throw err;
+    }
+  }
 };
 
 module.exports = { courseRepository };

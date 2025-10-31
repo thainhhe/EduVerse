@@ -8,6 +8,7 @@ const {
 const {
   COMMENT_ERROR_MESSAGE,
 } = require("../../config/enum/comment.constants");
+const Enrollment = require("../../models/Enrollment");
 const flattenToLevel3 = (comment, level = 1) => {
   // Nếu đang ở cấp 3
   if (level === 2) {
@@ -64,7 +65,16 @@ const commentService = {
           message: "User không tồn tại",
         };
       }
+      const courseId = forum.courseId; // forum gắn với 1 khóa học
+      const enrollment = await Enrollment.findOne({ userId, courseId });
 
+      if (!enrollment) {
+        return {
+          status: STATUS_CODE.FORBIDDEN,
+          message: "Bạn cần đăng ký khóa học trước khi bình luận.",
+          success: false,
+        };
+      }
       // Tạo comment mới
       const newComment = await Comment.create({
         forumId,
