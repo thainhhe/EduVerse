@@ -11,7 +11,7 @@ import { toast } from "react-toastify";
 import { FaArrowLeft } from "react-icons/fa";
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email("Email không hợp lệ"),
+  email: z.string().email("Invalid email"),
 });
 
 const ForgotPassword = () => {
@@ -27,10 +27,10 @@ const ForgotPassword = () => {
   const onSubmit = async (data) => {
     try {
       await authService.forgotPassword(data.email);
-      toast.success("Link đặt lại mật khẩu đã được gửi!");
+      toast.success("Password reset link has been sent!");
       setIsEmailSent(true);
     } catch (error) {
-      toast.error(error.response?.data?.message || "Đã có lỗi xảy ra.");
+      toast.error(error.response?.data?.message || "An error occurred.");
     }
   };
 

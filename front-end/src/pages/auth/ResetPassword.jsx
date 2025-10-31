@@ -11,11 +11,11 @@ import { toast } from "react-toastify";
 
 const resetPasswordSchema = z
   .object({
-    password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Mật khẩu không khớp",
+    message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 
@@ -33,12 +33,10 @@ const ResetPassword = () => {
   const onSubmit = async (data) => {
     try {
       await authService.resetPassword(token, data.password);
-      toast.success("Đổi mật khẩu thành công!");
+      toast.success("Password changed successfully!");
       setIsSuccess(true);
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Link không hợp lệ hoặc đã hết hạn."
-      );
+      toast.error(error.response?.data?.message || "Invalid or expired link.");
     }
   };
 

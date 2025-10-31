@@ -148,17 +148,24 @@ const RegisterInstructor = () => {
 
             <div className="space-y-2">
               <Label htmlFor="subjects">Subject(s) You Want to Teach</Label>
-              <select
-                id="subjects"
-                className="flex h-10 w-full rounded-md border border-input bg-gray-50 px-3 py-2 text-sm"
-                {...register("subjects")}
-                multiple
-              >
-                <option value="Marketing">Marketing</option>
-                <option value="Programming">Programming</option>
-                <option value="Design">Design</option>
-                <option value="Business">Business</option>
-              </select>
+
+              {/* Multi-checkbox group for subjects */}
+              {["Marketing", "Programming", "Design", "Business"].map((s) => (
+                <div key={s} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`subject-${s}`}
+                    value={s}
+                    {...register("subjects")}
+                  />
+                  <label
+                    htmlFor={`subject-${s}`}
+                    className="text-sm text-gray-700"
+                  >
+                    {s}
+                  </label>
+                </div>
+              ))}
+
               {errors.subjects && (
                 <p className="text-sm text-red-500 mt-1">
                   {errors.subjects.message}
