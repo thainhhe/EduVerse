@@ -192,26 +192,26 @@ const scoreServices = {
           : { id: quiz.lessonId?.toString?.() || quiz.lessonId, title: null };
         scope.module = moduleFromLesson
           ? {
-              id: moduleFromLesson._id?.toString() || moduleFromLesson.id,
-              title: moduleFromLesson.title,
-            }
+            id: moduleFromLesson._id?.toString() || moduleFromLesson.id,
+            title: moduleFromLesson.title,
+          }
           : quiz.moduleId
-          ? {
+            ? {
               id: quiz.moduleId._id?.toString() || quiz.moduleId,
               title: quiz.moduleId?.title || null,
             }
-          : null;
+            : null;
         scope.course = courseFromLesson
           ? {
-              id: courseFromLesson._id?.toString() || courseFromLesson.id,
-              title: courseFromLesson.title,
-            }
+            id: courseFromLesson._id?.toString() || courseFromLesson.id,
+            title: courseFromLesson.title,
+          }
           : quiz.courseId
-          ? {
+            ? {
               id: quiz.courseId._id?.toString() || quiz.courseId,
               title: quiz.courseId?.title || null,
             }
-          : null;
+            : null;
       }
       // If quiz has moduleId (and no lesson)
       else if (quiz.moduleId) {
@@ -224,15 +224,15 @@ const scoreServices = {
           : { id: quiz.moduleId?.toString?.() || quiz.moduleId, title: null };
         scope.course = courseFromModule
           ? {
-              id: courseFromModule._id?.toString() || courseFromModule.id,
-              title: courseFromModule.title,
-            }
+            id: courseFromModule._id?.toString() || courseFromModule.id,
+            title: courseFromModule.title,
+          }
           : quiz.courseId
-          ? {
+            ? {
               id: quiz.courseId._id?.toString() || quiz.courseId,
               title: quiz.courseId?.title || null,
             }
-          : null;
+            : null;
       }
       // If quiz has courseId only
       else if (quiz.courseId) {
@@ -262,6 +262,72 @@ const scoreServices = {
       throw error;
     }
   },
+
+  checkQuizCompletion: async (userId, quizId) => {
+    try {
+      // Lấy thông tin quiz
+      const quiz = await quizRepository.getQuizById(quizId);
+
+      if (!quiz) {
+        return {
+          status: 404,
+          message: "Quiz not found",
+        };
+      }
+
+      // Lấy tất cả attempts của user cho quiz này
+      const attempts = await scoreRepository.getUserAttempts(userId, quizId);
+
+      // Kiểm tra xem đã làm chưa
+      const hasCompleted = attempts.length > 0;
+
+      // Tính toán thông tin
+      const attemptsUsed = attempts.length;
+      const attemptsRemaining = quiz.attemptsAllowed - attemptsUsed;
+      const canRetake = attemptsUsed < quiz.attemptsAllowed;
+
+      // Lấy attempt gần nhất (attemptNumber lớn nhất)
+      let latestAttempt = null;
+      if (hasCompleted) {
+        latestAttempt = attempts.reduce((latest, current) => {
+          return current.attemptNumber > latest.attemptNumber ? current : latest;
+        }, attempts[0]);
+      }
+
+      return {
+        status: 200,
+        message: "Success",
+        data: {
+          hasCompleted,
+          quiz: {
+            id: quiz._id,
+            title: quiz.title,
+            passingScore: quiz.passingScore,
+            attemptsAllowed: quiz.attemptsAllowed,
+          },
+          attempts: {
+            total: attemptsUsed,
+            remaining: attemptsRemaining,
+            canRetake,
+          },
+          latestScore: latestAttempt ? {
+            id: latestAttempt._id,
+            score: latestAttempt.score,
+            totalPoints: latestAttempt.totalPoints,
+            percentage: latestAttempt.percentage,
+            status: latestAttempt.status,
+            attemptNumber: latestAttempt.attemptNumber,
+            dateSubmitted: latestAttempt.dateSubmitted,
+            passed: latestAttempt.status === "passed",
+          } : null,
+        },
+      };
+    } catch (error) {
+      console.error("Service Error - checkQuizCompletion:", error);
+      throw error;
+    }
+  },
+
 };
 
 module.exports = scoreServices;
