@@ -18,6 +18,7 @@ const CourseDetail = () => {
   const { enrollments } = useEnrollment();
   console.log("enrollments", enrollments)
 
+
   const handleEnroll = () => {
     if (!user) {
       navigate("/login");

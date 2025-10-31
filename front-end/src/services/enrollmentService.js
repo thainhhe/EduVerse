@@ -6,6 +6,13 @@ export const enrollmentService = {
     return res.data;
   },
 
+  getDetailCourseEnrollmentsByUser: async (userId, courseId) => {
+    const res = await api.get(
+      `/enrollment/user/${userId}/course/${courseId}/detail`
+    );
+    return res.data;
+  },
+
   createEnrollment: async (data) => {
     const res = await api.post(`/enrollment`, data);
     return res.data;
