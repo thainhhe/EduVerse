@@ -1,5 +1,5 @@
-const {system_enum} = require("../../config/enum/system.constant");
-const {enrollment_enum} = require("../../config/enum/enroll.constants");
+const { system_enum } = require("../../config/enum/system.constant");
+const { enrollment_enum } = require("../../config/enum/enroll.constants");
 const enrollmentRepository = require("../../repositories/enroll.repository");
 const enrollValidator = require("../../validator/enroll.validator");
 const enrollmentHelper = require("./enroll.helper");
@@ -63,7 +63,7 @@ const enrollmentServices = {
                 validatedData.userId,
                 validatedData.courseId
             );
-            
+
             if (existingEnrollment) {
                 return {
                     status: system_enum.STATUS_CODE.BAD_REQUEST,
@@ -88,7 +88,7 @@ const enrollmentServices = {
                     errors: error.validationErrors,
                 };
             }
-            
+
             throw error;
         }
     },
@@ -113,7 +113,7 @@ const enrollmentServices = {
             };
         } catch (error) {
             console.error('Service Error - updateEnrollment:', error);
-            
+
             // Handle validation errors
             if (error.isValidation) {
                 return {
@@ -122,7 +122,7 @@ const enrollmentServices = {
                     errors: error.validationErrors,
                 };
             }
-            
+
             throw error;
         }
     },
@@ -148,6 +148,43 @@ const enrollmentServices = {
             throw error;
         }
     },
+
+    getDetailedEnrollmentByUser: async (userId) => {
+        try {
+            const enrollments = await enrollmentRepository.getDetailedEnrollmentByUser(userId);
+
+            if (!enrollments || enrollments.length === 0) {
+                return {
+                    status: system_enum.STATUS_CODE.NOT_FOUND,
+                    message: enrollment_enum.ENROLLMENT_MESSAGE.ENROLLMENT_NOT_FOUND,
+                    data: [],
+                };
+            }
+
+            const formatted = enrollments.map((e) => enrollmentHelper.formatDetailedEnrollment(e));
+
+            return {
+                status: system_enum.STATUS_CODE.OK,
+                message: system_enum.SYSTEM_MESSAGE.SUCCESS,
+                data: formatted,
+            };
+        } catch (error) {
+            console.error("Service Error - getDetailedEnrollmentByUser:", {
+                message: error.message,
+                stack: error.stack,
+                userId,
+            });
+            return {
+                status: system_enum.STATUS_CODE.INTERNAL_SERVER_ERROR,
+                message: system_enum.SYSTEM_MESSAGE.INTERNAL_SERVER_ERROR,
+                ...(process.env.NODE_ENV === "development" && {
+                    error: error.message,
+                    stack: error.stack,
+                }),
+            };
+        }
+    },
+
 };
 
 module.exports = enrollmentServices;

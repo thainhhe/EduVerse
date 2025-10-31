@@ -30,5 +30,7 @@ const system_enum = {
     },
 };
 module.exports = {
+    STATUS_CODE: system_enum.STATUS_CODE,
+    SYSTEM_MESSAGE: system_enum.SYSTEM_MESSAGE,
     system_enum,
 };

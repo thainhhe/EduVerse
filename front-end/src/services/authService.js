@@ -18,9 +18,29 @@ export const authService = {
     return response;
   },
 
-  getCurrentUser: async () => {
-    const response = await api.get("/auth/me");
-    return response;
+  // accept optional id; if id provided call /user/profile/:id which matches backend router
+  getCurrentUser: async (id = null) => {
+    if (id) {
+      const response = await api.get(`/users/profile/${id}`);
+      // api interceptor returns response.data already
+      return response;
+    }
+
+    // fallback: try common endpoints
+    const endpoints = ["/auth/me", "/auth/profile", "/users/me"];
+    for (const ep of endpoints) {
+      try {
+        const data = await api.get(ep);
+        return data;
+      } catch (err) {
+        if (err?.response?.status === 404) continue;
+        throw err;
+      }
+    }
+
+    const e = new Error("Current user endpoint not found");
+    e.response = { status: 404 };
+    throw e;
   },
 
   forgotPassword: async (email) => {

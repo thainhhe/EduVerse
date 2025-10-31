@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { Checkbox } from "@/components/ui/checkbox";
 
-const Register = () => {
+const RegisterInstructor = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { register: registerUser } = useAuth();
@@ -28,7 +29,7 @@ const Register = () => {
 
   const onSubmit = async (data) => {
     const result = await registerUser({
-      name: data.fullName,
+      username: data.fullName, // send username to match backend validator
       email: data.email,
       password: data.password,
       role: "instructor",
@@ -42,28 +43,26 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white py-12 px-4">
-      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-        {/* Illustration Section */}
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
+      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
         <div className="hidden lg:flex items-center justify-center">
           <img
             src="/Selection.png"
-            alt="Students learning together"
-            className="w-full max-w-lg rounded-2xl"
+            alt="Instructors collaborating"
+            className="w-full max-w-lg"
           />
         </div>
 
-        {/* Form Section */}
-        <div className="bg-white p-8 lg:p-12 rounded-2xl shadow-xl">
-          <h2 className="text-3xl font-bold text-primary text-center mb-2">
+        <div className="bg-white p-6 sm:p-8 lg:p-12 rounded-2xl shadow-xl">
+          <h2 className="text-2xl sm:text-3xl font-bold text-primary text-center mb-2">
             Create Your Instructor Account
           </h2>
           <p className="text-gray-600 text-center mb-8 text-sm">
-            Fill out the form below to start building and sharing your courses
-            with students across the globe
+            Start building and sharing your courses with students across the
+            globe.
           </p>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
               <Input
@@ -73,7 +72,7 @@ const Register = () => {
                 {...register("fullName")}
               />
               {errors.fullName && (
-                <p className="text-sm text-red-500">
+                <p className="text-sm text-red-500 mt-1">
                   {errors.fullName.message}
                 </p>
               )}
@@ -89,11 +88,13 @@ const Register = () => {
                 {...register("email")}
               />
               {errors.email && (
-                <p className="text-sm text-red-500">{errors.email.message}</p>
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
@@ -113,7 +114,7 @@ const Register = () => {
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="text-sm text-red-500">
+                  <p className="text-sm text-red-500 mt-1">
                     {errors.password.message}
                   </p>
                 )}
@@ -138,7 +139,7 @@ const Register = () => {
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="text-sm text-red-500">
+                  <p className="text-sm text-red-500 mt-1">
                     {errors.confirmPassword.message}
                   </p>
                 )}
@@ -159,7 +160,7 @@ const Register = () => {
                 <option value="Business">Business</option>
               </select>
               {errors.subjects && (
-                <p className="text-sm text-red-500">
+                <p className="text-sm text-red-500 mt-1">
                   {errors.subjects.message}
                 </p>
               )}
@@ -172,40 +173,37 @@ const Register = () => {
                 className="flex h-10 w-full rounded-md border border-input bg-gray-50 px-3 py-2 text-sm"
                 {...register("jobTitle")}
               >
+                <option value="">Select a job title</option>
                 <option value="Manager">Manager</option>
                 <option value="Professor">Professor</option>
                 <option value="Instructor">Instructor</option>
               </select>
               {errors.jobTitle && (
-                <p className="text-sm text-red-500">
+                <p className="text-sm text-red-500 mt-1">
                   {errors.jobTitle.message}
                 </p>
               )}
             </div>
 
-            <label className="flex items-start gap-3 text-sm text-gray-600 cursor-pointer">
-              <input
-                type="checkbox"
-                className="mt-1 w-4 h-4 rounded border-gray-300 text-primary"
-                required
+            <div className="flex items-start space-x-3 pt-2">
+              <Checkbox
+                id="agreeTerms"
+                {...register("agreeTerms", {
+                  setValueAs: (v) => v === "on" || v === "true" || v === true,
+                })}
+                className="mt-1"
               />
-              <span>
+              <label htmlFor="agreeTerms" className="text-sm text-gray-700">
                 By signing up, I agree with the{" "}
-                <Link
-                  to="/terms"
-                  className="text-primary font-medium hover:underline"
-                >
+                <Link to="/terms" className="text-indigo-600 hover:underline">
                   Terms of Use
                 </Link>{" "}
                 &{" "}
-                <Link
-                  to="/privacy"
-                  className="text-primary font-medium hover:underline"
-                >
+                <Link to="/privacy" className="text-indigo-600 hover:underline">
                   Privacy Policy
                 </Link>
-              </span>
-            </label>
+              </label>
+            </div>
 
             <Button
               type="submit"
@@ -216,7 +214,7 @@ const Register = () => {
               {isSubmitting ? "Signing up..." : "Sign up"}
             </Button>
 
-            <p className="text-center text-sm text-gray-600">
+            <p className="text-center text-sm text-gray-600 pt-2">
               Already have an account?{" "}
               <Link
                 to="/login"
@@ -232,4 +230,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default RegisterInstructor;

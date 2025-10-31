@@ -1,5 +1,4 @@
 const express = require("express");
-const router = express.Router();
 const categoryRouter = require("./category.routes.js");
 const reviewRouter = require("./review.routes.js");
 const enrollRouter = require("./enroll.routes.js");
@@ -12,6 +11,10 @@ const userRouter = require("./user.routes");
 const moduleRouter = require("./module.routes");
 const lessonRouter = require("./lesson.routes");
 const courseRouter = require("./course.routes");
+const forumRouter = require("./forum.routes");
+const commentRouter = require("./comment.routes");
+const chatbotRouter = require("./chatbot.routes");
+const router = express.Router();
 const materialRouter = require("./material.routes");
 const logRouter = require("./log.routes.js");
 const manage_user_router = require("./admin/manage-user.routes.js");
