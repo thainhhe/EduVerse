@@ -11,23 +11,32 @@ const chatbotController = {
   async handleQuery(req, res) {
     try {
       const { message, history } = req.body;
+      if (!message) {
+        return res.status(400).json({
+          success: false,
+          message: "message is required",
+          data: {},
+        });
+      }
 
-      // Chuyển tiếp yêu cầu đến Chatbot Service
-      const botResponse = await axios.post(CHATBOT_SERVICE_URL, {
+      // Forward request to chatbot service
+      const resp = await axios.post(CHATBOT_SERVICE_URL, {
         message,
-        history: history || [],
+        history,
       });
 
-      // Trả kết quả (data.reply) từ Chatbot Service về cho Frontend
-      return response(res, { data: botResponse.data });
+      // If service returns object { reply: ... } forward that structure
+      const body = resp.data ?? {};
+      return res.json({ success: true, message: "", data: body });
     } catch (error) {
       console.error(
-        "Lỗi khi gọi Chatbot Service:",
-        error.response?.data || error.message
+        "chatbotController.handleQuery error:",
+        error?.message || error
       );
-      return error_response(res, {
-        status: STATUS_CODE.INTERNAL_SERVER_ERROR,
-        message: "Lỗi kết nối đến trợ lý AI.",
+      return res.status(500).json({
+        success: false,
+        message: error?.message || "Internal error",
+        data: {},
       });
     }
   },
