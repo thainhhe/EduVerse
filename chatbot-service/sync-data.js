@@ -90,25 +90,160 @@ const syncData = async () => {
     return;
   }
 
-  // 3. Tạo văn bản (Documents) cho Langchain
-  const courseDocuments = courses.map((course) => {
-    const text = `Tên khóa học: ${course.title}. Mô tả: ${course.description}. Giá: ${course.price} VNĐ.`;
-    return {
-      pageContent: text,
+  // 3. Lấy modules + lessons và tạo documents chi tiết hơn
+  const moduleSchema = new mongoose.Schema(
+    {},
+    { collection: "modules", strict: false }
+  );
+  const lessonSchema = new mongoose.Schema(
+    {},
+    { collection: "lessons", strict: false }
+  );
+
+  const Module =
+    mongoose.models.Module || mongoose.model("Module", moduleSchema);
+  const Lesson =
+    mongoose.models.Lesson || mongoose.model("Lesson", lessonSchema);
+
+  let modules = [];
+  let lessons = [];
+  try {
+    const courseIds = courses.map((c) => c._id);
+    modules = await Module.find({ courseId: { $in: courseIds } }).lean();
+    const moduleIds = modules.map((m) => m._id);
+    lessons = await Lesson.find({ moduleId: { $in: moduleIds } }).lean();
+    console.log(
+      `Tìm thấy ${modules.length} module và ${lessons.length} lesson liên quan.`
+    );
+  } catch (e) {
+    console.warn("Không lấy được modules/lessons:", e?.message || e);
+  }
+
+  // Map để dễ truy xuất
+  const modulesByCourse = {};
+  modules.forEach((m) => {
+    const cid = String(m.courseId);
+    modulesByCourse[cid] = modulesByCourse[cid] || [];
+    modulesByCourse[cid].push(m);
+  });
+
+  const lessonsByModule = {};
+  lessons.forEach((l) => {
+    const mid = String(l.moduleId);
+    lessonsByModule[mid] = lessonsByModule[mid] || [];
+    lessonsByModule[mid].push(l);
+  });
+
+  // Tạo documents ở 3 mức: course, module, lesson
+  const courseDocuments = [];
+  const moduleDocuments = [];
+  const lessonDocuments = [];
+
+  courses.forEach((course) => {
+    const cid = String(course._id);
+    const mods = modulesByCourse[cid] || [];
+    const moduleSummaries = mods.map((m) => {
+      const mid = String(m._id);
+      return {
+        id: mid,
+        title: m.title || m.name || null,
+        lessonCount: (lessonsByModule[mid] || []).length,
+      };
+    });
+    const totalLessons = moduleSummaries.reduce(
+      (s, x) => s + (x.lessonCount || 0),
+      0
+    );
+
+    // Course-level doc (bao gồm summary)
+    courseDocuments.push({
+      pageContent: `Tên khóa học: ${course.title}. Mô tả: ${
+        course.description || ""
+      }. Giá: ${course.price || ""} VNĐ. Số module: ${
+        mods.length
+      }. Số bài học: ${totalLessons}. Modules: ${moduleSummaries
+        .map((m) => `${m.title}(${m.lessonCount} bài)`)
+        .join("; ")}`,
       metadata: {
-        courseId: course._id.toString(),
+        courseId: cid,
         type: "course",
         title: course.title,
+        moduleCount: mods.length,
+        lessonCount: totalLessons,
+        modules: moduleSummaries,
       },
-    };
+    });
+
+    // Module-level docs
+    mods.forEach((m) => {
+      const mid = String(m._id);
+      const lessonsForM = lessonsByModule[mid] || [];
+      moduleDocuments.push({
+        pageContent: `Module: ${m.title || m.name}. Mô tả: ${
+          m.description || ""
+        }. Thuộc khóa học: ${course.title}. Số bài học: ${lessonsForM.length}.`,
+        metadata: {
+          courseId: cid,
+          moduleId: mid,
+          type: "module",
+          title: m.title || m.name,
+          lessonCount: lessonsForM.length,
+        },
+      });
+
+      lessonsForM.forEach((l) => {
+        lessonDocuments.push({
+          pageContent: `Bài học: ${l.title || l.name}. Nội dung tóm tắt: ${
+            l.summary || l.content || ""
+          }. Thuộc module: ${m.title || m.name} - khóa: ${course.title}.`,
+          metadata: {
+            courseId: cid,
+            moduleId: mid,
+            lessonId: String(l._id),
+            type: "lesson",
+            title: l.title || l.name,
+          },
+        });
+      });
+    });
   });
+
+  const allDocs = [...courseDocuments, ...moduleDocuments, ...lessonDocuments];
 
   const embeddings = new GoogleGenerativeAIEmbeddings({
     apiKey: GEMINI_API_KEY,
     model: "text-embedding-004",
   });
 
-  const client = new ChromaClient({ path: CHROMA_URL });
+  const sanitizeMetadata = (meta = {}) => {
+    const out = {};
+    Object.keys(meta || {}).forEach((k) => {
+      const v = meta[k];
+      const t = typeof v;
+      if (v === null || t === "string" || t === "number" || t === "boolean") {
+        out[k] = v;
+      } else {
+        try {
+          out[k] = JSON.stringify(v);
+        } catch (e) {
+          out[k] = String(v);
+        }
+      }
+    });
+    return out;
+  };
+
+  const docsForChroma = allDocs.map((d, idx) => ({
+    pageContent: d.pageContent,
+    metadata: sanitizeMetadata(d.metadata),
+    id: `doc-${idx}-${Date.now()}`,
+  }));
+
+  const client = new ChromaClient({
+    host: "localhost",
+    port: 8000,
+    ssl: false,
+  });
 
   try {
     await client.deleteCollection({ name: COLLECTION_NAME });
@@ -117,13 +252,15 @@ const syncData = async () => {
     console.log("Không tìm thấy collection cũ, tạo mới.");
   }
 
-  console.log("Bắt đầu nạp dữ liệu vào ChromaDB...");
-  await Chroma.fromDocuments(courseDocuments, embeddings, {
+  console.log("Bắt đầu nạp dữ liệu (courses/modules/lessons) vào ChromaDB...");
+  await Chroma.fromDocuments(docsForChroma, embeddings, {
     collectionName: COLLECTION_NAME,
-    url: CHROMA_URL,
+    client,
   });
 
-  console.log(`ĐÃ NẠP THÀNH CÔNG ${courses.length} khóa học vào Vector DB!`);
+  console.log(
+    `ĐÃ NẠP THÀNH CÔNG: courses ${courses.length}, modules ${modules.length}, lessons ${lessons.length} vào Vector DB!`
+  );
   await mongoose.disconnect();
   console.log("Đã ngắt kết nối MongoDB.");
 };

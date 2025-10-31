@@ -26,4 +26,11 @@ courseRouter.delete("/delete/:id", verifyToken, courseController.deleteCourse);
 // Get courses of current authenticated instructor
 // courseRouter.get("/mine", verifyToken, courseController.getMyCourses);
 
+
+//get course by category
+courseRouter.get(
+  "/category/:categoryId",
+  courseController.getCourseByCategory
+);
+
 module.exports = courseRouter;
