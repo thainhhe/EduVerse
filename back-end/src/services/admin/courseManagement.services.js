@@ -1,4 +1,4 @@
-const courseManagementRepository = require("../../repositories/course.repository");
+const courseManagementRepository = require("../../repositories/admin/courseManagement.repository");
 const { course_enum } = require("../../../");
 const { system_enum } = require("../../config/enum/system.constant");
 
@@ -16,12 +16,18 @@ const courseManagementService = {
             }
             return {
                 status: system_enum.STATUS_CODE.OK,
-                success: true,
+                success: true,  
                 message: course_enum.COURSE_MESSAGE.GET_DATA_SUCCESS,
                 data: result,
             };
         } catch (error) {
-            throw new Error(error);
+            console.error("Error in getAllCourses:", error);
+            return {
+                status: system_enum.STATUS_CODE.INTERNAL_SERVER_ERROR,
+                success: false,
+                message: "Internal server error.",
+                data: [],
+            };
         }
     }
 };
