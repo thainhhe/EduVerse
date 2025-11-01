@@ -131,11 +131,7 @@ const Login = () => {
                 onClick={onGoogleSignIn}
                 className="w-full inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 bg-white hover:bg-gray-50"
               >
-                <img
-                  src="/images/google-icon.svg"
-                  alt="Google"
-                  className="w-5 h-5"
-                />
+                <FcGoogle className="w-5 h-5" size={20} />
                 Continue with Google
               </button>
             </div>
