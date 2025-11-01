@@ -8,8 +8,21 @@ const userRepository = {
       .exec();
   },
 
+  findInstructor: async () => {
+    return await User.find({ role: "instructor" })
+      .populate("permissions", "name")
+      .exec();
+  },
+
   findByEmail_Duplicate: async (email) => {
     return await User.findOne({ email: email }).exec();
+  },
+
+  findDuplicateEmailExceptSelf: async (email, userId) => {
+    return await User.findOne({
+      email: email,
+      _id: { $ne: userId },
+    }).exec();
   },
 
   findById: async (id) => {
@@ -39,6 +52,17 @@ const userRepository = {
       new: true,
     })
       .select("-password")
+      .populate("permissions", "name")
+      .exec();
+  },
+
+  update_by_email: async (email, update) => {
+    return await User.findOneAndUpdate(
+      { email: email, status: "active" },
+      update,
+      { new: true }
+    )
+      .select("-password")
       .exec();
   },
 
@@ -52,10 +76,19 @@ const userRepository = {
       .exec();
   },
 
+  banned: async (id) => {
+    return await User.findOneAndUpdate(
+      { _id: id, status: "active" },
+      { status: "banned" },
+      { new: true }
+    )
+      .select("-password")
+      .exec();
+  },
+
   save: async (user) => {
     return await user.save();
   },
 };
 
-// chỉ export một lần dưới dạng object
 module.exports = { userRepository };

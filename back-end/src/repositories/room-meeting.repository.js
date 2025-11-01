@@ -1,4 +1,4 @@
-const Room = require("../models/roomModel");
+const Room = require("../models/RoomMeeting");
 
 const roomMeetingRepository = {
     findAll: async () => {

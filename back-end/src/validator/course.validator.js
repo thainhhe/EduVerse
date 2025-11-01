@@ -42,10 +42,7 @@ const courseValidator = {
             )
             .default([]),
 
-        category: yup
-            .string()
-            .nullable()
-            .test("is-objectid", course_enum.COURSE_MESSAGE.INVALID_OBJECT_ID, (v) => !v || isObjectId(v)),
+        category: yup.string().nullable(),
 
         thumbnail: yup.string().nullable(),
 

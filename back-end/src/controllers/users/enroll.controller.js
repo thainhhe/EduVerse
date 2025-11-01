@@ -139,7 +139,7 @@ const getDetailedEnrollmentByUser = async (req, res) => {
     console.error("Controller Error - getDetailedEnrollmentByUser:", {
       message: error.message,
       stack: error.stack,
-      userId,
+      userId: req.params.userId,
     });
     return res.status(system_enum.STATUS_CODE.INTERNAL_SERVER_ERROR).json({
       message: system_enum.SYSTEM_MESSAGE.INTERNAL_SERVER_ERROR,
@@ -150,12 +150,11 @@ const getDetailedEnrollmentByUser = async (req, res) => {
     });
   }
 };
+
 const getDetailedEnrollmentByUserIdCourseId = async (req, res) => {
   try {
     const userId = req.params.userId;
     const courseId = req.params.courseId;
-    console.log("userId", userId);
-    console.log("courseId", courseId);
     const result =
       await enrollmentServices.getDetailedEnrollmentByUserIdCourseId(
         userId,
@@ -167,10 +166,11 @@ const getDetailedEnrollmentByUserIdCourseId = async (req, res) => {
       ...(result.error && { error: result.error, stack: result.stack }),
     });
   } catch (error) {
-    console.error("Controller Error - getDetailedEnrollmentByUser:", {
+    console.error("Controller Error - getDetailedEnrollmentByUserIdCourseId:", {
       message: error.message,
       stack: error.stack,
-      userId,
+      userId: req.params.userId,
+      courseId: req.params.courseId,
     });
     return res.status(system_enum.STATUS_CODE.INTERNAL_SERVER_ERROR).json({
       message: system_enum.SYSTEM_MESSAGE.INTERNAL_SERVER_ERROR,

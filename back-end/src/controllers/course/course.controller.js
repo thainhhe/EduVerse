@@ -12,6 +12,25 @@ const courseController = {
     }
   },
 
+  getAllCourseForLearner: async (req, res) => {
+    try {
+      const result = await courseService.getAllCourseForLearner();
+      return response(res, result);
+    } catch (error) {
+      return error_response(res, error);
+    }
+  },
+
+  getAllCourseInstructor: async (req, res) => {
+    try {
+      const id = req.params.id;
+      const result = await courseService.getAllCourseInstructor(id);
+      return response(res, result);
+    } catch (error) {
+      return error_response(res, error);
+    }
+  },
+
   getCourseById: async (req, res) => {
     try {
       const id = req.params.id;
@@ -25,7 +44,8 @@ const courseController = {
   createCourse: async (req, res) => {
     try {
       const data = req.body;
-      const result = await courseService.createCourse(data);
+      const file = req.file || null;
+      const result = await courseService.createCourse(data, file);
       return response(res, result);
     } catch (error) {
       return error_response(res, error);
@@ -36,7 +56,8 @@ const courseController = {
     try {
       const id = req.params.id;
       const data = req.body;
-      const result = await courseService.updateCourse(id, data);
+      const file = req.file || null;
+      const result = await courseService.updateCourse(id, data, file);
       return response(res, result);
     } catch (error) {
       return error_response(res, error);
@@ -53,31 +74,33 @@ const courseController = {
     }
   },
 
-  async getMyCourses(req, res) {
+  getMyCourses: async (req, res) => {
     try {
-      // Kiểm tra req.userId (được thêm bởi middleware verifyToken)
+      // ensure req.userId provided by auth middleware
       if (!req.userId) {
-        console.error("Thiếu req.userId trong controller getMyCourses.");
-        // Trả về lỗi 401 Unauthorized
-        return res
-          .status(401)
-          .json({
-            success: false,
-            message: "Không được phép: Thiếu ID người dùng.",
-          });
-        // Hoặc dùng error_response nếu muốn chuẩn hóa
-        // return error_response(res, { status: 401, message: "Không được phép: Thiếu ID người dùng." });
+        console.error("Missing req.userId in controller getMyCourses.");
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized: Missing user ID.",
+        });
       }
 
       const result = await courseService.getCoursesByInstructorId(req.userId);
-      return response(res, result); // Dùng hàm response chuẩn
+      return response(res, result);
     } catch (error) {
-      // Log lỗi cụ thể tại controller này
       console.error(
-        `Lỗi controller getMyCourses cho user ${req.userId}:`,
+        `Error in controller getMyCourses for user ${req.userId}:`,
         error
       );
-      // Gọi hàm error_response chuẩn
+      return error_response(res, error);
+    }
+  },
+
+  getCoursePublished: async (req, res) => {
+    try {
+      const result = await courseService.getCoursePublished();
+      return response(res, result);
+    } catch (error) {
       return error_response(res, error);
     }
   },

@@ -28,17 +28,23 @@ const RegisterInstructor = () => {
   });
 
   const onSubmit = async (data) => {
-    const result = await registerUser({
-      username: data.fullName, // send username to match backend validator
+    // debug: build payload and log it before sending
+    const payload = {
+      username: data.fullName,
       email: data.email,
       password: data.password,
       role: "instructor",
       subjects: data.subjects,
       jobTitle: data.jobTitle,
-    });
+    };
+    console.log("Register payload:", payload);
 
+    const result = await registerUser(payload);
+    console.log("Register response:", result);
+
+    // short delay so you can inspect Network/Console before redirect (remove in production)
     if (result.success) {
-      navigate("/login");
+      setTimeout(() => navigate("/login"), 800);
     }
   };
 
@@ -149,22 +155,18 @@ const RegisterInstructor = () => {
             <div className="space-y-2">
               <Label htmlFor="subjects">Subject(s) You Want to Teach</Label>
 
-              {/* Multi-checkbox group for subjects */}
-              {["Marketing", "Programming", "Design", "Business"].map((s) => (
-                <div key={s} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`subject-${s}`}
-                    value={s}
-                    {...register("subjects")}
-                  />
-                  <label
-                    htmlFor={`subject-${s}`}
-                    className="text-sm text-gray-700"
-                  >
-                    {s}
-                  </label>
-                </div>
-              ))}
+              {/* Multi-select for subjects (native <select multiple>) */}
+              <select
+                id="subjects"
+                multiple
+                {...register("subjects")}
+                className="h-32 w-full rounded-md border border-input bg-gray-50 px-3 py-2 text-sm"
+              >
+                <option value="Marketing">Marketing</option>
+                <option value="Programming">Programming</option>
+                <option value="Design">Design</option>
+                <option value="Business">Business</option>
+              </select>
 
               {errors.subjects && (
                 <p className="text-sm text-red-500 mt-1">

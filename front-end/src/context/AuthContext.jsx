@@ -82,24 +82,34 @@ export const AuthProvider = ({ children }) => {
       if (accessToken) localStorage.setItem("accessToken", accessToken);
       if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
 
-      if (userFromRes) {
-        setUser(userFromRes);
-        toast.success("Đăng nhập thành công!");
-        return { success: true, user: userFromRes };
+      // If backend returned a user object use it, otherwise try to fetch /auth/me or profile using token
+      let finalUser = userFromRes;
+      if (!finalUser && accessToken) {
+        try {
+          const me = await authService.getCurrentUser();
+          finalUser = me?.data?.user ?? me?.data ?? me ?? null;
+        } catch (e) {
+          finalUser = null;
+        }
       }
 
+      if (finalUser) {
+        setUser(finalUser);
+        toast.success("Login successful!");
+        return { success: true, user: finalUser };
+      }
+
+      // If we have token but couldn't fetch user, still treat as success but user is null
       if (accessToken) {
         setUser(null);
-        toast.success("Đăng nhập thành công!");
+        toast.success("Login successful!");
         return { success: true, user: null };
       }
 
       return { success: false, error: "Invalid response from server" };
     } catch (error) {
       const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Đăng nhập thất bại";
+        error?.response?.data?.message || error?.message || "Login failed";
       toast.error(message);
       return { success: false, error: message };
     }
@@ -109,7 +119,6 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await authService.register(userData);
 
-      // same extraction as login
       const accessToken =
         res?.accessToken ||
         res?.token ||
@@ -133,17 +142,29 @@ export const AuthProvider = ({ children }) => {
       if (accessToken) localStorage.setItem("accessToken", accessToken);
       if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
 
-      if (userFromRes) {
-        setUser(userFromRes);
-        toast.success("Đăng ký thành công!");
+      let finalUser = userFromRes;
+      if (!finalUser && accessToken) {
+        try {
+          const me = await authService.getCurrentUser();
+          finalUser = me?.data?.user ?? me?.data ?? me ?? null;
+        } catch (e) {
+          finalUser = null;
+        }
+      }
+
+      if (finalUser) {
+        setUser(finalUser);
+        toast.success("Registration successful!");
         return { success: true };
       }
 
-      toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
+      toast.success("Registration successful! Please log in.");
       return { success: true };
     } catch (error) {
       const message =
-        error?.response?.data?.message || error?.message || "Đăng ký thất bại";
+        error?.response?.data?.message ||
+        error?.message ||
+        "Registration failed";
       toast.error(message);
       return { success: false, error: message };
     }
@@ -157,9 +178,9 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       setUser(null);
-      toast.success("Đăng xuất thành công!");
+      toast.success("Logout successful!");
     } catch (error) {
-      toast.error("Đăng xuất thất bại");
+      toast.error("Logout failed");
     }
   };
 
