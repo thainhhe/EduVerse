@@ -71,7 +71,7 @@ const scoreServices = {
   submitQuiz: async (submitData) => {
     try {
       const validatedData = scoreValidator.validateSubmitQuiz(submitData);
-
+      console.log("validatedData", validatedData);
       const quiz = await quizRepository.getQuizById(validatedData.quizId);
 
       if (!quiz) {
@@ -101,7 +101,7 @@ const scoreServices = {
       }
 
       const result = scoreHelper.calculateScore(quiz, validatedData.answers);
-
+      console.log("result", result);
       const scoreData = {
         userId: validatedData.userId,
         quizId: validatedData.quizId,

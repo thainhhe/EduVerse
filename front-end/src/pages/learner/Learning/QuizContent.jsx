@@ -3,8 +3,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 
-export default function PracticeTest() {
-    const { quizId } = useParams();
+const QuizContent = ({ quizId }) => {
+    console.log("quizId", quizId)
     const { user } = useAuth()
     const userId = user._id
     const [quiz, setQuiz] = useState(null);
@@ -72,15 +72,11 @@ export default function PracticeTest() {
             });
 
             const result = await res.json();
-            console.log("✅ Kết quả:", result);
-            console.log(result.success)
             if (result.success) {
                 ToastHelper.success(result.message)
             } else {
                 ToastHelper.warning(result.message)
             }
-
-            // alert(`Nộp bài thành công! Điểm: ${result.data?.percentage || 0}`);
         } catch (err) {
             console.error("❌ Lỗi khi submit:", err);
         }
@@ -128,3 +124,5 @@ export default function PracticeTest() {
         </div>
     );
 }
+
+export default QuizContent

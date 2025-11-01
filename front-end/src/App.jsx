@@ -68,7 +68,7 @@ function App() {
         <Route path="instructors" element={<Instructors />} />
         <Route path="instructors/:id" element={<InstructorProfile />} />
         <Route path="settings" element={<Settings />} />
-        <Route path="quiz" element={<Quiz />} />
+        <Route path="/quiz/:quizId" element={<Quiz />} />
         <Route path="forgot-password" element={<ForgotPassword />} />
         <Route path="reset-password/:token" element={<ResetPassword />} />
         <Route path="learning/:courseId" element={<Learning />} />

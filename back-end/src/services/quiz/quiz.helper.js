@@ -8,7 +8,8 @@ const quizHelper = {
       description: data.description,
       questions:
         data.questions?.map((q) => ({
-          id: q._1?._id?.toString(),
+          // id: q._1?._id?.toString(),
+          id: q._id?.toString() || q.id,
           questionText: q.questionText,
           questionType: q.questionType,
           options: q.options,
