@@ -3,7 +3,7 @@ import api from "./api";
 // Courses
 export const getAllCoursePublished = () => api.get(`/courses`);
 
-export const getMyCourses = () => api.get("/courses/mine");
+export const getMyCourses = (id) => api.get(`/courses/instructor/${id}`);
 export const getCourseById = (id) => api.get(`/courses/${id}`);
 export const createCourse = (payload) => api.post("/courses/create", payload);
 export const updateCourse = (id, payload) =>
@@ -41,3 +41,9 @@ export const getAllQuizzes = () => api.get(`/quiz`);
 export const createQuiz = (payload) => api.post(`/quiz`, payload);
 export const updateQuiz = (id, payload) => api.put(`/quiz/${id}`, payload);
 export const deleteQuiz = (id) => api.delete(`/quiz/${id}`);
+export const getQuizzesByCourse = (courseId) =>
+  api.get(`/quiz/course/${courseId}`);
+export const getQuizzesByModule = (moduleId) =>
+  api.get(`/quiz/module/${moduleId}`);
+export const getQuizzesByLesson = (lessonId) =>
+  api.get(`/quiz/lesson/${lessonId}`);

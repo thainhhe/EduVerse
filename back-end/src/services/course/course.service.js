@@ -1,6 +1,6 @@
 const { course_enum } = require("../../config/enum/course.constants");
 const { system_enum } = require("../../config/enum/system.constant");
-const courseRepository = require("../../repositories/course.repository");
+const { courseRepository } = require("../../repositories/course.repository");
 const { upLoadImage } = require("../../utils/response.util");
 const { moduleService } = require("../module/module.service");
 

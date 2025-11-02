@@ -37,7 +37,7 @@ const routes = [
     ),
   },
   {
-    path: "/auth/google/callback",
+    path: "/google-auth/success",
     element: <GoogleCallback />,
   },
 ];
