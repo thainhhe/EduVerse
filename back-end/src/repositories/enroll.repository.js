@@ -358,6 +358,83 @@ const enrollmentRepository = {
         }
     },
 
+
+    // Calculate and update user progress in a course
+    calculateUserProgress: async (userId, courseId) => {
+        try {
+            console.log(`Calculating progress for user ${userId} in course ${courseId}`);
+
+            //Lấy tất cả modules của course
+            const modules = await Module.find({ courseId }).lean();
+            const moduleIds = modules.map(m => m._id.toString());
+
+            if (!moduleIds.length) {
+                console.log('No modules found for this course');
+                return { progress: 0, totalLessons: 0, completedLessons: 0 };
+            }
+
+            // Lấy tất cả lessons của các modules
+            const lessons = await Lesson.find({ 
+                moduleId: { $in: moduleIds } 
+            }).select('_id user_completed').lean();
+
+            const totalLessons = lessons.length;
+
+            if (totalLessons === 0) {
+                console.log('No lessons found in this course');
+                return { progress: 0, totalLessons: 0, completedLessons: 0 };
+            }
+
+            // Đếm số lessons mà user đã complete
+            const completedLessons = lessons.filter(lesson => 
+                lesson.user_completed.some(id => id.toString() === userId.toString())
+            ).length;
+
+            // Tính % progress
+            const progress = Math.round((completedLessons / totalLessons) * 100);
+
+            console.log(`✅ Progress calculated: ${completedLessons}/${totalLessons} = ${progress}%`);
+
+            // Update progress vào enrollment
+            const updatedEnrollment = await Enrollment.findOneAndUpdate(
+                { userId, courseId },
+                { 
+                    progress,
+                    lastAccessed: new Date(),
+                    // Nếu hoàn thành 100% thì update status
+                    ...(progress === 100 && { status: 'completed' })
+                },
+                { new: true }
+            ).populate('userId', 'name username email')
+             .populate('courseId', 'title description');
+
+            if (!updatedEnrollment) {
+                throw new Error('Enrollment not found');
+            }
+
+            return {
+                progress,
+                totalLessons,
+                completedLessons,
+                enrollment: updatedEnrollment
+            };
+
+        } catch (error) {
+            console.error('Repository Error - calculateUserProgress:', error);
+            throw error;
+        }
+    },
+
+    getEnrollmentByUserAndCourse: async (userId, courseId) => {
+        try {
+            const enrollment = await Enrollment.findOne({ userId, courseId });
+            return enrollment;
+        } catch (error) {
+            console.error('Repository Error - getEnrollmentByUserAndCourse:', error);
+            throw error;
+        }
+    }
+
 };
 
 module.exports = enrollmentRepository;

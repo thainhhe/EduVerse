@@ -16,6 +16,6 @@ reviewRouter.delete('/:id', verifyToken, reviewController.deleteReview);
 // get all review of course and calculator avg rating
 reviewRouter.get('/course/:courseId', reviewController.getAllReviewsOfCourseAndAvgRating);
 // get all review of user
-reviewRouter.get('/user/:userId', reviewController.getAllReviewByUserId)
+reviewRouter.get('/user/:userId', reviewController.getAllReviewByUserId);
 
 module.exports = reviewRouter;
