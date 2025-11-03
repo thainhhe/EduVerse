@@ -103,6 +103,7 @@ const scoreRepository = {
   getScoreByUserAndQuiz: async (userId, quizId) => {
     try {
       return await Score.findOne({ userId, quizId })
+        .sort({ attemptNumber: -1 })
         .populate("userId", "username email avatar")
         .populate({
           path: "quizId",
@@ -133,6 +134,8 @@ const scoreRepository = {
       throw error;
     }
   },
+
+
 };
 
 module.exports = scoreRepository;

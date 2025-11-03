@@ -5,7 +5,7 @@ const { verifyToken } = require("../middlewares/auth/authMiddleware");
 
 scoreRouter.get("/", verifyToken, scoreController.getAllScores);
 
-// new route: get score for a user in a specific quiz (includes scope info)
+// get score for a user in a specific quiz
 scoreRouter.get(
   "/user/:userId/quiz/:quizId",
   // verifyToken,
@@ -30,5 +30,6 @@ scoreRouter.get(
   // verifyToken,
   scoreController.checkQuizCompletion
 );
+
 
 module.exports = scoreRouter;

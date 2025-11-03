@@ -244,6 +244,55 @@ const enrollmentServices = {
       };
     }
   },
+  // Recalculate progress for a specific enrollment
+  recalculateProgress: async (userId, courseId) => {
+    try {
+      console.log(
+        `Service: Recalculating progress for user ${userId} in course ${courseId}`
+      );
+
+      const progressData = await enrollmentRepository.calculateUserProgress(
+        userId,
+        courseId
+      );
+
+      if (!progressData.enrollment) {
+        throw new Error("Enrollment not found");
+      }
+
+      console.log(`Service: Progress recalculated successfully`);
+
+      return progressData;
+    } catch (error) {
+      console.error("Service Error - recalculateProgress:", error);
+      throw error;
+    }
+  },
+
+  getEnrollmentByUserAndCourse: async (userId, courseId) => {
+    try {
+      const enrollment =
+        await enrollmentRepository.getEnrollmentByUserAndCourse(
+          userId,
+          courseId
+        );
+      if (!enrollment) {
+        return {
+          status: system_enum.STATUS_CODE.NOT_FOUND,
+          message: enrollment_enum.ENROLLMENT_MESSAGE.ENROLLMENT_NOT_FOUND,
+        };
+      }
+
+      return {
+        status: system_enum.STATUS_CODE.OK,
+        message: system_enum.SYSTEM_MESSAGE.SUCCESS,
+        data: enrollmentHelper.formatEnrollment(enrollment),
+      };
+    } catch (error) {
+      console.error("Service Error - getEnrollmentByUserAndCourse:", error);
+      throw error;
+    }
+  },
 };
 
 module.exports = enrollmentServices;

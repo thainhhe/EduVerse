@@ -167,6 +167,7 @@ const QuizContent = ({ quizId, onQuizSubmitted }) => {
             )}
 
 
+
             {hasStarted && (
                 <div className="mt-6 animate-fade-in">
                     <div>

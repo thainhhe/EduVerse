@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronDown, Circle, CheckCircle2 } from "lucide-react";
 
 const LearningSidebar = ({ course, onSelectItem, selectedItem }) => {
+
     const [expandedSections, setExpandedSections] = useState({ "0": true });
 
     const toggleSection = (id) => {
@@ -20,6 +21,8 @@ const LearningSidebar = ({ course, onSelectItem, selectedItem }) => {
         totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
     console.log("course", course)
+    console.log("onSelectItem", onSelectItem)
+    console.log("selectedItem", selectedItem)
     return (
         <div className="w-80 border-r border-gray-200 bg-gray-50 h-screen overflow-y-auto">
             <div className="p-4">

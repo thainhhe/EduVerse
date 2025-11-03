@@ -2,7 +2,6 @@ import api from "./api";
 
 // Courses
 export const getAllCoursePublished = () => api.get(`/courses`);
-
 export const getMyCourses = () => api.get("/courses/mine");
 export const getCourseById = (id) => api.get(`/courses/${id}`);
 export const createCourse = (payload) => api.post("/courses/create", payload);
@@ -10,7 +9,18 @@ export const updateCourse = (id, payload) =>
   api.put(`/courses/update/${id}`, payload);
 export const deleteCourse = (id) => api.delete(`/courses/delete/${id}`);
 
-// Modules
+// Courses By Admin
+export const getAllCourse = () => api.get(`/admin/courses`);
+// export const getMyCourses = () => api.get("/courses/mine");
+export const getAllCourseById = (id) => api.get(`/admin/courses/${id}`);
+
+// ✅ Approve course
+export const approveCourse = (id) => api.put(`/admin/courses/${id}/approve`);
+
+// ✅ Reject course
+export const rejectCourse = (id, reason) =>
+  api.put(`/admin/courses/${id}/reject`, { reasonReject: reason });
+
 export const getModulesInCourse = async (courseId) => {
   try {
     return await api.get(`/modules/course-module/${courseId}`);
