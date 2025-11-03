@@ -62,14 +62,15 @@ const ModulesPage = () => {
     try {
       const res = await getModulesInCourse(cid);
       const items = res?.data?.data ?? res?.data ?? [];
+      console.log("items", items)
       // normalize to { id, name/title, lessons }
       const normalized = Array.isArray(items)
         ? items.map((m) => ({
-            id: m.id ?? m._id ?? m._id?.toString?.(),
-            name: m.title ?? m.name ?? "Untitled",
-            lessons: m.lessons ?? [],
-            ...m,
-          }))
+          id: m.id ?? m._id ?? m._id?.toString?.(),
+          name: m.title ?? m.name ?? "Untitled",
+          lessons: m.lessons ?? [],
+          ...m,
+        }))
         : [];
       setModules(normalized);
     } catch (err) {

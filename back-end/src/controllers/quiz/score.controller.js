@@ -76,6 +76,17 @@ const getUserQuizScore = async (req, res) => {
   }
 };
 
+const checkQuizCompletion = async (req, res) => {
+  try {
+    const { userId, quizId } = req.params;
+    const result = await scoreServices.checkQuizCompletion(userId, quizId);
+
+    return response(res, result);
+  } catch (error) {
+    return error_response(res, error);
+  }
+};
+
 module.exports = {
   getAllScores,
   getScoreById,
@@ -84,4 +95,5 @@ module.exports = {
   submitQuiz,
   deleteScore,
   getUserQuizScore,
+  checkQuizCompletion,
 };

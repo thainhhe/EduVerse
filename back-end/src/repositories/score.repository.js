@@ -107,7 +107,7 @@ const scoreRepository = {
         .populate({
           path: "quizId",
           select:
-            "title description passingScore courseId moduleId lessonId isPublished",
+            "title description questions  passingScore courseId moduleId lessonId isPublished",
           populate: [
             { path: "courseId", select: "title _id" },
             {
@@ -126,6 +126,7 @@ const scoreRepository = {
             },
           ],
         })
+        .sort({ attemptNumber: -1 })
         .exec();
     } catch (error) {
       console.error("Repository Error - getScoreByUserAndQuiz:", error);

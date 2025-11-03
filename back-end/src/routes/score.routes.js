@@ -25,5 +25,10 @@ scoreRouter.post(
   scoreController.submitQuiz
 );
 scoreRouter.delete("/:id", verifyToken, scoreController.deleteScore);
+scoreRouter.get(
+  "/check/:userId/quiz/:quizId",
+  // verifyToken,
+  scoreController.checkQuizCompletion
+);
 
 module.exports = scoreRouter;

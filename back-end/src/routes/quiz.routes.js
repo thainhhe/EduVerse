@@ -27,7 +27,11 @@ quizRouter.get(
   quizController.getQuizById
 );
 quizRouter.post("/", verifyToken, quizController.createQuiz);
-quizRouter.put("/:id", verifyToken, quizController.updateQuiz);
+quizRouter.put(
+  "/:id",
+  //  verifyToken,
+  quizController.updateQuiz
+);
 quizRouter.delete("/:id", verifyToken, quizController.deleteQuiz);
 
 module.exports = quizRouter;
