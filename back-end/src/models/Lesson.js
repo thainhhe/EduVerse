@@ -1,16 +1,13 @@
 const mongoose = require("mongoose");
 const Module = require("./Module");
+const User = require("./User");
+const Material = require("./Material");
 
 const lessonSchema = new mongoose.Schema(
   {
     moduleId: { type: mongoose.Schema.Types.ObjectId, ref: "Module" },
     title: { type: String, required: true },
     content: { type: String },
-    type: {
-      type: String,
-      enum: ["video", "article", "quiz"],
-      default: "article",
-    },
     order: { type: Number, required: true },
     user_completed: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     materials: [{ type: mongoose.Schema.Types.ObjectId, ref: "Material" }],

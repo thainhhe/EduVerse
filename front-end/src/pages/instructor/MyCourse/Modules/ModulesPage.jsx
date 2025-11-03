@@ -17,14 +17,19 @@ import {
   Trash2,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { AddModuleModal } from "./AddModule";
 import { AddLessonModal } from "./AddLesson";
 import QuizManager from "../Quiz/quiz-manager";
 import UploadVideoModal from "../Upload/UploadVideoModal";
 import UploadDocumentModal from "../Upload/UploadDocumentModal";
-import { getModulesInCourse } from "@/services/courseService";
+import {
+  getModulesInCourse,
+  getQuizzesByCourse,
+  getQuizzesByModule,
+  getQuizzesByLesson,
+} from "@/services/courseService";
 
 const ModulesPage = () => {
   const [expandedModules, setExpandedModules] = useState([]);
@@ -42,8 +47,18 @@ const ModulesPage = () => {
     lessonId: null,
   });
 
+  const [courseQuizCount, setCourseQuizCount] = useState(0);
+  const [moduleQuizCounts, setModuleQuizCounts] = useState({}); // { [moduleId]: count }
+  const [lessonQuizCounts, setLessonQuizCounts] = useState({}); // optional: { [lessonId]: count }
+
+  // NEW: menu state for compact "⋯" menus
+  const [openModuleMenuId, setOpenModuleMenuId] = useState(null);
+  const [openLessonMenuId, setOpenLessonMenuId] = useState(null);
+
   const location = useLocation();
-  const courseIdFromState = location?.state?.id ?? null;
+  const params = useParams();
+  // prefer state.id (when navigated with state), fallback to URL param :id
+  const courseIdFromState = location?.state?.id ?? params?.id ?? null;
 
   // if opened from course card with openQuiz flag, set context and open modal
   useEffect(() => {
@@ -53,6 +68,93 @@ const ModulesPage = () => {
       setIsQuizManagerOpen(true);
     }
   }, [courseIdFromState, location?.state?.openQuiz]);
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const onDocClick = (e) => {
+      // if click outside any menu, close
+      setOpenModuleMenuId((prev) => {
+        if (!prev) return prev;
+        const el = document.getElementById(`module-menu-${prev}`);
+        if (!el) return null;
+        if (!el.contains(e.target)) return null;
+        return prev;
+      });
+      setOpenLessonMenuId((prev) => {
+        if (!prev) return prev;
+        const el = document.getElementById(`lesson-menu-${prev}`);
+        if (!el) return null;
+        if (!el.contains(e.target)) return null;
+        return prev;
+      });
+      // if clicked outside, both will be set to null by logic above
+    };
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, []);
+
+  const fetchQuizCounts = async (courseId, modulesList = []) => {
+    if (!courseId) return;
+    try {
+      const courseRes = await getQuizzesByCourse(courseId);
+      // normalize server response to array
+      const normalizeArray = (res) => {
+        if (!res) return [];
+        if (Array.isArray(res)) return res;
+        if (Array.isArray(res.data)) return res.data;
+        if (Array.isArray(res.data?.data)) return res.data.data;
+        if (Array.isArray(res.data?.items)) return res.data.items;
+        return [];
+      };
+      const courseItems = normalizeArray(courseRes);
+      console.debug(
+        "fetchQuizCounts - courseRes:",
+        courseRes,
+        "=>",
+        courseItems.length
+      );
+      setCourseQuizCount(Array.isArray(courseItems) ? courseItems.length : 0);
+
+      // module counts in parallel
+      const modulePromises = modulesList.map((m) =>
+        getQuizzesByModule(m.id)
+          .then((r) => {
+            const items = normalizeArray(r);
+            return { id: m.id, count: Array.isArray(items) ? items.length : 0 };
+          })
+          .catch(() => ({ id: m.id, count: 0 }))
+      );
+      const moduleResults = await Promise.all(modulePromises);
+      const mCounts = {};
+      moduleResults.forEach((r) => (mCounts[r.id] = r.count));
+      setModuleQuizCounts(mCounts);
+      console.debug("module quiz counts:", mCounts);
+
+      // optional: prefetch lesson quiz counts (skip if many lessons)
+      const lessonPromises = [];
+      modulesList.forEach((m) => {
+        (m.lessons || []).forEach((lesson) => {
+          lessonPromises.push(
+            getQuizzesByLesson(lesson.id)
+              .then((r) => {
+                const items = normalizeArray(r);
+                return { id: lesson.id, count: items.length };
+              })
+              .catch(() => ({ id: lesson.id, count: 0 }))
+          );
+        });
+      });
+      if (lessonPromises.length) {
+        const lessonResults = await Promise.all(lessonPromises);
+        const lCounts = {};
+        lessonResults.forEach((r) => (lCounts[r.id] = r.count));
+        setLessonQuizCounts(lCounts);
+        console.debug("lesson quiz counts:", lCounts);
+      }
+    } catch (err) {
+      console.error("Failed to fetch quiz counts:", err);
+    }
+  };
 
   // modules fetched from backend
   const [modules, setModules] = useState([]);
@@ -73,6 +175,8 @@ const ModulesPage = () => {
         }))
         : [];
       setModules(normalized);
+      // ngay sau khi có modules, lấy counts
+      await fetchQuizCounts(cid, normalized);
     } catch (err) {
       console.error("Failed to fetch modules:", err);
       setModules([]);
@@ -102,11 +206,45 @@ const ModulesPage = () => {
     setIsAddLessonOpen(true);
   };
 
+  // MENU helpers
+  const toggleModuleMenu = (moduleId) => {
+    setOpenModuleMenuId((prev) => (prev === moduleId ? null : moduleId));
+    // close lesson menu when opening module menu
+    setOpenLessonMenuId(null);
+  };
+  const toggleLessonMenu = (lessonId) => {
+    setOpenLessonMenuId((prev) => (prev === lessonId ? null : lessonId));
+    // close module menu when opening lesson menu
+    setOpenModuleMenuId(null);
+  };
+
   return (
     <div>
-      <div className="flex justify-between">
-        <h1 className="text-2xl font-semibold"></h1>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-semibold">Course Modules</h1>
+          <div className="text-sm text-muted-foreground">
+            Course quizzes:{" "}
+            <span className="font-medium">{courseQuizCount}</span>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+            onClick={() => {
+              if (!courseIdFromState) return;
+              setCurrentQuizContext({
+                courseId: courseIdFromState,
+                moduleId: null,
+                lessonId: null,
+              });
+              setIsQuizManagerOpen(true);
+            }}
+          >
+            Manage course quizzes ({courseQuizCount})
+          </Button>
+
           <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
             Submit Course
           </Button>
@@ -150,39 +288,74 @@ const ModulesPage = () => {
                       <span className="font-medium">
                         {module.name} ({module.lessons.length} lessons)
                       </span>
+                      <Badge className="ml-3 text-xs">
+                        {moduleQuizCounts[module.id] ?? 0} quiz
+                      </Badge>
                       {isExpanded ? (
                         <ChevronDown className="h-4 w-4 text-muted-foreground" />
                       ) : (
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       )}
                     </button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-2 text-indigo-600 hover:bg-indigo-50"
-                      onClick={() => handleAddLesson(module.id)}
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Lesson
-                    </Button>
 
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-2 text-indigo-600 hover:bg-indigo-50"
-                      onClick={() => {
-                        // open module-level quiz: only moduleId (omit courseId)
-                        setCurrentQuizContext({
-                          courseId: null,
-                          moduleId: module.id,
-                          lessonId: null,
-                        });
-                        setIsQuizManagerOpen(true);
-                      }}
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Quiz
-                    </Button>
+                    {/* Compact action menu for module */}
+                    <div className="relative">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleModuleMenu(module.id);
+                        }}
+                        className="px-2 py-1 rounded hover:bg-gray-100 text-muted-foreground"
+                        aria-expanded={openModuleMenuId === module.id}
+                        aria-haspopup="menu"
+                      >
+                        ⋯
+                      </button>
+
+                      {openModuleMenuId === module.id && (
+                        <div
+                          id={`module-menu-${module.id}`}
+                          className="absolute right-0 mt-2 w-40 bg-white border rounded shadow-md z-50"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                            onClick={() => {
+                              handleAddLesson(module.id);
+                              setOpenModuleMenuId(null);
+                            }}
+                          >
+                            <span className="mr-2">＋</span> Add Lesson
+                          </button>
+
+                          <button
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                            onClick={() => {
+                              setCurrentQuizContext({
+                                courseId: courseIdFromState ?? null,
+                                moduleId: module.id,
+                                lessonId: null,
+                              });
+                              setIsQuizManagerOpen(true);
+                              setOpenModuleMenuId(null);
+                            }}
+                          >
+                            <span className="mr-2">🎯</span> Manage Quizzes
+                          </button>
+
+                          <button
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-red-600"
+                            onClick={() => {
+                              // placeholder for delete module
+                              console.log("delete module", module.id);
+                              setOpenModuleMenuId(null);
+                            }}
+                          >
+                            <span className="mr-2">🗑</span> Delete Module
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Lesson List */}
@@ -203,6 +376,9 @@ const ModulesPage = () => {
                                 <span className="text-sm text-muted-foreground">
                                   {lesson.title}
                                 </span>
+                                <Badge className="ml-3 text-xs">
+                                  {lessonQuizCounts[lesson.id] ?? 0}
+                                </Badge>
                               </div>
 
                               <div className="flex-1" />
@@ -223,35 +399,91 @@ const ModulesPage = () => {
                                 {lesson.status}
                               </Badge>
 
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                              {/* compact lesson action menu */}
+                              <div className="relative ml-3">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleLessonMenu(lesson.id);
+                                  }}
+                                  className="px-2 py-1 rounded hover:bg-gray-100 text-muted-foreground"
+                                  aria-expanded={openLessonMenuId === lesson.id}
+                                  aria-haspopup="menu"
                                 >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
+                                  ⋯
+                                </button>
 
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                  onClick={() => toggleAddOptions(lesson.id)}
-                                >
-                                  <PlusIcon className="h-4 w-4" />
-                                </Button>
+                                {openLessonMenuId === lesson.id && (
+                                  <div
+                                    id={`lesson-menu-${lesson.id}`}
+                                    className="absolute right-0 mt-2 w-52 bg-white border rounded shadow-md z-50"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <button
+                                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                                      onClick={() => {
+                                        // edit lesson
+                                        console.log("edit lesson", lesson.id);
+                                        setOpenLessonMenuId(null);
+                                      }}
+                                    >
+                                      <span className="mr-2">✏️</span> Edit
+                                      Lesson
+                                    </button>
 
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                    <button
+                                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                                      onClick={() => {
+                                        setCurrentQuizContext({
+                                          ...currentQuizContext,
+                                          moduleId: module.id,
+                                          lessonId: lesson.id,
+                                        });
+                                        setIsQuizManagerOpen(true);
+                                        setOpenLessonMenuId(null);
+                                      }}
+                                    >
+                                      <span className="mr-2">＋</span> Add Quiz
+                                    </button>
+
+                                    <button
+                                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                                      onClick={() => {
+                                        setIsVideoModalOpen(true);
+                                        setOpenLessonMenuId(null);
+                                      }}
+                                    >
+                                      <span className="mr-2">🎬</span> Add Video
+                                    </button>
+
+                                    <button
+                                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                                      onClick={() => {
+                                        setIsDocumentModalOpen(true);
+                                        setOpenLessonMenuId(null);
+                                      }}
+                                    >
+                                      <span className="mr-2">📄</span> Add
+                                      Document
+                                    </button>
+
+                                    <button
+                                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-red-600"
+                                      onClick={() => {
+                                        // delete lesson placeholder
+                                        console.log("delete lesson", lesson.id);
+                                        setOpenLessonMenuId(null);
+                                      }}
+                                    >
+                                      <span className="mr-2">🗑</span> Delete
+                                      Lesson
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             </div>
 
-                            {/* Options Dropdown */}
+                            {/* Options Dropdown (legacy) */}
                             {isOptionsOpen && (
                               <div className="flex justify-between p-4 pl-16 bg-gray-50 border-l border-gray-200 rounded-md shadow-sm">
                                 <Button

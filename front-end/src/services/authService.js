@@ -1,63 +1,72 @@
 import api from "./api";
+import { API_BASE_URL } from "@/config/constants";
 
-export const authService = {
+const authService = {
   login: async (email, password) => {
-    const response = await api.post("/auth/login", { email, password });
-    return response;
+    const res = await api.post("/auth/login", { email, password });
+    return res;
   },
 
-  register: async (userData) => {
-    const response = await api.post("/auth/register", userData);
-    return response;
+  register: async (payload) => {
+    const res = await api.post("/auth/register", payload);
+    return res;
   },
 
   logout: async () => {
-    const response = await api.post("/auth/logout");
+    try {
+      await api.post("/auth/logout");
+    } catch (e) {}
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
-    return response;
-  },
-
-  // accept optional id; if id provided call /user/profile/:id which matches backend router
-  getCurrentUser: async (id = null) => {
-    if (id) {
-      const response = await api.get(`/users/profile/${id}`);
-      // api interceptor returns response.data already
-      return response;
-    }
-
-    // fallback: try common endpoints
-    const endpoints = ["/auth/me", "/auth/profile", "/users/me"];
-    for (const ep of endpoints) {
-      try {
-        const data = await api.get(ep);
-        return data;
-      } catch (err) {
-        if (err?.response?.status === 404) continue;
-        throw err;
-      }
-    }
-
-    const e = new Error("Current user endpoint not found");
-    e.response = { status: 404 };
-    throw e;
   },
 
   forgotPassword: async (email) => {
-    const response = await api.post("/auth/forgot-password", { email });
-    return response;
+    const res = await api.post("/users/reset-password", { email });
+    return res;
   },
 
-  resetPassword: async (token, newPassword) => {
-    const response = await api.post("/auth/reset-password", {
+  resetPassword: async (token, password) => {
+    const res = await api.post("/users/reset-password", {
       token,
-      newPassword,
+      password,
     });
-    return response;
+    return res;
   },
 
-  updateProfile: async (userData) => {
-    const response = await api.put("/auth/profile", userData);
-    return response;
+  verifyOtp: async (payload) => {
+    // backend: POST /api/v1/users/verify-otp
+    const res = await api.post("/users/verify-otp", payload);
+    return res;
+  },
+
+  getCurrentUser: async (id) => {
+    if (!id) {
+      try {
+        const me = await api.get("/auth/me");
+        return me;
+      } catch (e) {
+        return null;
+      }
+    }
+    const res = await api.get(`/users/profile/${id}`);
+    return res;
+  },
+
+  updateProfile: async (id, payload) => {
+    const res = await api.put(`/users/profile/${id}`, payload); // backend has PUT /profile/:id
+    return res;
+  },
+
+  googleSignIn: () => {
+    const base = (API_BASE_URL || "").replace(/\/+$/, "");
+    const url = `${base}/auth/google`;
+    window.location.href = url;
+  },
+
+  handleGoogleCallbackTokens: ({ accessToken, refreshToken }) => {
+    if (accessToken) localStorage.setItem("accessToken", accessToken);
+    if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
   },
 };
+
+export default authService;

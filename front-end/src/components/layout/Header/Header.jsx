@@ -144,11 +144,11 @@ const Header = () => {
                 {showAvatarMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-white border rounded-md shadow-lg z-50">
                     <Link
-                      to="/profile"
+                      to="/settings"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setShowAvatarMenu(false)}
                     >
-                      Profile
+                      Settings
                     </Link>
 
                     {/* show different menu item based on role */}
@@ -163,13 +163,23 @@ const Header = () => {
                     )}
 
                     {user?.role === "instructor" && (
-                      <Link
-                        to="/mycourses"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={() => setShowAvatarMenu(false)}
-                      >
-                        My Courses
-                      </Link>
+                      <>
+                        <Link
+                          to="/mycourses"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setShowAvatarMenu(false)}
+                        >
+                          My Courses
+                        </Link>
+
+                        <Link
+                          to="/dashboard-instructor"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setShowAvatarMenu(false)}
+                        >
+                          Dashboard
+                        </Link>
+                      </>
                     )}
 
                     <button
@@ -244,11 +254,11 @@ const Header = () => {
               ) : (
                 <>
                   <Link
-                    to="/profile"
+                    to="/settings"
                     onClick={() => setIsMenuOpen(false)}
                     className="w-full text-center px-4 py-2 rounded-md bg-white text-gray-700 hover:bg-gray-50"
                   >
-                    Profile
+                    Settings
                   </Link>
 
                   {user?.role === "learner" && (
@@ -268,6 +278,15 @@ const Header = () => {
                       className="w-full text-center px-4 py-2 rounded-md bg-white text-gray-700 hover:bg-gray-50"
                     >
                       My Courses
+                    </Link>
+                  )}
+                  {user?.role === "instructor" && (
+                    <Link
+                      to="/dashboard-instructor"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="w-full text-center px-4 py-2 rounded-md bg-white text-gray-700 hover:bg-gray-50"
+                    >
+                      Dashboard
                     </Link>
                   )}
 

@@ -15,7 +15,16 @@ const userController = {
         try {
             const id = req.params.id;
             const data = req.body;
-            const result = await userService.updateProfile(id, data);
+            const file = req.file || null;
+            const result = await userService.updateProfile(id, data, file);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
+    getInstructor: async (req, res) => {
+        try {
+            const result = await userService.getInstructorProfile();
             return response(res, result);
         } catch (error) {
             return error_response(res, error);
@@ -25,6 +34,26 @@ const userController = {
         try {
             const id = req.params.id;
             const result = await userService.closeAccount(id);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
+
+    request_reset_password: async (req, res) => {
+        try {
+            const { email } = req.body;
+            const result = await userService.requestResetPassword(email);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
+
+    verify_otp_client: async (req, res) => {
+        try {
+            const { email, otp } = req.body;
+            const result = await userService.verify_otp(email, otp);
             return response(res, result);
         } catch (error) {
             return error_response(res, error);

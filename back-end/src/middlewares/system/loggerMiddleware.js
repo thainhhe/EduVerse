@@ -1,30 +1,52 @@
-const morgan = require("morgan");
-const Log = require("../../models/Log");
+const fs = require("fs");
+const path = require("path");
 
-const Logger = (req, res, next) => {
-    const start = process.hrtime();
-    res.on("finish", async () => {
-        const diff = process.hrtime(start);
-        const responseTime = diff[0] * 1e3 + diff[1] / 1e6;
+const logDir = "E:\\logs";
+const logFile = path.join(logDir, "system.log");
 
-        const logData = {
-            userId: req?.userId || null,
-            method: req.method,
-            url: req.originalUrl,
-            statusCode: res.statusCode,
-            responseTime: responseTime.toFixed(2),
-            ipAddress: req.ip,
-            userAgent: req.headers["user-agent"],
-        };
+if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir);
+}
 
-        try {
-            await Log.create(logData);
-        } catch (err) {
-            console.error("Log save error:", err.message);
+if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+}
+
+const hideSensitiveData = (obj) => {
+    if (!obj || typeof obj !== "object") return obj;
+
+    const cloned = { ...obj };
+    const sensitiveKeys = ["password", "pass", "oldPassword", "newPassword", "confirmPassword"];
+
+    for (const key of Object.keys(cloned)) {
+        if (sensitiveKeys.includes(key.toLowerCase())) {
+            cloned[key] = "******";
+        } else if (typeof cloned[key] === "object") {
+            cloned[key] = hideSensitiveData(cloned[key]);
         }
-    });
+    }
 
+    return cloned;
+};
+
+const loggerMiddleware = (req, res, next) => {
+    if (req.method === "GET") {
+        return next();
+    }
+
+    const now = new Date().toISOString();
+    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
+    const safeBody = hideSensitiveData(req.body);
+
+    const logEntry = `[${now}] [${req.method}] ${req.originalUrl} | IP: ${ip} | User: ${
+        req.user ? JSON.stringify(req.user) : "Unauthenticated"
+    } | Body: ${JSON.stringify(safeBody)}\n`;
+
+    fs.appendFile(logFile, logEntry, (err) => {
+        if (err) console.error("❌ Ghi log lỗi:", err);
+    });
     next();
 };
 
-module.exports = Logger;
+module.exports = loggerMiddleware;

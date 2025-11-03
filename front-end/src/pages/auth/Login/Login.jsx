@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
+import authService from "@/services/authService";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -33,6 +34,10 @@ const Login = () => {
         navigate("/dashboard");
       }
     }
+  };
+
+  const onGoogleSignIn = () => {
+    authService.googleSignIn();
   };
 
   return (
@@ -120,15 +125,16 @@ const Login = () => {
               </div>
             </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full bg-transparent"
-              size="lg"
-            >
-              <FcGoogle className="mr-2 h-5 w-5" />
-              Sign in with Google
-            </Button>
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={onGoogleSignIn}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 bg-white hover:bg-gray-50"
+              >
+                <FcGoogle className="w-5 h-5" size={20} />
+                Continue with Google
+              </button>
+            </div>
 
             <p className="text-center text-sm text-gray-600 pt-2">
               Don't have an account?{" "}

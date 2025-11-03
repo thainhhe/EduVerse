@@ -1,27 +1,34 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authService } from "@services/authService";
+import authService from "@/services/authService";
 import { toast } from "react-toastify";
 
 const resetPasswordSchema = z
   .object({
-    password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Mật khẩu không khớp",
+    message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 
 const ResetPassword = () => {
   const [isSuccess, setIsSuccess] = useState(false);
-  const { token } = useParams();
+  const { token: paramToken } = useParams();
+  const { search } = useLocation();
+  const navigate = useNavigate();
+
+  // support token from path or query
+  const qp = new URLSearchParams(search);
+  const token = paramToken || qp.get("token") || qp.get("t");
+
   const {
     register,
     handleSubmit,
@@ -33,12 +40,10 @@ const ResetPassword = () => {
   const onSubmit = async (data) => {
     try {
       await authService.resetPassword(token, data.password);
-      toast.success("Đổi mật khẩu thành công!");
-      setIsSuccess(true);
+      toast.success("Password changed successfully!");
+      navigate("/login");
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Link không hợp lệ hoặc đã hết hạn."
-      );
+      toast.error(error.response?.data?.message || "Invalid or expired link.");
     }
   };
 

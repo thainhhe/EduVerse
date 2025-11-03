@@ -13,27 +13,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createCourse, updateCourse } from "@/services/courseService";
 import { categoryService } from "@/services/categoryService";
-import { useAuth } from "@/hooks/useAuth"; // add this import (adjust path if your hook lives elsewhere)
+import { useAuth } from "@/hooks/useAuth";
 import api from "@/services/api";
-// Courses
-export const getMyCourses = () => api.get("/courses/mine");
-// ...other exports...
-
-// Modules
-export const getModulesInCourse = async (courseId) => {
-  try {
-    return await api.get(`/modules/course-module/${courseId}`);
-  } catch (err) {
-    // Nếu backend trả 404 (no modules), trả về shape rỗng giống response thành công
-    if (err?.response?.status === 404) {
-      return { data: { data: [] } };
-    }
-    throw err;
-  }
-};
-export const getModuleById = (id) => api.get(`/modules/${id}`);
 
 const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
   const navigate = useNavigate();
@@ -126,9 +108,6 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
       timezone: timezone || undefined,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
-      // thumbnail placeholder if file selected
-      ...(file ? { thumbnail: file.name } : {}),
-      // additional metadata
       instructor_bio: bio,
     };
 
@@ -141,19 +120,34 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
 
     try {
       setSaving(true);
+
+      // Prepare FormData so backend upload middleware (upload.single('thumbnail')) works
+      const formData = new FormData();
+      Object.entries(payload).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) formData.append(k, v);
+      });
+      if (file) {
+        formData.append("thumbnail", file);
+      }
+
+      let res;
       if (isUpdate && courseId) {
-        const res = await updateCourse(courseId, payload);
+        // let axios set Content-Type (with boundary) automatically
+        res = await api.put(`/courses/update/${courseId}`, formData);
         const data = res?.data ?? res;
         const id = data?._id || courseId;
         navigate("/create-course/modules", { state: { id } });
       } else {
-        const res = await createCourse(payload);
+        // let axios set Content-Type (with boundary) automatically
+        res = await api.post("/courses/create", formData);
         const data = res?.data ?? res;
         const id = data?._id || data?.id;
         navigate("/create-course/modules", { state: { id } });
       }
     } catch (err) {
+      // Log server validation error body
       console.error("Failed to save course:", err);
+      console.error("server response:", err.response?.data);
       alert("Save failed. Check console for details.");
     } finally {
       setSaving(false);

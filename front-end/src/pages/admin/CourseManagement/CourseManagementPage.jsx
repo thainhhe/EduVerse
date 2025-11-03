@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Eye, X } from "lucide-react";
-import { approveCourse, getAllCourse } from "@/services/courseService";
+import { approveCourse, getAllCourse, rejectCourse } from "@/services/courseService";
 import { ToastHelper } from "@/helper/ToastHelper";
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 
@@ -84,7 +84,7 @@ const CourseManagementPage = () => {
       return;
     }
     try {
-      const res = await rejectCourse(id, rejectReason);
+      const res = await rejectCourse(selectedCourseId, rejectReason);
       if (res?.success) {
         ToastHelper.success("Khóa học đã bị từ chối!");
         setShowRejectModal(false);
@@ -94,6 +94,7 @@ const CourseManagementPage = () => {
         ToastHelper.error(data?.message || "Từ chối thất bại!");
       }
     } catch (err) {
+      console.log('err', err)
       ToastHelper.error("Lỗi hệ thống khi từ chối!");
     }
   };

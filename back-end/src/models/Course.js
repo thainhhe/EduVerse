@@ -14,7 +14,7 @@ const courseSchema = new mongoose.Schema(
                 permission: [{ type: mongoose.Schema.Types.ObjectId, ref: "Permission" }],
             },
         ],
-        category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
+        category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", default: "" },
         thumbnail: { type: String, default: "" },
         price: { type: Number, default: 0, min: 0 },
         rating: { type: Number, default: 0, min: 0, max: 5 },

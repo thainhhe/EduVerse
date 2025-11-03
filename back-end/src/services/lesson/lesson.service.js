@@ -51,7 +51,7 @@ const lessonService = {
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: lesson_enum.LESSON_MESSAGE.GET_DATA_SUCCESS,
-                data: result.map((r) => lessonHelper.formatLessonData(r)),
+                data: lessonHelper.sortLessonsByOrder(result.map((r) => lessonHelper.formatLessonData(r))),
             };
         } catch (error) {
             throw new Error(error);

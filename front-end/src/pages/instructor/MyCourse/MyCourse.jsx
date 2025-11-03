@@ -6,6 +6,7 @@ import CourseCardPublish from "./CourseCardPublish";
 import CourseCardUnPublish from "./CourseCardUnPublish";
 import { Link } from "react-router-dom";
 import { getMyCourses } from "@/services/courseService";
+import api from "@/services/api"; // thêm import fallback
 
 const MyCourse = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -18,7 +19,36 @@ const MyCourse = () => {
     const fetch = async () => {
       setLoading(true);
       try {
-        const res = await getMyCourses(); // api interceptor may return data or {data}
+        const getCurrentUserId = () => {
+          try {
+            const userStr = localStorage.getItem("user");
+            if (userStr) {
+              const u = JSON.parse(userStr);
+              return u._id || u.id || u.userId || null;
+            }
+            const token = localStorage.getItem("accessToken");
+            if (token) {
+              const parts = token.split(".");
+              if (parts.length === 3) {
+                const payload = JSON.parse(atob(parts[1]));
+                return payload._id || payload.id || payload.sub || null;
+              }
+            }
+          } catch (e) {
+            // ignore
+          }
+          return null;
+        };
+
+        const userId = getCurrentUserId();
+        let res;
+        if (userId) {
+          res = await getMyCourses(userId);
+        } else {
+          // fallback to /courses/mine if service expects id but we don't have it client-side
+          res = await api.get("/courses/mine");
+        }
+
         const list = (res?.data ?? res) || [];
         const mapped = list.map((c) => ({
           _id: c._id,
