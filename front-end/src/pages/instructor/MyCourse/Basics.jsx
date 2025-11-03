@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { categoryService } from "@/services/categoryService";
+import categoryService from "@/services/categoryService";
 import { useAuth } from "@/hooks/useAuth";
 import api from "@/services/api";
 

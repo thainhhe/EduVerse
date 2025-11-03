@@ -338,7 +338,8 @@ const ModulesPage = () => {
                               setOpenModuleMenuId(null);
                             }}
                           >
-                            <span className="mr-2">🎯</span> Manage Quizzes
+                            <span className="mr-2">🎯</span> Manage Module
+                            Quizzes
                           </button>
 
                           <button
