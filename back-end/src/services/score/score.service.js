@@ -71,7 +71,7 @@ const scoreServices = {
   submitQuiz: async (submitData) => {
     try {
       const validatedData = scoreValidator.validateSubmitQuiz(submitData);
-
+      console.log("validatedData", validatedData);
       const quiz = await quizRepository.getQuizById(validatedData.quizId);
 
       if (!quiz) {
@@ -101,7 +101,7 @@ const scoreServices = {
       }
 
       const result = scoreHelper.calculateScore(quiz, validatedData.answers);
-
+      console.log("result", result);
       const scoreData = {
         userId: validatedData.userId,
         quizId: validatedData.quizId,
@@ -172,12 +172,37 @@ const scoreServices = {
           message: "Score not found for this user and quiz",
         };
       }
-
-      // formatted score
-      const formatted = scoreHelper.formatScore(score);
-
-      // derive scope info from populated quizId
+      console.log("score", score);
       const quiz = score.quizId || {};
+      const questions = quiz?.questions || [];
+      console.log("questions", questions);
+      const detailedAnswers = score.answers.map((ans) => {
+        const question = questions.find(
+          (q) => q._id.toString() === ans.questionId.toString()
+        );
+
+        return {
+          ...(ans.toObject?.() || ans),
+          question: question
+            ? {
+                questionText: question.questionText,
+                questionType: question.questionType,
+                options: question.options,
+                correctAnswer: question.correctAnswer,
+                explanation: question.explanation,
+                points: question.points,
+                order: question.order,
+              }
+            : null,
+        };
+      });
+
+      console.log("detailedAnswers", detailedAnswers);
+      const formatted = {
+        ...scoreHelper.formatScore(score),
+        answers: detailedAnswers,
+      };
+
       const scope = {};
 
       // If quiz has lessonId populated and that lesson has module/course populated
@@ -259,6 +284,75 @@ const scoreServices = {
       };
     } catch (error) {
       console.error("Service Error - getUserQuizScore:", error);
+      throw error;
+    }
+  },
+
+  checkQuizCompletion: async (userId, quizId) => {
+    try {
+      // Lấy thông tin quiz
+      const quiz = await quizRepository.getQuizById(quizId);
+
+      if (!quiz) {
+        return {
+          status: 404,
+          message: "Quiz not found",
+        };
+      }
+
+      // Lấy tất cả attempts của user cho quiz này
+      const attempts = await scoreRepository.getUserAttempts(userId, quizId);
+
+      // Kiểm tra xem đã làm chưa
+      const hasCompleted = attempts.length > 0;
+
+      // Tính toán thông tin
+      const attemptsUsed = attempts.length;
+      const attemptsRemaining = quiz.attemptsAllowed - attemptsUsed;
+      const canRetake = attemptsUsed < quiz.attemptsAllowed;
+
+      // Lấy attempt gần nhất (attemptNumber lớn nhất)
+      let latestAttempt = null;
+      if (hasCompleted) {
+        latestAttempt = attempts.reduce((latest, current) => {
+          return current.attemptNumber > latest.attemptNumber
+            ? current
+            : latest;
+        }, attempts[0]);
+      }
+
+      return {
+        status: 200,
+        message: "Success",
+        data: {
+          hasCompleted,
+          quiz: {
+            id: quiz._id,
+            title: quiz.title,
+            passingScore: quiz.passingScore,
+            attemptsAllowed: quiz.attemptsAllowed,
+          },
+          attempts: {
+            total: attemptsUsed,
+            remaining: attemptsRemaining,
+            canRetake,
+          },
+          latestScore: latestAttempt
+            ? {
+                id: latestAttempt._id,
+                score: latestAttempt.score,
+                totalPoints: latestAttempt.totalPoints,
+                percentage: latestAttempt.percentage,
+                status: latestAttempt.status,
+                attemptNumber: latestAttempt.attemptNumber,
+                dateSubmitted: latestAttempt.dateSubmitted,
+                passed: latestAttempt.status === "passed",
+              }
+            : null,
+        },
+      };
+    } catch (error) {
+      console.error("Service Error - checkQuizCompletion:", error);
       throw error;
     }
   },

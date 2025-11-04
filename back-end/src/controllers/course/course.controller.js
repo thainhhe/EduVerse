@@ -96,15 +96,6 @@ const courseController = {
     }
   },
 
-  getCoursePublished: async (req, res) => {
-    try {
-      const result = await courseService.getCoursePublished();
-      return response(res, result);
-    } catch (error) {
-      return error_response(res, error);
-    }
-  },
-
   getCourseByCategory: async (req, res) => {
     try {
       const categoryId = req.params.categoryId;

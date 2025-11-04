@@ -103,11 +103,12 @@ const scoreRepository = {
   getScoreByUserAndQuiz: async (userId, quizId) => {
     try {
       return await Score.findOne({ userId, quizId })
+        .sort({ attemptNumber: -1 })
         .populate("userId", "username email avatar")
         .populate({
           path: "quizId",
           select:
-            "title description passingScore courseId moduleId lessonId isPublished",
+            "title description questions  passingScore courseId moduleId lessonId isPublished",
           populate: [
             { path: "courseId", select: "title _id" },
             {
@@ -126,12 +127,15 @@ const scoreRepository = {
             },
           ],
         })
+        .sort({ attemptNumber: -1 })
         .exec();
     } catch (error) {
       console.error("Repository Error - getScoreByUserAndQuiz:", error);
       throw error;
     }
   },
+
+
 };
 
 module.exports = scoreRepository;

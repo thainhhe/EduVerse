@@ -40,6 +40,7 @@ import InstructorProfileDetail from "./pages/admin/UserManagement/InstructorProf
 import LearnerProfileDetail from "./pages/admin/UserManagement/LearnerProfileDetail";
 import CourseManagementPage from "./pages/admin/CourseManagement/CourseManagementPage";
 import CourseDetailPage from "./pages/admin/CourseManagement/CourseDetailPage";
+import QuizDetail from "./pages/learner/Learning/QuizDetail";
 import GoogleCallback from "./pages/auth/GoogleCallback";
 import DashboardInstructor from "./pages/instructor/DashboardInstructor/DashBoardInstructor";
 // NEW imports
@@ -71,6 +72,10 @@ function App() {
         <Route path="register-learner" element={<RegisterLearner />} />
         <Route path="instructors" element={<Instructors />} />
         <Route path="instructors/:id" element={<InstructorProfile />} />
+        <Route path="settings" element={<Settings />} />
+        <Route path="/quiz-detail/:quizId" element={<QuizDetail />} />
+        <Route path="forgot-password" element={<ForgotPassword />} />
+        <Route path="reset-password/:token" element={<ResetPassword />} />
 
         <Route path="quiz" element={<Quiz />} />
         <Route path="forgot-password" element={<ForgotPassword />} />
@@ -92,6 +97,10 @@ function App() {
         <Route path="comment-thread" element={<CommentThread />} />
 
         <Route path="checkout" element={<PaymentPage />} />
+        <Route
+          path="checkout/success"
+          element={<PaymentConfirmationPage />}
+        />
         <Route path="checkout/success" element={<PaymentConfirmationPage />} />
         {/* Private routes */}
         <Route element={<PrivateRoute />}>
@@ -120,7 +129,7 @@ function App() {
             element={<div>Instructor Dashboard</div>}
           />
         </Route>
-      </Route>
+      </Route >
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="users" element={<UserManagementPage />} />
@@ -141,7 +150,7 @@ function App() {
       </Route>
 
       <Route path="*" element={<NotFound />} />
-    </Routes>
+    </Routes >
   );
 }
 
