@@ -162,7 +162,7 @@ const userService = {
             user.resetOtpHash = null;
             user.resetOtpExpires = null;
             user.resetOtpAttempts = 0;
-            user.password = await authHelper.hashPassword("123456");
+            user.password = await authHelper.hashPassword("12345678");
             await userRepository.save(user);
             return {
                 status: system_enum.STATUS_CODE.OK,
