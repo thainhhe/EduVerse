@@ -19,17 +19,16 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const CHROMA_URL = "http://localhost:8000";
 const COLLECTION_NAME = "eduverse_rag";
 
-// Khởi tạo đúng class theo exports hiện tại của @langchain/google-genai
 const { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } = gg;
 
 const model = new ChatGoogleGenerativeAI({
   apiKey: GEMINI_API_KEY,
-  model: "models/gemini-2.5-pro", // <-- dùng tên model từ output list-models.js
+  model: "models/gemini-2.5-pro",
 });
 
 const embeddings = new GoogleGenerativeAIEmbeddings({
   apiKey: GEMINI_API_KEY,
-  model: "models/text-embedding-004", // <-- dùng tên đầy đủ từ list
+  model: "models/text-embedding-004",
 });
 
 const client = new ChromaClient({ host: "localhost", port: 8000, ssl: false });
@@ -66,24 +65,20 @@ Câu trả lời:`
 
 const formatDocs = (docs) => docs.map((doc) => doc.pageContent).join("\n\n");
 
-// --- BẮT ĐẦU SỬA LỖI ---
-// Chúng ta sửa lại ragChain để đảm bảo retriever nhận được chuỗi (string)
 const ragChain = RunnableSequence.from([
   {
     context: RunnableSequence.from([
-      (input) => input.question, // 1. Trích xuất chuỗi câu hỏi (string)
-      retriever, // 2. Đưa chuỗi (string) vào retriever
-      formatDocs, // 3. Định dạng tài liệu tìm được
+      (input) => input.question,
+      retriever,
+      formatDocs,
     ]),
-    question: (input) => input.question, // Giữ nguyên câu hỏi gốc để đưa vào prompt
+    question: (input) => input.question,
   },
   promptTemplate,
   model,
   new StringOutputParser(),
 ]);
-// --- KẾT THÚC SỬA LỖI ---
 
-// --- Tạo API Endpoint ---
 app.post("/query", async (req, res) => {
   try {
     const { message } = req.body;
@@ -91,7 +86,6 @@ app.post("/query", async (req, res) => {
 
     console.log(`[Chatbot Service] Nhận câu hỏi: ${message}`);
 
-    // Thử lấy docs từ vector store (kể cả khi chroma đang chạy)
     let docs = [];
     try {
       docs = await vectorStore.similaritySearch(message, 5);
@@ -107,7 +101,6 @@ app.post("/query", async (req, res) => {
       docs = [];
     }
 
-    // Nếu không có docs -> gọi model trực tiếp (fallback)
     if (!docs || docs.length === 0) {
       console.log("[Chatbot] No docs found, using direct model fallback");
       const directPrompt = PromptTemplate.fromTemplate(
@@ -123,10 +116,7 @@ app.post("/query", async (req, res) => {
       return res.json({ reply: String(directResult) });
     }
 
-    // Nếu có docs -> trả tạm preview (hoặc chèn RAG chain ở đây nếu bạn đã cấu hình ragChain)
-    // (nếu bạn đã có ragChain, thay phần này bằng ragChain.invoke)
     const combined = docs.map((d) => d.pageContent || "").join("\n\n");
-    // ngắn gọn trả câu trả lời dựa trên docs bằng model (context + question) — simple approach:
     const ragPrompt = PromptTemplate.fromTemplate(
       `Bạn là trợ lý AI. Dưới đây là các trích xuất từ nội dung kho tư liệu:\n\n{context}\n\nCâu hỏi:\n{question}\n\nHãy trả lời bằng tiếng Việt, có dẫn nguồn ngắn (nếu có).`
     );
