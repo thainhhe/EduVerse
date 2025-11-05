@@ -5,6 +5,7 @@ const userHelper = {
             username: data.username,
             email: data.email,
             avatar: data.avatar !== null ? data.avatar : "",
+            role: data.role || "learner",
             permissions: data.permissions.length > 0 ? data.permissions.map((p) => p.name) : [],
             emailNotifications: data.emailNotifications,
             systemNotifications: data.systemNotifications,

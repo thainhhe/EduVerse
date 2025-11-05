@@ -1,14 +1,14 @@
 const user_enum = {
     USER_MESSAGE: {
-        GET_PROFILE_SUCCESS: "",
-        CHANGE_PASSWORD_SUCCESS: "",
-        CLOSE_ACCOUNT_SUCCESS: "",
-        UPDATE_PROFILE_SUCCESS: "",
+        GET_PROFILE_SUCCESS: "Profile retrieved successfully.",
+        CHANGE_PASSWORD_SUCCESS: "Password changed successfully.",
+        CLOSE_ACCOUNT_SUCCESS: "Account closed successfully.",
+        UPDATE_PROFILE_SUCCESS: "Profile updated successfully.",
 
-        USER_NOT_FOUND: "",
-        FAIL_GET_DATA: "",
-        ASSIGN_PERMISSION_SUCCESS: "",
-        ASSIGN_PERMISSION_FAIL: "",
+        USER_NOT_FOUND: "User not found.",
+        FAIL_GET_DATA: "Failed to retrieve user data.",
+        ASSIGN_PERMISSION_SUCCESS: "Permissions assigned successfully.",
+        ASSIGN_PERMISSION_FAIL: "Failed to assign permissions.",
     },
 };
 

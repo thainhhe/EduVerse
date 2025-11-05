@@ -4,9 +4,9 @@ const notificationSchema = new mongoose.Schema(
     {
         receiverId: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }],
         senderId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        type: { type: String, enum: ["info", "warning", "alert"], required: true },
+        type: { type: String, enum: ["info", "warning", "alert"], required: true, default: "info" },
         message: { type: String, required: true },
-        isGlobal: { type: Boolean, default: false },
+        isGlobal: { type: Boolean, default: false, default: false },
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date, default: Date.now },
     },
