@@ -1,4 +1,4 @@
-import ReactPlayer from "react-player";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -6,30 +6,49 @@ import { Button } from "@/components/ui/button";
 import { ImageIcon, Send } from "lucide-react";
 
 const LessonContent = ({ lesson, course }) => {
+    // Tạo state nếu muốn đổi video dynamically
+    const [videoFileId, setVideoFileId] = useState(
+        lesson.videoUrlFileId || "1CjFwqQ-gU4mjyFdQ6LkmIj25GQaVZs3y"
+    );
+
+    // Link iframe của Google Drive
+    const iframeSrc = `https://drive.google.com/file/d/${videoFileId}/preview`;
+
     return (
         <div>
             <h1 className="text-2xl font-bold mb-4">{lesson.title}</h1>
+
             <div className="aspect-video bg-black rounded-lg overflow-hidden mb-6">
-                <ReactPlayer
-                    url={lesson.videoUrl || "https://www.youtube.com/watch?v=gKDkDa3CfZY"}
-                    width="100%"
-                    height="100%"
-                    controls
-                />
+                {videoFileId ? (
+                    <iframe
+                        src={iframeSrc}
+                        width="100%"
+                        height="100%"
+                        allow="autoplay; encrypted-media"
+                        allowFullScreen
+                        title="Google Drive Video"
+                        style={{ border: "0" }}
+                    />
+                ) : (
+                    <p>Vui lòng cung cấp File ID để xem video.</p>
+                )}
             </div>
+
             <Tabs defaultValue="discussion" className="w-full">
                 <TabsList className="mb-4">
                     <TabsTrigger value="summary">Summary</TabsTrigger>
-                    {/* <TabsTrigger value="discussion">Discussion</TabsTrigger> */}
+                    <TabsTrigger value="discussion">Discussion</TabsTrigger>
                     <TabsTrigger value="resources">Resources</TabsTrigger>
                     <TabsTrigger value="transcript">Transcript</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="summary">
-                    <p><strong>Mô tả khóa học:</strong> {course.description || "Chưa có mô tả khóa học."}</p>
+                    <p>
+                        <strong>Mô tả khóa học:</strong> {course.description || "Chưa có mô tả khóa học."}
+                    </p>
                 </TabsContent>
 
-                {/* <TabsContent value="discussion">
+                <TabsContent value="discussion">
                     <div className="space-y-4">
                         <div className="flex items-start gap-4">
                             <Avatar>
@@ -49,11 +68,12 @@ const LessonContent = ({ lesson, course }) => {
                             </div>
                         </div>
                     </div>
-                </TabsContent> */}
+                </TabsContent>
 
                 <TabsContent value="resources">
                     <p>Tài liệu sẽ hiển thị ở đây.</p>
                 </TabsContent>
+
                 <TabsContent value="transcript">
                     <p>Bản ghi lời thoại của video.</p>
                 </TabsContent>
@@ -63,3 +83,4 @@ const LessonContent = ({ lesson, course }) => {
 };
 
 export default LessonContent;
+

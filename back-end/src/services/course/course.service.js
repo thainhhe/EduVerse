@@ -92,22 +92,11 @@ const courseService = {
           data: [],
         };
       }
-      const data = await Promise.all(
-        result.map(async (c) => {
-          const modulesResult = await moduleService.getModuleByCourseId(c._id);
-          const modules = modulesResult?.data || [];
-          return {
-            ...(c.toObject ? c.toObject() : c),
-            modules,
-          };
-        })
-      );
-
       return {
+        data: result,
         status: system_enum.STATUS_CODE.OK,
         success: true,
         message: course_enum.COURSE_MESSAGE.GET_DATA_SUCCESS,
-        data,
       };
     } catch (error) {
       return {

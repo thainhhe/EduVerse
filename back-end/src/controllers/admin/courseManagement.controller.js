@@ -30,6 +30,7 @@ const adminCourseManagementController = {
     try {
       const courseId = req.params.id;
       const result = await courseManagementService.approveCourse(courseId);
+      console.log("result in controller ", result);
       return response(res, result);
     } catch (error) {
       return error_response(res, error);

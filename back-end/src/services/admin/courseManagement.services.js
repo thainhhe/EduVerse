@@ -67,7 +67,8 @@ const courseManagementService = {
     try {
       const result = await courseManagementRepository.approveCourse(courseId);
 
-      if (!result || !result.course) {
+      console.log("result in service", result);
+      if (!result || !result.data.course) {
         return {
           status: system_enum.STATUS_CODE.NOT_FOUND,
           success: false,

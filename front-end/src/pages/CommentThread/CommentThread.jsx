@@ -66,7 +66,7 @@ export default function CommentThread({ forumId, userId, courseId, canComment })
     };
 
     return (
-        <main className="min-h-screen bg-background">
+        <main className=" bg-background">
             <div className="max-w-3xl mx-auto space-y-5 mt-5">
                 {/* Ô nhập bình luận */}
                 <div className="flex items-center gap-2">
@@ -93,22 +93,25 @@ export default function CommentThread({ forumId, userId, courseId, canComment })
                 </div>
 
                 {/* Danh sách bình luận */}
-                {loading ? (
-                    <p className="text-gray-500 text-sm italic">Đang tải bình luận...</p>
-                ) : comments.length > 0 ? (
-                    comments.map((c) => (
-                        <CommentItem
-                            key={c._id}
-                            comment={c}
-                            level={0}
-                            forumId={forumId}
-                            userId={userId}
-                            refresh={fetchComments}
-                        />
-                    ))
-                ) : (
-                    <p className="text-gray-500 text-sm italic">Chưa có bình luận nào</p>
-                )}
+                <div className="max-h-[700px] overflow-y-auto p-2  ">
+                    {loading ? (
+                        <p className="">Đang tải bình luận...</p>
+                    ) : comments.length > 0 ? (
+                        comments.map((c) => (
+                            <CommentItem
+                                key={c._id}
+                                comment={c}
+                                level={0}
+                                forumId={forumId}
+                                userId={userId}
+                                refresh={fetchComments}
+                            />
+                        ))
+                    ) : (
+                        <p className="text-gray-500 text-sm italic">Chưa có bình luận nào</p>
+                    )}
+                </div>
+
             </div>
         </main>
     );

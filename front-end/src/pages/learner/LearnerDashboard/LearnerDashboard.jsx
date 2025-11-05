@@ -100,23 +100,24 @@ const Dashboard = () => {
                   className="w-full h-40 object-cover"
                 />
                 <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-2">{course.title}</h3>
+                  <h3 className="text-lg font-semibold mb-2">{course.courseTitle}</h3>
                   <p className="text-sm text-gray-600 mb-4">
                     {course.instructor}
                   </p>
                   <div className="space-y-2 mb-4">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">
-                        Progress: {course.progress}%
+                        Date start: {new Date(course.lastAccessed).toLocaleDateString("vi-VN")}
                       </span>
+
                     </div>
-                    <Progress value={course.progress} className="h-2" />
+                    {/* <Progress value={course.progress} className="h-2" /> */}
                   </div>
                   <Button
                     asChild
                     className="bg-green-600 hover:bg-green-700 text-white"
                   >
-                    <Link to={`/learning/${course.courseId}`}>  Continue Learning</Link>
+                    <Link to={`/courses/${course.courseId}`}>  Continue Learning</Link>
                   </Button>
 
                 </CardContent>

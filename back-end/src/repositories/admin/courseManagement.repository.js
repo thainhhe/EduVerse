@@ -5,6 +5,8 @@ const Lesson = require("../../models/Lesson");
 const Material = require("../../models/Material");
 const Quiz = require("../../models/Quiz");
 const Enrollment = require("../../models/Enrollment");
+const Forum = require("../../models/Forum");
+const { STATUS_CODE } = require("../../config/enum/system.constant");
 
 const courseManagementRepository = {
   getAllCourses: async () => {
@@ -163,74 +165,202 @@ const courseManagementRepository = {
   },
 
   // Approve course and publish all related quizzes
+  // approveCourse: async (courseId) => {
+  //   try {
+  //     console.log(` Approving course ${courseId}...`);
+
+  //     // 1. Update course status to 'approve' and set isPublished to true
+  //     const course = await Course.findByIdAndUpdate(
+  //       courseId,
+  //       {
+  //         status: "approve",
+  //         isPublished: true,
+  //         reasonReject: "", // Clear rejection reason if any
+  //       },
+  //       { new: true }
+  //     ).exec();
+
+  //     if (!course) {
+  //       throw new Error("Course not found");
+  //     }
+
+  //     // 2. Get all modules of this course
+  //     const modules = await Module.find({ courseId }).exec();
+  //     const moduleIds = modules.map((m) => m._id);
+
+  //     // 3. Get all lessons of these modules
+  //     const lessons = await Lesson.find({
+  //       moduleId: { $in: moduleIds },
+  //     }).exec();
+  //     const lessonIds = lessons.map((l) => l._id);
+
+  //     // 4. Publish all quizzes at course level
+  //     const courseQuizzesUpdate = await Quiz.updateMany(
+  //       { courseId, isPublished: false },
+  //       { isPublished: true }
+  //     ).exec();
+
+  //     // 5. Publish all quizzes at module level
+  //     const moduleQuizzesUpdate = await Quiz.updateMany(
+  //       { moduleId: { $in: moduleIds }, isPublished: false },
+  //       { isPublished: true }
+  //     ).exec();
+
+  //     // 6. Publish all quizzes at lesson level
+  //     const lessonQuizzesUpdate = await Quiz.updateMany(
+  //       { lessonId: { $in: lessonIds }, isPublished: false },
+  //       { isPublished: true }
+  //     ).exec();
+
+  //     console.log(`Course approved successfully!`);
+  //     console.log(
+  //       `   - Course quizzes published: ${courseQuizzesUpdate.modifiedCount}`
+  //     );
+  //     console.log(
+  //       `   - Module quizzes published: ${moduleQuizzesUpdate.modifiedCount}`
+  //     );
+  //     console.log(
+  //       `   - Lesson quizzes published: ${lessonQuizzesUpdate.modifiedCount}`
+  //     );
+
+  //     return {
+  //       course,
+  //       quizzesPublished: {
+  //         courseLevel: courseQuizzesUpdate.modifiedCount,
+  //         moduleLevel: moduleQuizzesUpdate.modifiedCount,
+  //         lessonLevel: lessonQuizzesUpdate.modifiedCount,
+  //         total:
+  //           courseQuizzesUpdate.modifiedCount +
+  //           moduleQuizzesUpdate.modifiedCount +
+  //           lessonQuizzesUpdate.modifiedCount,
+  //       },
+  //     };
+  //   } catch (error) {
+  //     console.error("Repository Error - approveCourse:", error);
+  //     throw error;
+  //   }
+  // },
+
+  // Reject course
+  // rejectCourse: async (courseId, reasonReject) => {
+  //   try {
+  //     console.log(`❌ Rejecting course ${courseId}...`);
+
+  //     const course = await Course.findByIdAndUpdate(
+  //       courseId,
+  //       {
+  //         status: "reject",
+  //         isPublished: false,
+  //         reasonReject: reasonReject || "Course does not meet requirements",
+  //       },
+  //       { new: true }
+  //     ).exec();
+
+  //     if (!course) {
+  //       throw new Error("Course not found");
+  //     }
+
+  //     // Optional: Unpublish all quizzes when rejected
+  //     const modules = await Module.find({ courseId }).exec();
+  //     const moduleIds = modules.map((m) => m._id);
+  //     const lessons = await Lesson.find({
+  //       moduleId: { $in: moduleIds },
+  //     }).exec();
+  //     const lessonIds = lessons.map((l) => l._id);
+
+  //     await Quiz.updateMany(
+  //       {
+  //         $or: [
+  //           { courseId },
+  //           { moduleId: { $in: moduleIds } },
+  //           { lessonId: { $in: lessonIds } },
+  //         ],
+  //       },
+  //       { isPublished: false }
+  //     ).exec();
+
+  //     console.log(`Course rejected successfully!`);
+
+  //     return course;
+  //   } catch (error) {
+  //     console.error("Repository Error - rejectCourse:", error);
+  //     throw error;
+  //   }
+  // },
+
+  // ✅ Approve course and publish all related quizzes + create/update forum
   approveCourse: async (courseId) => {
     try {
-      console.log(` Approving course ${courseId}...`);
+      console.log(`✅ Approving course ${courseId}...`);
 
-      // 1. Update course status to 'approve' and set isPublished to true
+      // 1️⃣ Cập nhật trạng thái khóa học
       const course = await Course.findByIdAndUpdate(
         courseId,
         {
           status: "approve",
           isPublished: true,
-          reasonReject: "", // Clear rejection reason if any
+          reasonReject: "",
         },
         { new: true }
       ).exec();
 
-      if (!course) {
-        throw new Error("Course not found");
-      }
+      if (!course) throw new Error("Course not found");
 
-      // 2. Get all modules of this course
+      // 2️⃣ Lấy modules và lessons liên quan
       const modules = await Module.find({ courseId }).exec();
+      console.log("modules", modules);
       const moduleIds = modules.map((m) => m._id);
-
-      // 3. Get all lessons of these modules
       const lessons = await Lesson.find({
         moduleId: { $in: moduleIds },
       }).exec();
       const lessonIds = lessons.map((l) => l._id);
 
-      // 4. Publish all quizzes at course level
-      const courseQuizzesUpdate = await Quiz.updateMany(
-        { courseId, isPublished: false },
-        { isPublished: true }
-      ).exec();
+      // 3️⃣ Publish tất cả quiz liên quan
+      const [courseQuiz, moduleQuiz, lessonQuiz] = await Promise.all([
+        Quiz.updateMany({ courseId }, { isPublished: true }),
+        Quiz.updateMany(
+          { moduleId: { $in: moduleIds } },
+          { isPublished: true }
+        ),
+        Quiz.updateMany(
+          { lessonId: { $in: lessonIds } },
+          { isPublished: true }
+        ),
+      ]);
 
-      // 5. Publish all quizzes at module level
-      const moduleQuizzesUpdate = await Quiz.updateMany(
-        { moduleId: { $in: moduleIds }, isPublished: false },
-        { isPublished: true }
-      ).exec();
+      // 4️⃣ Tạo hoặc cập nhật forum
+      const existingForum = await Forum.findOne({ courseId });
+      if (!existingForum) {
+        const newForum = await Forum.create({
+          title: course.title || "Diễn đàn khóa học",
+          description: `Diễn đàn thảo luận cho khóa học "${course.title}"`,
+          courseId,
+          isPublic: true,
+        });
+        console.log(
+          `🗨️ Forum created for course ${course._id}: ${newForum._id}`
+        );
+      } else {
+        await Forum.findByIdAndUpdate(existingForum._id, { isPublic: true });
+        console.log(`🔄 Forum updated to public for course ${courseId}`);
+      }
 
-      // 6. Publish all quizzes at lesson level
-      const lessonQuizzesUpdate = await Quiz.updateMany(
-        { lessonId: { $in: lessonIds }, isPublished: false },
-        { isPublished: true }
-      ).exec();
-
-      console.log(`Course approved successfully!`);
-      console.log(
-        `   - Course quizzes published: ${courseQuizzesUpdate.modifiedCount}`
-      );
-      console.log(
-        `   - Module quizzes published: ${moduleQuizzesUpdate.modifiedCount}`
-      );
-      console.log(
-        `   - Lesson quizzes published: ${lessonQuizzesUpdate.modifiedCount}`
-      );
-
+      console.log("🎉 Course approved successfully!");
       return {
-        course,
-        quizzesPublished: {
-          courseLevel: courseQuizzesUpdate.modifiedCount,
-          moduleLevel: moduleQuizzesUpdate.modifiedCount,
-          lessonLevel: lessonQuizzesUpdate.modifiedCount,
-          total:
-            courseQuizzesUpdate.modifiedCount +
-            moduleQuizzesUpdate.modifiedCount +
-            lessonQuizzesUpdate.modifiedCount,
+        status: STATUS_CODE.OK,
+        message:
+          "Khóa học đã được duyệt và forum đã được cập nhật hoặc tạo mới",
+        data: {
+          course,
+          quizzesPublished: {
+            courseLevel: courseQuiz.modifiedCount,
+            moduleLevel: moduleQuiz.modifiedCount,
+            lessonLevel: lessonQuiz.modifiedCount,
+            total:
+              courseQuiz.modifiedCount +
+              moduleQuiz.modifiedCount +
+              lessonQuiz.modifiedCount,
+          },
         },
       };
     } catch (error) {
@@ -239,26 +369,25 @@ const courseManagementRepository = {
     }
   },
 
-  // Reject course
+  // ❌ Reject course -> unpublish quizzes + hide forum
   rejectCourse: async (courseId, reasonReject) => {
     try {
       console.log(`❌ Rejecting course ${courseId}...`);
 
+      // 1️⃣ Cập nhật trạng thái khóa học
       const course = await Course.findByIdAndUpdate(
         courseId,
         {
           status: "reject",
           isPublished: false,
-          reasonReject: reasonReject || "Course does not meet requirements",
+          reasonReject: reasonReject || "Khóa học không đạt yêu cầu",
         },
         { new: true }
       ).exec();
 
-      if (!course) {
-        throw new Error("Course not found");
-      }
+      if (!course) throw new Error("Course not found");
 
-      // Optional: Unpublish all quizzes when rejected
+      // 2️⃣ Lấy module và lesson của khóa học
       const modules = await Module.find({ courseId }).exec();
       const moduleIds = modules.map((m) => m._id);
       const lessons = await Lesson.find({
@@ -266,6 +395,7 @@ const courseManagementRepository = {
       }).exec();
       const lessonIds = lessons.map((l) => l._id);
 
+      // 3️⃣ Unpublish tất cả quiz liên quan
       await Quiz.updateMany(
         {
           $or: [
@@ -277,9 +407,21 @@ const courseManagementRepository = {
         { isPublished: false }
       ).exec();
 
-      console.log(`Course rejected successfully!`);
+      // 4️⃣ Cập nhật forum -> ẩn đi thay vì xóa
+      const existingForum = await Forum.findOne({ courseId });
+      if (existingForum) {
+        await Forum.findByIdAndUpdate(existingForum._id, { isPublic: false });
+        console.log(`🚫 Forum set to private for rejected course ${courseId}`);
+      } else {
+        console.log(`ℹ️ No forum found for rejected course ${courseId}`);
+      }
 
-      return course;
+      console.log("✅ Course rejected and forum hidden (if existed).");
+      return {
+        status: STATUS_CODE.OK,
+        message: "Khóa học đã bị từ chối và forum đã được ẩn (nếu có)",
+        data: course,
+      };
     } catch (error) {
       console.error("Repository Error - rejectCourse:", error);
       throw error;

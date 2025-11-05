@@ -8,9 +8,17 @@ reviewRouter.get("/", reviewController.getAllReviews);
 // get review by id
 reviewRouter.get("/:id", verifyToken, reviewController.getReviewById);
 // create review
-reviewRouter.post("/", verifyToken, reviewController.createReview);
+reviewRouter.post(
+  "/",
+  // verifyToken,
+  reviewController.createReview
+);
 // update review
-reviewRouter.put("/:id", verifyToken, reviewController.updateReview);
+reviewRouter.put(
+  "/:id",
+  // verifyToken,
+  reviewController.updateReview
+);
 // delete review
 reviewRouter.delete("/:id", verifyToken, reviewController.deleteReview);
 // get all review of course and calculator avg rating

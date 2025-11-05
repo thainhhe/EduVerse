@@ -151,7 +151,7 @@ const Courses = () => {
                         asChild
                         className="bg-green-600 hover:bg-green-700 text-white"
                       >
-                        <Link to={`/learning/${course._id}`}>Go to Course</Link>
+                        <Link to={`/courses/${course._id}`}>Go to Course</Link>
                       </Button>
                     ) : (
                       <Button

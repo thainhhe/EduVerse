@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Mail, Phone, Globe, MapPin } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Globe, MapPin, BookOpen } from "lucide-react";
 import { FaLinkedin, FaTwitter } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,57 +11,55 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { getMyCourses } from "@/services/courseService";
 
 const InstructorProfile = () => {
   const { id } = useParams();
+  const [instructor, setInstructor] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Dữ liệu giả lập
-  const instructor = {
-    name: "Dr. Eleanor Vance",
-    title: "Quantum Computing & Advanced Algorithms",
-    specialties: [
-      "Quantum Physics",
-      "Algorithm Design",
-      "Theoretical Computer Science",
-    ],
-    image: "/female-professor.png",
-    biography:
-      "Dr. Eleanor Vance is a distinguished professor and researcher with over 15 years of experience...",
-    contact: {
-      email: "eleanor.vance@educonnect.com",
-      phone: "+1 (555) 123-4567",
-      website: "www.eleanorvance.com",
-      location: "Online / New York, USA",
-    },
-    courses: [
-      {
-        id: 1,
-        title: "Introduction to Quantum Computing",
-        duration: "8 Weeks",
-        description:
-          "Explore the fundamental principles of quantum mechanics and their application in computing.",
-      },
-      {
-        id: 2,
-        title: "Advanced Algorithm Design",
-        duration: "10 Weeks",
-        description:
-          "Deep dive into complex algorithms, data structures, and optimization techniques.",
-      },
-      {
-        id: 3,
-        title: "Quantum Cryptography & Security",
-        duration: "6 Weeks",
-        description:
-          "Understand how quantum mechanics impacts cybersecurity and modern encryption.",
-      },
-    ],
-  };
+  useEffect(() => {
+    const fetchInstructorData = async () => {
+      try {
+        setLoading(true);
+        const res = await getMyCourses(id);
+        console.log("res", res);
+        const data = res?.data?.[0]; // ✅ lấy phần tử đầu tiên trong mảng
+        console.log("data", data);
+        if (data) setInstructor(data);
+      } catch (error) {
+        console.error("❌ Failed to fetch instructor data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) fetchInstructorData();
+  }, [id]);
+
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-600 text-lg">
+        Loading instructor information...
+      </div>
+    );
+
+  if (!instructor)
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-gray-600">
+        <p className="mb-4">Instructor not found.</p>
+        <Button asChild>
+          <Link to="/instructors">Go Back</Link>
+        </Button>
+      </div>
+    );
+
+  const { username, email, avatar, courses } = instructor;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 sm:py-12">
       <div className="container mx-auto px-4 max-w-5xl">
+        {/* Back Button */}
         <Button variant="ghost" asChild className="mb-6">
           <Link to="/instructors">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -68,45 +67,26 @@ const InstructorProfile = () => {
           </Link>
         </Button>
 
+        {/* Instructor Info */}
         <div className="bg-white rounded-lg shadow-sm p-4 sm:p-8 mb-6">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8">
             <Avatar className="w-24 h-24 sm:w-32 sm:h-32">
               <AvatarImage
-                src={instructor.image || "/placeholder.svg"}
-                alt={instructor.name}
+                src={avatar || "/default-avatar.png"}
+                alt={username}
               />
-              <AvatarFallback>{instructor.name.charAt(0)}</AvatarFallback>
+              <AvatarFallback>{username?.charAt(0)}</AvatarFallback>
             </Avatar>
+
             <div className="flex-1 text-center md:text-left">
               <h1 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-2">
-                {instructor.name}
+                {username}
               </h1>
-              <p className="text-md sm:text-lg text-gray-600 mb-4">
-                {instructor.title}
-              </p>
-              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                {instructor.specialties.map((specialty, index) => (
-                  <Badge
-                    key={index}
-                    variant="secondary"
-                    className="bg-gray-100"
-                  >
-                    {specialty}
-                  </Badge>
-                ))}
-              </div>
+              <p className="text-gray-600 text-sm mb-2">{email}</p>
             </div>
           </div>
 
-          <section className="mb-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-              Biography
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              {instructor.biography}
-            </p>
-          </section>
-
+          {/* Contact Info */}
           <section className="mb-8">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
               Contact Information
@@ -114,51 +94,80 @@ const InstructorProfile = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex items-center gap-3 text-gray-700">
                 <Mail className="h-5 w-5 text-indigo-600" />
-                <span>{instructor.contact.email}</span>
-              </div>
-              <div className="flex items-center gap-3 text-gray-700">
-                <Phone className="h-5 w-5 text-indigo-600" />
-                <span>{instructor.contact.phone}</span>
-              </div>
-              <div className="flex items-center gap-3 text-gray-700">
-                <Globe className="h-5 w-5 text-indigo-600" />
-                <span>{instructor.contact.website}</span>
+                <span>{email}</span>
               </div>
               <div className="flex items-center gap-3 text-gray-700">
                 <MapPin className="h-5 w-5 text-indigo-600" />
-                <span>{instructor.contact.location}</span>
+                <span>Online / Global</span>
+              </div>
+              <div className="flex items-center gap-3 text-gray-700">
+                <Globe className="h-5 w-5 text-indigo-600" />
+                <span>www.educonnect.com</span>
+              </div>
+              <div className="flex items-center gap-3 text-gray-700">
+                <Phone className="h-5 w-5 text-indigo-600" />
+                <span>+1 (555) 123-4567</span>
               </div>
             </div>
           </section>
 
+          {/* Courses */}
           <section className="mb-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <BookOpen className="h-6 w-6 text-indigo-600" />
               Courses Taught
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {instructor.courses.map((course) => (
-                <Card key={course.id} className="flex flex-col">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-indigo-600">
-                      {course.title}
-                    </CardTitle>
-                    <CardDescription>
-                      Duration: {course.duration}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex flex-col flex-grow p-6 pt-0">
-                    <p className="text-sm text-gray-600 mb-4 flex-grow">
-                      {course.description}
-                    </p>
-                    <Button className="w-full bg-indigo-600 hover:bg-indigo-700 mt-auto">
-                      View Course Details
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+
+            {!courses?.length ? (
+              <p className="text-gray-500 italic">
+                This instructor hasn’t published any courses yet.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {courses.map((course) => (
+                  <Card key={course._id} className="flex flex-col">
+                    <CardHeader>
+                      <CardTitle className="text-lg text-indigo-600 line-clamp-2">
+                        {course.title}
+                      </CardTitle>
+                      <CardDescription>
+                        Duration:{" "}
+                        {course.duration?.value
+                          ? `${course.duration.value} ${course.duration.unit}`
+                          : "N/A"}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col flex-grow p-6 pt-0">
+                      <img
+                        src={
+                          course.thumbnail
+                            ? `/uploads/${course.thumbnail}`
+                            : "/course-placeholder.png"
+                        }
+                        alt={course.title}
+                        className="rounded-lg w-full h-36 object-cover mb-4"
+                      />
+                      <p className="text-sm text-gray-600 mb-4 flex-grow line-clamp-4">
+                        {course.description}
+                      </p>
+                      <div className="flex justify-between items-center mb-3 text-sm text-gray-500">
+                        <span>💵 {course.price.toLocaleString()} VND</span>
+                        <span>⭐ {course.rating}/5</span>
+                      </div>
+                      <Button
+                        asChild
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 mt-auto"
+                      >
+                        <Link to={`/courses/${course._id}`}>View Details</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </section>
 
+          {/* Connect Section */}
           <section>
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
               Connect Online

@@ -17,7 +17,7 @@ courseRouter.get("/:id", courseController.getCourseById);
 courseRouter.get("/learner/common", courseController.getAllCourseForLearner);
 courseRouter.get(
   "/instructor/:id",
-  verifyToken,
+  // verifyToken,
   // checkPermission(["admin", "instructor"], ["manage_course"]),
   courseController.getAllCourseInstructor
 );
