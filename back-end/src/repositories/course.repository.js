@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Course = require("../models/Course");
 const User = require("../models/User");
 
@@ -98,13 +99,106 @@ const courseRepository = {
   },
 
   getAllByMainInstructor: async (id) => {
-    return await Course.find({ main_instructor: id, isDeleted: false })
-      .sort({ createdAt: -1 })
-      .populate("category")
-      .populate("main_instructor", "_id username email")
-      .populate("instructors.id", "_id username email")
-      .populate("instructors.permission")
-      .exec();
+    const _id = new mongoose.Types.ObjectId(id);
+    return await User.aggregate([
+      { $match: { _id: _id, role: "instructor" } },
+      {
+        $lookup: {
+          from: "permissions",
+          localField: "permissions",
+          foreignField: "_id",
+          as: "permissions",
+        },
+      },
+      {
+        $lookup: {
+          from: "courses",
+          localField: "_id",
+          foreignField: "main_instructor",
+          as: "courses",
+          pipeline: [
+            { $sort: { rating: -1 } },
+            {
+              $lookup: {
+                from: "categories",
+                localField: "category",
+                foreignField: "_id",
+                as: "category",
+              },
+            },
+            {
+              $unwind: { path: "$category", preserveNullAndEmptyArrays: true },
+            },
+            {
+              $lookup: {
+                from: "users",
+                localField: "main_instructor",
+                foreignField: "_id",
+                as: "main_instructor",
+                pipeline: [
+                  {
+                    $lookup: {
+                      from: "permissions",
+                      localField: "permissions",
+                      foreignField: "_id",
+                      as: "permissions",
+                    },
+                  },
+                  {
+                    $project: {
+                      password: 0,
+                      resetOtpHash: 0,
+                      resetOtpExpires: 0,
+                      resetOtpAttempts: 0,
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              $unwind: {
+                path: "$main_instructor",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            {
+              $lookup: {
+                from: "modules",
+                localField: "_id",
+                foreignField: "courseId",
+                as: "modules",
+                pipeline: [
+                  { $sort: { order: 1, createdAt: 1 } },
+                  {
+                    $lookup: {
+                      from: "lessons",
+                      localField: "_id",
+                      foreignField: "moduleId",
+                      as: "lessons",
+                      pipeline: [{ $sort: { order: 1, createdAt: 1 } }],
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+      {
+        $addFields: {
+          maxRating: { $ifNull: [{ $max: "$courses.rating" }, 0] },
+        },
+      },
+      {
+        $project: {
+          password: 0,
+          resetOtpHash: 0,
+          resetOtpExpires: 0,
+          resetOtpAttempts: 0,
+          __v: 0,
+        },
+      },
+    ]);
   },
 
   getById: async (id) => {

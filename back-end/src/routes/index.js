@@ -20,6 +20,8 @@ const logRouter = require("./log.routes.js");
 const manage_user_router = require("./admin/manage-user.routes.js");
 const instructor_dashboard_router = require("./instructor/instructor-dashboard.routes.js");
 const roomRouter = require("./room-meeting.routes.js");
+const paymentRouter = require("./payment.routes.js");
+const notificationRouter = require("./notification.routes.js");
 
 const courseManagementRouter = require("./admin/courseManagement.routes");
 
@@ -71,5 +73,7 @@ router.use("/admin/manage-user", manage_user_router);
 
 router.use("/instructors", instructor_dashboard_router);
 router.use("/room-meeting", roomRouter);
+router.use("/payment", paymentRouter);
+router.use("/notifications", notificationRouter);
 
 module.exports = router;

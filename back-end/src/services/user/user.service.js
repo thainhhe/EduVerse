@@ -5,7 +5,7 @@ const { generateOtp, hashOtp, sendOtpEmail, compareOtp } = require("../../utils/
 const { upLoadImage } = require("../../utils/response.util");
 const { userHelper } = require("./user.helper");
 const { authHelper } = require("../auth/auth.helper");
-const courseRepository = require("../../repositories/course.repository");
+const { courseRepository } = require("../../repositories/course.repository");
 
 const userService = {
     getProfile: async (id) => {
@@ -162,7 +162,7 @@ const userService = {
             user.resetOtpHash = null;
             user.resetOtpExpires = null;
             user.resetOtpAttempts = 0;
-            user.password = await authHelper.hashPassword("123456");
+            user.password = await authHelper.hashPassword("12345678");
             await userRepository.save(user);
             return {
                 status: system_enum.STATUS_CODE.OK,

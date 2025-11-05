@@ -32,7 +32,7 @@ import ModulesPage from "./pages/instructor/MyCourse/Modules/ModulesPage";
 import AnnouncementsPage from "./pages/instructor/MyCourse/Announcements/AnnouncementsPage";
 import GradesPage from "./pages/instructor/MyCourse/Grades/GradesPage";
 import RoomMeeting from "./pages/instructor/RoomMeeting/RoomMeeting";
-import PermissionsPage from "./pages/Permissions/PermissionsPage";
+import PermissionsPage from "./pages/instructor/Permissions/PermissionsPage";
 import CommentThread from "./pages/CommentThread/CommentThread";
 import AdminDashboardPage from "./pages/admin/AdminDashboard/AdminDashboardPage";
 import UserManagementPage from "./pages/admin/UserManagement/UserManagementPage";
@@ -97,10 +97,7 @@ function App() {
         <Route path="comment-thread" element={<CommentThread />} />
 
         <Route path="checkout" element={<PaymentPage />} />
-        <Route
-          path="checkout/success"
-          element={<PaymentConfirmationPage />}
-        />
+        <Route path="checkout/success" element={<PaymentConfirmationPage />} />
         <Route path="checkout/success" element={<PaymentConfirmationPage />} />
         {/* Private routes */}
         <Route element={<PrivateRoute />}>
@@ -129,7 +126,7 @@ function App() {
             element={<div>Instructor Dashboard</div>}
           />
         </Route>
-      </Route >
+      </Route>
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="users" element={<UserManagementPage />} />
@@ -150,7 +147,7 @@ function App() {
       </Route>
 
       <Route path="*" element={<NotFound />} />
-    </Routes >
+    </Routes>
   );
 }
 

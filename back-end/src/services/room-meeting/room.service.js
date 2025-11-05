@@ -1,5 +1,6 @@
 const { system_enum } = require("../../config/enum/system.constant");
 const roomMeetingRepository = require("../../repositories/room-meeting.repository");
+const crypto = require("crypto");
 
 const roomService = {
     getAllRoom: async () => {
@@ -34,7 +35,30 @@ const roomService = {
     },
     createRoom: async (data) => {
         try {
-            const result = await roomMeetingRepository.createRoom(data);
+            const { courseId, createdBy, name, startTime, endTime } = data;
+
+            if (!courseId || !createdBy || !name) {
+                return {
+                    status: system_enum.STATUS_CODE.BAD_REQUEST,
+                    message: system_enum.SYSTEM_MESSAGE.INVALID_INPUT,
+                };
+            }
+            const randomSuffix = crypto.randomBytes(4).toString("hex");
+            const roomName = `${name.replace(/\s+/g, "_")}_${randomSuffix}`;
+            const meetingLink = `https://meet.jit.si/${roomName}`;
+
+            const defaultStart = new Date();
+            defaultStart.setDate(defaultStart.getDate() + 3);
+
+            const roomData = {
+                name,
+                courseId,
+                createdBy,
+                link: meetingLink,
+                startTime: startTime ? new Date(startTime) : defaultStart,
+                endTime: endTime || null,
+            };
+            const result = await roomMeetingRepository.createRoom(roomData);
             return {
                 status: system_enum.STATUS_CODE.CREATED,
                 message: system_enum.SYSTEM_MESSAGE.SUCCESS,
