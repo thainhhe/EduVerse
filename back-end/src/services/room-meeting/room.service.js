@@ -45,7 +45,7 @@ const roomService = {
             }
             const randomSuffix = crypto.randomBytes(4).toString("hex");
             const roomName = `${name.replace(/\s+/g, "_")}_${randomSuffix}`;
-            const meetingLink = `https://meet.jit.si/${roomName}`;
+            const meetingLink = `https://localhost:8443/${roomName}`;
 
             const defaultStart = new Date();
             defaultStart.setDate(defaultStart.getDate() + 3);
