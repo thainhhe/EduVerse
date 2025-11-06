@@ -26,7 +26,7 @@ const RoomMeeting = () => {
     }
   };
 
-  // fallback from session storage (saved when user started editing the course)
+  // fallback from local storage (saved when user started editing the course)
   const storageCourseId =
     typeof window !== "undefined"
       ? sessionStorage.getItem("currentCourseId")
@@ -140,11 +140,7 @@ const RoomMeeting = () => {
               value={newRoomName}
               onChange={(e) => setNewRoomName(e.target.value)}
             />
-            <Input
-              placeholder="Đường dẫn (link)"
-              value={newRoomLink}
-              onChange={(e) => setNewRoomLink(e.target.value)}
-            />
+
             <Button onClick={handleCreateRoom}>
               <Plus className="mr-2 h-4 w-4" /> Tạo
             </Button>

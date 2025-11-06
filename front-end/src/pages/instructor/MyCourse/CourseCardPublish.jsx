@@ -45,7 +45,7 @@ const CourseCardPublish = ({ course, role }) => {
 
   // Card click -> open create-module / module manager (no stopPropagation)
   const openModuleManager = () => {
-    const id = course._id ?? course.id;
+    const id = course._id ?? course.id ?? course.idStr;
     if (!id) return;
     navigate("/create-course/modules", { state: { id } });
   };

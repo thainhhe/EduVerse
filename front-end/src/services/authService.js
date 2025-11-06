@@ -12,6 +12,11 @@ const authService = {
     return res;
   },
 
+  changePassword: async (id, payload) => {
+    const res = await api.post(`/auth/change-password/${id}`, payload);
+    return res;
+  },
+
   logout: async () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");

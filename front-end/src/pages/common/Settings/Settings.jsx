@@ -32,6 +32,13 @@ const Settings = () => {
 
   const [loading, setLoading] = useState(false);
 
+  // password change UI state
+  const [showChangeForm, setShowChangeForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changing, setChanging] = useState(false);
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -122,6 +129,49 @@ const Settings = () => {
     toast.info("Delete account not implemented in UI");
   };
 
+  const handleStartChange = () => {
+    setShowChangeForm(true);
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+  };
+
+  const handleCancelChange = () => {
+    setShowChangeForm(false);
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+  };
+
+  const handleChangePassword = async () => {
+    if (!profile.id) return toast.error("Missing user id");
+    if (!currentPassword || !newPassword || !confirmPassword)
+      return toast.error("Please fill all fields");
+    if (newPassword.length < 8)
+      return toast.error("New password must be at least 8 characters");
+    if (newPassword !== confirmPassword)
+      return toast.error("Passwords do not match");
+
+    setChanging(true);
+    try {
+      // backend expects POST /auth/change-password/:id
+      await authService.changePassword(profile.id, {
+        currentPassword,
+        newPassword,
+      });
+      toast.success("Password changed");
+      handleCancelChange();
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Change password failed";
+      toast.error(msg);
+    } finally {
+      setChanging(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 max-w-4xl">
@@ -179,24 +229,67 @@ const Settings = () => {
 
             <div>
               <Label htmlFor="password">Password</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="password"
-                  type="password"
-                  value="********"
-                  readOnly
-                  className="bg-gray-50"
-                />
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    toast.info("Change password flow not implemented here")
-                  }
-                >
-                  <Lock className="mr-2 h-4 w-4" />
-                  Change
-                </Button>
-              </div>
+              {!showChangeForm ? (
+                <div className="flex gap-2">
+                  <Input
+                    id="password"
+                    type="password"
+                    value="********"
+                    readOnly
+                    className="bg-gray-50"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={handleStartChange}
+                    disabled={!profile.id}
+                  >
+                    <Lock className="mr-2 h-4 w-4" />
+                    Change
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="currentPassword">Current password</Label>
+                    <Input
+                      id="currentPassword"
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="newPassword">New password</Label>
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="confirmPassword">Confirm password</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleChangePassword} disabled={changing}>
+                      Save
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={handleCancelChange}
+                      disabled={changing}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2">
