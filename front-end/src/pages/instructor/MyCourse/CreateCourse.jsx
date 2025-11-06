@@ -32,6 +32,17 @@ const CreateCourse = () => {
     fetchCourse();
   }, [courseId, isUpdateMode]);
 
+  const handleBack = () => {
+    // prefer explicit origin passed in state
+    const from = location.state?.from;
+    if (from) {
+      navigate(from);
+      return;
+    }
+
+    navigate("/mycourses");
+  };
+
   return (
     <div>
       <header className="">
@@ -40,7 +51,7 @@ const CreateCourse = () => {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>

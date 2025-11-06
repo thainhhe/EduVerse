@@ -43,7 +43,8 @@ import CourseDetailPage from "./pages/admin/CourseManagement/CourseDetailPage";
 import QuizDetail from "./pages/learner/Learning/QuizDetail";
 import GoogleCallback from "./pages/auth/GoogleCallback";
 import DashboardInstructor from "./pages/instructor/DashboardInstructor/DashBoardInstructor";
-// NEW imports
+import InstructorCourseDetail from "@/pages/instructor/CourseDetail";
+
 import ChatbotManagementPage from "./pages/admin/ChatbotManagement/ChatbotManagementPage";
 import CommentManagementPage from "./pages/admin/CommentManagement/CommentManagementPage";
 
@@ -68,6 +69,11 @@ function App() {
         <Route path="register-instructor" element={<Register />} />
         <Route path="courses" element={<Courses />} />
         <Route path="courses/:id" element={<CourseDetail />} />
+        {/* Instructor public detail (management view for instructor) */}
+        <Route
+          path="instructor/courses/:id"
+          element={<InstructorCourseDetail />}
+        />
         <Route path="mycourses" element={<MyCourse />} />
         <Route path="register-learner" element={<RegisterLearner />} />
         <Route path="instructors" element={<Instructors />} />
