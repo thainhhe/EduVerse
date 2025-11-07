@@ -1,7 +1,7 @@
 // src/context/AuthContext.jsx
 
 import React, { createContext, useCallback, useEffect, useState } from "react";
-import { authService } from "@/services/authService"; // adjust path if needed
+import authService from "@/services/authService";
 import { toast } from "react-toastify";
 
 export const AuthContext = createContext(null);
@@ -23,12 +23,10 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Try to restore session on mount
   useEffect(() => {
     const init = async () => {
       const accessToken = localStorage.getItem("accessToken");
       if (accessToken) {
-        // decode token to extract user id (try common keys)
         const payload = parseJwt(accessToken);
         const userId = payload?.id ?? payload?._id ?? payload?.sub ?? null;
 
@@ -39,13 +37,11 @@ export const AuthProvider = ({ children }) => {
           } else {
             currentUser = await authService.getCurrentUser();
           }
-          // normalize: authService/api may return raw data or wrapper
           const normalized =
             currentUser?.data?.user ?? currentUser?.data ?? currentUser;
           if (normalized) setUser(normalized);
         } catch (err) {
           const status = err?.response?.status;
-          // only clear tokens on auth errors
           if (status === 401 || status === 403) {
             localStorage.removeItem("accessToken");
             localStorage.removeItem("refreshToken");
@@ -86,24 +82,34 @@ export const AuthProvider = ({ children }) => {
       if (accessToken) localStorage.setItem("accessToken", accessToken);
       if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
 
-      if (userFromRes) {
-        setUser(userFromRes);
-        toast.success("Đăng nhập thành công!");
-        return { success: true, user: userFromRes };
+      // If backend returned a user object use it, otherwise try to fetch /auth/me or profile using token
+      let finalUser = userFromRes;
+      if (!finalUser && accessToken) {
+        try {
+          const me = await authService.getCurrentUser();
+          finalUser = me?.data?.user ?? me?.data ?? me ?? null;
+        } catch (e) {
+          finalUser = null;
+        }
       }
 
+      if (finalUser) {
+        setUser(finalUser);
+        toast.success("Login successful!");
+        return { success: true, user: finalUser };
+      }
+
+      // If we have token but couldn't fetch user, still treat as success but user is null
       if (accessToken) {
         setUser(null);
-        toast.success("Đăng nhập thành công!");
+        toast.success("Login successful!");
         return { success: true, user: null };
       }
 
       return { success: false, error: "Invalid response from server" };
     } catch (error) {
       const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Đăng nhập thất bại";
+        error?.response?.data?.message || error?.message || "Login failed";
       toast.error(message);
       return { success: false, error: message };
     }
@@ -113,7 +119,6 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await authService.register(userData);
 
-      // same extraction as login
       const accessToken =
         res?.accessToken ||
         res?.token ||
@@ -137,18 +142,29 @@ export const AuthProvider = ({ children }) => {
       if (accessToken) localStorage.setItem("accessToken", accessToken);
       if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
 
-      if (userFromRes) {
-        setUser(userFromRes);
-        toast.success("Đăng ký thành công!");
+      let finalUser = userFromRes;
+      if (!finalUser && accessToken) {
+        try {
+          const me = await authService.getCurrentUser();
+          finalUser = me?.data?.user ?? me?.data ?? me ?? null;
+        } catch (e) {
+          finalUser = null;
+        }
+      }
+
+      if (finalUser) {
+        setUser(finalUser);
+        toast.success("Registration successful!");
         return { success: true };
       }
 
-      // If no user returned, consider registration success (some backends don't auto-login)
-      toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
+      toast.success("Registration successful! Please log in.");
       return { success: true };
     } catch (error) {
       const message =
-        error?.response?.data?.message || error?.message || "Đăng ký thất bại";
+        error?.response?.data?.message ||
+        error?.message ||
+        "Registration failed";
       toast.error(message);
       return { success: false, error: message };
     }
@@ -156,18 +172,15 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      // call backend logout if endpoint exists, otherwise just clear local
       try {
         await authService.logout();
-      } catch (e) {
-        // ignore network errors on logout
-      }
+      } catch (e) {}
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       setUser(null);
-      toast.success("Đăng xuất thành công!");
+      toast.success("Logout successful!");
     } catch (error) {
-      toast.error("Đăng xuất thất bại");
+      toast.error("Logout failed");
     }
   };
 

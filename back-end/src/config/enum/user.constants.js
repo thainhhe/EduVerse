@@ -7,6 +7,8 @@ const user_enum = {
 
         USER_NOT_FOUND: "",
         FAIL_GET_DATA: "",
+        ASSIGN_PERMISSION_SUCCESS: "",
+        ASSIGN_PERMISSION_FAIL: "",
     },
 };
 

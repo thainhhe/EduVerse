@@ -80,6 +80,7 @@ const checkQuizCompletion = async (req, res) => {
   try {
     const { userId, quizId } = req.params;
     const result = await scoreServices.checkQuizCompletion(userId, quizId);
+
     return response(res, result);
   } catch (error) {
     return error_response(res, error);

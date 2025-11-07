@@ -18,6 +18,13 @@ const CourseCardPublish = ({ course, role }) => {
     navigate("/create-course", { state: { id } });
   };
 
+  // when navigating to modules/quiz manager, pass course id in state
+  const openModules = () => {
+    // ensure course._id or course.id exists
+    const id = course._id ?? course.id ?? course.idStr;
+    navigate("/create-course/modules", { state: { id } });
+  };
+
   const handleDelete = () => {
     if (confirm("Are you sure you want to delete this course?")) {
       console.log("🗑️ Deleted course:", course.id);
@@ -29,9 +36,7 @@ const CourseCardPublish = ({ course, role }) => {
     console.log(`🔁 Course ${course.id} visibility: ${!visible}`);
   };
   const handleOpenCourseQuiz = () => {
-    const id = course?._id || course?.id;
-    if (!id)
-      return console.warn("Missing course id when trying to open quiz", course);
+    const id = course._id ?? course.id ?? course.idStr;
     navigate("/create-course/modules", { state: { id, openQuiz: true } });
   };
 

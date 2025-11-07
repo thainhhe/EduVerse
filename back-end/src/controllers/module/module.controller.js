@@ -11,15 +11,6 @@ const moduleController = {
             return error_response(res, error);
         }
     },
-    getModuleById: async (req, res) => {
-        try {
-            const id = req.params.id;
-            const result = await moduleService.getModuleId(id);
-            return response(res, result);
-        } catch (error) {
-            return error_response(res, error);
-        }
-    },
     createNewModule: async (req, res) => {
         try {
             const data = req.body;

@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FaRegStar } from "react-icons/fa";
 import { getAllCoursePublished } from "@/services/courseService";
+import { useEnrollment } from "@/context/EnrollmentContext";
+import { useAuth } from "@/hooks/useAuth";
 
 const Courses = () => {
   const [courses, setCourses] = useState([]);
@@ -12,7 +14,9 @@ const Courses = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  const { user } = useAuth();
+  const { enrollments } = useEnrollment();
+  console.log("enrollments", enrollments)
   // ✅ Lấy dữ liệu từ API thật
 
   useEffect(() => {
@@ -45,6 +49,7 @@ const Courses = () => {
 
     fetchCourses();
   }, []);
+
 
 
   const filteredCourses =
@@ -141,14 +146,23 @@ const Courses = () => {
                     <span className="text-lg font-bold text-indigo-600">
                       ${course.price || 0}
                     </span>
-                    <Button
-                      asChild
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                    >
-                      <Link to={`/courses/${course._id || course.id}`}>
-                        Enroll
-                      </Link>
-                    </Button>
+                    {enrollments.some((e) => e.courseId === course._id) ? (
+                      <Button
+                        asChild
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <Link to={`/courses/${course._id}`}>Go to Course</Link>
+                      </Button>
+                    ) : (
+                      <Button
+                        asChild
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                      >
+                        <Link to={`/courses/${course._id}`}>Enroll</Link>
+                      </Button>
+                    )}
+
+
                   </div>
                 </CardContent>
               </Card>

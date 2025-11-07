@@ -71,7 +71,7 @@ const scoreServices = {
   submitQuiz: async (submitData) => {
     try {
       const validatedData = scoreValidator.validateSubmitQuiz(submitData);
-
+      console.log("validatedData", validatedData);
       const quiz = await quizRepository.getQuizById(validatedData.quizId);
 
       if (!quiz) {
@@ -101,7 +101,7 @@ const scoreServices = {
       }
 
       const result = scoreHelper.calculateScore(quiz, validatedData.answers);
-
+      console.log("result", result);
       const scoreData = {
         userId: validatedData.userId,
         quizId: validatedData.quizId,
@@ -172,12 +172,37 @@ const scoreServices = {
           message: "Score not found for this user and quiz",
         };
       }
-
-      // formatted score
-      const formatted = scoreHelper.formatScore(score);
-
-      // derive scope info from populated quizId
+      console.log("score", score);
       const quiz = score.quizId || {};
+      const questions = quiz?.questions || [];
+      console.log("questions", questions);
+      const detailedAnswers = score.answers.map((ans) => {
+        const question = questions.find(
+          (q) => q._id.toString() === ans.questionId.toString()
+        );
+
+        return {
+          ...(ans.toObject?.() || ans),
+          question: question
+            ? {
+                questionText: question.questionText,
+                questionType: question.questionType,
+                options: question.options,
+                correctAnswer: question.correctAnswer,
+                explanation: question.explanation,
+                points: question.points,
+                order: question.order,
+              }
+            : null,
+        };
+      });
+
+      console.log("detailedAnswers", detailedAnswers);
+      const formatted = {
+        ...scoreHelper.formatScore(score),
+        answers: detailedAnswers,
+      };
+
       const scope = {};
 
       // If quiz has lessonId populated and that lesson has module/course populated
@@ -192,26 +217,26 @@ const scoreServices = {
           : { id: quiz.lessonId?.toString?.() || quiz.lessonId, title: null };
         scope.module = moduleFromLesson
           ? {
-            id: moduleFromLesson._id?.toString() || moduleFromLesson.id,
-            title: moduleFromLesson.title,
-          }
+              id: moduleFromLesson._id?.toString() || moduleFromLesson.id,
+              title: moduleFromLesson.title,
+            }
           : quiz.moduleId
-            ? {
+          ? {
               id: quiz.moduleId._id?.toString() || quiz.moduleId,
               title: quiz.moduleId?.title || null,
             }
-            : null;
+          : null;
         scope.course = courseFromLesson
           ? {
-            id: courseFromLesson._id?.toString() || courseFromLesson.id,
-            title: courseFromLesson.title,
-          }
+              id: courseFromLesson._id?.toString() || courseFromLesson.id,
+              title: courseFromLesson.title,
+            }
           : quiz.courseId
-            ? {
+          ? {
               id: quiz.courseId._id?.toString() || quiz.courseId,
               title: quiz.courseId?.title || null,
             }
-            : null;
+          : null;
       }
       // If quiz has moduleId (and no lesson)
       else if (quiz.moduleId) {
@@ -224,15 +249,15 @@ const scoreServices = {
           : { id: quiz.moduleId?.toString?.() || quiz.moduleId, title: null };
         scope.course = courseFromModule
           ? {
-            id: courseFromModule._id?.toString() || courseFromModule.id,
-            title: courseFromModule.title,
-          }
+              id: courseFromModule._id?.toString() || courseFromModule.id,
+              title: courseFromModule.title,
+            }
           : quiz.courseId
-            ? {
+          ? {
               id: quiz.courseId._id?.toString() || quiz.courseId,
               title: quiz.courseId?.title || null,
             }
-            : null;
+          : null;
       }
       // If quiz has courseId only
       else if (quiz.courseId) {
@@ -290,7 +315,9 @@ const scoreServices = {
       let latestAttempt = null;
       if (hasCompleted) {
         latestAttempt = attempts.reduce((latest, current) => {
-          return current.attemptNumber > latest.attemptNumber ? current : latest;
+          return current.attemptNumber > latest.attemptNumber
+            ? current
+            : latest;
         }, attempts[0]);
       }
 
@@ -310,16 +337,18 @@ const scoreServices = {
             remaining: attemptsRemaining,
             canRetake,
           },
-          latestScore: latestAttempt ? {
-            id: latestAttempt._id,
-            score: latestAttempt.score,
-            totalPoints: latestAttempt.totalPoints,
-            percentage: latestAttempt.percentage,
-            status: latestAttempt.status,
-            attemptNumber: latestAttempt.attemptNumber,
-            dateSubmitted: latestAttempt.dateSubmitted,
-            passed: latestAttempt.status === "passed",
-          } : null,
+          latestScore: latestAttempt
+            ? {
+                id: latestAttempt._id,
+                score: latestAttempt.score,
+                totalPoints: latestAttempt.totalPoints,
+                percentage: latestAttempt.percentage,
+                status: latestAttempt.status,
+                attemptNumber: latestAttempt.attemptNumber,
+                dateSubmitted: latestAttempt.dateSubmitted,
+                passed: latestAttempt.status === "passed",
+              }
+            : null,
         },
       };
     } catch (error) {
@@ -327,7 +356,6 @@ const scoreServices = {
       throw error;
     }
   },
-
 };
 
 module.exports = scoreServices;

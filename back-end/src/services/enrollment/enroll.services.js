@@ -5,227 +5,294 @@ const enrollValidator = require("../../validator/enroll.validator");
 const enrollmentHelper = require("./enroll.helper");
 
 const enrollmentServices = {
-    getAllEnrollments: async () => {
-        try {
-            const enrollments = await enrollmentRepository.getAllEnrollments();
-            return {
-                status: system_enum.STATUS_CODE.OK,
-                message: system_enum.SYSTEM_MESSAGE.SUCCESS,
-                data: enrollmentHelper.formatEnrollments(enrollments),
-            };
-        } catch (error) {
-            console.error('Service Error - getAllEnrollments:', error);
-            throw error;
-        }
-    },
+  getAllEnrollments: async () => {
+    try {
+      const enrollments = await enrollmentRepository.getAllEnrollments();
+      return {
+        status: system_enum.STATUS_CODE.OK,
+        message: system_enum.SYSTEM_MESSAGE.SUCCESS,
+        data: enrollmentHelper.formatEnrollments(enrollments),
+      };
+    } catch (error) {
+      console.error("Service Error - getAllEnrollments:", error);
+      throw error;
+    }
+  },
 
-    getEnrollmentById: async (id) => {
-        try {
-            const enrollment = await enrollmentRepository.getEnrollmentById(id);
+  getEnrollmentById: async (id) => {
+    try {
+      const enrollment = await enrollmentRepository.getEnrollmentById(id);
 
-            if (!enrollment) {
-                return {
-                    status: system_enum.STATUS_CODE.NOT_FOUND,
-                    message: enrollment_enum.ENROLLMENT_MESSAGE.ENROLLMENT_NOT_FOUND,
-                };
-            }
+      if (!enrollment) {
+        return {
+          status: system_enum.STATUS_CODE.NOT_FOUND,
+          message: enrollment_enum.ENROLLMENT_MESSAGE.ENROLLMENT_NOT_FOUND,
+        };
+      }
 
-            return {
-                status: system_enum.STATUS_CODE.OK,
-                message: system_enum.SYSTEM_MESSAGE.SUCCESS,
-                data: enrollmentHelper.formatEnrollment(enrollment),
-            };
-        } catch (error) {
-            console.error('Service Error - getEnrollmentById:', error);
-            throw error;
-        }
-    },
+      return {
+        status: system_enum.STATUS_CODE.OK,
+        message: system_enum.SYSTEM_MESSAGE.SUCCESS,
+        data: enrollmentHelper.formatEnrollment(enrollment),
+      };
+    } catch (error) {
+      console.error("Service Error - getEnrollmentById:", error);
+      throw error;
+    }
+  },
 
-    getAllEnrollmentByUser: async (userId) => {
-        try {
-            const enrollments = await enrollmentRepository.getAllEnrollmentByUser(userId);
-            return {
-                status: system_enum.STATUS_CODE.OK,
-                message: system_enum.SYSTEM_MESSAGE.SUCCESS,
-                data: enrollmentHelper.formatEnrollments(enrollments),
-            };
-        } catch (error) {
-            console.error('Service Error - getAllEnrollmentByUser:', error);
-            throw error;
-        }
-    },
+  getAllEnrollmentByUser: async (userId) => {
+    try {
+      const enrollments = await enrollmentRepository.getAllEnrollmentByUser(
+        userId
+      );
+      return {
+        status: system_enum.STATUS_CODE.OK,
+        message: system_enum.SYSTEM_MESSAGE.SUCCESS,
+        data: enrollmentHelper.formatEnrollments(enrollments),
+      };
+    } catch (error) {
+      console.error("Service Error - getAllEnrollmentByUser:", error);
+      throw error;
+    }
+  },
 
-    createEnrollment: async (enrollData) => {
-        try {
-            const validatedData = enrollValidator.validateEnrollData(enrollData, false);
+  createEnrollment: async (enrollData) => {
+    try {
+      const validatedData = enrollValidator.validateEnrollData(
+        enrollData,
+        false
+      );
 
-            const existingEnrollment = await enrollmentRepository.getEnrollmentByUserAndCourse(
-                validatedData.userId,
-                validatedData.courseId
-            );
+      const existingEnrollment =
+        await enrollmentRepository.getEnrollmentByUserAndCourse(
+          validatedData.userId,
+          validatedData.courseId
+        );
 
-            if (existingEnrollment) {
-                return {
-                    status: system_enum.STATUS_CODE.BAD_REQUEST,
-                    message: enrollment_enum.ENROLLMENT_MESSAGE.DUPLICATE_ENROLLMENT,
-                };
-            }
+      if (existingEnrollment) {
+        return {
+          status: system_enum.STATUS_CODE.BAD_REQUEST,
+          message: enrollment_enum.ENROLLMENT_MESSAGE.DUPLICATE_ENROLLMENT,
+        };
+      }
 
-            const newEnrollment = await enrollmentRepository.createEnrollment(validatedData);
-            const formattedData = enrollmentHelper.formatEnrollment(newEnrollment);
+      const newEnrollment = await enrollmentRepository.createEnrollment(
+        validatedData
+      );
+      const formattedData = enrollmentHelper.formatEnrollment(newEnrollment);
 
-            return {
-                status: system_enum.STATUS_CODE.CREATED,
-                message: enrollment_enum.ENROLLMENT_MESSAGE.ENROLL_SUCCESS,
-                data: formattedData,
-            };
-        } catch (error) {
-            // Handle validation errors
-            if (error.isValidation) {
-                return {
-                    status: system_enum.STATUS_CODE.BAD_REQUEST,
-                    message: 'Validation failed',
-                    errors: error.validationErrors,
-                };
-            }
+      return {
+        status: system_enum.STATUS_CODE.CREATED,
+        message: enrollment_enum.ENROLLMENT_MESSAGE.ENROLL_SUCCESS,
+        data: formattedData,
+      };
+    } catch (error) {
+      // Handle validation errors
+      if (error.isValidation) {
+        return {
+          status: system_enum.STATUS_CODE.BAD_REQUEST,
+          message: "Validation failed",
+          errors: error.validationErrors,
+        };
+      }
 
-            throw error;
-        }
-    },
+      throw error;
+    }
+  },
 
-    updateEnrollment: async (id, enrollData) => {
-        try {
-            const validatedData = enrollValidator.validateEnrollData(enrollData, true);
+  updateEnrollment: async (id, enrollData) => {
+    try {
+      const validatedData = enrollValidator.validateEnrollData(
+        enrollData,
+        true
+      );
 
-            const existingEnrollment = await enrollmentRepository.getEnrollmentById(id);
-            if (!existingEnrollment) {
-                return {
-                    status: system_enum.STATUS_CODE.NOT_FOUND,
-                    message: enrollment_enum.ENROLLMENT_MESSAGE.ENROLLMENT_NOT_FOUND,
-                };
-            }
+      const existingEnrollment = await enrollmentRepository.getEnrollmentById(
+        id
+      );
+      if (!existingEnrollment) {
+        return {
+          status: system_enum.STATUS_CODE.NOT_FOUND,
+          message: enrollment_enum.ENROLLMENT_MESSAGE.ENROLLMENT_NOT_FOUND,
+        };
+      }
 
-            const updatedEnrollment = await enrollmentRepository.updateEnrollment(id, validatedData);
-            return {
-                status: system_enum.STATUS_CODE.OK,
-                message: enrollment_enum.ENROLLMENT_MESSAGE.UPDATE_SUCCESS,
-                data: enrollmentHelper.formatEnrollment(updatedEnrollment),
-            };
-        } catch (error) {
-            console.error('Service Error - updateEnrollment:', error);
+      const updatedEnrollment = await enrollmentRepository.updateEnrollment(
+        id,
+        validatedData
+      );
+      return {
+        status: system_enum.STATUS_CODE.OK,
+        message: enrollment_enum.ENROLLMENT_MESSAGE.UPDATE_SUCCESS,
+        data: enrollmentHelper.formatEnrollment(updatedEnrollment),
+      };
+    } catch (error) {
+      console.error("Service Error - updateEnrollment:", error);
 
-            // Handle validation errors
-            if (error.isValidation) {
-                return {
-                    status: system_enum.STATUS_CODE.BAD_REQUEST,
-                    message: 'Validation failed',
-                    errors: error.validationErrors,
-                };
-            }
+      // Handle validation errors
+      if (error.isValidation) {
+        return {
+          status: system_enum.STATUS_CODE.BAD_REQUEST,
+          message: "Validation failed",
+          errors: error.validationErrors,
+        };
+      }
 
-            throw error;
-        }
-    },
+      throw error;
+    }
+  },
 
-    deleteEnrollment: async (id) => {
-        try {
-            const existingEnrollment = await enrollmentRepository.getEnrollmentById(id);
-            if (!existingEnrollment) {
-                return {
-                    status: system_enum.STATUS_CODE.NOT_FOUND,
-                    message: enrollment_enum.ENROLLMENT_MESSAGE.ENROLLMENT_NOT_FOUND,
-                };
-            }
+  deleteEnrollment: async (id) => {
+    try {
+      const existingEnrollment = await enrollmentRepository.getEnrollmentById(
+        id
+      );
+      if (!existingEnrollment) {
+        return {
+          status: system_enum.STATUS_CODE.NOT_FOUND,
+          message: enrollment_enum.ENROLLMENT_MESSAGE.ENROLLMENT_NOT_FOUND,
+        };
+      }
 
-            const deletedEnrollment = await enrollmentRepository.deleteEnrollment(id);
-            return {
-                status: system_enum.STATUS_CODE.OK,
-                message: enrollment_enum.ENROLLMENT_MESSAGE.DELETE_SUCCESS,
-                data: enrollmentHelper.formatEnrollment(deletedEnrollment),
-            };
-        } catch (error) {
-            console.error('Service Error - deleteEnrollment:', error);
-            throw error;
-        }
-    },
+      const deletedEnrollment = await enrollmentRepository.deleteEnrollment(id);
+      return {
+        status: system_enum.STATUS_CODE.OK,
+        message: enrollment_enum.ENROLLMENT_MESSAGE.DELETE_SUCCESS,
+        data: enrollmentHelper.formatEnrollment(deletedEnrollment),
+      };
+    } catch (error) {
+      console.error("Service Error - deleteEnrollment:", error);
+      throw error;
+    }
+  },
 
-    getDetailedEnrollmentByUser: async (userId) => {
-        try {
-            const enrollments = await enrollmentRepository.getDetailedEnrollmentByUser(userId);
+  getDetailedEnrollmentByUser: async (userId) => {
+    try {
+      const enrollments =
+        await enrollmentRepository.getDetailedEnrollmentByUser(userId);
 
-            if (!enrollments || enrollments.length === 0) {
-                return {
-                    status: system_enum.STATUS_CODE.NOT_FOUND,
-                    message: enrollment_enum.ENROLLMENT_MESSAGE.ENROLLMENT_NOT_FOUND,
-                    data: [],
-                };
-            }
+      if (!enrollments || enrollments.length === 0) {
+        return {
+          status: system_enum.STATUS_CODE.NOT_FOUND,
+          message: enrollment_enum.ENROLLMENT_MESSAGE.ENROLLMENT_NOT_FOUND,
+          data: [],
+        };
+      }
 
-            const formatted = enrollments.map((e) => enrollmentHelper.formatDetailedEnrollment(e));
+      const formatted = enrollments.map((e) =>
+        enrollmentHelper.formatDetailedEnrollment(e)
+      );
 
-            return {
-                status: system_enum.STATUS_CODE.OK,
-                message: system_enum.SYSTEM_MESSAGE.SUCCESS,
-                data: formatted,
-            };
-        } catch (error) {
-            console.error("Service Error - getDetailedEnrollmentByUser:", {
-                message: error.message,
-                stack: error.stack,
-                userId,
-            });
-            return {
-                status: system_enum.STATUS_CODE.INTERNAL_SERVER_ERROR,
-                message: system_enum.SYSTEM_MESSAGE.INTERNAL_SERVER_ERROR,
-                ...(process.env.NODE_ENV === "development" && {
-                    error: error.message,
-                    stack: error.stack,
-                }),
-            };
-        }
-    },
+      return {
+        status: system_enum.STATUS_CODE.OK,
+        message: system_enum.SYSTEM_MESSAGE.SUCCESS,
+        data: formatted,
+      };
+    } catch (error) {
+      console.error("Service Error - getDetailedEnrollmentByUser:", {
+        message: error.message,
+        stack: error.stack,
+        userId,
+      });
+      return {
+        status: system_enum.STATUS_CODE.INTERNAL_SERVER_ERROR,
+        message: system_enum.SYSTEM_MESSAGE.INTERNAL_SERVER_ERROR,
+        ...(process.env.NODE_ENV === "development" && {
+          error: error.message,
+          stack: error.stack,
+        }),
+      };
+    }
+  },
+  getDetailedEnrollmentByUserIdCourseId: async (userId, courseId) => {
+    try {
+      const enrollment =
+        await enrollmentRepository.getDetailedEnrollmentByUserIdCourseId(
+          userId,
+          courseId
+        );
 
-    // Recalculate progress for a specific enrollment
-    recalculateProgress: async (userId, courseId) => {
-        try {
-            console.log(`Service: Recalculating progress for user ${userId} in course ${courseId}`);
+      if (!enrollment) {
+        return {
+          status: system_enum.STATUS_CODE.NOT_FOUND,
+          message: enrollment_enum.ENROLLMENT_MESSAGE.ENROLLMENT_NOT_FOUND,
+          data: null,
+        };
+      }
 
-            const progressData = await enrollmentRepository.calculateUserProgress(userId, courseId);
+      const formatted = enrollmentHelper.formatDetailedEnrollment(enrollment);
 
-            if (!progressData.enrollment) {
-                throw new Error('Enrollment not found');
-            }
+      return {
+        status: system_enum.STATUS_CODE.OK,
+        message: system_enum.SYSTEM_MESSAGE.SUCCESS,
+        data: formatted,
+      };
+    } catch (error) {
+      console.error("Service Error - getDetailedEnrollmentByUser:", {
+        message: error.message,
+        stack: error.stack,
+        userId,
+      });
+      return {
+        status: system_enum.STATUS_CODE.INTERNAL_SERVER_ERROR,
+        message: system_enum.SYSTEM_MESSAGE.INTERNAL_SERVER_ERROR,
+        ...(process.env.NODE_ENV === "development" && {
+          error: error.message,
+          stack: error.stack,
+        }),
+      };
+    }
+  },
+  // Recalculate progress for a specific enrollment
+  recalculateProgress: async (userId, courseId) => {
+    try {
+      console.log(
+        `Service: Recalculating progress for user ${userId} in course ${courseId}`
+      );
 
-            console.log(`Service: Progress recalculated successfully`);
+      const progressData = await enrollmentRepository.calculateUserProgress(
+        userId,
+        courseId
+      );
 
-            return progressData;
-        } catch (error) {
-            console.error('Service Error - recalculateProgress:', error);
-            throw error;
-        }
-    },
+      if (!progressData.enrollment) {
+        throw new Error("Enrollment not found");
+      }
 
-    getEnrollmentByUserAndCourse: async (userId, courseId) => {
-        try {
-            const enrollment = await enrollmentRepository.getEnrollmentByUserAndCourse(userId, courseId);
-            if (!enrollment) {
-                return {
-                    status: system_enum.STATUS_CODE.NOT_FOUND,
-                    message: enrollment_enum.ENROLLMENT_MESSAGE.ENROLLMENT_NOT_FOUND,
-                };
-            }
+      console.log(`Service: Progress recalculated successfully`);
 
-            return {
-                status: system_enum.STATUS_CODE.OK,
-                message: system_enum.SYSTEM_MESSAGE.SUCCESS,
-                data: enrollmentHelper.formatEnrollment(enrollment),
-            };
-        } catch (error) {
-            console.error('Service Error - getEnrollmentByUserAndCourse:', error);
-            throw error;
-        }
-    },
+      return progressData;
+    } catch (error) {
+      console.error("Service Error - recalculateProgress:", error);
+      throw error;
+    }
+  },
 
+  getEnrollmentByUserAndCourse: async (userId, courseId) => {
+    try {
+      const enrollment =
+        await enrollmentRepository.getEnrollmentByUserAndCourse(
+          userId,
+          courseId
+        );
+      if (!enrollment) {
+        return {
+          status: system_enum.STATUS_CODE.NOT_FOUND,
+          message: enrollment_enum.ENROLLMENT_MESSAGE.ENROLLMENT_NOT_FOUND,
+        };
+      }
+
+      return {
+        status: system_enum.STATUS_CODE.OK,
+        message: system_enum.SYSTEM_MESSAGE.SUCCESS,
+        data: enrollmentHelper.formatEnrollment(enrollment),
+      };
+    } catch (error) {
+      console.error("Service Error - getEnrollmentByUserAndCourse:", error);
+      throw error;
+    }
+  },
 };
 
 module.exports = enrollmentServices;

@@ -1,32 +1,32 @@
 import { z } from "zod";
 
 export const loginSchema = z.object({
-  email: z.string().email("Email không hợp lệ"),
-  password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
+  email: z.string().email("Invalid email"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 export const registerLearnerSchema = z
   .object({
-    fullName: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
-    email: z.string().email("Email không hợp lệ"),
-    password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
+    fullName: z.string().min(2, "Name must be at least 2 characters"),
+    email: z.string().email("Invalid email"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Mật khẩu không khớp",
+    message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 
 export const registerInstructorSchema = z
   .object({
-    fullName: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
-    email: z.string().email("Email không hợp lệ"),
-    password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
+    fullName: z.string().min(2, "Name must be at least 2 characters"),
+    email: z.string().email("Invalid email"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
-    subjects: z.array(z.string()).min(1, "Vui lòng chọn ít nhất 1 môn học"),
-    jobTitle: z.string().min(1, "Vui lòng chọn chức danh"),
+    subjects: z.array(z.string()).min(1, "Please select at least 1 subject"),
+    jobTitle: z.string().min(1, "Please select a job title"),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Mật khẩu không khớp",
+    message: "Passwords do not match",
     path: ["confirmPassword"],
   });

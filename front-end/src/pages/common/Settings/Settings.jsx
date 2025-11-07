@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Lock, Pencil, Trash2, Mail, Bell, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,24 +13,113 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+import authService from "@/services/authService";
+import { toast } from "react-toastify";
+
 const Settings = () => {
   const [profile, setProfile] = useState({
-    fullName: "ABC",
-    email: "abc@courseflow.com",
-    avatar: "/diverse-user-avatars.png",
+    fullName: "",
+    email: "",
+    avatar: "",
+    id: null,
   });
 
   const [notifications, setNotifications] = useState({
-    email: true,
-    inApp: true,
+    email: false,
+    inApp: false,
     marketing: false,
   });
 
-  const handleNotificationToggle = (key) => {
-    setNotifications((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const me = await authService.getCurrentUser();
+        // normalizing response similar to AuthContext
+        const normalized = me?.data?.user ?? me?.data ?? me;
+        const user = normalized?.user ?? normalized ?? null;
+
+        if (user) {
+          setProfile({
+            fullName: user.username || user.name || "",
+            email: user.email || "",
+            avatar: user.avatar || "",
+            id: user._id || user.id || null,
+          });
+          setNotifications({
+            email: !!user.emailNotifications,
+            inApp: !!user.systemNotifications,
+            marketing: !!user.marketingNotifications, // optional
+          });
+        }
+      } catch (err) {
+        console.warn("Failed to load current user:", err);
+      }
+    };
+
+    load();
+  }, []);
+
+  const handleProfileChange = (key, value) => {
+    setProfile((p) => ({ ...p, [key]: value }));
+  };
+
+  const handleSaveProfile = async () => {
+    if (!profile.id) return toast.error("Missing user id");
+    setLoading(true);
+    try {
+      const payload = {
+        username: profile.fullName,
+        // don't allow email change here if backend disallows; keep email for completeness
+        email: profile.email,
+      };
+      await authService.updateProfile(profile.id, payload);
+      // refresh user data
+      const me = await authService.getCurrentUser();
+      const normalized = me?.data?.user ?? me?.data ?? me;
+      const user = normalized?.user ?? normalized ?? null;
+      if (user) {
+        setProfile((p) => ({
+          ...p,
+          fullName: user.username || user.name || p.fullName,
+          avatar: user.avatar || p.avatar,
+        }));
+      }
+      toast.success("Profile updated");
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message || err?.message || "Update failed";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNotificationToggle = async (key) => {
+    const next = { ...notifications, [key]: !notifications[key] };
+    setNotifications(next);
+
+    if (!profile.id) return;
+    setLoading(true);
+    try {
+      const payload = {
+        emailNotifications: next.email,
+        systemNotifications: next.inApp,
+        marketingNotifications: next.marketing,
+      };
+      await authService.updateProfile(profile.id, payload);
+      toast.success("Notification settings saved");
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || "Save failed";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    toast.info("Delete account not implemented in UI");
   };
 
   return (
@@ -57,18 +146,22 @@ const Settings = () => {
             <div className="flex items-center gap-4">
               <Avatar className="w-20 h-20">
                 <AvatarImage
-                  src={profile.avatar || "/placeholder.svg"}
+                  src={profile.avatar || "/diverse-user-avatars.png"}
                   alt={profile.fullName}
                 />
-                <AvatarFallback>{profile.fullName.charAt(0)}</AvatarFallback>
+                <AvatarFallback>
+                  {(profile.fullName || "?").charAt(0)}
+                </AvatarFallback>
               </Avatar>
               <div className="flex-1">
                 <Label htmlFor="fullName">Full Name</Label>
                 <Input
                   id="fullName"
                   value={profile.fullName}
-                  readOnly
-                  className="bg-gray-50"
+                  onChange={(e) =>
+                    handleProfileChange("fullName", e.target.value)
+                  }
+                  className="bg-white"
                 />
               </div>
             </div>
@@ -94,17 +187,35 @@ const Settings = () => {
                   readOnly
                   className="bg-gray-50"
                 />
-                <Button variant="outline">
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    toast.info("Change password flow not implemented here")
+                  }
+                >
                   <Lock className="mr-2 h-4 w-4" />
                   Change
                 </Button>
               </div>
             </div>
 
-            <Button className="bg-indigo-600 hover:bg-indigo-700">
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit Profile
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                className="bg-indigo-600 hover:bg-indigo-700"
+                onClick={handleSaveProfile}
+                disabled={loading}
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Save Changes
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => window.location.reload()}
+                disabled={loading}
+              >
+                Reset
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -167,7 +278,7 @@ const Settings = () => {
                   data.
                 </p>
               </div>
-              <Button variant="destructive">
+              <Button variant="destructive" onClick={handleDeleteAccount}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Account
               </Button>

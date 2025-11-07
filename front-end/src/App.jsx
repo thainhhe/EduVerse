@@ -13,7 +13,6 @@ import Courses from "@/pages/common/Courses/Courses";
 import CourseDetail from "@/pages/common/CourseDetail/CourseDetail";
 import Learning from "@/pages/learner/Learning/Learning";
 import Classroom from "@pages/Classroom/Classroom";
-import Profile from "@pages/Profile/Profile";
 import Forum from "@/pages/common/Forum/Forum";
 import NotFound from "@/pages/common/NotFound/NotFound";
 import Instructors from "@/pages/common/Instructors/Instructors";
@@ -41,6 +40,12 @@ import InstructorProfileDetail from "./pages/admin/UserManagement/InstructorProf
 import LearnerProfileDetail from "./pages/admin/UserManagement/LearnerProfileDetail";
 import CourseManagementPage from "./pages/admin/CourseManagement/CourseManagementPage";
 import CourseDetailPage from "./pages/admin/CourseManagement/CourseDetailPage";
+import QuizDetail from "./pages/learner/Learning/QuizDetail";
+import GoogleCallback from "./pages/auth/GoogleCallback";
+import DashboardInstructor from "./pages/instructor/DashboardInstructor/DashBoardInstructor";
+// NEW imports
+import ChatbotManagementPage from "./pages/admin/ChatbotManagement/ChatbotManagementPage";
+import CommentManagementPage from "./pages/admin/CommentManagement/CommentManagementPage";
 
 function App() {
   const { loading } = useAuth();
@@ -68,12 +73,18 @@ function App() {
         <Route path="instructors" element={<Instructors />} />
         <Route path="instructors/:id" element={<InstructorProfile />} />
         <Route path="settings" element={<Settings />} />
-        <Route path="quiz" element={<Quiz />} />
+        <Route path="/quiz-detail/:quizId" element={<QuizDetail />} />
         <Route path="forgot-password" element={<ForgotPassword />} />
         <Route path="reset-password/:token" element={<ResetPassword />} />
-        <Route path="learning-test" element={<Learning />} />
-        <Route path="dashboard-test" element={<Dashboard />} />
 
+        <Route path="quiz" element={<Quiz />} />
+        <Route path="forgot-password" element={<ForgotPassword />} />
+        {/* Accept both /reset-password?email=...&otp=... and /reset-password/:token */}
+        <Route path="reset-password/:token?" element={<ResetPassword />} />
+        <Route path="learning/:courseId" element={<Learning />} />
+        <Route path="dashboard-test" element={<Dashboard />} />
+        <Route path="/google-auth/success" element={<GoogleCallback />} />
+        <Route path="dashboard-instructor" element={<DashboardInstructor />} />
         <Route path="create-course" element={<CreateCourse />} />
         {/* 2️⃣ Các bước sau khi tạo khóa học (có sidebar) */}
         <Route path="create-course" element={<CourseBuilderLayout />}>
@@ -84,14 +95,20 @@ function App() {
         </Route>
         <Route path="permission" element={<PermissionsPage />} />
         <Route path="comment-thread" element={<CommentThread />} />
+
+        <Route path="checkout" element={<PaymentPage />} />
+        <Route
+          path="checkout/success"
+          element={<PaymentConfirmationPage />}
+        />
+        <Route path="checkout/success" element={<PaymentConfirmationPage />} />
         {/* Private routes */}
         <Route element={<PrivateRoute />}>
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="learning/:courseId" element={<Learning />} />
           <Route path="classroom/:roomId" element={<Classroom />} />
-          <Route path="profile" element={<Profile />} />
           <Route path="forum" element={<Forum />} />
-
+          <Route path="settings" element={<Settings />} />
           <Route path="checkout" element={<PaymentPage />} />
           <Route
             path="checkout/success"
@@ -112,15 +129,7 @@ function App() {
             element={<div>Instructor Dashboard</div>}
           />
         </Route>
-      </Route>
-      {/* <Route
-          element={
-            <PermissionBasedRoute allowedPermissions={["manage:users"]} />
-          }
-        >
-
-        </Route>
-        > */}
+      </Route >
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="users" element={<UserManagementPage />} />
@@ -134,17 +143,14 @@ function App() {
         />
         <Route path="courses" element={<CourseManagementPage />} />
         <Route path="courses/:id" element={<CourseDetailPage />} />
-      </Route>
-      {/* </Route> */}
 
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route path="admin/*" element={<div>Admin Dashboard</div>} />
-        <Route path="dashboard" element={<AdminDashboardPage />} />
-        <Route path="users" element={<UserManagementPage />} />
+        {/* Admin management pages */}
+        <Route path="chatbot" element={<ChatbotManagementPage />} />
+        <Route path="comments" element={<CommentManagementPage />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
-    </Routes>
+    </Routes >
   );
 }
 

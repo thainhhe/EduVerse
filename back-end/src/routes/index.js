@@ -16,6 +16,11 @@ const commentRouter = require("./comment.routes");
 const chatbotRouter = require("./chatbot.routes");
 const router = express.Router();
 const materialRouter = require("./material.routes");
+const logRouter = require("./log.routes.js");
+const manage_user_router = require("./admin/manage-user.routes.js");
+const instructor_dashboard_router = require("./instructor/instructor-dashboard.routes.js");
+const roomRouter = require("./room-meeting.routes.js");
+const paymentRouter = require("./payment.routes.js");
 
 const courseManagementRouter = require('./admin/courseManagement.routes');
 const dashboardRoutes = require('./admin/dashboard.routes');
@@ -59,5 +64,16 @@ router.use("/chatbot", chatbotRouter);
 router.use('/admin/courses', courseManagementRouter);
 router.use('/admin/dashboard', dashboardRoutes);
 
+router.use("/logs", logRouter);
+
+///admin
+
+router.use("/admin/manage-user", manage_user_router);
+
+// instructor
+
+router.use("/instructors", instructor_dashboard_router);
+router.use("/room-meeting", roomRouter);
+router.use("/payment", paymentRouter);
 
 module.exports = router;

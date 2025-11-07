@@ -27,26 +27,9 @@ const lessonValidator = {
             .number()
             .required(lesson_enum.LESSON_MESSAGE.REQUIRED_ORDER)
             .integer(lesson_enum.LESSON_MESSAGE.ORDER_INVALID),
-        user_completed: yup
-            .array()
-            .of(
-                yup
-                    .string()
-                    .test("is-objectid", lesson_enum.LESSON_MESSAGE.INVALID_OBJECT_ID, (v) => !v || isObjectId(v))
-            )
-            .default([]),
-        materials: yup
-            .array()
-            .of(
-                yup
-                    .string()
-                    .test("is-objectid", lesson_enum.LESSON_MESSAGE.INVALID_OBJECT_ID, (v) => !v || isObjectId(v))
-            )
-            .default([]),
-        quiz: yup
-            .string()
-            .nullable()
-            .test("is-objectid", lesson_enum.LESSON_MESSAGE.INVALID_OBJECT_ID, (v) => !v || isObjectId(v)),
+        user_completed: yup.array().of(yup.string()).default([]),
+        materials: yup.array().of(yup.string()).default([]),
+        quiz: yup.string().nullable().default(null),
         status: yup
             .string()
             .oneOf(lesson_enum.VALIDATE_SCHEMA.STATUS, lesson_enum.LESSON_MESSAGE.INVALID_STATUS)
