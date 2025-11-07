@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEnrollment } from "@/context/EnrollmentContext";
 
-const PaymentConfirmationPage = () => {
+const PaymentFailPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
@@ -13,25 +13,8 @@ const PaymentConfirmationPage = () => {
     const orderCode = queryParams.get("orderCode");
     const status = queryParams.get("status");
     const code = queryParams.get("code");
-    const { user } = useAuth();
+
     const { courseId, courseTitle, coursePrice } = location.state || {};
-    const { refreshEnrollments } = useEnrollment();
-
-    const createEnrollment = async () => {
-        await enrollmentService.createEnrollment({
-            userId: user._id,
-            courseId,
-            enrollmentDate: Date.now(),
-            status: "enrolled",
-            grade: "Incomplete",
-        });
-    };
-
-    useEffect(() => {
-        if (status === "success") {
-            createEnrollment();
-        }
-    }, [status]);
 
     const handleContinue = () => {
         refreshEnrollments();
@@ -41,11 +24,9 @@ const PaymentConfirmationPage = () => {
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
             <div className="w-full max-w-2xl text-center bg-white p-8 sm:p-12 rounded-xl shadow-lg">
-                <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-6" />
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">Payment Successful!</h1>
-                <p className="text-gray-600 mb-8">
-                    Thank you for your purchase. Your payment has been processed successfully.
-                </p>
+                <CheckCircle2 className="mx-auto h-16 w-16 text-red-500 mb-6" />
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">Payment Fail!</h1>
+                <p className="text-gray-600 mb-8">Thank you for your purchase. Your payment has been cancel!</p>
 
                 <div className="bg-gray-50 rounded-lg p-6 text-left space-y-4 mb-8 border">
                     <div className="flex justify-between">
@@ -86,4 +67,4 @@ const PaymentConfirmationPage = () => {
     );
 };
 
-export default PaymentConfirmationPage;
+export default PaymentFailPage;

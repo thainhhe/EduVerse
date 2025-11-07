@@ -20,8 +20,8 @@ const paymentService = {
             const orderCode = paymentHelper.randomNumber();
             const amount = data.total_amount;
             const description = data.description || `Thanh toan hoa don`;
-            const returnUrl = `${FRONTEND_URL}/payment/success`;
-            const cancelUrl = `${FRONTEND_URL}/payment/cancel`;
+            const returnUrl = `${FRONTEND_URL}/checkout/success`;
+            const cancelUrl = `${FRONTEND_URL}/checkout/fail`;
 
             const paymentData = {
                 orderCode: orderCode,
