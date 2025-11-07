@@ -21,6 +21,10 @@ pids
 
 # Google Drive Credentials
 credentials.json
+drive-token.json
+oauth-credentials.json
+scripts/
+scripts/getRefreshToken.js
 
 # Environment variables
 .env

@@ -18,6 +18,7 @@ const router = express.Router();
 const materialRouter = require("./material.routes");
 
 const courseManagementRouter = require('./admin/courseManagement.routes');
+const dashboardRoutes = require('./admin/dashboard.routes');
 
 //===============================GENERAL ROUTES=========================================================
 
@@ -56,6 +57,7 @@ router.use("/chatbot", chatbotRouter);
 
 //===============================ADMIN ROUTES=========================================================
 router.use('/admin/courses', courseManagementRouter);
+router.use('/admin/dashboard', dashboardRoutes);
 
 
 module.exports = router;

@@ -10,7 +10,7 @@ const reviewHelper = {
 
     formatReviewForResponse: (review) => {
         return {
-            id: review._id,
+            id: review.id,
             userId: review.userId,
             courseId: review.courseId,
             rating: review.rating,

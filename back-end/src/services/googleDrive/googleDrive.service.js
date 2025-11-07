@@ -1,123 +1,50 @@
-const googleDriveConfig = require('../../config/googleDrive.config');
+// googleDrive.service.js
 const { Readable } = require('stream');
+const fs = require('fs');
+const googleDriveConfig = require('../../config/googleDrive.config');
 
 const googleDriveService = {
-    uploadFile: async (file, type) => {
+    uploadFile: async (file, folderId) => {
+        const drive = googleDriveConfig.getDrive();
+
+        if (!file || !file.path) {
+            throw new Error("Invalid file path from multer");
+        }
+
+        // LOG 1: Kiểm tra xem file tạm có tồn tại không
+        console.log('Attempting to upload file from path:', file.path);
+
         try {
-            console.log('📤 Starting upload to Google Drive...');
-            console.log('File:', file.originalname);
-            console.log('Type:', type);
-            console.log('Size:', (file.size / (1024 * 1024)).toFixed(2), 'MB');
-            console.log('Buffer size:', file.buffer ? file.buffer.length : 'NO BUFFER');
-
-            const drive = googleDriveConfig.getDrive();
-            
-            const folderId = type === 'video' 
-                ? process.env.GOOGLE_DRIVE_FOLDER_VIDEO 
-                : process.env.GOOGLE_DRIVE_FOLDER_DOCUMENT;
-
-            if (!folderId) {
-                throw new Error(`Google Drive folder ID for ${type} not configured`);
-            }
-
-            // ✅ CHECK buffer tồn tại
-            if (!file.buffer) {
-                throw new Error('File buffer is empty!');
-            }
-
-            // ✅ Tạo stream từ buffer
-            const bufferStream = Readable.from(file.buffer);
-
-            const fileMetadata = {
-                name: `${Date.now()}-${file.originalname}`,
-                parents: [folderId],
-            };
-
-            const media = {
-                mimeType: file.mimetype,
-                body: bufferStream,
-            };
-
-            console.log('⏳ Uploading to folder:', folderId);
-
             const response = await drive.files.create({
-                requestBody: fileMetadata,
-                media: media,
-                fields: 'id, name, mimeType, size, webViewLink, webContentLink',
-                supportsAllDrives: true,
-            });
-
-            console.log('✅ Upload response:', {
-                id: response.data.id,
-                size: response.data.size,
-                name: response.data.name
-            });
-
-            // ✅ KIỂM TRA file size
-            const uploadedSize = parseInt(response.data.size || '0');
-            console.log('📦 Uploaded file size:', uploadedSize, 'bytes');
-
-            if (uploadedSize === 0) {
-                throw new Error('Upload failed: File size is 0 bytes on Google Drive');
-            }
-
-            // Set permissions
-            await drive.permissions.create({
-                fileId: response.data.id,
                 requestBody: {
-                    role: 'reader',
-                    type: 'anyone',
+                    name: `${Date.now()}-${file.originalname}`,
+                    parents: [folderId],
                 },
-                supportsAllDrives: true,
+                media: {
+                    mimeType: file.mimetype,
+                    body: fs.createReadStream(file.path)
+                },
+                fields: "id, name, size, mimeType, webViewLink, webContentLink",
             });
 
-            console.log('✅ Upload successful! File ID:', response.data.id);
+            // LOG 2: Đây là log quan trọng nhất!
+            console.log('GOOGLE DRIVE RESPONSE:', response.data);
 
-            // Tạo preview URLs
-            const fileId = response.data.id;
-            const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-            const embedUrl = `https://drive.google.com/file/d/${fileId}/preview?embedded=true`;
+            return response.data;
 
-            return {
-                fileId: fileId,
-                fileUrl: previewUrl,
-                embedUrl: embedUrl,
-                downloadUrl: response.data.webContentLink,
-                viewUrl: response.data.webViewLink,
-                fileName: response.data.name,
-                fileSize: uploadedSize,
-                mimeType: response.data.mimeType,
-            };
         } catch (error) {
-            console.error('❌ Google Drive upload error:', error);
-            console.error('Error details:', {
-                name: error.name,
-                message: error.message,
-                code: error.code,
-                status: error.status
-            });
-            throw new Error(`Failed to upload file to Google Drive: ${error.message}`);
-        }
-    },
+            // LOG 3: Bắt lỗi nếu API call thất bại
+            console.error('Lỗi từ Google Drive API:', error.message);
+            throw error; // Ném lỗi ra để controller bắt
 
-    deleteFile: async (fileId) => {
-        try {
-            console.log('🗑️ Deleting file from Google Drive:', fileId);
-            
-            const drive = googleDriveConfig.getDrive();
-            
-            await drive.files.delete({
-                fileId: fileId,
-                supportsAllDrives: true,
+        } finally {
+            // ✅ Bỏ comment dòng này để xóa file tạm
+            fs.unlink(file.path, (err) => {
+                if (err) console.error("Error deleting temp file:", file.path, err);
+                else console.log('Temp file deleted successfully:', file.path);
             });
-
-            console.log('✅ File deleted successfully');
-            return { success: true, message: 'File deleted from Google Drive' };
-        } catch (error) {
-            console.error('❌ Google Drive delete error:', error);
-            throw new Error(`Failed to delete file from Google Drive: ${error.message}`);
         }
-    },
+    }
 };
 
 module.exports = googleDriveService;
