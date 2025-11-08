@@ -4,265 +4,211 @@ const { ChromaClient } = require("chromadb");
 const { Chroma } = require("@langchain/community/vectorstores/chroma");
 const { GoogleGenerativeAIEmbeddings } = require("@langchain/google-genai");
 const path = require("path");
-const fs = require("fs");
 
-// --- CẤU HÌNH ĐƯỜNG DẪN ---
-const COURSE_MODEL_PATH = path.resolve(
-  __dirname,
-  "../back-end/src/models/Course.js"
-);
-const USER_MODEL_PATH = path.resolve(
-  __dirname,
-  "../back-end/src/models/User.js"
-);
-
-// --- BIẾN MÔI TRƯỜNG ---
 const MONGO_URI = process.env.MONGO_URI;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const CHROMA_URL = "http://localhost:8000";
-const COLLECTION_NAME = "eduverse_rag";
+const CHROMA_HOST = "localhost";
+const CHROMA_PORT = 8000;
+const COLLECTION_NAME = process.env.CHROMA_COLLECTION || "eduverse_rag";
+// cap mỗi collection để tránh memory spike (tùy chỉnh bằng env)
+const MAX_DOCS_PER_COLLECTION =
+  Number(process.env.MAX_DOCS_PER_COLLECTION) || 1000;
 
-const syncData = async () => {
-  console.log("Bắt đầu quá trình đồng bộ...");
+const isTextField = (v) => typeof v === "string" && v.trim().length > 0;
+const firstOf = (obj, keys) => {
+  for (const k of keys) if (obj[k]) return obj[k];
+  return null;
+};
 
+// Tạo pageContent bằng cách ưu tiên các trường văn bản quan trọng
+const buildPageContent = (doc) => {
+  const priorityKeys = ["title", "name", "heading", "subject", "question"];
+  const bodyKeys = [
+    "description",
+    "summary",
+    "content",
+    "body",
+    "text",
+    "message",
+  ];
+  const parts = [];
+
+  // priority
+  for (const k of priorityKeys) {
+    if (isTextField(doc[k])) parts.push(`${k}: ${doc[k]}`);
+  }
+
+  // body fields
+  for (const k of bodyKeys) {
+    if (isTextField(doc[k])) parts.push(`${k}: ${doc[k]}`);
+  }
+
+  // fallback: collect other string fields (limit total length)
+  const otherPieces = [];
+  for (const [k, v] of Object.entries(doc)) {
+    if (parts.length > 0 && otherPieces.join(" ").length > 2000) break;
+    if (
+      priorityKeys.includes(k) ||
+      bodyKeys.includes(k) ||
+      k === "_id" ||
+      k === "__v"
+    )
+      continue;
+    if (isTextField(v)) otherPieces.push(`${k}: ${v}`);
+    else if (Array.isArray(v) && v.length && typeof v[0] === "string")
+      otherPieces.push(`${k}: ${v.slice(0, 10).join(", ")}`);
+  }
+  if (otherPieces.length) parts.push(...otherPieces);
+
+  const joined = parts.join("\n\n");
+  // limit size to avoid very large embeddings
+  return joined.slice(0, 15000);
+};
+
+const sanitizeMetadata = (doc, collectionName) => {
+  const meta = { collection: collectionName, id: String(doc._id) };
+  for (const [k, v] of Object.entries(doc)) {
+    if (k === "__v" || k === "_id") continue;
+    const t = typeof v;
+    if (v === null || t === "string" || t === "number" || t === "boolean") {
+      meta[k] = v;
+    } else {
+      try {
+        meta[k] = JSON.stringify(v);
+      } catch (e) {
+        meta[k] = String(v);
+      }
+    }
+  }
+  return meta;
+};
+
+const connectMongo = async () => {
   if (!MONGO_URI) {
-    console.error(
-      "MISSING MONGO_URI trong .env. Vui lòng kiểm tra chatbot-service/.env (hoặc copy từ back-end/.env)."
-    );
+    console.error("MONGO_URI not set. Exiting.");
+    process.exit(1);
+  }
+  await mongoose.connect(MONGO_URI, {
+    serverSelectionTimeoutMS: 30000,
+    connectTimeoutMS: 30000,
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+};
+
+const run = async () => {
+  console.log("Starting full sync to Chroma...");
+
+  if (!GEMINI_API_KEY) {
+    console.error("GEMINI_API_KEY not set. Exiting.");
     process.exit(1);
   }
 
-  // Hiển thị thông tin rút gọn để debug
-  try {
-    const display = MONGO_URI.replace(/(\/\/)(.*@)?/, "$1***@");
-    console.log("Kết nối tới MongoDB (rút gọn):", display);
-  } catch {}
+  await connectMongo();
+  console.log("Mongo connected.");
 
-  // 1. Kết nối DB chính (Mongo) — tăng timeout và options
-  try {
-    await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 30000,
-      connectTimeoutMS: 30000,
-      // useNewUrlParser/useUnifiedTopology vẫn an toàn để đặt (mặc dù mongoose mới có mặc định)
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log("Đã kết nối MongoDB.");
-  } catch (e) {
-    console.error("Lỗi kết nối MongoDB:", e.message || e);
-    console.error(
-      "Kiểm tra: MongoDB có đang chạy (mongod), port 27017, MONGO_URI đúng?"
-    );
-    return;
-  }
+  // list collections
+  const collections = await mongoose.connection.db.listCollections().toArray();
+  const collectionNames = collections
+    .map((c) => c.name)
+    .filter(
+      (n) => !n.startsWith("system.") && n !== "chroma" && n !== "chroma-"
+    ) // skip system
+    .sort();
 
-  // Require models SAU khi đã kết nối (tránh vấn đề register model trước connect)
-  // Thay vì require model từ back-end (gây ra nhiều bản mongoose), định nghĩa model tối giản tại đây
-  // Điều quan trọng: đặt collection chính xác (thường là 'courses' nếu model tên 'Course')
-  const courseSchema = new mongoose.Schema(
-    {
-      title: String,
-      description: String,
-      price: mongoose.Schema.Types.Mixed,
-      status: String,
-      // nếu cần trường instructor hoặc khác, thêm vào ở đây (loại Mixed/ObjectId tuỳ dữ liệu)
-    },
-    { collection: "courses", strict: false } // strict:false để không lỗi nếu DB có nhiều field khác
-  );
-  // Nếu model đã được register trên THIS mongoose instance thì tái sử dụng
-  const Course =
-    mongoose.models.Course || mongoose.model("Course", courseSchema);
+  console.log("Collections to sync:", collectionNames);
 
-  // 2. Lấy dữ liệu khóa học (bắt lỗi rõ)
-  let courses;
-  try {
-    courses = await Course.find({ status: "approve" }).lean();
-    console.log(`Tìm thấy ${courses.length} khóa học đã duyệt.`);
-  } catch (err) {
-    console.error("Lỗi khi truy vấn Course.find():", err.message || err);
-    await mongoose.disconnect();
-    return;
-  }
+  const docsForChroma = [];
+  let totalDocs = 0;
 
-  if (!courses || courses.length === 0) {
-    console.log("Không có khóa học nào để đồng bộ.");
-    await mongoose.disconnect();
-    return;
-  }
+  for (const name of collectionNames) {
+    try {
+      const col = mongoose.connection.db.collection(name);
+      const count = await col.countDocuments();
+      if (count === 0) {
+        console.log(`Skipping collection ${name} (empty).`);
+        continue;
+      }
+      console.log(`Reading collection ${name} (${count} docs).`);
 
-  // 3. Lấy modules + lessons và tạo documents chi tiết hơn
-  const moduleSchema = new mongoose.Schema(
-    {},
-    { collection: "modules", strict: false }
-  );
-  const lessonSchema = new mongoose.Schema(
-    {},
-    { collection: "lessons", strict: false }
-  );
+      const cursor = col.find({}).limit(MAX_DOCS_PER_COLLECTION);
+      const docs = await cursor.toArray();
 
-  const Module =
-    mongoose.models.Module || mongoose.model("Module", moduleSchema);
-  const Lesson =
-    mongoose.models.Lesson || mongoose.model("Lesson", lessonSchema);
-
-  let modules = [];
-  let lessons = [];
-  try {
-    const courseIds = courses.map((c) => c._id);
-    modules = await Module.find({ courseId: { $in: courseIds } }).lean();
-    const moduleIds = modules.map((m) => m._id);
-    lessons = await Lesson.find({ moduleId: { $in: moduleIds } }).lean();
-    console.log(
-      `Tìm thấy ${modules.length} module và ${lessons.length} lesson liên quan.`
-    );
-  } catch (e) {
-    console.warn("Không lấy được modules/lessons:", e?.message || e);
-  }
-
-  // Map để dễ truy xuất
-  const modulesByCourse = {};
-  modules.forEach((m) => {
-    const cid = String(m.courseId);
-    modulesByCourse[cid] = modulesByCourse[cid] || [];
-    modulesByCourse[cid].push(m);
-  });
-
-  const lessonsByModule = {};
-  lessons.forEach((l) => {
-    const mid = String(l.moduleId);
-    lessonsByModule[mid] = lessonsByModule[mid] || [];
-    lessonsByModule[mid].push(l);
-  });
-
-  // Tạo documents ở 3 mức: course, module, lesson
-  const courseDocuments = [];
-  const moduleDocuments = [];
-  const lessonDocuments = [];
-
-  courses.forEach((course) => {
-    const cid = String(course._id);
-    const mods = modulesByCourse[cid] || [];
-    const moduleSummaries = mods.map((m) => {
-      const mid = String(m._id);
-      return {
-        id: mid,
-        title: m.title || m.name || null,
-        lessonCount: (lessonsByModule[mid] || []).length,
-      };
-    });
-    const totalLessons = moduleSummaries.reduce(
-      (s, x) => s + (x.lessonCount || 0),
-      0
-    );
-
-    // Course-level doc (bao gồm summary)
-    courseDocuments.push({
-      pageContent: `Tên khóa học: ${course.title}. Mô tả: ${
-        course.description || ""
-      }. Giá: ${course.price || ""} VNĐ. Số module: ${
-        mods.length
-      }. Số bài học: ${totalLessons}. Modules: ${moduleSummaries
-        .map((m) => `${m.title}(${m.lessonCount} bài)`)
-        .join("; ")}`,
-      metadata: {
-        courseId: cid,
-        type: "course",
-        title: course.title,
-        moduleCount: mods.length,
-        lessonCount: totalLessons,
-        modules: moduleSummaries,
-      },
-    });
-
-    // Module-level docs
-    mods.forEach((m) => {
-      const mid = String(m._id);
-      const lessonsForM = lessonsByModule[mid] || [];
-      moduleDocuments.push({
-        pageContent: `Module: ${m.title || m.name}. Mô tả: ${
-          m.description || ""
-        }. Thuộc khóa học: ${course.title}. Số bài học: ${lessonsForM.length}.`,
-        metadata: {
-          courseId: cid,
-          moduleId: mid,
-          type: "module",
-          title: m.title || m.name,
-          lessonCount: lessonsForM.length,
-        },
-      });
-
-      lessonsForM.forEach((l) => {
-        lessonDocuments.push({
-          pageContent: `Bài học: ${l.title || l.name}. Nội dung tóm tắt: ${
-            l.summary || l.content || ""
-          }. Thuộc module: ${m.title || m.name} - khóa: ${course.title}.`,
-          metadata: {
-            courseId: cid,
-            moduleId: mid,
-            lessonId: String(l._id),
-            type: "lesson",
-            title: l.title || l.name,
-          },
+      for (const doc of docs) {
+        const pageContent = buildPageContent(doc);
+        // if pageContent is empty, create fallback summary of keys
+        const content =
+          pageContent && pageContent.trim().length
+            ? pageContent
+            : `Document in ${name} - id: ${doc._id}`;
+        const metadata = sanitizeMetadata(doc, name);
+        docsForChroma.push({
+          pageContent: content,
+          metadata,
+          id: `doc-${name}-${String(doc._id)}`,
         });
-      });
-    });
-  });
+        totalDocs += 1;
+      }
+      console.log(`Added ${docs.length} docs from ${name}.`);
+    } catch (e) {
+      console.warn(`Failed reading collection ${name}:`, e.message || e);
+    }
+  }
 
-  const allDocs = [...courseDocuments, ...moduleDocuments, ...lessonDocuments];
+  if (docsForChroma.length === 0) {
+    console.log("No documents extracted. Exiting.");
+    await mongoose.disconnect();
+    return;
+  }
+
+  console.log(
+    `Total documents prepared for Chroma: ${docsForChroma.length} (capped per collection: ${MAX_DOCS_PER_COLLECTION}).`
+  );
 
   const embeddings = new GoogleGenerativeAIEmbeddings({
     apiKey: GEMINI_API_KEY,
-    model: "text-embedding-004",
+    model: process.env.EMBEDDING_MODEL || "text-embedding-004",
   });
 
-  const sanitizeMetadata = (meta = {}) => {
-    const out = {};
-    Object.keys(meta || {}).forEach((k) => {
-      const v = meta[k];
-      const t = typeof v;
-      if (v === null || t === "string" || t === "number" || t === "boolean") {
-        out[k] = v;
-      } else {
-        try {
-          out[k] = JSON.stringify(v);
-        } catch (e) {
-          out[k] = String(v);
-        }
-      }
-    });
-    return out;
-  };
-
-  const docsForChroma = allDocs.map((d, idx) => ({
-    pageContent: d.pageContent,
-    metadata: sanitizeMetadata(d.metadata),
-    id: `doc-${idx}-${Date.now()}`,
-  }));
-
   const client = new ChromaClient({
-    host: "localhost",
-    port: 8000,
+    host: CHROMA_HOST,
+    port: CHROMA_PORT,
     ssl: false,
   });
 
   try {
-    await client.deleteCollection({ name: COLLECTION_NAME });
-    console.log(`Đã xóa collection cũ: ${COLLECTION_NAME}`);
-  } catch (e) {
-    console.log("Không tìm thấy collection cũ, tạo mới.");
+    // try delete existing collection
+    try {
+      await client.deleteCollection({ name: COLLECTION_NAME });
+      console.log(`Deleted existing Chroma collection: ${COLLECTION_NAME}`);
+    } catch {
+      console.log("No existing collection to delete, creating new one.");
+    }
+
+    // sanitize docs for Chroma (ensure metadata values are strings/numbers/booleans)
+    const sanitized = docsForChroma.map((d) => ({
+      pageContent: d.pageContent,
+      metadata: d.metadata,
+      id: d.id,
+    }));
+
+    await Chroma.fromDocuments(sanitized, embeddings, {
+      collectionName: COLLECTION_NAME,
+      client,
+    });
+
+    console.log(
+      `Uploaded ${sanitized.length} documents into Chroma collection "${COLLECTION_NAME}".`
+    );
+  } catch (err) {
+    console.error("Failed to upsert to Chroma:", err.message || err);
+  } finally {
+    await mongoose.disconnect();
+    console.log("Mongo disconnected. Sync finished.");
   }
-
-  console.log("Bắt đầu nạp dữ liệu (courses/modules/lessons) vào ChromaDB...");
-  await Chroma.fromDocuments(docsForChroma, embeddings, {
-    collectionName: COLLECTION_NAME,
-    client,
-  });
-
-  console.log(
-    `ĐÃ NẠP THÀNH CÔNG: courses ${courses.length}, modules ${modules.length}, lessons ${lessons.length} vào Vector DB!`
-  );
-  await mongoose.disconnect();
-  console.log("Đã ngắt kết nối MongoDB.");
 };
 
-syncData();
+run().catch((err) => {
+  console.error("Sync failed:", err);
+  process.exit(1);
+});

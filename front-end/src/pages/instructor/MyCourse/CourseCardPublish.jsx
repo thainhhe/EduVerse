@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Star, Users, Clock, Edit, EyeOff, Eye, Trash } from "lucide-react";
+import { Star, Users, Clock } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -8,8 +8,8 @@ const CourseCardPublish = ({ course, role }) => {
   const navigate = useNavigate();
   const [visible, setVisible] = useState(true);
 
-  const handleEdit = () => {
-    // ensure we pass course id to CreateCourse screen
+  const handleEdit = (e) => {
+    e?.stopPropagation?.();
     const id = course?._id || course?.id;
     if (!id) {
       console.warn("Missing course id when trying to edit", course);
@@ -18,30 +18,44 @@ const CourseCardPublish = ({ course, role }) => {
     navigate("/create-course", { state: { id } });
   };
 
-  // when navigating to modules/quiz manager, pass course id in state
-  const openModules = () => {
-    // ensure course._id or course.id exists
+  // openModules used by inner buttons (stops propagation)
+  const openModules = (e) => {
+    e?.stopPropagation?.();
     const id = course._id ?? course.id ?? course.idStr;
     navigate("/create-course/modules", { state: { id } });
   };
 
-  const handleDelete = () => {
+  const handleDelete = (e) => {
+    e?.stopPropagation?.();
     if (confirm("Are you sure you want to delete this course?")) {
       console.log("🗑️ Deleted course:", course.id);
       // TODO: Call API here
     }
   };
-  const toggleVisibility = () => {
+  const toggleVisibility = (e) => {
+    e?.stopPropagation?.();
     setVisible(!visible);
     console.log(`🔁 Course ${course.id} visibility: ${!visible}`);
   };
-  const handleOpenCourseQuiz = () => {
+  const handleOpenCourseQuiz = (e) => {
+    e?.stopPropagation?.();
     const id = course._id ?? course.id ?? course.idStr;
     navigate("/create-course/modules", { state: { id, openQuiz: true } });
   };
 
+  // Card click -> open create-module / module manager (no stopPropagation)
+  const openModuleManager = () => {
+    const id = course._id ?? course.id ?? course.idStr;
+    if (!id) return;
+    sessionStorage.setItem("currentCourseId", id);
+    navigate("/create-course/modules", { state: { id } });
+  };
+
   return (
-    <Card className="group overflow-hidden transition-all hover:shadow-lg">
+    <Card
+      className="group overflow-hidden transition-all hover:shadow-lg cursor-pointer"
+      onClick={openModuleManager}
+    >
       <div className="relative aspect-video overflow-hidden bg-muted">
         <img
           src={course.image || "/placeholder.svg"}

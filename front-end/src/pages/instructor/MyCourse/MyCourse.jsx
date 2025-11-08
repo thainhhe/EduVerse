@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Filter, Plus } from "lucide-react";
@@ -6,79 +6,126 @@ import CourseCardPublish from "./CourseCardPublish";
 import CourseCardUnPublish from "./CourseCardUnPublish";
 import { Link } from "react-router-dom";
 import { getMyCourses } from "@/services/courseService";
-import api from "@/services/api"; // thêm import fallback
 
 const MyCourse = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const [courses, setCourses] = useState([]);
+  const [allCourses, setAllCourses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("published");
 
   useEffect(() => {
-    const fetch = async () => {
+    const getCurrentUserId = () => {
+      try {
+        const userStr =
+          localStorage.getItem("user") || sessionStorage.getItem("user");
+        if (userStr) {
+          const u = JSON.parse(userStr);
+          return u._id || u.id || u.userId || null;
+        }
+        const token =
+          localStorage.getItem("accessToken") ||
+          localStorage.getItem("token") ||
+          sessionStorage.getItem("accessToken");
+        if (token) {
+          const parts = token.split(".");
+          if (parts.length === 3) {
+            const payload = JSON.parse(atob(parts[1]));
+            return payload._id || payload.id || payload.sub || null;
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+      return null;
+    };
+
+    const fetchCourses = async () => {
       setLoading(true);
       try {
-        const getCurrentUserId = () => {
-          try {
-            const userStr = localStorage.getItem("user");
-            if (userStr) {
-              const u = JSON.parse(userStr);
-              return u._id || u.id || u.userId || null;
-            }
-            const token = localStorage.getItem("accessToken");
-            if (token) {
-              const parts = token.split(".");
-              if (parts.length === 3) {
-                const payload = JSON.parse(atob(parts[1]));
-                return payload._id || payload.id || payload.sub || null;
-              }
-            }
-          } catch (e) {
-            // ignore
-          }
-          return null;
-        };
-
         const userId = getCurrentUserId();
-        let res;
-        if (userId) {
-          res = await getMyCourses(userId);
-        } else {
-          // fallback to /courses/mine if service expects id but we don't have it client-side
-          res = await api.get("/courses/mine");
+        if (!userId) {
+          console.warn("No user id found for getMyCourses");
+          setAllCourses([]);
+          return;
         }
 
-        const list = (res?.data ?? res) || [];
-        const mapped = list.map((c) => ({
-          _id: c._id,
-          id: c._id,
-          title: c.title || "Untitled course",
+        const res = await getMyCourses(userId);
+        console.debug("getMyCourses raw response:", res);
+        const body = res?.data ?? res; // axios response -> res.data is API body
+
+        const normalizeCourses = (payload) => {
+          if (!payload) return [];
+          if (Array.isArray(payload)) {
+            if (payload.length > 0 && Array.isArray(payload[0]?.courses))
+              return payload[0].courses;
+            if (payload.length > 0 && payload[0]?._id && payload[0]?.title)
+              return payload;
+            return [];
+          }
+          const d = payload.data ?? payload;
+          if (Array.isArray(d)) {
+            if (d.length > 0 && Array.isArray(d[0]?.courses))
+              return d[0].courses;
+            if (d.length > 0 && d[0]?._id && d[0]?.title) return d;
+          }
+          // deeper nesting like payload.data.data or payload.data.items
+          if (Array.isArray(payload?.data?.data)) return payload.data.data;
+          if (Array.isArray(payload?.data?.items)) return payload.data.items;
+          return [];
+        };
+
+        const list = normalizeCourses(body);
+
+        console.debug("extracted courses list:", list);
+
+        const mapped = list.map((c, idx) => ({
+          _id: c._id ?? c.id ?? `missing-${idx}`,
+          id: c._id ?? c.id ?? `missing-${idx}`,
+          title: c.title || c.name || "Untitled course",
+          image: c.thumbnail || c.image || "/placeholder.svg",
           rating: c.rating ?? 0,
-          reviewCount: (c.reviews && c.reviews.length) || 0,
-          studentsEnrolled: c.totalEnrollments ?? 0,
+          reviewCount: Array.isArray(c.reviews)
+            ? c.reviews.length
+            : c.reviewCount ?? 0,
+          studentsEnrolled: c.totalEnrollments ?? c.students ?? 0,
           lastUpdated: c.updatedAt
             ? new Date(c.updatedAt).toLocaleDateString()
             : c.updatedAt || "—",
-          image:
-            c.thumbnail ||
-            `/placeholder.svg?height=200&width=300&query=course+thumbnail`,
-          status: c.status || "pending",
-          isPublished: !!c.isPublished,
-          category: c.category?.name || null,
+          status: c.status || "draft",
+          isPublished: !!c.isPublished || c.status === "approve",
+          progress: c.progress ?? 0,
+          raw: c,
         }));
-        setCourses(mapped);
+
+        setAllCourses(mapped);
       } catch (err) {
         console.error("Failed to load my courses", err);
+        setAllCourses([]);
       } finally {
         setLoading(false);
       }
     };
-    fetch();
+
+    fetchCourses();
   }, []);
 
-  const totalPages = Math.max(1, Math.ceil(courses.length / itemsPerPage));
-  const paginatedCourses = courses.slice(
+  // derived lists
+  const publishedList = allCourses.filter((c) => c.isPublished);
+  const unpublishedList = allCourses.filter((c) => !c.isPublished);
+
+  // reset page when switching tabs
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
+
+  const total =
+    activeTab === "published" ? publishedList.length : unpublishedList.length;
+  const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
+  const currentList =
+    activeTab === "published" ? publishedList : unpublishedList;
+  const paginated = currentList.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -108,7 +155,7 @@ const MyCourse = () => {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="published" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-8">
             <TabsTrigger value="published">Published Courses</TabsTrigger>
             <TabsTrigger value="unpublished">Unpublished Courses</TabsTrigger>
@@ -120,8 +167,8 @@ const MyCourse = () => {
               {loading ? (
                 <div>Loading...</div>
               ) : (
-                paginatedCourses.map((course) => (
-                  <CourseCardPublish key={course.id} course={course} />
+                paginated.map((course) => (
+                  <CourseCardPublish key={course._id} course={course} />
                 ))
               )}
             </div>
@@ -129,8 +176,8 @@ const MyCourse = () => {
             {/* Pagination */}
             <div className="flex items-center justify-between border-t border-border pt-6">
               <p className="text-sm text-muted-foreground">
-                Show 1 to {Math.min(itemsPerPage, courses.length)} of{" "}
-                {courses.length} results
+                Show {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                {Math.min(currentPage * itemsPerPage, total)} of {total} results
               </p>
               <div className="flex items-center gap-2">
                 <Button
@@ -176,8 +223,8 @@ const MyCourse = () => {
               {loading ? (
                 <div>Loading...</div>
               ) : (
-                paginatedCourses.map((course) => (
-                  <CourseCardUnPublish key={course.id} course={course} />
+                paginated.map((course) => (
+                  <CourseCardUnPublish key={course._id} course={course} />
                 ))
               )}
             </div>
@@ -185,8 +232,8 @@ const MyCourse = () => {
             {/* Pagination */}
             <div className="flex items-center justify-between border-t border-border pt-6">
               <p className="text-sm text-muted-foreground">
-                Show 1 to {Math.min(itemsPerPage, courses.length)} of{" "}
-                {courses.length} results
+                Show {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                {Math.min(currentPage * itemsPerPage, total)} of {total} results
               </p>
               <div className="flex items-center gap-2">
                 <Button

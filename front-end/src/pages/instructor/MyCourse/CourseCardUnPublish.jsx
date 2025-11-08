@@ -8,18 +8,17 @@ const CourseCardUnPublish = ({ course }) => {
   const navigate = useNavigate();
 
   const handleEdit = () => {
-    const id = course?._id || course?.id;
-    if (!id) {
-      console.warn("Missing course id when trying to edit", course);
-      return;
-    }
+    // save courseId so child builder pages can read it even if location.state is lost
+    const id = course._id ?? course.id ?? course.idStr ?? null;
+    if (id) sessionStorage.setItem("currentCourseId", id);
+
     navigate("/create-course", { state: { id } });
   };
 
   const handleOpenCourseQuiz = () => {
-    const id = course?._id || course?.id;
-    if (!id)
-      return console.warn("Missing course id when trying to open quiz", course);
+    const id = course._id ?? course.id ?? course.idStr ?? null;
+    if (id) sessionStorage.setItem("currentCourseId", id);
+
     navigate("/create-course/modules", { state: { id, openQuiz: true } });
   };
 

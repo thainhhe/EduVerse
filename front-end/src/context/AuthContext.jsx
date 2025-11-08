@@ -30,16 +30,22 @@ export const AuthProvider = ({ children }) => {
         const payload = parseJwt(accessToken);
         const userId = payload?.id ?? payload?._id ?? payload?.sub ?? null;
 
+        if (!userId) {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          setLoading(false);
+          return;
+        }
+
         try {
-          let currentUser;
-          if (userId) {
-            currentUser = await authService.getCurrentUser(userId);
-          } else {
-            currentUser = await authService.getCurrentUser();
-          }
+          const currentUser = await authService.getCurrentUser(userId);
+
           const normalized =
             currentUser?.data?.user ?? currentUser?.data ?? currentUser;
-          if (normalized) setUser(normalized);
+
+          if (normalized) {
+            setUser(normalized);
+          }
         } catch (err) {
           const status = err?.response?.status;
           if (status === 401 || status === 403) {
@@ -54,7 +60,6 @@ export const AuthProvider = ({ children }) => {
     };
     init();
   }, []);
-
   const login = async (email, password) => {
     try {
       const res = await authService.login(email, password);
@@ -82,7 +87,6 @@ export const AuthProvider = ({ children }) => {
       if (accessToken) localStorage.setItem("accessToken", accessToken);
       if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
 
-      // If backend returned a user object use it, otherwise try to fetch /auth/me or profile using token
       let finalUser = userFromRes;
       if (!finalUser && accessToken) {
         try {
@@ -99,7 +103,6 @@ export const AuthProvider = ({ children }) => {
         return { success: true, user: finalUser };
       }
 
-      // If we have token but couldn't fetch user, still treat as success but user is null
       if (accessToken) {
         setUser(null);
         toast.success("Login successful!");
@@ -170,13 +173,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = async () => {
+  const logout = () => {
     try {
-      try {
-        await authService.logout();
-      } catch (e) {}
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
+      authService.logout();
+
       setUser(null);
       toast.success("Logout successful!");
     } catch (error) {

@@ -32,7 +32,7 @@ import ModulesPage from "./pages/instructor/MyCourse/Modules/ModulesPage";
 import AnnouncementsPage from "./pages/instructor/MyCourse/Announcements/AnnouncementsPage";
 import GradesPage from "./pages/instructor/MyCourse/Grades/GradesPage";
 import RoomMeeting from "./pages/instructor/RoomMeeting/RoomMeeting";
-import PermissionsPage from "./pages/Permissions/PermissionsPage";
+import PermissionsPage from "./pages/instructor/Permissions/PermissionsPage";
 import CommentThread from "./pages/CommentThread/CommentThread";
 import AdminDashboardPage from "./pages/admin/AdminDashboard/AdminDashboardPage";
 import UserManagementPage from "./pages/admin/UserManagement/UserManagementPage";
@@ -43,7 +43,8 @@ import CourseDetailPage from "./pages/admin/CourseManagement/CourseDetailPage";
 import QuizDetail from "./pages/learner/Learning/QuizDetail";
 import GoogleCallback from "./pages/auth/GoogleCallback";
 import DashboardInstructor from "./pages/instructor/DashboardInstructor/DashBoardInstructor";
-// NEW imports
+import InstructorCourseDetail from "@/pages/instructor/CourseDetail";
+
 import ChatbotManagementPage from "./pages/admin/ChatbotManagement/ChatbotManagementPage";
 import CommentManagementPage from "./pages/admin/CommentManagement/CommentManagementPage";
 import PaymentFailPage from "./pages/common/checkout/PaymentFailPage";
@@ -69,6 +70,11 @@ function App() {
         <Route path="register-instructor" element={<Register />} />
         <Route path="courses" element={<Courses />} />
         <Route path="courses/:id" element={<CourseDetail />} />
+        {/* Instructor public detail (management view for instructor) */}
+        <Route
+          path="instructor/courses/:id"
+          element={<InstructorCourseDetail />}
+        />
         <Route path="mycourses" element={<MyCourse />} />
         <Route path="register-learner" element={<RegisterLearner />} />
         <Route path="instructors" element={<Instructors />} />
