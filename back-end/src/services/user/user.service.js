@@ -1,7 +1,7 @@
 const { system_enum } = require("../../config/enum/system.constant");
 const { user_enum } = require("../../config/enum/user.constants");
 const { userRepository } = require("../../repositories/user.repository");
-const { generateOtp, hashOtp, sendOtpEmail, compareOtp } = require("../../utils/mail.util");
+const { generateOtp, hashOtp, sendOtpEmail, compareOtp, send_NewPassword_Email } = require("../../utils/mail.util");
 const { upLoadImage } = require("../../utils/response.util");
 const { userHelper } = require("./user.helper");
 const { authHelper } = require("../auth/auth.helper");
@@ -162,8 +162,10 @@ const userService = {
             user.resetOtpHash = null;
             user.resetOtpExpires = null;
             user.resetOtpAttempts = 0;
-            user.password = await authHelper.hashPassword("12345678");
+            const rawPassword = userHelper.generatePassword(8);
+            user.password = await authHelper.hashPassword(rawPassword);
             await userRepository.save(user);
+            await send_NewPassword_Email(user.email, rawPassword);
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: system_enum.SYSTEM_MESSAGE.RESET_PASSWORD_SUCCESS,

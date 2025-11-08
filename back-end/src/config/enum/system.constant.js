@@ -13,7 +13,7 @@ const system_enum = {
         OTP_EXPIRED: "OTP expired",
         TOO_MANY_ATTEMPT_OTP: "Too many attempts, request a new OTP",
         FAIL_GET_DATA: "Too many attempts, request a new OTP",
-        RESET_PASSWORD_SUCCESS: "Your password was reset. New password is 12345678",
+        RESET_PASSWORD_SUCCESS: "Your password was reset.Please check your email for the new password.",
     },
 
     STATUS_CODE: {
