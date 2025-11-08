@@ -18,51 +18,6 @@ const Dashboard = () => {
   const { user } = useAuth();
   const { enrollments } = useEnrollment();
   console.log("enrollments", enrollments)
-  // const enrollments = [
-  //   {
-  //     id: 1,
-  //     title: "Advanced Web Development with React",
-  //     instructor: "Jane Doe",
-  //     progress: 75,
-  //     image: "/react-web-development.png",
-  //   },
-  //   {
-  //     id: 2,
-  //     title: "Introduction to Artificial Intelligence",
-  //     instructor: "John Smith",
-  //     progress: 40,
-  //     image: "/artificial-intelligence-network.png",
-  //   },
-  //   {
-  //     id: 3,
-  //     title: "UI/UX Design Fundamentals",
-  //     instructor: "Emily White",
-  //     progress: 90,
-  //     image: "/ui-ux-design-concept.png",
-  //   },
-  //   {
-  //     id: 4,
-  //     title: "Data Science for Beginners",
-  //     instructor: "Michael Green",
-  //     progress: 20,
-  //     image: "/data-science-concept.png",
-  //   },
-  //   {
-  //     id: 5,
-  //     title: "Music Theory and Composition",
-  //     instructor: "Sarah Brown",
-  //     progress: 60,
-  //     image: "/music-theory-guitar.jpg",
-  //   },
-  //   {
-  //     id: 6,
-  //     title: "Urban Planning and Development",
-  //     instructor: "David Lee",
-  //     progress: 85,
-  //     image: "/urban-planning-city.jpg",
-  //   },
-  // ];
-
   const upcomingDeadlines = [
     { title: "React Project Milestone 2", date: "2024-07-25" },
     { title: "AI Ethics Essay Submission", date: "2024-07-28" },
@@ -70,6 +25,7 @@ const Dashboard = () => {
     { title: "Data Visualization Assignment", date: "2024-08-05" },
     { title: "Music Composition Final Project", date: "2024-08-10" },
   ];
+
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -92,26 +48,28 @@ const Dashboard = () => {
             {enrollments.map((course) => (
               <Card
                 key={course.id}
-                className="overflow-hidden hover:shadow-lg transition-shadow"
+                className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col"
               >
                 <img
                   src={course.image || "/placeholder.svg"}
                   alt={course.title}
                   className="w-full h-40 object-cover"
                 />
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-2">{course.courseTitle}</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    {course.instructor}
-                  </p>
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">
-                        Date start: {new Date(course.lastAccessed).toLocaleDateString("vi-VN")}
-                      </span>
+                <CardContent className="p-6 flex flex-col flex-grow">
+                  <div className="flex-grow">
+                    <h3 className="text-lg font-semibold mb-2">{course.courseTitle}</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      {course.instructor}
+                    </p>
+                    <div className="space-y-2 mb-4 flex-row">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">
+                          Date start: {new Date(course.lastAccessed).toLocaleDateString("vi-VN")}
+                        </span>
 
+                      </div>
+                      {/* <Progress value={course.progress} className="h-2" /> */}
                     </div>
-                    {/* <Progress value={course.progress} className="h-2" /> */}
                   </div>
                   <Button
                     asChild

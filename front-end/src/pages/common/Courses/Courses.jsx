@@ -16,7 +16,7 @@ const Courses = () => {
   const [error, setError] = useState("");
   const { user } = useAuth();
   const { enrollments } = useEnrollment();
-  console.log("enrollments", enrollments)
+  console.log("enrollments", enrollments);
   // ✅ Lấy dữ liệu từ API thật
 
   useEffect(() => {
@@ -72,6 +72,15 @@ const Courses = () => {
       </div>
     );
 
+  const itemsPerPage = 6; // số khóa học mỗi trang
+  const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
+
+  // cắt dữ liệu để hiển thị theo trang
+  const paginatedCourses = filteredCourses.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 sm:py-12">
       <div className="container mx-auto px-4">
@@ -98,13 +107,13 @@ const Courses = () => {
           </div>
         </div>
 
-        {filteredCourses.length === 0 ? (
+        {paginatedCourses.length === 0 ? (
           <p className="text-gray-500 text-center mt-10">
             No courses found in this category.
           </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {filteredCourses.map((course) => (
+            {paginatedCourses.map((course) => (
               <Card
                 key={course?._id || course?.id}
                 className="overflow-hidden hover:shadow-xl transition-shadow flex flex-col group"
@@ -144,7 +153,10 @@ const Courses = () => {
 
                   <div className="mt-auto pt-2 flex items-center justify-between">
                     <span className="text-lg font-bold text-indigo-600">
-                      ${course.price || 0}
+                      {course.price.toLocaleString("vi-VN", {
+                        style: "currency",
+                        currency: "VND",
+                      }) || 0}
                     </span>
                     {enrollments.some((e) => e.courseId === course._id) ? (
                       <Button
@@ -170,25 +182,28 @@ const Courses = () => {
           </div>
         )}
 
-        <div className="flex justify-center items-center gap-2 sm:gap-4">
-          <Button
-            variant="outline"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(1)}
-          >
-            Previous
-          </Button>
-          <span className="text-sm text-gray-600">
-            Page {currentPage} of 2
-          </span>
-          <Button
-            variant="outline"
-            disabled={currentPage === 2}
-            onClick={() => setCurrentPage(2)}
-          >
-            Next
-          </Button>
-        </div>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-3 sm:gap-4">
+            <Button
+              variant="outline"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => prev - 1)}
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-gray-600">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

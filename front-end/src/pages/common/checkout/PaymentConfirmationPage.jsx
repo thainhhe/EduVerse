@@ -15,6 +15,7 @@ const PaymentConfirmationPage = () => {
     const code = queryParams.get("code");
     const { user } = useAuth();
     const { courseId, courseTitle, coursePrice } = location.state || {};
+    console.log("courseId, courseTitle, coursePrice", courseId, courseTitle, coursePrice)
     const { refreshEnrollments } = useEnrollment();
 
     const createEnrollment = async () => {
@@ -32,11 +33,17 @@ const PaymentConfirmationPage = () => {
             createEnrollment();
         }
     }, [status]);
-
     const handleContinue = () => {
         refreshEnrollments();
         navigate(`/dashboard`);
     };
+    useEffect(() => {
+        const savedInfo = localStorage.getItem("payment_course_info");
+        console.log('savedInfo', savedInfo)
+        if (savedInfo) {
+            setCourseInfo(JSON.parse(savedInfo));
+        }
+    }, [])
 
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -54,11 +61,16 @@ const PaymentConfirmationPage = () => {
                     </div>
                     <div className="flex justify-between">
                         <span className="text-gray-500">Course Title:</span>
-                        <span className="font-medium text-gray-800">{courseTitle}</span>
+                        <span className="font-medium text-gray-800">{courseInfo?.courseTitle}</span>
                     </div>
                     <div className="flex justify-between">
                         <span className="text-gray-500">Course Price:</span>
-                        <span className="font-medium text-gray-800">{coursePrice}</span>
+                        <span className="font-medium text-gray-800">
+                            {courseInfo?.coursePrice?.toLocaleString("vi-VN", {
+                                style: "currency",
+                                currency: "VND",
+                            })}
+                        </span>
                     </div>
                     <div className="flex justify-between">
                         <span className="text-gray-500">Order Code:</span>

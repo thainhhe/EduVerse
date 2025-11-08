@@ -392,8 +392,6 @@
 
 // export default PaymentPage;
 
-"use client";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -411,6 +409,7 @@ const PaymentPage = () => {
     // 🔹 Lấy dữ liệu khóa học từ state
     const { courseId, courseTitle, coursePrice } = location.state || {};
 
+    console.log("courseId, courseTitle, coursePrice", courseId, courseTitle, coursePrice)
     const onSubmit = async () => {
         try {
             if (!user?._id) {
@@ -429,7 +428,14 @@ const PaymentPage = () => {
             const res = await paymentService.createPaymentIntent(data_payment);
             console.log("res:", res);
             const paymentLinkIntent = res.data?.checkoutUrl;
+            console.log("paymentLinkIntent", paymentLinkIntent)
             if (paymentLinkIntent) {
+
+                localStorage.setItem("payment_course_info", JSON.stringify({
+                    courseId,
+                    courseTitle,
+                    coursePrice,
+                }))
                 window.open(paymentLinkIntent, "_blank");
             } else {
                 ToastHelper.error("Không tìm thấy link thanh toán.");
