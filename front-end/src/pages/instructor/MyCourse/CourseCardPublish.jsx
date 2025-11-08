@@ -47,6 +47,7 @@ const CourseCardPublish = ({ course, role }) => {
   const openModuleManager = () => {
     const id = course._id ?? course.id ?? course.idStr;
     if (!id) return;
+    if (id) sessionStorage.setItem("currentCourseId", id);
     navigate("/create-course/modules", { state: { id } });
   };
 
