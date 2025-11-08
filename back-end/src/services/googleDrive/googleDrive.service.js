@@ -1,50 +1,34 @@
-// googleDrive.service.js
-const { Readable } = require('stream');
+// services/googleDrive.service.js
 const fs = require('fs');
-const googleDriveConfig = require('../../config/googleDrive.config');
+const drive = require('../../config/googleDrive.config');
 
 const googleDriveService = {
     uploadFile: async (file, folderId) => {
-        const drive = googleDriveConfig.getDrive();
-
-        if (!file || !file.path) {
-            throw new Error("Invalid file path from multer");
-        }
-
-        // LOG 1: Kiểm tra xem file tạm có tồn tại không
-        console.log('Attempting to upload file from path:', file.path);
-
         try {
             const response = await drive.files.create({
                 requestBody: {
                     name: `${Date.now()}-${file.originalname}`,
-                    parents: [folderId],
+                    parents: [folderId], 
+                    mimeType: file.mimetype,
                 },
                 media: {
                     mimeType: file.mimetype,
-                    body: fs.createReadStream(file.path)
+                    body: fs.createReadStream(file.path), // Đọc stream từ file tạm
                 },
-                fields: "id, name, size, mimeType, webViewLink, webContentLink",
+                // YÊU CẦU 'size' - SỬA LỖI fileSize: 0
+                fields: "id, name, size, webViewLink, mimeType", 
             });
-
-            // LOG 2: Đây là log quan trọng nhất!
-            console.log('GOOGLE DRIVE RESPONSE:', response.data);
-
+            console.log('Upload lên Google Drive thành công:', response.data);
             return response.data;
-
         } catch (error) {
-            // LOG 3: Bắt lỗi nếu API call thất bại
-            console.error('Lỗi từ Google Drive API:', error.message);
-            throw error; // Ném lỗi ra để controller bắt
-
+            console.error('Lỗi khi upload lên Google Drive:', error.message);
+            throw error;
         } finally {
-            // ✅ Bỏ comment dòng này để xóa file tạm
+            // Luôn xóa file tạm
             fs.unlink(file.path, (err) => {
-                if (err) console.error("Error deleting temp file:", file.path, err);
-                else console.log('Temp file deleted successfully:', file.path);
+                if (err) console.error("Lỗi xóa file tạm:", file.path, err);
             });
         }
     }
 };
-
 module.exports = googleDriveService;

@@ -164,130 +164,6 @@ const courseManagementRepository = {
     return courseDetails;
   },
 
-  // Approve course and publish all related quizzes
-  // approveCourse: async (courseId) => {
-  //   try {
-  //     console.log(` Approving course ${courseId}...`);
-
-  //     // 1. Update course status to 'approve' and set isPublished to true
-  //     const course = await Course.findByIdAndUpdate(
-  //       courseId,
-  //       {
-  //         status: "approve",
-  //         isPublished: true,
-  //         reasonReject: "", // Clear rejection reason if any
-  //       },
-  //       { new: true }
-  //     ).exec();
-
-  //     if (!course) {
-  //       throw new Error("Course not found");
-  //     }
-
-  //     // 2. Get all modules of this course
-  //     const modules = await Module.find({ courseId }).exec();
-  //     const moduleIds = modules.map((m) => m._id);
-
-  //     // 3. Get all lessons of these modules
-  //     const lessons = await Lesson.find({
-  //       moduleId: { $in: moduleIds },
-  //     }).exec();
-  //     const lessonIds = lessons.map((l) => l._id);
-
-  //     // 4. Publish all quizzes at course level
-  //     const courseQuizzesUpdate = await Quiz.updateMany(
-  //       { courseId, isPublished: false },
-  //       { isPublished: true }
-  //     ).exec();
-
-  //     // 5. Publish all quizzes at module level
-  //     const moduleQuizzesUpdate = await Quiz.updateMany(
-  //       { moduleId: { $in: moduleIds }, isPublished: false },
-  //       { isPublished: true }
-  //     ).exec();
-
-  //     // 6. Publish all quizzes at lesson level
-  //     const lessonQuizzesUpdate = await Quiz.updateMany(
-  //       { lessonId: { $in: lessonIds }, isPublished: false },
-  //       { isPublished: true }
-  //     ).exec();
-
-  //     console.log(`Course approved successfully!`);
-  //     console.log(
-  //       `   - Course quizzes published: ${courseQuizzesUpdate.modifiedCount}`
-  //     );
-  //     console.log(
-  //       `   - Module quizzes published: ${moduleQuizzesUpdate.modifiedCount}`
-  //     );
-  //     console.log(
-  //       `   - Lesson quizzes published: ${lessonQuizzesUpdate.modifiedCount}`
-  //     );
-
-  //     return {
-  //       course,
-  //       quizzesPublished: {
-  //         courseLevel: courseQuizzesUpdate.modifiedCount,
-  //         moduleLevel: moduleQuizzesUpdate.modifiedCount,
-  //         lessonLevel: lessonQuizzesUpdate.modifiedCount,
-  //         total:
-  //           courseQuizzesUpdate.modifiedCount +
-  //           moduleQuizzesUpdate.modifiedCount +
-  //           lessonQuizzesUpdate.modifiedCount,
-  //       },
-  //     };
-  //   } catch (error) {
-  //     console.error("Repository Error - approveCourse:", error);
-  //     throw error;
-  //   }
-  // },
-
-  // Reject course
-  // rejectCourse: async (courseId, reasonReject) => {
-  //   try {
-  //     console.log(`❌ Rejecting course ${courseId}...`);
-
-  //     const course = await Course.findByIdAndUpdate(
-  //       courseId,
-  //       {
-  //         status: "reject",
-  //         isPublished: false,
-  //         reasonReject: reasonReject || "Course does not meet requirements",
-  //       },
-  //       { new: true }
-  //     ).exec();
-
-  //     if (!course) {
-  //       throw new Error("Course not found");
-  //     }
-
-  //     // Optional: Unpublish all quizzes when rejected
-  //     const modules = await Module.find({ courseId }).exec();
-  //     const moduleIds = modules.map((m) => m._id);
-  //     const lessons = await Lesson.find({
-  //       moduleId: { $in: moduleIds },
-  //     }).exec();
-  //     const lessonIds = lessons.map((l) => l._id);
-
-  //     await Quiz.updateMany(
-  //       {
-  //         $or: [
-  //           { courseId },
-  //           { moduleId: { $in: moduleIds } },
-  //           { lessonId: { $in: lessonIds } },
-  //         ],
-  //       },
-  //       { isPublished: false }
-  //     ).exec();
-
-  //     console.log(`Course rejected successfully!`);
-
-  //     return course;
-  //   } catch (error) {
-  //     console.error("Repository Error - rejectCourse:", error);
-  //     throw error;
-  //   }
-  // },
-
   // ✅ Approve course and publish all related quizzes + create/update forum
   approveCourse: async (courseId) => {
     try {
@@ -302,11 +178,14 @@ const courseManagementRepository = {
           reasonReject: "",
         },
         { new: true }
-      ).exec();
+      )
+        // <-- 🚀 BỔ SUNG: Populate main_instructor để gửi mail
+        .populate("main_instructor", "email username")
+        .exec();
 
       if (!course) throw new Error("Course not found");
 
-      // 2️⃣ Lấy modules và lessons liên quan
+      // 2️⃣ Lấy modules và lessons liên quan (Giữ nguyên logic của bạn)
       const modules = await Module.find({ courseId }).exec();
       console.log("modules", modules);
       const moduleIds = modules.map((m) => m._id);
@@ -315,7 +194,7 @@ const courseManagementRepository = {
       }).exec();
       const lessonIds = lessons.map((l) => l._id);
 
-      // 3️⃣ Publish tất cả quiz liên quan
+      // 3️⃣ Publish tất cả quiz liên quan (Giữ nguyên logic của bạn)
       const [courseQuiz, moduleQuiz, lessonQuiz] = await Promise.all([
         Quiz.updateMany({ courseId }, { isPublished: true }),
         Quiz.updateMany(
@@ -328,7 +207,7 @@ const courseManagementRepository = {
         ),
       ]);
 
-      // 4️⃣ Tạo hoặc cập nhật forum
+      // 4️⃣ Tạo hoặc cập nhật forum (Giữ nguyên logic của bạn)
       const existingForum = await Forum.findOne({ courseId });
       if (!existingForum) {
         const newForum = await Forum.create({
@@ -346,26 +225,24 @@ const courseManagementRepository = {
       }
 
       console.log("🎉 Course approved successfully!");
+
+      // <-- 🚀 THAY ĐỔI: Trả về dữ liệu thô để Service xử lý
+      // Service của bạn (từ tin nhắn trước) đang mong đợi cấu trúc này
       return {
-        status: STATUS_CODE.OK,
-        message:
-          "Khóa học đã được duyệt và forum đã được cập nhật hoặc tạo mới",
-        data: {
-          course,
-          quizzesPublished: {
-            courseLevel: courseQuiz.modifiedCount,
-            moduleLevel: moduleQuiz.modifiedCount,
-            lessonLevel: lessonQuiz.modifiedCount,
-            total:
-              courseQuiz.modifiedCount +
-              moduleQuiz.modifiedCount +
-              lessonQuiz.modifiedCount,
-          },
+        course: course, // 'course' này đã được populate
+        quizzesPublished: {
+          courseLevel: courseQuiz.modifiedCount,
+          moduleLevel: moduleQuiz.modifiedCount,
+          lessonLevel: lessonQuiz.modifiedCount,
+          total:
+            courseQuiz.modifiedCount +
+            moduleQuiz.modifiedCount +
+            lessonQuiz.modifiedCount,
         },
       };
     } catch (error) {
       console.error("Repository Error - approveCourse:", error);
-      throw error;
+      throw error; // Ném lỗi để Service ở trên bắt được
     }
   },
 
@@ -383,11 +260,14 @@ const courseManagementRepository = {
           reasonReject: reasonReject || "Khóa học không đạt yêu cầu",
         },
         { new: true }
-      ).exec();
+      )
+        // <-- 🚀 BỔ SUNG: Populate main_instructor để gửi mail
+        .populate("main_instructor", "email username")
+        .exec();
 
       if (!course) throw new Error("Course not found");
 
-      // 2️⃣ Lấy module và lesson của khóa học
+      // 2️⃣ Lấy module và lesson của khóa học (Giữ nguyên logic của bạn)
       const modules = await Module.find({ courseId }).exec();
       const moduleIds = modules.map((m) => m._id);
       const lessons = await Lesson.find({
@@ -395,7 +275,7 @@ const courseManagementRepository = {
       }).exec();
       const lessonIds = lessons.map((l) => l._id);
 
-      // 3️⃣ Unpublish tất cả quiz liên quan
+      // 3️⃣ Unpublish tất cả quiz liên quan (Giữ nguyên logic của bạn)
       await Quiz.updateMany(
         {
           $or: [
@@ -407,7 +287,7 @@ const courseManagementRepository = {
         { isPublished: false }
       ).exec();
 
-      // 4️⃣ Cập nhật forum -> ẩn đi thay vì xóa
+      // 4️⃣ Cập nhật forum -> ẩn đi thay vì xóa (Giữ nguyên logic của bạn)
       const existingForum = await Forum.findOne({ courseId });
       if (existingForum) {
         await Forum.findByIdAndUpdate(existingForum._id, { isPublic: false });
@@ -417,14 +297,13 @@ const courseManagementRepository = {
       }
 
       console.log("✅ Course rejected and forum hidden (if existed).");
-      return {
-        status: STATUS_CODE.OK,
-        message: "Khóa học đã bị từ chối và forum đã được ẩn (nếu có)",
-        data: course,
-      };
+
+      // <-- 🚀 THAY ĐỔI: Trả về 'course' object đã populate
+      // Service của bạn đang mong đợi nhận trực tiếp 'course' object
+      return course;
     } catch (error) {
       console.error("Repository Error - rejectCourse:", error);
-      throw error;
+      throw error; // Ném lỗi để Service ở trên bắt được
     }
   },
 };
