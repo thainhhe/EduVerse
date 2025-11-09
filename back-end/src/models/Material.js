@@ -17,7 +17,11 @@ const materialSchema = new mongoose.Schema(
         uploadedAt: { type: Date, default: Date.now },
         accessLevel: { type: String, enum: ["public", "private", "restricted"], default: "private" },
         downloadCount: { type: Number, default: 0, min: 0 },
-        status: { type: String, enum: ["active", "inactive", "archived"], default: "active" },
+        status: {
+            type: String,
+            enum: ['active', 'inactive'],
+            default: 'active',
+        },
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date, default: Date.now },
     },

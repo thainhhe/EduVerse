@@ -23,7 +23,8 @@ const roomRouter = require("./room-meeting.routes.js");
 const paymentRouter = require("./payment.routes.js");
 const notificationRouter = require("./notification.routes.js");
 
-const courseManagementRouter = require("./admin/courseManagement.routes");
+const courseManagementRouter = require('./admin/courseManagement.routes');
+const dashboardRoutes = require('./admin/dashboard.routes');
 
 //===============================GENERAL ROUTES=========================================================
 
@@ -61,7 +62,8 @@ router.use("/comment", commentRouter);
 router.use("/chatbot", chatbotRouter);
 
 //===============================ADMIN ROUTES=========================================================
-router.use("/admin/courses", courseManagementRouter);
+router.use('/admin/courses', courseManagementRouter);
+router.use('/admin/dashboard', dashboardRoutes);
 
 router.use("/logs", logRouter);
 

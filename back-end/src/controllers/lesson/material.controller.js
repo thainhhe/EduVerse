@@ -1,214 +1,65 @@
-const materialServices = require('../../services/material/material.services');
+// controllers/lesson/material.controller.js
+const Material = require('../../models/Material');
+const googleDriveService = require('../../services/googleDrive/googleDrive.service'); 
 
-const materialController = {
-    // Get all materials
-    getAllMaterials: async (req, res) => {
+class MaterialController {
+    
+    // HÀM UPLOAD
+    async uploadMaterial(req, res) {
         try {
-            const filters = {};
-            if (req.query.type) filters.type = req.query.type;
-            if (req.query.status) filters.status = req.query.status;
-            if (req.query.accessLevel) filters.accessLevel = req.query.accessLevel;
+            const { ...bodyData } = req.body;
+            const file = req.file;
+            if (!file) return res.status(400).json({ success: false, message: "Missing file" });
 
-            const result = await materialServices.getAllMaterials(filters);
-            return res.status(result.status).json({
-                message: result.message,
-                data: result.data,
-            });
-        } catch (error) {
-            console.error('Controller Error - getAllMaterials:', error);
-            return res.status(500).json({
-                message: 'Internal server error',
-                ...(process.env.NODE_ENV === 'development' && {
-                    error: error.message,
-                    stack: error.stack,
-                }),
-            });
-        }
-    },
+            const folderId = process.env.DRIVE_FOLDER_ID;
+            const driveFile = await googleDriveService.uploadFile(file, folderId);
 
-    // Get material by ID
-    getMaterialById: async (req, res) => {
-        try {
-            const materialId = req.params.id;
-            const result = await materialServices.getMaterialById(materialId);
-            return res.status(result.status).json({
-                message: result.message,
-                data: result.data,
-            });
-        } catch (error) {
-            console.error('Controller Error - getMaterialById:', error);
-            return res.status(500).json({
-                message: 'Internal server error',
-                ...(process.env.NODE_ENV === 'development' && {
-                    error: error.message,
-                    stack: error.stack,
-                }),
-            });
-        }
-    },
-
-    // Get materials by type
-    getMaterialsByType: async (req, res) => {
-        try {
-            const type = req.params.type;
-            const result = await materialServices.getMaterialsByType(type);
-            return res.status(result.status).json({
-                message: result.message,
-                data: result.data,
-            });
-        } catch (error) {
-            console.error('Controller Error - getMaterialsByType:', error);
-            return res.status(500).json({
-                message: 'Internal server error',
-                ...(process.env.NODE_ENV === 'development' && {
-                    error: error.message,
-                    stack: error.stack,
-                }),
-            });
-        }
-    },
-
-    // Get materials by user
-    getMaterialsByUser: async (req, res) => {
-        try {
-            const userId = req.params.userId;
-            const result = await materialServices.getMaterialsByUser(userId);
-            return res.status(result.status).json({
-                message: result.message,
-                data: result.data,
-            });
-        } catch (error) {
-            console.error('Controller Error - getMaterialsByUser:', error);
-            return res.status(500).json({
-                message: 'Internal server error',
-                ...(process.env.NODE_ENV === 'development' && {
-                    error: error.message,
-                    stack: error.stack,
-                }),
-            });
-        }
-    },
-
-    // Create material with link (no file upload)
-    createMaterialWithLink: async (req, res) => {
-        try {
-            const materialData = req.body;
-            const result = await materialServices.createMaterialWithLink(materialData);
-            return res.status(result.status).json({
-                message: result.message,
-                data: result.data,
-                ...(result.errors && { errors: result.errors }),
-            });
-        } catch (error) {
-            console.error('Controller Error - createMaterialWithLink:', error);
-            return res.status(500).json({
-                message: 'Internal server error',
-                ...(process.env.NODE_ENV === 'development' && {
-                    error: error.message,
-                    stack: error.stack,
-                }),
-            });
-        }
-    },
-
-    // Upload material (video or document)
-    uploadMaterial: async (req, res) => {
-        try {
-            if (!req.file) {
-                return res.status(400).json({
-                    message: 'No file uploaded',
-                });
+            // TẠO LINK XEM (luôn dùng /preview)
+            let viewUrl = driveFile.webViewLink;
+            if (viewUrl) {
+                viewUrl = viewUrl.replace('/view', '/preview');
             }
 
-            const materialData = {
-                title: req.body.title,
-                description: req.body.description,
-                type: req.body.type,
-                uploadedBy: req.body.uploadedBy,
-                accessLevel: req.body.accessLevel || 'private',
-                status: req.body.status || 'active',
-            };
+            const material = await Material.create({
+                title: bodyData.title || driveFile.name,
+                description: bodyData.description,
+                url: viewUrl, 
+                type: file.mimetype.startsWith('video/') ? 'video' : 'document',
+                fileId: driveFile.id,
+                fileName: driveFile.name,
+                fileSize: parseInt(driveFile.size, 10) || 0, // SỬA LỖI
+                mimeType: driveFile.mimeType,
+                status: 'active',
+                uploadedBy: bodyData.uploadedBy,
+                accessLevel: bodyData.accessLevel || "private",
+            });
 
-            const result = await materialServices.uploadMaterial(req.file, materialData);
-            return res.status(result.status).json({
-                message: result.message,
-                data: result.data,
-                ...(result.errors && { errors: result.errors }),
+            return res.status(201).json({
+                success: true,
+                message: "Upload lên Google Drive thành công.",
+                data: material,
             });
         } catch (error) {
-            console.error('Controller Error - uploadMaterial:', error);
-            return res.status(500).json({
-                message: 'Internal server error',
-                ...(process.env.NODE_ENV === 'development' && {
-                    error: error.message,
-                    stack: error.stack,
-                }),
-            });
+            console.error('LỖI (Controller GDrive):', error.message);
+            return res.status(500).json({ success: false, message: "Lỗi server", error: error.message });
         }
-    },
+    }
 
-    // Update material
-    updateMaterial: async (req, res) => {
+    // HÀM LẤY LINK XEM
+    async getMaterialView(req, res) {
         try {
-            const materialId = req.params.id;
-            const materialData = req.body;
-            const result = await materialServices.updateMaterial(materialId, materialData);
-            return res.status(result.status).json({
-                message: result.message,
-                data: result.data,
-                ...(result.errors && { errors: result.errors }),
+            // (Bạn nên kiểm tra quyền Auth ở đây)
+            const material = await Material.findById(req.params.id);
+            if (!material) return res.status(404).json({ message: "Không tìm thấy" });
+
+            res.json({ 
+                success: true, 
+                url: material.url, 
+                type: material.type 
             });
         } catch (error) {
-            console.error('Controller Error - updateMaterial:', error);
-            return res.status(500).json({
-                message: 'Internal server error',
-                ...(process.env.NODE_ENV === 'development' && {
-                    error: error.message,
-                    stack: error.stack,
-                }),
-            });
+            res.status(500).json({ success: false, message: error.message });
         }
-    },
-
-    // Delete material
-    deleteMaterial: async (req, res) => {
-        try {
-            const materialId = req.params.id;
-            const result = await materialServices.deleteMaterial(materialId);
-            return res.status(result.status).json({
-                message: result.message,
-            });
-        } catch (error) {
-            console.error('Controller Error - deleteMaterial:', error);
-            return res.status(500).json({
-                message: 'Internal server error',
-                ...(process.env.NODE_ENV === 'development' && {
-                    error: error.message,
-                    stack: error.stack,
-                }),
-            });
-        }
-    },
-
-    // Track download
-    trackDownload: async (req, res) => {
-        try {
-            const materialId = req.params.id;
-            const result = await materialServices.trackDownload(materialId);
-            return res.status(result.status).json({
-                message: result.message,
-            });
-        } catch (error) {
-            console.error('Controller Error - trackDownload:', error);
-            return res.status(500).json({
-                message: 'Internal server error',
-                ...(process.env.NODE_ENV === 'development' && {
-                    error: error.message,
-                    stack: error.stack,
-                }),
-            });
-        }
-    },
-};
-
-module.exports = materialController;
+    }
+}
+module.exports = new MaterialController();

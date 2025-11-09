@@ -1,44 +1,21 @@
+// config/googleDrive.config.js
 const { google } = require('googleapis');
-const fs = require('fs');
-const path = require('path');
+require('dotenv').config();
 
-class GoogleDriveConfig {
-    constructor() {
-        this.auth = null;
-        this.drive = null;
-        this.initialize();
-    }
+const oauth2Client = new google.auth.OAuth2(
+    process.env.DRIVE_CLIENT_ID,
+    process.env.DRIVE_CLIENT_SECRET,
+    process.env.DRIVE_REDIRECT_URI
+);
 
-    initialize() {
-        try {
-            const credentialsPath = path.join(__dirname, '../../credentials.json');
-            
-            if (!fs.existsSync(credentialsPath)) {
-                throw new Error('credentials.json not found!');
-            }
+// Đặt refresh token (sẽ lấy từ .env sau khi chạy Giai đoạn 3)
+oauth2Client.setCredentials({
+    refresh_token: process.env.DRIVE_REFRESH_TOKEN
+});
 
-            const credentials = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
+const drive = google.drive({
+    version: 'v3',
+    auth: oauth2Client,
+});
 
-            this.auth = new google.auth.GoogleAuth({
-                credentials,
-                scopes: ['https://www.googleapis.com/auth/drive.file'],
-            });
-
-            this.drive = google.drive({ version: 'v3', auth: this.auth });
-            
-            console.log('✅ Google Drive initialized successfully');
-        } catch (error) {
-            console.error('❌ Google Drive initialization failed:', error);
-            throw error;
-        }
-    }
-
-    getDrive() {
-        if (!this.drive) {
-            this.initialize();
-        }
-        return this.drive;
-    }
-}
-
-module.exports = new GoogleDriveConfig();
+module.exports = drive;

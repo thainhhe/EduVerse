@@ -64,4 +64,59 @@ const sendInviteInstructorEmail = (toEmail, inviteLink, inviterName = "EduVerse 
     return transporter.sendMail(mailOptions);
 };
 
-module.exports = { generateOtp, hashOtp, compareOtp, sendOtpEmail, sendInviteInstructorEmail };
+/**
+ * Gửi email thông báo khoá học được phê duyệt
+ * @param {string} toEmail - Email giảng viên
+ * @param {string} instructorName - Tên giảng viên
+ * @param {string} courseTitle - Tiêu đề khoá học
+ */
+const sendCourseApprovalEmail = (toEmail, instructorName, courseTitle) => {
+    const mailOptions = {
+        from: process.env.EMAIL_FROM || '"EduVerse Team" <no-reply@eduverse.com>',
+        to: toEmail,
+        subject: `🎉 Chúc mừng! Khóa học của bạn đã được phê duyệt: "${courseTitle}"`,
+        html: `
+            <div style="font-family: Arial, sans-serif; color: #333;">
+                <h2>🎉 Khóa học của bạn đã được chấp thuận!</h2>
+                <p>Xin chào <strong>${instructorName}</strong>,</p>
+                <p>Chúng tôi vui mừng thông báo rằng khóa học "<strong>${courseTitle}</strong>" của bạn đã được đội ngũ kiểm duyệt EduVerse xem xét và <strong>phê duyệt</strong>.</p>
+                <p>Khóa học của bạn hiện đã được xuất bản và hiển thị công khai. Cảm ơn bạn đã đóng góp nội dung chất lượng cho nền tảng!</p>
+                <br>
+                <p>Trân trọng,<br>Đội ngũ EduVerse</p>
+            </div>
+        `,
+    };
+    return transporter.sendMail(mailOptions);
+};
+
+/**
+ * Gửi email thông báo khoá học bị từ chối
+ * @param {string} toEmail - Email giảng viên
+ * @param {string} instructorName - Tên giảng viên
+ * @param {string} courseTitle - Tiêu đề khoá học
+ * @param {string} reasonReject - Lý do từ chối
+ */
+const sendCourseRejectionEmail = (toEmail, instructorName, courseTitle, reasonReject) => {
+    const mailOptions = {
+        from: process.env.EMAIL_FROM || '"EduVerse Team" <no-reply@eduverse.com>',
+        to: toEmail,
+        subject: `⚠️ Cần xem xét: Khóa học của bạn bị từ chối: "${courseTitle}"`,
+        html: `
+            <div style="font-family: Arial, sans-serif; color: #333;">
+                <h2>⚠️ Thông báo về khóa học "${courseTitle}"</h2>
+                <p>Xin chào <strong>${instructorName}</strong>,</p>
+                <p>Chúng tôi rất tiếc phải thông báo rằng khóa học "<strong>${courseTitle}</strong>" của bạn đã bị <strong>từ chối</strong> sau quá trình xem xét.</p>
+                <p><strong>Lý do từ chối:</strong></p>
+                <div style="border-left: 4px solid #f44336; padding-left: 15px; background-color: #f9f9f9; margin: 15px 0;">
+                    <p style="font-style: italic;">${reasonReject}</p>
+                </div>
+                <p>Vui lòng xem xét các góp ý trên, cập nhật lại nội dung khóa học và gửi lại để chúng tôi xem xét.</p>
+                <br>
+                <p>Trân trọng,<br>Đội ngũ EduVerse</p>
+            </div>
+        `,
+    };
+    return transporter.sendMail(mailOptions);
+};
+
+module.exports = { generateOtp, hashOtp, compareOtp, sendOtpEmail, sendInviteInstructorEmail, sendCourseApprovalEmail, sendCourseRejectionEmail };
