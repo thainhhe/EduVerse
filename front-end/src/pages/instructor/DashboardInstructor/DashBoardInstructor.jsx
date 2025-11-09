@@ -1,7 +1,9 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { getInstructorDashboard } from "@/services/courseService";
 
 const StatCard = ({ title, value, delta, caption }) => (
   <Card className="shadow-sm">
@@ -81,93 +83,144 @@ const MiniPie = ({ slices = [] }) => {
 };
 
 const DashboardInstructor = () => {
-  // MOCK data - replace by API calls
+  const { user } = useAuth() || {};
+  const instructorId = user?._id || user?.id || null;
+
+  const [loading, setLoading] = useState(false);
+  const [overview, setOverview] = useState(null);
+  const [barSeries, setBarSeries] = useState([]);
+  const [pieSlices, setPieSlices] = useState([]);
+  const [activities, setActivities] = useState([]);
+
+  useEffect(() => {
+    if (!instructorId) return;
+    const fetch = async () => {
+      setLoading(true);
+      try {
+        const res = await getInstructorDashboard(instructorId);
+        console.log("res", res)
+        const payload = res?.data;
+        if (!payload) {
+          setLoading(false);
+          return;
+        }
+
+        // Overview
+        setOverview(payload.overview || null);
+
+        // enrollmentTrends -> barSeries (map month number to short label)
+        const monthNames = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ];
+        const trends = (payload.enrollmentTrends || []).map((t) => ({
+          label: monthNames[(t._id || 0) - 1] || `${t._id}`,
+          value: t.total || 0,
+        }));
+        setBarSeries(
+          trends.length
+            ? trends
+            : [
+              { label: "Jan", value: 0 },
+              { label: "Feb", value: 0 },
+              { label: "Mar", value: 0 },
+              { label: "Apr", value: 0 },
+              { label: "May", value: 0 },
+              { label: "Jun", value: 0 },
+            ]
+        );
+
+        // revenueDistribution -> pieSlices
+        const colors = [
+          "#6366F1",
+          "#FB7185",
+          "#34D399",
+          "#F59E0B",
+          "#A78BFA",
+          "#60A5FA",
+        ];
+        const dist = (payload.revenueDistribution || []).map((d, i) => ({
+          label: d.category || "Unknown",
+          value: d.revenue || 0,
+          color: colors[i % colors.length],
+        }));
+        setPieSlices(
+          dist.length
+            ? dist
+            : [{ label: "No data", value: 1, color: "#E5E7EB" }]
+        );
+
+        // activities: the backend doesn't return recent activities here; build a simple list from top courses/enrollments if available
+        setActivities([
+          // fallback placeholder; keep original mock for UX while server data not provided
+          {
+            student: "Alice Smith",
+            course: "Advanced React",
+            activity: "Completed Lesson: Hooks",
+            time: "5 minutes ago",
+          },
+          {
+            student: "Bob Johnson",
+            course: "Python for Data Science",
+            activity: "Submitted Assignment: Week 3",
+            time: "1 hour ago",
+          },
+        ]);
+      } catch (err) {
+        console.error("Failed to fetch instructor dashboard:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetch();
+  }, [instructorId]);
+
   const stats = [
     {
       title: "Total Videos Uploaded",
-      value: "1,234",
-      delta: 10,
+      value: overview ? overview.totalVideos : "—",
+      delta: overview ? Number(overview.videoGrowth) || 0 : 0,
       caption: "Across all your courses",
     },
     {
       title: "Students Enrolled",
-      value: "9,876",
-      delta: 15,
+      value: overview ? overview.totalEnrollments : "—",
+      delta: overview ? Number(overview.enrollmentGrowth) || 0 : 0,
       caption: "Across all active courses",
     },
     {
       title: "Total Revenue",
-      value: "$123,456",
-      delta: 20,
+      value: overview
+        ? `${overview.totalRevenue.toLocaleString("vi-VN")} ₫`
+        : "—",
+      delta: overview ? Number(overview.revenueGrowth) || 0 : 0,
       caption: "Total earnings to date",
     },
     {
       title: "Average Course Rating",
-      value: "4.8",
+      value: overview ? overview.avgRating : "—",
       delta: 0,
       caption: "Based on student feedback",
     },
   ];
 
-  const barSeries = [
-    { label: "Jan", value: 120 },
-    { label: "Feb", value: 600 },
-    { label: "Mar", value: 1400 },
-    { label: "Apr", value: 1600 },
-    { label: "May", value: 1800 },
-    { label: "Jun", value: 2200 },
-  ];
-
-  const pieSlices = [
-    { label: "Web Dev", value: 35, color: "#6366F1" },
-    { label: "Data Sci", value: 25, color: "#FB7185" },
-    { label: "Mobile", value: 19, color: "#34D399" },
-    { label: "Graphic", value: 14, color: "#F59E0B" },
-    { label: "Digital", value: 7, color: "#A78BFA" },
-  ];
-
-  const activities = [
-    {
-      student: "Alice Smith",
-      course: "Advanced React",
-      activity: "Completed Lesson: Hooks",
-      time: "5 minutes ago",
-    },
-    {
-      student: "Bob Johnson",
-      course: "Python for Data Science",
-      activity: "Submitted Assignment: Week 3",
-      time: "1 hour ago",
-    },
-    {
-      student: "Charlie Brown",
-      course: "UI/UX Design Fundamentals",
-      activity: "Enrolled in Course",
-      time: "2 hours ago",
-    },
-    {
-      student: "Diana Miller",
-      course: "Modern JavaScript",
-      activity: "Started Quiz: ES6 Features",
-      time: "4 hours ago",
-    },
-    {
-      student: "Eve Davis",
-      course: "Cloud Computing Basics",
-      activity: "Posted Question: AWS S3",
-      time: "1 day ago",
-    },
-    {
-      student: "Frank White",
-      course: "Advanced React",
-      activity: "Completed Lesson: Redux",
-      time: "2 days ago",
-    },
-  ];
-
   const pieLegend = useMemo(
-    () => pieSlices.map((s) => ({ ...s, label: s.label + ` ${s.value}%` })),
-    []
+    () =>
+      pieSlices.map((s) => ({
+        ...s,
+        label: s.label + ` ${Math.round(s.value)} `,
+      })),
+    [pieSlices]
   );
 
   return (

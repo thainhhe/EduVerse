@@ -28,9 +28,10 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
   // Controlled fields
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
+  const [newCategory, setNewCategory] = useState(""); // allow entering new category
   const [level, setLevel] = useState("");
   const [language, setLanguage] = useState("");
-  const [timezone, setTimezone] = useState("");
+  const [price, setPrice] = useState(""); // replaced timezone with price
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [description, setDescription] = useState("");
@@ -67,9 +68,12 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
     );
     // map backend fields to selects if they exist
     setCategory(courseData.category?._id ?? courseData.category ?? "");
+    // if backend stored price
+    setPrice(courseData.price ?? "");
     setLevel(courseData.level ?? "");
     setLanguage(courseData.language ?? "");
-    setTimezone(courseData.timezone ?? "");
+    // clear newCategory by default (if course already had an id-based category)
+    setNewCategory("");
     // NOTE: file/thumbnail remains client-side until upload implemented
   }, [courseData]);
 
@@ -97,58 +101,114 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
   };
 
   const handleNext = async () => {
-    // Build payload according to backend Course schema.
-    const payload = {
-      title: title.trim(),
-      description: description.trim(),
-      main_instructor: user?._id || user?.id || null,
-      category: category || undefined,
-      level: level || undefined,
-      language: language || undefined,
-      timezone: timezone || undefined,
-      startDate: startDate || undefined,
-      endDate: endDate || undefined,
-      instructor_bio: bio,
-    };
-
-    if (!payload.main_instructor) {
-      alert(
-        "Cannot create/update course: missing authenticated instructor id."
-      );
+    // basic client-side validation
+    if (!title.trim()) {
+      alert("Title is required.");
+      return;
+    }
+    if (!newCategory && !category) {
+      alert("Please select or enter a category.");
       return;
     }
 
     try {
       setSaving(true);
 
-      // Prepare FormData so backend upload middleware (upload.single('thumbnail')) works
-      const formData = new FormData();
-      Object.entries(payload).forEach(([k, v]) => {
-        if (v !== undefined && v !== null) formData.append(k, v);
-      });
-      if (file) {
-        formData.append("thumbnail", file);
+      // If user entered a new category, create it first and use the returned id
+      let categoryId = category;
+      if (newCategory && newCategory.trim()) {
+        try {
+          // Try sending both possible field names (name and title)
+          // send required fields expected by backend validator:
+          // both name and description are required by createCategorySchema
+          const catPayload = {
+            name: newCategory.trim(),
+            // use the new category text as a minimal description (or replace with a proper input)
+            description: newCategory.trim(),
+          };
+          const created = await categoryService.create(catPayload);
+          // categoryService.normalizeOne returns object with id property
+          categoryId = created?.id ?? created?._id ?? created;
+        } catch (catErr) {
+          console.error("Failed to create category:", catErr);
+          const srv = catErr?.response?.data;
+          console.error("category create response body:", srv);
+          // If message is array (validator), show joined messages
+          const msg =
+            Array.isArray(srv?.message) && srv.message.length
+              ? srv.message.join("; ")
+              : srv?.message || "See console for details";
+          alert("Failed to create category: " + msg);
+          setSaving(false);
+          return;
+        }
+      }
+
+      const payload = {
+        title: title.trim(),
+        description: description.trim(),
+        main_instructor: user?._id || user?.id || null,
+        category: categoryId,
+        level: level || undefined,
+        language: language || undefined,
+        price: price !== "" ? Number(price) : undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        instructor_bio: bio,
+      };
+
+      if (!payload.main_instructor) {
+        alert(
+          "Cannot create/update course: missing authenticated instructor id."
+        );
+        setSaving(false);
+        return;
       }
 
       let res;
-      if (isUpdate && courseId) {
-        // let axios set Content-Type (with boundary) automatically
-        res = await api.put(`/courses/update/${courseId}`, formData);
-        const data = res?.data ?? res;
-        const id = data?._id || courseId;
-        navigate("/create-course/modules", { state: { id } });
+      // If there's a file, use FormData (multipart); otherwise send JSON
+      if (file) {
+        const formData = new FormData();
+        Object.entries(payload).forEach(([k, v]) => {
+          if (v !== undefined && v !== null) formData.append(k, v);
+        });
+        formData.append("thumbnail", file);
+
+        if (isUpdate && courseId) {
+          res = await api.put(`/courses/update/${courseId}`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+        } else {
+          res = await api.post("/courses/create", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+        }
       } else {
-        // let axios set Content-Type (with boundary) automatically
-        res = await api.post("/courses/create", formData);
-        const data = res?.data ?? res;
-        const id = data?._id || data?.id;
-        navigate("/create-course/modules", { state: { id } });
+        // send JSON
+        if (isUpdate && courseId) {
+          res = await api.put(`/courses/update/${courseId}`, payload);
+        } else {
+          res = await api.post("/courses/create", payload);
+        }
       }
+
+      const data = res?.data ?? res;
+      const id = data?._id ?? data?.id ?? courseId;
+      navigate("/create-course/modules", { state: { id } });
     } catch (err) {
-      // Log server validation error body
       console.error("Failed to save course:", err);
       console.error("server response:", err.response?.data);
-      alert("Save failed. Check console for details.");
+      // show field errors if any
+      const server = err?.response?.data;
+      if (server?.errors && Array.isArray(server.errors)) {
+        console.table(server.errors);
+        alert(
+          "Save failed: " +
+            (server.message || "Validation error. Check console.")
+        );
+      } else {
+        alert("Save failed. Check console for details.");
+      }
     } finally {
       setSaving(false);
     }
@@ -278,6 +338,22 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                   )}
                 </SelectContent>
               </Select>
+
+              <div className="mt-2">
+                <Label htmlFor="newCategory" className="mb-2 text-sm">
+                  Or enter new category
+                </Label>
+                <Input
+                  id="newCategory"
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  placeholder="Enter new category name"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  If you enter a new category, it will be used instead of the
+                  selected one.
+                </p>
+              </div>
             </div>
 
             <div>
@@ -314,19 +390,17 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
 
             <div className="col-span-2 grid grid-cols-2 gap-6">
               <div>
-                <Label htmlFor="timezone" className="mb-2">
-                  Timezone
+                <Label htmlFor="price" className="mb-2">
+                  Price (USD)
                 </Label>
-                <Select value={timezone} onValueChange={(v) => setTimezone(v)}>
-                  <SelectTrigger id="timezone">
-                    <SelectValue placeholder="Select timezone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="utc7">UTC +07:00</SelectItem>
-                    <SelectItem value="utc0">UTC +00:00</SelectItem>
-                    <SelectItem value="utc8">UTC +08:00</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                />
               </div>
               <div className="grid grid-cols-2 gap-5">
                 <div>
