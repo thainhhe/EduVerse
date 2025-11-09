@@ -4,6 +4,9 @@ import api from "./api"; // Import tệp api.js
 // Dựa trên các route ở back-end
 const roomService = {
   // GET /room-meeting/:courseId
+  getAllRooms: () => {
+    return api.get(`/room-meeting`);
+  },
   getRoomsByCourse: (courseId) => {
     return api.get(`/room-meeting/${courseId}`);
   },

@@ -48,6 +48,7 @@ import InstructorCourseDetail from "@/pages/instructor/CourseDetail";
 import ChatbotManagementPage from "./pages/admin/ChatbotManagement/ChatbotManagementPage";
 import CommentManagementPage from "./pages/admin/CommentManagement/CommentManagementPage";
 import PaymentFailPage from "./pages/common/checkout/PaymentFailPage";
+import RoomList from "./pages/learner/RoomList/RoomList";
 
 function App() {
   const { loading } = useAuth();
@@ -69,6 +70,8 @@ function App() {
         <Route path="login" element={<Login />} />
         <Route path="register-instructor" element={<Register />} />
         <Route path="courses" element={<Courses />} />
+        <Route path="/course/rooms" element={<RoomList />} />
+
         <Route path="courses/:id" element={<CourseDetail />} />
         {/* Instructor public detail (management view for instructor) */}
         <Route

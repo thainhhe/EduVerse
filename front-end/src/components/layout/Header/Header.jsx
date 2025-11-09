@@ -19,7 +19,7 @@ const Header = () => {
     { to: "/", text: "Home" },
     { to: "/courses", text: "Courses" },
     { to: "/instructors", text: "Instructors" },
-    { to: "/blogs", text: "Blog/News" },
+    { to: "/course/rooms", text: "Ongoing Classroom " },
     { to: "/contacts", text: "Contact" },
   ];
 
@@ -71,11 +71,10 @@ const Header = () => {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`font-medium transition-colors ${
-                    location.pathname === link.to
-                      ? "text-indigo-500"
-                      : "text-gray-900 hover:text-indigo-500"
-                  }`}
+                  className={`font-medium transition-colors ${location.pathname === link.to
+                    ? "text-indigo-500"
+                    : "text-gray-900 hover:text-indigo-500"
+                    }`}
                 >
                   {link.text}
                 </Link>
@@ -216,11 +215,10 @@ const Header = () => {
                 key={link.to}
                 to={link.to}
                 onClick={() => setIsMenuOpen(false)}
-                className={`px-3 py-2 rounded-md font-medium ${
-                  location.pathname === link.to
-                    ? "bg-indigo-50 text-indigo-600"
-                    : "text-gray-900 hover:bg-gray-50"
-                }`}
+                className={`px-3 py-2 rounded-md font-medium ${location.pathname === link.to
+                  ? "bg-indigo-50 text-indigo-600"
+                  : "text-gray-900 hover:bg-gray-50"
+                  }`}
               >
                 {link.text}
               </Link>

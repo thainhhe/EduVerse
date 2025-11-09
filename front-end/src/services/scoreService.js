@@ -20,4 +20,14 @@ export const scoreService = {
       return { success: false, message: "Lỗi khi get quiz" };
     }
   },
+
+  async submitScore(body) {
+    try {
+      const res = await api.post("score/submit", body);
+      return res;
+    } catch (error) {
+      console.error("❌ Lỗi khi submit quiz:", error);
+      return { success: false, message: "Lỗi khi nộp bài quiz" };
+    }
+  },
 };

@@ -1,5 +1,6 @@
 import { ToastHelper } from "@/helper/ToastHelper";
 import { useAuth } from "@/hooks/useAuth";
+import { getQuizById } from "@/services/courseService";
 import { scoreService } from "@/services/scoreService";
 import { Clock, ListChecks, Percent, Repeat } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -16,19 +17,29 @@ const QuizContent = ({ quizId, onQuizSubmitted }) => {
     // ✅ Lấy quiz theo quizId
     useEffect(() => {
         if (!quizId) return;
-        fetch(`http://localhost:9999/api/v1/quiz/${quizId}`)
-            .then((res) => res.json())
-            .then((data) => {
-                setQuiz(data.data);
-                console.log(data)
-                const init = {};
-                data.data.questions.forEach((q, idx) => {
-                    init[idx] = q.questionType === "checkbox" ? [] : "";
-                });
-                setAnswers(init);
-            })
-            .catch((err) => console.error(" Error fetching quiz:", err));
+
+        const fetchQuiz = async () => {
+            try {
+                const result = await getQuizById(quizId);
+                console.log("result", result);
+
+                if (result && result.data) {
+                    setQuiz(result.data);
+                    console.log("result.data", result.data);
+
+                    const init = {};
+                    result.data.questions.forEach((q, idx) => {
+                        init[idx] = q.questionType === "checkbox" ? [] : "";
+                    });
+                    setAnswers(init);
+                }
+            } catch (error) {
+                console.error("Error fetching quiz:", error);
+            }
+        };
+        fetchQuiz();
     }, [quizId]);
+
     const handleChange = (index, value, isCheckbox) => {
         setAnswers((prev) => {
             if (isCheckbox) {
@@ -70,7 +81,7 @@ const QuizContent = ({ quizId, onQuizSubmitted }) => {
         const s = sec % 60;
         return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
     }
-    console.log("formatTime", formatTime)
+    // console.log("formatTime", formatTime)
     if (!quiz) return <p className="p-8 text-center">Loading quiz...</p>;
 
 
@@ -93,16 +104,7 @@ const QuizContent = ({ quizId, onQuizSubmitted }) => {
         };
 
         try {
-            const res = await fetch("http://localhost:9999/api/v1/score/submit", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("token")}`,
-                },
-                body: JSON.stringify(body),
-            });
-
-            const result = await res.json();
+            const result = await scoreService.submitScore(body);
             if (result.success) {
                 if (result.message) {
                     const message = auto
