@@ -30,6 +30,7 @@ import {
   getQuizzesByModule,
   getQuizzesByLesson,
 } from "@/services/courseService";
+import LessonMaterialModal from "./LessonMaterialModal";
 
 const ModulesPage = () => {
   const [expandedModules, setExpandedModules] = useState([]);
@@ -54,6 +55,9 @@ const ModulesPage = () => {
   // NEW: menu state for compact "⋯" menus
   const [openModuleMenuId, setOpenModuleMenuId] = useState(null);
   const [openLessonMenuId, setOpenLessonMenuId] = useState(null);
+  const [selectedLessonId, setSelectedLessonId] = useState(null);
+
+  const [openMaterialModal, setOpenMaterialModal] = useState(null);
 
   const location = useLocation();
   const params = useParams();
@@ -368,7 +372,15 @@ const ModulesPage = () => {
                           <div key={lesson.id}>
                             <div className="flex items-center gap-4 p-4 hover:bg-muted/50 pl-10">
                               <GripVertical className="h-5 w-5 text-muted-foreground" />
-                              <button className="text-sm font-medium text-primary hover:underline">
+                              <button
+                                className="text-sm font-medium text-primary hover:underline"
+                                onClick={() => {
+                                  setOpenMaterialModal(true);
+                                  setOpenLessonMenuId(null);
+                                  setOpenModuleMenuId(null)
+                                  setSelectedLessonId(lesson.id);
+                                }}
+                              >
                                 Lesson {index + 1}
                               </button>
 
@@ -452,6 +464,7 @@ const ModulesPage = () => {
                                       onClick={() => {
                                         setIsVideoModalOpen(true);
                                         setOpenLessonMenuId(null);
+                                        setSelectedLessonId(lesson.id);
                                       }}
                                     >
                                       <span className="mr-2">🎬</span> Add Video
@@ -462,6 +475,8 @@ const ModulesPage = () => {
                                       onClick={() => {
                                         setIsDocumentModalOpen(true);
                                         setOpenLessonMenuId(null);
+                                        setSelectedLessonId(lesson.id);
+
                                       }}
                                     >
                                       <span className="mr-2">📄</span> Add
@@ -569,12 +584,20 @@ const ModulesPage = () => {
         />
         <UploadVideoModal
           open={isVideoModalOpen}
+          lessonId={selectedLessonId}
           onOpenChange={setIsVideoModalOpen}
         />
         <UploadDocumentModal
           open={isDocumentModalOpen}
+          lessonId={selectedLessonId}
           onOpenChange={setIsDocumentModalOpen}
         />
+        <LessonMaterialModal
+          open={openMaterialModal}
+          onOpenChange={setOpenMaterialModal}
+          lessonId={selectedLessonId}
+        />
+
       </div>
     </div>
   );
