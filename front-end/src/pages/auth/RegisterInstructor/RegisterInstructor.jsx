@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +10,103 @@ import { Label } from "@/components/ui/label";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Checkbox } from "@/components/ui/checkbox";
 
+const SUBJECT_OPTIONS = [
+  "Marketing",
+  "Programming",
+  "Design",
+  "Business",
+  "Math",
+  "Physics",
+];
+
+const MultiSelectDropdown = ({ value = [], onChange, options = [] }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const onDoc = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
+  const toggle = (opt) => {
+    const exists = Array.isArray(value) && value.includes(opt);
+    const next = exists
+      ? value.filter((v) => v !== opt)
+      : [...(value || []), opt];
+    onChange(next);
+  };
+
+  const clearAll = (e) => {
+    e.stopPropagation();
+    onChange([]);
+  };
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((s) => !s)}
+        className="w-full text-left h-10 rounded-md border border-input bg-gray-50 px-3 py-2 text-sm flex items-center justify-between"
+      >
+        <span className="truncate">
+          {Array.isArray(value) && value.length > 0
+            ? value.join(", ")
+            : "Select subject(s)"}
+        </span>
+        <div className="flex items-center gap-2">
+          {Array.isArray(value) && value.length > 0 && (
+            <button
+              type="button"
+              onClick={clearAll}
+              className="text-xs text-gray-500 mr-2"
+            >
+              Clear
+            </button>
+          )}
+          <svg
+            className="w-4 h-4 text-gray-600"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </div>
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-1 w-full rounded-md border bg-white shadow-lg max-h-56 overflow-auto">
+          <div className="p-2">
+            {options.map((opt) => {
+              const checked = Array.isArray(value) && value.includes(opt);
+              return (
+                <label
+                  key={opt}
+                  className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-50 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggle(opt)}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">{opt}</span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const RegisterInstructor = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -19,32 +116,51 @@ const RegisterInstructor = () => {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(registerInstructorSchema),
+    mode: "onBlur", // validate on blur and submit
     defaultValues: {
-      subjects: [],
+      subjects: [], // keep internal value as array
     },
   });
 
+  // sync watched subjects for MultiSelectDropdown
+  const watchedSubjects = watch("subjects") || [];
+
+  // ensure form field exists
+  useEffect(() => {
+    setValue("subjects", Array.isArray(watchedSubjects) ? watchedSubjects : []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const onSubmit = async (data) => {
-    // debug: build payload and log it before sending
+    // normalize subjects to array
+    const subjectsArray = Array.isArray(data.subjects)
+      ? data.subjects
+      : data.subjects
+      ? [data.subjects]
+      : [];
+
     const payload = {
+      // keep existing keys (some backends expect these)
       username: data.fullName,
       email: data.email,
       password: data.password,
       role: "instructor",
-      subjects: data.subjects,
       jobTitle: data.jobTitle,
+      subjects: subjectsArray,
+
+      // also include snake_case fields that your backend & DB show
+      job_title: data.jobTitle || null,
+      subject_instructor: subjectsArray, // send array; if backend expects string, change to subjectsArray.join(',')
     };
-    console.log("Register payload:", payload);
 
     const result = await registerUser(payload);
-    console.log("Register response:", result);
-
-    // short delay so you can inspect Network/Console before redirect (remove in production)
-    if (result.success) {
-      setTimeout(() => navigate("/login"), 800);
+    if (result?.success) {
+      setTimeout(() => navigate("/login"), 600);
     }
   };
 
@@ -68,13 +184,19 @@ const RegisterInstructor = () => {
             globe.
           </p>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            noValidate
+            className="space-y-4"
+          >
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
               <Input
                 id="fullName"
                 placeholder="Full Name"
-                className="bg-gray-50"
+                className={`bg-gray-50 ${
+                  errors.fullName ? "border-red-500 ring-1 ring-red-500" : ""
+                }`}
                 {...register("fullName")}
               />
               {errors.fullName && (
@@ -90,7 +212,9 @@ const RegisterInstructor = () => {
                 id="email"
                 type="email"
                 placeholder="Email Address"
-                className="bg-gray-50"
+                className={`bg-gray-50 ${
+                  errors.email ? "border-red-500 ring-1 ring-red-500" : ""
+                }`}
                 {...register("email")}
               />
               {errors.email && (
@@ -155,18 +279,16 @@ const RegisterInstructor = () => {
             <div className="space-y-2">
               <Label htmlFor="subjects">Subject(s) You Want to Teach</Label>
 
-              {/* Multi-select for subjects (native <select multiple>) */}
-              <select
-                id="subjects"
-                multiple
-                {...register("subjects")}
-                className="h-32 w-full rounded-md border border-input bg-gray-50 px-3 py-2 text-sm"
-              >
-                <option value="Marketing">Marketing</option>
-                <option value="Programming">Programming</option>
-                <option value="Design">Design</option>
-                <option value="Business">Business</option>
-              </select>
+              <MultiSelectDropdown
+                options={SUBJECT_OPTIONS}
+                value={watchedSubjects}
+                onChange={(next) =>
+                  setValue("subjects", next, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  })
+                }
+              />
 
               {errors.subjects && (
                 <p className="text-sm text-red-500 mt-1">

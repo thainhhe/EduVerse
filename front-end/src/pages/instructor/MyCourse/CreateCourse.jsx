@@ -9,11 +9,14 @@ import { CourseDraftProvider } from "@/context/CourseDraftContext"; // { added }
 const CreateCourse = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const courseId = location.state?.id || null;
+
+  // đọc sessionCourseId trước, rồi ưu tiên location.state nếu có
   const sessionCourseId =
     typeof window !== "undefined"
       ? sessionStorage.getItem("currentCourseId")
       : null;
+
+  const courseId = location.state?.id || sessionCourseId || null;
 
   const [courseData, setCourseData] = useState(null);
   const [loading, setLoading] = useState(false);

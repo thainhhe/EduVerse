@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { FaSignInAlt, FaUserPlus, FaSearch } from "react-icons/fa";
@@ -9,6 +9,7 @@ import { Menu, X } from "lucide-react";
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showSignupMenu, setShowSignupMenu] = useState(false);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
@@ -40,6 +41,7 @@ const Header = () => {
   const onLogout = async () => {
     await logout();
     setShowAvatarMenu(false);
+    navigate("/login");
   };
 
   const initials = (name) => {
@@ -291,9 +293,10 @@ const Header = () => {
                   )}
 
                   <button
-                    onClick={() => {
-                      logout();
+                    onClick={async () => {
+                      await logout();
                       setIsMenuOpen(false);
+                      navigate("/login");
                     }}
                     className="w-full text-center px-4 py-2 rounded-md bg-red-50 text-red-600 hover:bg-red-100"
                   >

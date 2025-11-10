@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { learnerRegisterSchema } from "@/lib/validations";
+import { registerLearnerSchema } from "@/lib/validations/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ const RegisterLearner = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({
-    resolver: zodResolver(learnerRegisterSchema),
+    resolver: zodResolver(registerLearnerSchema),
   });
 
   const onSubmit = async (data) => {
@@ -55,7 +55,11 @@ const RegisterLearner = () => {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            noValidate
+            className="space-y-4"
+          >
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
               <Input
