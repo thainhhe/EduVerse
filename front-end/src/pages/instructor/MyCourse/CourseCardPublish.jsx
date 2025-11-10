@@ -15,7 +15,10 @@ const CourseCardPublish = ({ course, role }) => {
       console.warn("Missing course id when trying to edit", course);
       return;
     }
-    navigate("/create-course", { state: { id } });
+    // ensure fallback for other pages
+    sessionStorage.setItem("currentCourseId", id);
+    // navigate to Basics (create-course) and mark as update
+    navigate("/create-course", { state: { id, isUpdate: true } });
   };
 
   // openModules used by inner buttons (stops propagation)
@@ -43,12 +46,13 @@ const CourseCardPublish = ({ course, role }) => {
     navigate("/create-course/modules", { state: { id, openQuiz: true } });
   };
 
-  // Card click -> open create-module / module manager (no stopPropagation)
+  // Card click -> open create-course basics (instead of modules) if you prefer:
   const openModuleManager = () => {
     const id = course._id ?? course.id ?? course.idStr;
     if (!id) return;
     sessionStorage.setItem("currentCourseId", id);
-    navigate("/create-course/modules", { state: { id } });
+    // open Basics edit view
+    navigate("/create-course", { state: { id, isUpdate: true } });
   };
 
   return (

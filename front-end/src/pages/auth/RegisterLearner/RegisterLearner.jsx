@@ -56,7 +56,7 @@ const RegisterLearner = () => {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
               <Input
                 id="fullName"
@@ -70,7 +70,7 @@ const RegisterLearner = () => {
               )}
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
               <Input
                 id="email"
@@ -87,7 +87,7 @@ const RegisterLearner = () => {
 
             {/* Responsive grid for passwords */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
@@ -102,7 +102,7 @@ const RegisterLearner = () => {
                 )}
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
                 <Input
                   id="confirmPassword"
@@ -146,7 +146,7 @@ const RegisterLearner = () => {
 
             <Button
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700"
+              className="w-full bg-[#4F39F6] text-white hover:bg-[#3e2adf] focus:ring-0"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Signing up..." : "Sign up"}

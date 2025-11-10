@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,9 +16,11 @@ import { Textarea } from "@/components/ui/textarea";
 import categoryService from "@/services/categoryService";
 import { useAuth } from "@/hooks/useAuth";
 import api from "@/services/api";
+import { useCourseDraft } from "@/context/CourseDraftContext";
 
 const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth() || {};
   const [file, setFile] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -28,20 +30,23 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
   // Controlled fields
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
-  const [newCategory, setNewCategory] = useState(""); // allow entering new category
-  const [level, setLevel] = useState("");
-  const [language, setLanguage] = useState("");
-  const [price, setPrice] = useState(""); // replaced timezone with price
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [newCategory, setNewCategory] = useState("");
+  const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [bio, setBio] = useState("");
+
+  // Thumbnail states
+  const [existingThumbnailUrl, setExistingThumbnailUrl] = useState(null); // url from backend
+  const [thumbnailPreview, setThumbnailPreview] = useState(null);
+  const [removeThumbnail, setRemoveThumbnail] = useState(false);
+
+  const { draft, update: updateDraft, clear: clearDraft } = useCourseDraft();
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const list = await categoryService.getAll();
-        setCategories(list); // list already normalized by service
+        setCategories(list);
       } catch (err) {
         console.error("Failed to load categories:", err);
         setCategories([]);
@@ -50,32 +55,73 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
     fetchCategories();
   }, []);
 
+  // populate from courseData when editing existing course
   useEffect(() => {
     if (!courseData) return;
-    // populate controlled fields from courseData
     setTitle(courseData.title ?? "");
     setDescription(courseData.description ?? "");
     setBio(courseData.instructor_bio ?? courseData.bio ?? "");
-    setStartDate(
-      courseData.startDate
-        ? new Date(courseData.startDate).toISOString().slice(0, 10)
-        : ""
-    );
-    setEndDate(
-      courseData.endDate
-        ? new Date(courseData.endDate).toISOString().slice(0, 10)
-        : ""
-    );
-    // map backend fields to selects if they exist
     setCategory(courseData.category?._id ?? courseData.category ?? "");
-    // if backend stored price
     setPrice(courseData.price ?? "");
-    setLevel(courseData.level ?? "");
-    setLanguage(courseData.language ?? "");
-    // clear newCategory by default (if course already had an id-based category)
     setNewCategory("");
-    // NOTE: file/thumbnail remains client-side until upload implemented
+    setExistingThumbnailUrl(
+      courseData.thumbnail ?? courseData.image ?? courseData.imageUrl ?? null
+    );
+    setThumbnailPreview(null);
+    setRemoveThumbnail(false);
   }, [courseData]);
+
+  // If there's draft in context and no courseData, apply it
+  useEffect(() => {
+    if (courseData) return;
+    if (!draft) return;
+    setTitle((v) => (v ? v : draft.title ?? ""));
+    setDescription((v) => (v ? v : draft.description ?? ""));
+    setBio((v) => (v ? v : draft.bio ?? ""));
+    setCategory((v) => (v ? v : draft.category ?? ""));
+    setPrice((v) => (v ? v : draft.price ?? ""));
+    setExistingThumbnailUrl((v) => (v ? v : draft.thumbnailUrl ?? null));
+    setRemoveThumbnail(!!draft.removeThumbnail);
+    // note: draft.hasNewFile cannot restore File object; user must re-select if needed
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft, courseData]);
+
+  // sync local state -> draft context (persisted by provider)
+  useEffect(() => {
+    try {
+      updateDraft({
+        title,
+        description,
+        bio,
+        category,
+        price,
+        thumbnailUrl: existingThumbnailUrl,
+        hasNewFile: !!file,
+        removeThumbnail,
+        updatedAt: Date.now(),
+      });
+    } catch (e) {
+      console.warn("Failed to update draft:", e);
+    }
+  }, [
+    title,
+    description,
+    bio,
+    category,
+    price,
+    existingThumbnailUrl,
+    file,
+    removeThumbnail,
+    updateDraft,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (thumbnailPreview) {
+        URL.revokeObjectURL(thumbnailPreview);
+      }
+    };
+  }, [thumbnailPreview]);
 
   const handleBrowse = () => {
     document.getElementById("fileInput")?.click();
@@ -83,25 +129,43 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files?.[0];
-    if (selectedFile) setFile(selectedFile);
+    if (selectedFile) {
+      if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
+      const previewUrl = URL.createObjectURL(selectedFile);
+      setFile(selectedFile);
+      setThumbnailPreview(previewUrl);
+      setRemoveThumbnail(false);
+    }
   };
 
   const handleCancel = () => {
-    setFile(null);
+    if (file) {
+      if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
+      setFile(null);
+      setThumbnailPreview(null);
+    } else {
+      const input = document.getElementById("fileInput");
+      if (input) input.value = "";
+    }
+  };
+
+  const handleRemoveThumbnail = () => {
+    if (thumbnailPreview) {
+      URL.revokeObjectURL(thumbnailPreview);
+      setThumbnailPreview(null);
+      setFile(null);
+    }
+    setExistingThumbnailUrl(null);
+    setRemoveThumbnail(true);
     const input = document.getElementById("fileInput");
     if (input) input.value = "";
   };
 
   const handleUpload = () => {
-    if (!file) {
-      alert("Please select a file first.");
-      return;
-    }
-    console.log("Uploading (placeholder):", file);
+    handleBrowse();
   };
 
   const handleNext = async () => {
-    // basic client-side validation
     if (!title.trim()) {
       alert("Title is required.");
       return;
@@ -114,26 +178,18 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
     try {
       setSaving(true);
 
-      // If user entered a new category, create it first and use the returned id
       let categoryId = category;
       if (newCategory && newCategory.trim()) {
         try {
-          // Try sending both possible field names (name and title)
-          // send required fields expected by backend validator:
-          // both name and description are required by createCategorySchema
           const catPayload = {
             name: newCategory.trim(),
-            // use the new category text as a minimal description (or replace with a proper input)
             description: newCategory.trim(),
           };
           const created = await categoryService.create(catPayload);
-          // categoryService.normalizeOne returns object with id property
           categoryId = created?.id ?? created?._id ?? created;
         } catch (catErr) {
           console.error("Failed to create category:", catErr);
           const srv = catErr?.response?.data;
-          console.error("category create response body:", srv);
-          // If message is array (validator), show joined messages
           const msg =
             Array.isArray(srv?.message) && srv.message.length
               ? srv.message.join("; ")
@@ -149,12 +205,9 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
         description: description.trim(),
         main_instructor: user?._id || user?.id || null,
         category: categoryId,
-        level: level || undefined,
-        language: language || undefined,
         price: price !== "" ? Number(price) : undefined,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
         instructor_bio: bio,
+        ...(removeThumbnail ? { removeThumbnail: true } : {}),
       };
 
       if (!payload.main_instructor) {
@@ -166,7 +219,6 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
       }
 
       let res;
-      // If there's a file, use FormData (multipart); otherwise send JSON
       if (file) {
         const formData = new FormData();
         Object.entries(payload).forEach(([k, v]) => {
@@ -184,7 +236,6 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
           });
         }
       } else {
-        // send JSON
         if (isUpdate && courseId) {
           res = await api.put(`/courses/update/${courseId}`, payload);
         } else {
@@ -194,11 +245,16 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
 
       const data = res?.data ?? res;
       const id = data?._id ?? data?.id ?? courseId;
+
+      // ensure courseId persisted so other pages (Modules) and subsequent mount restore draft
+      if (id) sessionStorage.setItem("currentCourseId", id);
+
+      // clear draft on successful save
+      clearDraft();
       navigate("/create-course/modules", { state: { id } });
     } catch (err) {
       console.error("Failed to save course:", err);
       console.error("server response:", err.response?.data);
-      // show field errors if any
       const server = err?.response?.data;
       if (server?.errors && Array.isArray(server.errors)) {
         console.table(server.errors);
@@ -226,40 +282,48 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
         <CardContent className="mt-10">
           <div className="space-y-3">
             <div className="space-y-3">
-              <div className="font-semibold text-gray-700">Upload video</div>
+              <div className="font-semibold text-gray-700">
+                Upload thumbnail
+              </div>
 
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 hover:border-indigo-500 transition-colors bg-white shadow-sm relative">
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-2 hover:border-indigo-500 transition-colors bg-white shadow-sm relative">
                 <input
                   id="fileInput"
                   type="file"
-                  accept="video/mp4,video/avi,video/mov"
+                  accept="image/png,image/jpeg,image/webp"
                   className="hidden"
                   onChange={handleFileChange}
                 />
 
-                <div className="flex flex-col items-center justify-center text-gray-500 min-h-[250px]">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-10 w-10 mb-2 text-indigo-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                <div className="flex flex-col items-center justify-center text-gray-500 min-h-[250px] overflow-hidden rounded-lg">
+                  {thumbnailPreview || existingThumbnailUrl ? (
+                    <img
+                      src={thumbnailPreview || existingThumbnailUrl}
+                      alt="thumbnail preview"
+                      className="object-cover w-full h-[250px]"
                     />
-                  </svg>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-gray-500 min-h-[250px]">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-10 w-10 mb-2 text-indigo-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M7 7l5 5 5-5"
+                        />
+                      </svg>
 
-                  {!file ? (
-                    <>
                       <p className="text-lg font-semibold text-gray-700 mb-1">
-                        Drop video here
+                        Drop image here
                       </p>
                       <p className="text-sm text-gray-500 mb-2">
-                        Supported format: MP4, AVI, MOV...
+                        Supported format: JPG, PNG, WEBP...
                       </p>
                       <p className="text-sm font-medium text-gray-400">OR</p>
                       <Button
@@ -268,18 +332,9 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                         className="mt-2 text-indigo-600 border-indigo-500 hover:bg-indigo-50"
                         onClick={handleBrowse}
                       >
-                        Browse files
+                        Browse images
                       </Button>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-lg font-semibold text-gray-700 mb-2">
-                        Selected file:
-                      </p>
-                      <p className="text-sm text-indigo-600 font-medium">
-                        {file.name}
-                      </p>
-                    </>
+                    </div>
                   )}
                 </div>
 
@@ -291,11 +346,22 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                   >
                     Cancel
                   </Button>
+
+                  {thumbnailPreview || existingThumbnailUrl ? (
+                    <Button
+                      variant="ghost"
+                      className="text-red-600 border-red-200"
+                      onClick={handleRemoveThumbnail}
+                    >
+                      Remove
+                    </Button>
+                  ) : null}
+
                   <Button
                     className="bg-indigo-600 hover:bg-indigo-700 text-white"
                     onClick={handleUpload}
                   >
-                    Upload
+                    Select
                   </Button>
                 </div>
               </div>
@@ -356,38 +422,6 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="level" className="mb-2">
-                Course Level
-              </Label>
-              <Select value={level} onValueChange={(v) => setLevel(v)}>
-                <SelectTrigger id="level">
-                  <SelectValue placeholder="Select level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="beginner">Beginner</SelectItem>
-                  <SelectItem value="intermediate">Intermediate</SelectItem>
-                  <SelectItem value="advanced">Advanced</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="language" className="mb-2">
-                Language
-              </Label>
-              <Select value={language} onValueChange={(v) => setLanguage(v)}>
-                <SelectTrigger id="language">
-                  <SelectValue placeholder="Select language" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="english">English</SelectItem>
-                  <SelectItem value="vietnamese">Vietnamese</SelectItem>
-                  <SelectItem value="spanish">Spanish</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             <div className="col-span-2 grid grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="price" className="mb-2">
@@ -401,36 +435,6 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                 />
-              </div>
-              <div className="grid grid-cols-2 gap-5">
-                <div>
-                  <Label htmlFor="startDate" className="mb-2">
-                    Start Date
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="startDate"
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="pr-10"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="endDate" className="mb-2">
-                    End Date
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="endDate"
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="pr-10"
-                    />
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -463,11 +467,8 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
 
           <div className="space-y-3 mt-5">
             {[
-              "Allow personalized learning paths for students based on the student's assessments",
-              "All assignments must be submitted by the end date for a certificate",
               "Allow students attach files to discussions",
               "Allow students create discussions topics",
-              "Allow students edit or delete their own discussion replies",
               "Allow students organize their own groups",
               "Hide totals in students grades summary",
             ].map((text, i) => (

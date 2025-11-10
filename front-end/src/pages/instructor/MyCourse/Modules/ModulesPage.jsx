@@ -61,10 +61,39 @@ const ModulesPage = () => {
 
   const location = useLocation();
   const params = useParams();
-  // prefer state.id (when navigated with state), fallback to URL param :id
-  const courseIdFromState = location?.state?.id ?? params?.id ?? null;
 
-  // if opened from course card with openQuiz flag, set context and open modal
+  const getCourseIdFromQuery = () => {
+    try {
+      const qp = new URLSearchParams(location.search);
+      return qp.get("courseId");
+    } catch {
+      return null;
+    }
+  };
+
+  const storageCourseId =
+    typeof window !== "undefined"
+      ? sessionStorage.getItem("currentCourseId")
+      : null;
+
+  const courseIdFromState =
+    location?.state?.id ??
+    params?.id ??
+    getCourseIdFromQuery() ??
+    storageCourseId ??
+    null;
+
+  // ensure sessionCourseId persisted for other pages / on back navigation
+  useEffect(() => {
+    if (courseIdFromState) {
+      try {
+        sessionStorage.setItem("currentCourseId", courseIdFromState);
+      } catch (e) {
+        // ignore storage errors
+      }
+    }
+  }, [courseIdFromState]);
+
   useEffect(() => {
     if (!courseIdFromState) return;
     setCurrentQuizContext((prev) => ({ ...prev, courseId: courseIdFromState }));
@@ -73,10 +102,8 @@ const ModulesPage = () => {
     }
   }, [courseIdFromState, location?.state?.openQuiz]);
 
-  // Close menus when clicking outside
   useEffect(() => {
     const onDocClick = (e) => {
-      // if click outside any menu, close
       setOpenModuleMenuId((prev) => {
         if (!prev) return prev;
         const el = document.getElementById(`module-menu-${prev}`);
@@ -168,15 +195,15 @@ const ModulesPage = () => {
     try {
       const res = await getModulesInCourse(cid);
       const items = res?.data?.data ?? res?.data ?? [];
-      console.log("items", items)
+      console.log("items", items);
       // normalize to { id, name/title, lessons }
       const normalized = Array.isArray(items)
         ? items.map((m) => ({
-          id: m.id ?? m._id ?? m._id?.toString?.(),
-          name: m.title ?? m.name ?? "Untitled",
-          lessons: m.lessons ?? [],
-          ...m,
-        }))
+            id: m.id ?? m._id ?? m._id?.toString?.(),
+            name: m.title ?? m.name ?? "Untitled",
+            lessons: m.lessons ?? [],
+            ...m,
+          }))
         : [];
       setModules(normalized);
       // ngay sau khi có modules, lấy counts
@@ -377,7 +404,7 @@ const ModulesPage = () => {
                                 onClick={() => {
                                   setOpenMaterialModal(true);
                                   setOpenLessonMenuId(null);
-                                  setOpenModuleMenuId(null)
+                                  setOpenModuleMenuId(null);
                                   setSelectedLessonId(lesson.id);
                                 }}
                               >
@@ -476,7 +503,6 @@ const ModulesPage = () => {
                                         setIsDocumentModalOpen(true);
                                         setOpenLessonMenuId(null);
                                         setSelectedLessonId(lesson.id);
-
                                       }}
                                     >
                                       <span className="mr-2">📄</span> Add
@@ -597,7 +623,6 @@ const ModulesPage = () => {
           onOpenChange={setOpenMaterialModal}
           lessonId={selectedLessonId}
         />
-
       </div>
     </div>
   );

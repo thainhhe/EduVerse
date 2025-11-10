@@ -60,7 +60,7 @@ const RegisterInstructor = () => {
         </div>
 
         <div className="bg-white p-6 sm:p-8 lg:p-12 rounded-2xl shadow-xl">
-          <h2 className="text-2xl sm:text-3xl font-bold text-primary text-center mb-2">
+          <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 text-center mb-2">
             Create Your Instructor Account
           </h2>
           <p className="text-gray-600 text-center mb-8 text-sm">
@@ -216,7 +216,7 @@ const RegisterInstructor = () => {
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-[#4F39F6] text-white hover:bg-[#3e2adf] focus:ring-0"
               size="lg"
               disabled={isSubmitting}
             >

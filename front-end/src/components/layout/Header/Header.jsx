@@ -71,10 +71,11 @@ const Header = () => {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`font-medium transition-colors ${location.pathname === link.to
-                    ? "text-indigo-500"
-                    : "text-gray-900 hover:text-indigo-500"
-                    }`}
+                  className={`font-medium transition-colors ${
+                    location.pathname === link.to
+                      ? "text-indigo-500"
+                      : "text-gray-900 hover:text-indigo-500"
+                  }`}
                 >
                   {link.text}
                 </Link>
@@ -96,7 +97,7 @@ const Header = () => {
               <>
                 <Button variant="outline" asChild>
                   <Link to="/login">
-                    <FaSignInAlt className="mr-2" /> Login
+                    <FaSignInAlt className="mr-2" /> Sign in
                   </Link>
                 </Button>
 
@@ -116,14 +117,14 @@ const Header = () => {
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         onClick={() => setShowSignupMenu(false)}
                       >
-                        Register as Learner
+                        Sign up as Learner
                       </Link>
                       <Link
                         to="/register-instructor"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         onClick={() => setShowSignupMenu(false)}
                       >
-                        Register as Instructor
+                        Sign up as Instructor
                       </Link>
                     </div>
                   )}
@@ -215,10 +216,11 @@ const Header = () => {
                 key={link.to}
                 to={link.to}
                 onClick={() => setIsMenuOpen(false)}
-                className={`px-3 py-2 rounded-md font-medium ${location.pathname === link.to
-                  ? "bg-indigo-50 text-indigo-600"
-                  : "text-gray-900 hover:bg-gray-50"
-                  }`}
+                className={`px-3 py-2 rounded-md font-medium ${
+                  location.pathname === link.to
+                    ? "bg-indigo-50 text-indigo-600"
+                    : "text-gray-900 hover:bg-gray-50"
+                }`}
               >
                 {link.text}
               </Link>
@@ -228,7 +230,7 @@ const Header = () => {
                 <>
                   <Button variant="outline" asChild>
                     <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                      Login
+                      Sign in
                     </Link>
                   </Button>
 
@@ -238,14 +240,14 @@ const Header = () => {
                       onClick={() => setIsMenuOpen(false)}
                       className="w-full text-center px-4 py-2 rounded-md bg-indigo-500 text-white hover:bg-indigo-600"
                     >
-                      Signup as Learner
+                      Sign up as Learner
                     </Link>
                     <Link
                       to="/register-instructor"
                       onClick={() => setIsMenuOpen(false)}
                       className="w-full text-center mt-2 px-4 py-2 rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50"
                     >
-                      Signup as Instructor
+                      Sign up as Instructor
                     </Link>
                   </div>
                 </>

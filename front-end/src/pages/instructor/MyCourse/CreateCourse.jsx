@@ -4,11 +4,16 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getCourseById } from "@/services/courseService";
+import { CourseDraftProvider } from "@/context/CourseDraftContext"; // { added }
 
 const CreateCourse = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const courseId = location.state?.id || null;
+  const sessionCourseId =
+    typeof window !== "undefined"
+      ? sessionStorage.getItem("currentCourseId")
+      : null;
 
   const [courseData, setCourseData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -61,11 +66,14 @@ const CreateCourse = () => {
         </div>
       </header>
       <main className="mt-5">
-        <Basics
-          courseId={courseId}
-          isUpdate={isUpdateMode}
-          courseData={courseData}
-        />
+        {/* Wrap Basics with provider so useCourseDraft works */}
+        <CourseDraftProvider courseId={sessionCourseId || courseId || "new"}>
+          <Basics
+            courseId={courseId}
+            isUpdate={isUpdateMode}
+            courseData={courseData}
+          />
+        </CourseDraftProvider>
       </main>
     </div>
   );
