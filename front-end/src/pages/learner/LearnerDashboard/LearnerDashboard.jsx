@@ -17,7 +17,7 @@ import { useEnrollment } from "@/context/EnrollmentContext";
 const Dashboard = () => {
   const { user } = useAuth();
   const { enrollments } = useEnrollment();
-  console.log("enrollments", enrollments)
+  console.log("enrollments", enrollments);
   const upcomingDeadlines = [
     { title: "React Project Milestone 2", date: "2024-07-25" },
     { title: "AI Ethics Essay Submission", date: "2024-07-28" },
@@ -26,13 +26,12 @@ const Dashboard = () => {
     { title: "Music Composition Final Project", date: "2024-08-10" },
   ];
 
-
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Welcome Back, {user.name}!
+            Welcome Back, {user.username}!
           </h1>
           <p className="text-gray-600">
             Here's an overview of your progress and upcoming activities.
@@ -51,22 +50,26 @@ const Dashboard = () => {
                 className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col"
               >
                 <img
-                  src={course.image || "/placeholder.svg"}
+                  src={course.thumbnail || "/placeholder.svg"}
                   alt={course.title}
                   className="w-full h-40 object-cover"
                 />
                 <CardContent className="p-6 flex flex-col flex-grow">
                   <div className="flex-grow">
-                    <h3 className="text-lg font-semibold mb-2">{course.courseTitle}</h3>
+                    <h3 className="text-lg font-semibold mb-2">
+                      {course.courseTitle}
+                    </h3>
                     <p className="text-sm text-gray-600 mb-4">
                       {course.instructor}
                     </p>
                     <div className="space-y-2 mb-4 flex-row">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">
-                          Date start: {new Date(course.lastAccessed).toLocaleDateString("vi-VN")}
+                          Date start:{" "}
+                          {new Date(course.lastAccessed).toLocaleDateString(
+                            "vi-VN"
+                          )}
                         </span>
-
                       </div>
                       {/* <Progress value={course.progress} className="h-2" /> */}
                     </div>
@@ -75,9 +78,11 @@ const Dashboard = () => {
                     asChild
                     className="bg-green-600 hover:bg-green-700 text-white"
                   >
-                    <Link to={`/courses/${course.courseId}`}>  Continue Learning</Link>
+                    <Link to={`/courses/${course.courseId}`}>
+                      {" "}
+                      Continue Learning
+                    </Link>
                   </Button>
-
                 </CardContent>
               </Card>
             ))}

@@ -137,25 +137,35 @@ const RegisterInstructor = () => {
   }, []);
 
   const onSubmit = async (data) => {
-    // normalize subjects to array
+    // normalize subjects -> string for backend model
     const subjectsArray = Array.isArray(data.subjects)
       ? data.subjects
       : data.subjects
       ? [data.subjects]
       : [];
 
+    const subjectString = subjectsArray.length ? subjectsArray.join(",") : "";
+
+    // normalize job title to backend enum (lowercase) or null
+    let normalizedJobTitle = data.jobTitle
+      ? String(data.jobTitle).trim().toLowerCase()
+      : null;
+    if (
+      normalizedJobTitle &&
+      !["manager", "professor", "instructor"].includes(normalizedJobTitle)
+    ) {
+      normalizedJobTitle = null;
+    }
+
     const payload = {
-      // keep existing keys (some backends expect these)
       username: data.fullName,
       email: data.email,
       password: data.password,
       role: "instructor",
-      jobTitle: data.jobTitle,
-      subjects: subjectsArray,
 
-      // also include snake_case fields that your backend & DB show
-      job_title: data.jobTitle || null,
-      subject_instructor: subjectsArray, // send array; if backend expects string, change to subjectsArray.join(',')
+      // fields matching backend model
+      job_title: normalizedJobTitle, // string or null
+      subject_instructor: subjectString, // comma-separated string (matches current model type)
     };
 
     const result = await registerUser(payload);

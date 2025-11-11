@@ -25,7 +25,7 @@ courseRouter.post(
   "/create",
   verifyToken,
   checkPermission(["admin", "instructor"], ["manage_course"]),
-  validate_schema(courseValidator.createCourseSchema),
+  // validate_schema(courseValidator.createCourseSchema),
   upload.single("thumbnail"),
   courseController.createCourse
 );

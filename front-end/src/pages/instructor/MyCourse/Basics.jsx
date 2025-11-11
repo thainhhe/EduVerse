@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import categoryService from "@/services/categoryService";
 import { useAuth } from "@/hooks/useAuth";
 import api from "@/services/api";
+import { createCourse } from "@/services/courseService";
 import { useCourseDraft } from "@/context/CourseDraftContext";
 
 const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
@@ -60,7 +61,7 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
     if (!courseData) return;
     setTitle(courseData.title ?? "");
     setDescription(courseData.description ?? "");
-    setBio(courseData.instructor_bio ?? courseData.bio ?? "");
+    // setBio(courseData.instructor_bio ?? courseData.bio ?? "");
     setCategory(courseData.category?._id ?? courseData.category ?? "");
     setPrice(courseData.price ?? "");
     setNewCategory("");
@@ -77,7 +78,7 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
     if (!draft) return;
     setTitle((v) => (v ? v : draft.title ?? ""));
     setDescription((v) => (v ? v : draft.description ?? ""));
-    setBio((v) => (v ? v : draft.bio ?? ""));
+    // setBio((v) => (v ? v : draft.bio ?? ""));
     setCategory((v) => (v ? v : draft.category ?? ""));
     setPrice((v) => (v ? v : draft.price ?? ""));
     setExistingThumbnailUrl((v) => (v ? v : draft.thumbnailUrl ?? null));
@@ -92,7 +93,7 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
       updateDraft({
         title,
         description,
-        bio,
+        // bio,
         category,
         price,
         thumbnailUrl: existingThumbnailUrl,
@@ -106,7 +107,7 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
   }, [
     title,
     description,
-    bio,
+    // bio,
     category,
     price,
     existingThumbnailUrl,
@@ -206,9 +207,10 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
         main_instructor: user?._id || user?.id || null,
         category: categoryId,
         price: price !== "" ? Number(price) : undefined,
-        instructor_bio: bio,
+        // instructor_bio: bio,
         ...(removeThumbnail ? { removeThumbnail: true } : {}),
       };
+      console.log("Saving course with payload:", payload, { file });
 
       if (!payload.main_instructor) {
         alert(

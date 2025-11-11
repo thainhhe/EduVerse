@@ -1,5 +1,3 @@
-
-
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,6 +25,7 @@ const Learning = () => {
           user._id,
           courseId
         );
+        console.log("Fetched course detail enrollment:", data);
 
         if (data) {
           setCourseData(data);
@@ -73,7 +72,8 @@ const Learning = () => {
   }, [courseId, user._id]);
 
   if (loading) return <p className="text-center py-10">Loading...</p>;
-  if (!courseData) return <p className="text-center py-10">Không tìm thấy khóa học</p>;
+  if (!courseData)
+    return <p className="text-center py-10">Không tìm thấy khóa học</p>;
 
   const { courseId: course } = courseData;
   // ✅ Khi chọn quiz
@@ -86,8 +86,8 @@ const Learning = () => {
     if (result.success) setQuizStatus(result.data);
     setCheckingQuiz(false);
   };
-  console.log("quizStatus", quizStatus)
-  console.log("checkingQuiz", checkingQuiz)
+  console.log("quizStatus", quizStatus);
+  console.log("checkingQuiz", checkingQuiz);
   return (
     <div className="flex min-h-screen bg-white">
       {/* Sidebar */}
@@ -116,7 +116,9 @@ const Learning = () => {
                 quiz={quizStatus.quiz}
                 latestScore={quizStatus.latestScore}
                 attempts={quizStatus.attempts}
-                onRetake={() => setQuizStatus({ ...quizStatus, hasCompleted: false })}
+                onRetake={() =>
+                  setQuizStatus({ ...quizStatus, hasCompleted: false })
+                }
                 currentLesson={selectedItem}
               />
             ) : (
@@ -129,7 +131,6 @@ const Learning = () => {
         )}
 
         {checkingQuiz && <p>Đang kiểm tra trạng thái quiz...</p>}
-
       </div>
     </div>
   );
