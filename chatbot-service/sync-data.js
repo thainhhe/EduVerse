@@ -26,15 +26,15 @@ const buildText = (type, doc) => {
     case "module":
       return `Module: ${doc.title || "Untitled"}. Description: ${
         doc.description || ""
-      }. Course: ${doc.course_title || doc.courseId || "N/A"}. Order: ${
-        doc.order ?? "N/A"
-      }.`;
+      }. Course: ${doc.course_title || doc.courseId || "N/A"} (Price: ${
+        doc.course_price ?? "N/A"
+      }). Order: ${doc.order ?? "N/A"}.`;
     case "lesson":
       return `Lesson: ${doc.title || "Untitled"}. Content: ${
         doc.content || ""
       }. Module: ${doc.module_title || doc.moduleId || "N/A"}. Course: ${
         doc.course_title || doc.courseId || "N/A"
-      }. Order: ${doc.order ?? "N/A"}.`;
+      } (Price: ${doc.course_price ?? "N/A"}). Order: ${doc.order ?? "N/A"}.`;
     case "material":
       return `Material: ${doc.title || "Untitled"}. Description: ${
         doc.description || ""
@@ -95,7 +95,6 @@ const syncData = async () => {
     await mongoose.connect(MONGO_URI, {
       serverSelectionTimeoutMS: 30000,
       connectTimeoutMS: 30000,
-      // Removed deprecated options useNewUrlParser/useUnifiedTopology
     });
     console.log("Connected to MongoDB.");
   } catch (e) {
@@ -103,7 +102,6 @@ const syncData = async () => {
     process.exit(1);
   }
 
-  // Minimal model definitions (strict:false) so we can query arbitrary existing collections
   const makeModel = (name) =>
     mongoose.models[name] ||
     mongoose.model(
@@ -122,7 +120,7 @@ const syncData = async () => {
   const Quiz = makeModel("Quiz");
   const Review = makeModel("Review");
   const Enrollment = makeModel("Enrollment");
-  const User = makeModel("User"); // optional, if users collection exists
+  const User = makeModel("User");
 
   const fetchCollection = async (model, filter = {}) => {
     try {
@@ -148,7 +146,8 @@ const syncData = async () => {
     enrollments,
     users,
   ] = await Promise.all([
-    fetchCollection(Course, {}), // you may filter by status if desired
+    // only sync approved / published courses so RAG focuses on public content
+    fetchCollection(Course, { status: "approve" }),
     fetchCollection(Category),
     fetchCollection(Module),
     fetchCollection(Lesson),
@@ -163,7 +162,6 @@ const syncData = async () => {
     `Fetched - courses:${courses.length}, categories:${categories.length}, modules:${modules.length}, lessons:${lessons.length}, materials:${materials.length}, quizzes:${quizzes.length}, reviews:${reviews.length}, enrollments:${enrollments.length}, users:${users.length}`
   );
 
-  // Build lookup maps for denormalization
   const courseMap = new Map(courses.map((c) => [String(c._id), c]));
   const moduleMap = new Map(modules.map((m) => [String(m._id), m]));
   const lessonMap = new Map(lessons.map((l) => [String(l._id), l]));
@@ -174,27 +172,32 @@ const syncData = async () => {
 
   // Courses
   courses.forEach((c) => {
-    const doc = {
-      ...c,
-      main_instructor_name:
-        (c.main_instructor && userMap.get(String(c.main_instructor))?.name) ||
-        undefined,
-    };
+    // debug: always print course id/title/price
+    console.log(
+      `Course ${c._id} "${c.title || "Untitled"}" price:`,
+      c.price === undefined ? "undefined" : c.price === null ? "null" : c.price
+    );
+
     documents.push({
-      pageContent: buildText("course", doc),
+      pageContent: buildText("course", c),
       metadata: {
         id: c._id ? String(c._id) : undefined,
         type: "course",
         title: c.title || "",
+        price: c.price != null ? c.price : null,
       },
     });
 
-    // Composite: course summary with its modules and top lessons
+    // Composite: course summary with description + price + modules
     const relatedModules = modules.filter(
       (m) => m.courseId && String(m.courseId) === String(c._id)
     );
     const moduleTitles = relatedModules.map((m) => m.title || "").slice(0, 10);
-    const composite = `Course Overview: ${c.title || "Untitled"}. Modules: ${
+    const composite = `Course Overview: ${
+      c.title || "Untitled"
+    }. Description: ${c.description || ""}. Price: ${
+      c.price ?? "N/A"
+    }. Status: ${c.status || "N/A"}. Modules: ${
       moduleTitles.length ? moduleTitles.join(", ") : "None"
     }.`;
     documents.push({
@@ -203,6 +206,7 @@ const syncData = async () => {
         id: c._id ? `${String(c._id)}_overview` : undefined,
         type: "course_overview",
         title: c.title || "",
+        price: c.price != null ? c.price : null,
       },
     });
   });
@@ -219,10 +223,14 @@ const syncData = async () => {
     });
   });
 
-  // Modules (denormalize course title)
+  // Modules (denormalize course title + price)
   modules.forEach((m) => {
     const course = m.courseId ? courseMap.get(String(m.courseId)) : null;
-    const doc = { ...m, course_title: course?.title };
+    const doc = {
+      ...m,
+      course_title: course?.title,
+      course_price: course?.price,
+    };
     documents.push({
       pageContent: buildText("module", doc),
       metadata: {
@@ -230,11 +238,12 @@ const syncData = async () => {
         type: "module",
         title: m.title || "",
         courseId: m.courseId ? String(m.courseId) : undefined,
+        course_price: course?.price ?? null,
       },
     });
   });
 
-  // Lessons (denormalize module and course titles)
+  // Lessons (denormalize module and course titles + course price)
   lessons.forEach((l) => {
     const module = l.moduleId ? moduleMap.get(String(l.moduleId)) : null;
     const course =
@@ -247,6 +256,7 @@ const syncData = async () => {
       ...l,
       module_title: module?.title,
       course_title: course?.title,
+      course_price: course?.price,
     };
     documents.push({
       pageContent: buildText("lesson", doc),
@@ -261,14 +271,19 @@ const syncData = async () => {
             : l.courseId
             ? String(l.courseId)
             : undefined,
+        course_price: course?.price ?? null,
       },
     });
   });
 
-  // Materials (denormalize course title if available)
+  // Materials
   materials.forEach((m) => {
     const course = m.courseId ? courseMap.get(String(m.courseId)) : null;
-    const doc = { ...m, course_title: course?.title };
+    const doc = {
+      ...m,
+      course_title: course?.title,
+      course_price: course?.price,
+    };
     documents.push({
       pageContent: buildText("material", doc),
       metadata: {
@@ -276,11 +291,12 @@ const syncData = async () => {
         type: "material",
         title: m.title || "",
         courseId: m.courseId ? String(m.courseId) : undefined,
+        course_price: course?.price ?? null,
       },
     });
   });
 
-  // Quizzes (attach lesson/module/course titles where available)
+  // Quizzes
   quizzes.forEach((q) => {
     const doc = { ...q };
     if (q.lessonId) {
@@ -292,6 +308,7 @@ const syncData = async () => {
         if (mod && mod.courseId) {
           const course = courseMap.get(String(mod.courseId));
           doc.course_title = course?.title;
+          doc.course_price = course?.price;
         }
       }
     } else if (q.moduleId) {
@@ -300,10 +317,12 @@ const syncData = async () => {
       if (mod && mod.courseId) {
         const course = courseMap.get(String(mod.courseId));
         doc.course_title = course?.title;
+        doc.course_price = course?.price;
       }
     } else if (q.courseId) {
       const course = courseMap.get(String(q.courseId));
       doc.course_title = course?.title;
+      doc.course_price = course?.price;
     }
 
     documents.push({
@@ -315,15 +334,21 @@ const syncData = async () => {
         lessonId: q.lessonId ? String(q.lessonId) : undefined,
         moduleId: q.moduleId ? String(q.moduleId) : undefined,
         courseId: q.courseId ? String(q.courseId) : undefined,
+        course_price: doc.course_price ?? null,
       },
     });
   });
 
-  // Reviews (include course title and optional user name)
+  // Reviews
   reviews.forEach((r) => {
     const course = r.courseId ? courseMap.get(String(r.courseId)) : null;
     const user = r.userId ? userMap.get(String(r.userId)) : null;
-    const doc = { ...r, course_title: course?.title, user_name: user?.name };
+    const doc = {
+      ...r,
+      course_title: course?.title,
+      user_name: user?.name,
+      course_price: course?.price,
+    };
     documents.push({
       pageContent: buildText("review", doc),
       metadata: {
@@ -332,15 +357,21 @@ const syncData = async () => {
         courseId: r.courseId ? String(r.courseId) : undefined,
         userId: r.userId ? String(r.userId) : undefined,
         rating: r.rating,
+        course_price: course?.price ?? null,
       },
     });
   });
 
-  // Enrollments (include course title and optional user name)
+  // Enrollments
   enrollments.forEach((en) => {
     const course = en.courseId ? courseMap.get(String(en.courseId)) : null;
     const user = en.userId ? userMap.get(String(en.userId)) : null;
-    const doc = { ...en, course_title: course?.title, user_name: user?.name };
+    const doc = {
+      ...en,
+      course_title: course?.title,
+      user_name: user?.name,
+      course_price: course?.price,
+    };
     documents.push({
       pageContent: buildText("enrollment", doc),
       metadata: {
@@ -348,9 +379,24 @@ const syncData = async () => {
         type: "enrollment",
         courseId: en.courseId ? String(en.courseId) : undefined,
         userId: en.userId ? String(en.userId) : undefined,
+        course_price: course?.price ?? null,
       },
     });
   });
+
+  const allCourseTitlesAndPrices = courses
+    .map((c) => `${c.title || "Untitled"} (Giá: ${c.price ?? "N/A"})`)
+    .join(", ");
+
+  const summaryDoc = {
+    pageContent: `Đây là danh sách tóm tắt tất cả các khóa học hiện có: ${allCourseTitlesAndPrices}. Tổng cộng có ${courses.length} khóa học.`,
+    metadata: {
+      id: "all_courses_summary_list",
+      type: "course_summary_list",
+    },
+  };
+  documents.push(summaryDoc);
+  console.log("Added 1 summary document for all courses.");
 
   if (documents.length === 0) {
     console.log("No documents collected. Exiting.");
@@ -364,10 +410,10 @@ const syncData = async () => {
   try {
     const embeddings = new GoogleGenerativeAIEmbeddings({
       apiKey: GEMINI_API_KEY,
-      model: "text-embedding-004",
+      model: "models/text-embedding-004", // Đảm bảo model giống server.js
     });
 
-    // Parse CHROMA_URL to provide host/port/ssl (avoid deprecated 'path')
+    // Parse CHROMA_URL to provide host/port/ssl
     let chromaClientConfig;
     try {
       const u = new URL(CHROMA_URL);
@@ -380,7 +426,7 @@ const syncData = async () => {
       chromaClientConfig = { host: "localhost", port: 8000, ssl: false };
     }
 
-    // Create low-level client with host/port/ssl
+    // Create low-level client (chỉ dùng để xóa nếu cần)
     const client = new ChromaClient(chromaClientConfig);
 
     // delete existing collection if present
@@ -393,51 +439,42 @@ const syncData = async () => {
       );
     }
 
-    const dummyEmbeddingFunction = {
-      generate: async (texts) => {
-        console.warn(
-          "Dummy embedding function 'generate' called. This should not happen if embeddings are provided."
-        );
-        // Trả về một mảng rỗng cho mỗi văn bản
-        return texts.map(() => []);
-      },
-    };
-
-    const collection = await client.getOrCreateCollection({
-      name: COLLECTION_NAME,
-      metadata: { "hnsw:space": "cosine" }, // Giữ lại metadata từ lần trước
-      embeddingFunction: dummyEmbeddingFunction, // <-- THÊM DÒNG NÀY
+    // ---- SỬ DỤNG LANGCHAIN VECTORSTORE ĐỂ TRÁNH LỖI 422 ----
+    const vectorStore = new Chroma(embeddings, {
+      collectionName: COLLECTION_NAME,
+      client,
     });
-    console.log(`Ensured collection exists: ${COLLECTION_NAME}`);
 
-    // split into batches
-    const BATCH_SIZE = 50; // reduce to avoid rate limits
+    console.log(
+      `Initialized LangChain vector store for collection: ${COLLECTION_NAME}`
+    );
+
+    const BATCH_SIZE = 50;
     for (let i = 0; i < documents.length; i += BATCH_SIZE) {
       const batch = documents.slice(i, i + BATCH_SIZE);
       console.log(
         `Indexing batch ${i / BATCH_SIZE + 1} (${batch.length} docs)...`
       );
 
-      // ---- BẮT ĐẦU: tạo embeddings thủ công và dùng client.add() ----
-      const batchTexts = batch.map((doc) => doc.pageContent);
-      const batchMetadatas = batch.map((doc) => doc.metadata);
+      // Trích xuất ID từ metadata
       const batchIds = batch.map(
         (doc, j) => doc.metadata?.id || `doc_${i + j}`
       );
 
-      // Tạo embeddings cho batch này
-      const batchEmbeddings = await embeddings.embedDocuments(batchTexts);
-
-      // Gọi API cấp thấp của Chroma để thêm dữ liệu (đã cung cấp embeddings)
-      await collection.add({
-        // <--- SỬA DÒNG NÀY
-        // collectionName không cần thiết khi gọi trực tiếp trên collection
-        ids: batchIds,
-        embeddings: batchEmbeddings,
-        metadatas: batchMetadatas,
-        documents: batchTexts,
+      // Tạo một batch "sạch" không chứa 'id' trong metadata vì 'id' được cung cấp riêng
+      const cleanBatch = batch.map((doc) => {
+        const newMeta = { ...doc.metadata };
+        delete newMeta.id;
+        return {
+          pageContent: doc.pageContent,
+          metadata: newMeta,
+        };
       });
-      // ---- KẾT THÚC ----
+
+      // Sử dụng LangChain để tạo embeddings và thêm vào Chroma
+      await vectorStore.addDocuments(cleanBatch, { ids: batchIds });
+
+      console.log(`Batch ${i / BATCH_SIZE + 1} indexed.`);
 
       // small delay between batches
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -446,6 +483,9 @@ const syncData = async () => {
     console.log("Indexing finished.");
   } catch (err) {
     console.error("Chroma / Embeddings error:", err.message || err);
+    if (err.stack) {
+      console.error(err.stack);
+    }
   } finally {
     await mongoose.disconnect();
     console.log("Disconnected MongoDB.");

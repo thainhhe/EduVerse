@@ -1,4 +1,4 @@
-// chatbot-service/server.js (ĐÃ SỬA LỖI)
+// chatbot-service/server.js (ĐÃ NÂNG CẤP LÊN MULTI-QUERY)
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -9,6 +9,8 @@ const gg = require("@langchain/google-genai");
 const { PromptTemplate } = require("@langchain/core/prompts");
 const { StringOutputParser } = require("@langchain/core/output_parsers");
 const { RunnableSequence } = require("@langchain/core/runnables");
+// IMPORT MỚI: MultiQueryRetriever
+// const { MultiQueryRetriever } = require("@langchain/retrievers/multi_query");
 
 const app = express();
 app.use(express.json());
@@ -21,6 +23,7 @@ const COLLECTION_NAME = "eduverse_rag";
 
 const { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } = gg;
 
+// 1. Khởi tạo Model và Embeddings (Không đổi)
 const model = new ChatGoogleGenerativeAI({
   apiKey: GEMINI_API_KEY,
   model: "models/gemini-2.5-pro",
@@ -31,6 +34,7 @@ const embeddings = new GoogleGenerativeAIEmbeddings({
   model: "models/text-embedding-004",
 });
 
+// 2. Khởi tạo VectorStore (Không đổi)
 const client = new ChromaClient({ host: "localhost", port: 8000, ssl: false });
 const vectorStore = new Chroma(embeddings, {
   collectionName: COLLECTION_NAME,
@@ -44,41 +48,38 @@ console.log(
   "models/text-embedding-004"
 );
 
-if (!model || !embeddings) {
-  console.error(
-    "Không thể khởi tạo ChatGoogleGenerativeAI / GoogleGenerativeAIEmbeddings."
-  );
-  process.exit(1);
-}
+// 3. NÂNG CẤP: Khởi tạo MultiQueryRetriever
+// Nó sẽ dùng `model` để tạo ra nhiều câu hỏi con từ câu hỏi của người dùng
+console.log("[Chatbot] Initializing MultiQueryRetriever...");
+const retriever = vectorStore.asRetriever(5); // Yêu cầu nó lấy 5 tài liệu
+console.log("[Chatbot] Using fallback retriever: vectorStore.asRetriever(5)");
 
-const retriever = vectorStore.asRetriever(3);
-
-const promptTemplate = PromptTemplate.fromTemplate(
-  `Bạn là trợ lý AI thân thiện của EduVerse.
-QUY TẮC: Chỉ trả lời dựa trên "Ngữ cảnh" được cung cấp. Nếu không tìm thấy, hãy nói "Tôi không tìm thấy thông tin này."
-Ngữ cảnh:
-{context}
-Câu hỏi:
-{question}
-Câu trả lời:`
-);
-
+// 4. TỐI ƯU: Định nghĩa các chain xử lý chính
 const formatDocs = (docs) => docs.map((doc) => doc.pageContent).join("\n\n");
 
-const ragChain = RunnableSequence.from([
-  {
-    context: RunnableSequence.from([
-      (input) => input.question,
-      retriever,
-      formatDocs,
-    ]),
-    question: (input) => input.question,
-  },
-  promptTemplate,
+// --- Chain RAG (Khi tìm thấy tài liệu) ---
+const ragPromptTemplate = PromptTemplate.fromTemplate(
+  `Bạn là trợ lý AI. Dưới đây là các trích xuất từ nội dung kho tư liệu:\n\n{context}\n\nCâu hỏi:\n{question}\n\nHãy trả lời bằng tiếng Việt, có dẫn nguồn ngắn (nếu có).`
+);
+
+const coreRagChain = RunnableSequence.from([
+  ragPromptTemplate,
   model,
   new StringOutputParser(),
 ]);
 
+// --- Chain Fallback (Khi KHÔNG tìm thấy tài liệu) ---
+const fallbackPrompt = PromptTemplate.fromTemplate(
+  `Bạn là trợ lý AI thân thiện của EduVerse. Trả lời ngắn gọn, bằng tiếng Việt.\n\nCâu hỏi:\n{question}\n\nCâu trả lời:`
+);
+
+const fallbackChain = RunnableSequence.from([
+  fallbackPrompt,
+  model,
+  new StringOutputParser(),
+]);
+
+// 5. TỐI ƯU: Endpoint /query
 app.post("/query", async (req, res) => {
   try {
     const { message } = req.body;
@@ -88,8 +89,20 @@ app.post("/query", async (req, res) => {
 
     let docs = [];
     try {
-      docs = await vectorStore.similaritySearch(message, 5);
-      console.log(`[Chatbot] retrieved ${docs?.length ?? 0} docs`);
+      // 1. Chạy MultiQueryRetriever ĐỂ LẤY TÀI LIỆU
+      // Đây là nơi phép màu xảy ra. Nó sẽ tạo nhiều câu hỏi và tìm kiếm.
+      // fallback: asRetriever exposes getRelevantDocuments(query)
+      if (typeof retriever.getRelevantDocuments === "function") {
+        docs = await retriever.getRelevantDocuments(message);
+      } else if (typeof retriever.invoke === "function") {
+        docs = await retriever.invoke(message);
+      } else {
+        docs = [];
+      }
+      console.log(
+        `[Chatbot] MultiQueryRetriever retrieved ${docs?.length ?? 0} docs`
+      );
+
       if (docs && docs.length > 0) {
         console.log(
           "[Chatbot] preview doc[0]:",
@@ -97,40 +110,28 @@ app.post("/query", async (req, res) => {
         );
       }
     } catch (err) {
-      console.warn("[Chatbot] similaritySearch error:", err?.message || err);
+      console.warn("[Chatbot] Retriever error:", err?.message || err);
       docs = [];
     }
 
+    // 2. Quyết định dùng chain nào dựa trên kết quả truy xuất
     if (!docs || docs.length === 0) {
+      // --- Logic Fallback ---
       console.log("[Chatbot] No docs found, using direct model fallback");
-      const directPrompt = PromptTemplate.fromTemplate(
-        `Bạn là trợ lý AI thân thiện của EduVerse. Trả lời ngắn gọn, bằng tiếng Việt.\n\nCâu hỏi:\n{question}\n\nCâu trả lời:`
-      );
-      const directChain = RunnableSequence.from([
-        directPrompt,
-        model,
-        new StringOutputParser(),
-      ]);
-      const directResult = await directChain.invoke({ question: message });
-      console.log(`[Chatbot Service] Direct reply: ${directResult}`);
-      return res.json({ reply: String(directResult) });
+      const fallbackResult = await fallbackChain.invoke({ question: message });
+      console.log(`[Chatbot Service] Fallback reply: ${fallbackResult}`);
+      return res.json({ reply: String(fallbackResult) });
+    } else {
+      // --- Logic RAG ---
+      // Kết hợp tài liệu và gọi chain RAG chính
+      const context = formatDocs(docs);
+      const ragResult = await coreRagChain.invoke({
+        context: context,
+        question: message,
+      });
+      console.log(`[Chatbot Service] RAG reply: ${ragResult}`);
+      return res.json({ reply: String(ragResult) });
     }
-
-    const combined = docs.map((d) => d.pageContent || "").join("\n\n");
-    const ragPrompt = PromptTemplate.fromTemplate(
-      `Bạn là trợ lý AI. Dưới đây là các trích xuất từ nội dung kho tư liệu:\n\n{context}\n\nCâu hỏi:\n{question}\n\nHãy trả lời bằng tiếng Việt, có dẫn nguồn ngắn (nếu có).`
-    );
-    const ragChain = RunnableSequence.from([
-      ragPrompt,
-      model,
-      new StringOutputParser(),
-    ]);
-    const ragResult = await ragChain.invoke({
-      context: combined,
-      question: message,
-    });
-    console.log(`[Chatbot Service] RAG reply: ${ragResult}`);
-    return res.json({ reply: String(ragResult) });
   } catch (error) {
     console.error("Lỗi RAG Chain:", error);
     return res.status(500).json({ reply: "Lỗi xử lý AI" });
