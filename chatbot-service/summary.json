@@ -1,0 +1,7 @@
+{
+  "pageContent": "Đây là danh sách tóm tắt tất cả các khóa học hiện có: Node JS update (Giá: 5000; Giảng viên: Alice Johnson; Duration: 20 day), khóa học C/C++ (Giá: 350000; Giảng viên: Nguyễn Hữu Thái; Duration: 15 day), C/C++ nâng cao (Giá: 2000; Giảng viên: Alice Johnson; Duration: 0 day). Tổng cộng có 3 khóa học.",
+  "metadata": {
+    "id": "all_courses_summary_list",
+    "type": "course_summary_list"
+  }
+}
