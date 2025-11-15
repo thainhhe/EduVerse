@@ -24,7 +24,7 @@ const Courses = () => {
       try {
         setLoading(true);
         const res = await getAllCoursePublished();
-        console.log("res", res)
+        console.log("res", res);
         if (res?.success) {
           // ✅ Khi thành công
           const data = res.data || [];
@@ -49,8 +49,6 @@ const Courses = () => {
 
     fetchCourses();
   }, []);
-
-
 
   const filteredCourses =
     selectedCategory === "All"
@@ -96,10 +94,11 @@ const Courses = () => {
                 key={category}
                 variant={selectedCategory === category ? "default" : "outline"}
                 onClick={() => setSelectedCategory(category)}
-                className={`transition-colors ${selectedCategory === category
-                  ? "bg-indigo-600 hover:bg-indigo-700 text-white"
-                  : "bg-white"
-                  }`}
+                className={`transition-colors ${
+                  selectedCategory === category
+                    ? "bg-indigo-600 hover:bg-indigo-700 text-white"
+                    : "bg-white"
+                }`}
               >
                 {category}
               </Button>
@@ -120,13 +119,15 @@ const Courses = () => {
               >
                 <div className="overflow-hidden">
                   <img
-                    src={course?.image || "/placeholder.svg"}
+                    src={course?.thumbnail || "/placeholder.svg"}
                     alt={course?.title}
                     className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
                 <CardContent className="p-4 flex flex-col flex-grow">
-                  <h3 className="text-lg font-semibold mb-2">{course?.title}</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    {course?.title}
+                  </h3>
                   <p className="text-sm text-gray-600 mb-4">
                     By {course?.main_instructor.username || "Unknown"}
                   </p>
@@ -173,8 +174,6 @@ const Courses = () => {
                         <Link to={`/courses/${course._id}`}>Enroll</Link>
                       </Button>
                     )}
-
-
                   </div>
                 </CardContent>
               </Card>

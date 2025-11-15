@@ -12,7 +12,8 @@ const CourseCardUnPublish = ({ course }) => {
     const id = course._id ?? course.id ?? course.idStr ?? null;
     if (id) sessionStorage.setItem("currentCourseId", id);
 
-    navigate("/create-course", { state: { id } });
+    // navigate to Basics with isUpdate flag
+    navigate("/create-course", { state: { id, isUpdate: true } });
   };
 
   const handleOpenCourseQuiz = () => {

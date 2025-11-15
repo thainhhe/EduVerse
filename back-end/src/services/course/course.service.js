@@ -147,7 +147,9 @@ const courseService = {
         const thumbnail_ = await upLoadImage(file);
         data.thumbnail = thumbnail_;
       }
+      console.log("Data in service:", data);
       const result = await courseRepository.create(data);
+
       return {
         status: system_enum.STATUS_CODE.CREATED,
         message: course_enum.COURSE_MESSAGE.CREATE_SUCCESS,

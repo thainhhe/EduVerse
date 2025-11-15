@@ -45,7 +45,7 @@ const enrollmentRepository = {
     try {
       return await Enrollment.find({ userId })
         .populate("userId", "name username email")
-        .populate("courseId", "title description")
+        .populate("courseId", "title description thumbnail")
         .exec();
     } catch (error) {
       console.error("Repository Error - getAllEnrollmentByUser:", error);

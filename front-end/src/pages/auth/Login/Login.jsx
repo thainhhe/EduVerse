@@ -45,7 +45,7 @@ const Login = () => {
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 bg-white shadow-xl rounded-2xl overflow-hidden">
         {/* Form Section */}
         <div className="p-6 sm:p-8 lg:p-12 flex flex-col justify-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 text-center lg:text-left">
+          <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-6 text-center lg:text-left">
             Sign in
           </h2>
 
@@ -107,7 +107,7 @@ const Login = () => {
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-[#4F39F6] text-white hover:bg-[#3e2adf] focus:ring-0"
               size="lg"
               disabled={isSubmitting}
             >

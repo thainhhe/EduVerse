@@ -23,10 +23,15 @@ const authService = {
         email: data.email,
         password: hashPass,
         role: data.role || "learner",
-        // include optional fields if provided
         ...(data.avatar !== undefined && { avatar: data.avatar }),
+
+        ...(data.job_title !== undefined && { job_title: data.job_title }),
+
+        ...(data.subject_instructor !== undefined && {
+          subject_instructor: data.subject_instructor,
+        }),
+
         ...(data.subjects !== undefined && { subjects: data.subjects }),
-        ...(data.jobTitle !== undefined && { jobTitle: data.jobTitle }),
       };
       const newUser = await userRepository.create(createPayload);
       return {

@@ -10,60 +10,56 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 // import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
-import { createLesson } from "@/services/courseService";
+import { useEffect, useState } from "react";
+import { updateLesson } from "@/services/courseService";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
-export function AddLessonModal({ open, onOpenChange, moduleId, moduleLessonsCount = 0, onCreated }) {
+export function EditLesson({ open, onOpenChange, lesson, onUpdate }) {
     const [lessonTitle, setLessonTitle] = useState("");
     const [contentGroup, setContentGroup] = useState("");
-    // const [description, setDescription] = useState("");
-    const [quiz, setQuiz] = useState(""); // nếu có selector quiz, giữ state ở đây
+    const [isPublic, setIsPublic] = useState(false);
+
+    useEffect(() => {
+        if (!open) return;
+        if (lesson) {
+            setLessonTitle(lesson.title || "");
+            setContentGroup(lesson.content || "");
+            setIsPublic(lesson.status !== "hidden");
+        }
+    }, [lesson]);
 
     const handleSave = async () => {
-        if (!moduleId) {
-            console.error("Missing moduleId - cannot create lesson");
-            return;
-        }
         try {
             const payload = {
+                moduleId: lesson.moduleId,
                 title: lessonTitle?.trim(),
-                // description: description?.trim(),
                 content: contentGroup?.trim(),
-                moduleId,
-                order: (moduleLessonsCount || 0) + 1,
+                status: isPublic ? "published" : "hidden",
+                order: lesson.order,
             };
-
-            // xử lý trường quiz: nếu có nhưng là chuỗi rỗng -> gửi null
-            if (typeof quiz !== "undefined") {
-                payload.quiz = quiz === "" ? null : quiz;
-            }
-
             // xóa các key rỗng/undefined
             Object.keys(payload).forEach((k) => {
                 if (payload[k] === "" || payload[k] === undefined) delete payload[k];
             });
-
-            const res = await createLesson(payload);
-            console.log("Create lesson response:", res?.data ?? res);
+            const res = await updateLesson(lesson.id, payload);
+            console.log("Update lesson response:", res?.data ?? res);
             // reset + close + notify parent
             setLessonTitle("");
             setContentGroup("");
             // setDescription("");
-            setQuiz("");
             onOpenChange(false);
-            if (typeof onCreated === "function") onCreated();
+            if (typeof onUpdate === "function") onUpdate();
         } catch (err) {
-            console.error("Create lesson failed:", err.response?.status, err.response?.data ?? err.message);
-            alert("Create lesson failed. Kiểm tra console/server logs.");
+            console.error("Update lesson failed:", err.response?.status, err.response?.data ?? err.message);
+            alert("Update lesson failed. Kiểm tra console/server logs.");
         }
     };
 
     const handleCancel = () => {
         // Reset form
-        setLessonTitle("");
-        setContentGroup("");
-        // setDescription("");
+        // setLessonTitle("");
+        // setContentGroup("");
         onOpenChange(false);
     };
 
@@ -71,9 +67,9 @@ export function AddLessonModal({ open, onOpenChange, moduleId, moduleLessonsCoun
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-semibold">Add New Lesson</DialogTitle>
+                    <DialogTitle className="text-xl font-semibold">Edit Lesson</DialogTitle>
                     <DialogDescription className="text-sm text-muted-foreground">
-                        Define a new lesson for your course, including its title and detailed content.
+                        Update lesson for your course, including its title and detailed content.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -106,19 +102,15 @@ export function AddLessonModal({ open, onOpenChange, moduleId, moduleLessonsCoun
                         />
                     </div>
 
-                    {/* Description */}
-                    {/* <div className="space-y-2">
-            <Label htmlFor="lesson-description" className="text-sm font-medium">
-              Description
-            </Label>
-            <Textarea
-              id="lesson-description"
-              placeholder="Provide a detailed description of the lesson content, learning objectives, and activities."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="min-h-[120px] resize-none"
-            />
-          </div> */}
+                    <div className="space-y-2">
+                        <div
+                            className="flex items-center gap-2 cursor-pointer p-2 border-1 rounded-lg"
+                            onClick={() => setIsPublic(!isPublic)}
+                        >
+                            <Checkbox checked={isPublic} onCheckedChange={() => setIsPublic(!isPublic)} />
+                            <span className="text-sm text-gray-700">Công khai khóa học này</span>
+                        </div>
+                    </div>
                 </div>
 
                 <DialogFooter className="gap-2">

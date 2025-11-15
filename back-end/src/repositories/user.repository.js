@@ -132,7 +132,7 @@ const userRepository = {
       password: data.password,
       role: data?.role || "learner",
       subject_instructor: data.subject_instructor || "",
-      job_title: data?.job_title || "instructor",
+      job_title: data?.job_title || null,
     });
   },
 

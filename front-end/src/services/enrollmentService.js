@@ -14,7 +14,9 @@ export const enrollmentService = {
   },
 
   createEnrollment: async (data) => {
+    console.log("Enrollment data:", data);
     const res = await api.post(`/enrollment`, data);
+    console.log("Enrollment created:", res.data);
     return res.data;
   },
 

@@ -1,9 +1,7 @@
-"use client";
-
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { createModule } from "@/services/courseService";
+import { createModule, updateModule } from "@/services/courseService";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,49 +13,54 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { useEffect } from "react";
 
 const formSchema = z.object({
     moduleTitle: z.string().min(1, "Title is required"),
     moduleDescription: z.string().min(1, "Description is required"),
-    // estimatedTime: z
-    //   .string()
-    //   .min(1, "Time is required")
-    //   .refine((val) => Number(val) > 0, "Time must be greater than 0"),
     makeVisible: z.boolean().optional(),
 });
 
-export function AddModuleModal({ open, onOpenChange, courseId, nextOrder = 1, onCreated }) {
+export function EditModuleModal({ open, onOpenChange, module_, onUpdate }) {
     const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             moduleTitle: "",
             moduleDescription: "",
-            // estimatedTime: "",
-            // makeVisible: false,
+            makeVisible: false,
         },
     });
+
+    useEffect(() => {
+        if (!open) return;
+        form.reset({
+            moduleTitle: module_?.title || "",
+            moduleDescription: module_?.description || "",
+            makeVisible: !!module_?.makeVisible,
+        });
+    }, [open, module_]);
 
     const onSubmit = async (values) => {
         try {
             const payload = {
                 title: values.moduleTitle,
                 description: values.moduleDescription,
-                courseId: courseId,
-                order: nextOrder,
-                // estimatedTime and makeVisible are UI-only here; include if backend supports
+                courseId: module_?.courseId,
+                makeVisible: values.makeVisible,
             };
-            await createModule(payload);
-            onOpenChange(false);
+
+            console.log("moduleUpdate:", module_);
+            await updateModule(module_.id, payload);
             form.reset();
-            if (typeof onCreated === "function") onCreated();
+            onOpenChange(false);
+
+            if (typeof onUpdate === "function") onUpdate();
         } catch (err) {
-            // log backend validation message if available
             console.error("Create module failed:", err.response?.data ?? err);
-            // keep UI unchanged; optionally show toast
+            alert("Create module failed. Check console/server logs.");
         }
     };
 
@@ -67,7 +70,7 @@ export function AddModuleModal({ open, onOpenChange, courseId, nextOrder = 1, on
                 <DialogHeader>
                     <DialogTitle className="text-xl font-semibold">Add New Module</DialogTitle>
                     <DialogDescription className="text-sm text-muted-foreground">
-                        Define a new module for your course, including its title, description, and visibility settings.
+                        Define a new module for your module_, including its title, description, and visibility settings.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -98,7 +101,7 @@ export function AddModuleModal({ open, onOpenChange, courseId, nextOrder = 1, on
                                     <FormControl>
                                         <Textarea
                                             placeholder="Provide a detailed overview of the module content and learning objectives."
-                                            className="min-h-[100px] resize-y"
+                                            className="min-h-[170px] resize-y"
                                             {...field}
                                         />
                                     </FormControl>
@@ -107,38 +110,23 @@ export function AddModuleModal({ open, onOpenChange, courseId, nextOrder = 1, on
                             )}
                         />
 
-                        {/* Estimated Time
-            <FormField
-              control={form.control}
-              name="estimatedTime"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Estimated Completion Time (hours)</FormLabel>
-                  <FormControl>
-                    <Input type="number" min="0" placeholder="0" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            /> */}
+                        {/* Visibility */}
+                        <FormField
+                            control={form.control}
+                            name="makeVisible"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
+                                    <FormControl>
+                                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                        <FormLabel>Make module visible to students immediately upon saving.</FormLabel>
+                                    </div>
+                                </FormItem>
+                            )}
+                        />
 
-                        {/* Visibility
-            <div className="pt-2">
-              <label className="flex items-center gap-3 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={form.watch("makeVisible")}
-                  onChange={(e) =>
-                    form.setValue("makeVisible", e.target.checked)
-                  }
-                  className="h-4 w-4 accent-indigo-600"
-                />
-                <span className="text-sm font-normal leading-snug">
-                  Make module visible to students immediately upon saving.
-                </span>
-              </label>
-            </div> */}
-
+                        {/* Buttons */}
                         <DialogFooter className="gap-2 pt-4">
                             <Button
                                 type="button"

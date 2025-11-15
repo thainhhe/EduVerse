@@ -45,6 +45,7 @@ const courseController = {
     try {
       const data = req.body;
       const file = req.file || null;
+      console.log("Data in controller createCourse:", data, { file });
       const result = await courseService.createCourse(data, file);
       return response(res, result);
     } catch (error) {
