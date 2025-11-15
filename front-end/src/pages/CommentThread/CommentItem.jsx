@@ -11,11 +11,17 @@ import {
     PenOffIcon,
     Check,
     X,
+    MoreVertical,
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { vi } from "date-fns/locale"
 import { Avatar } from "@radix-ui/react-avatar"
-
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 export default function CommentItem({ comment, level, forumId, userId, refresh }) {
     const [likes, setLikes] = useState(comment.likes || 0)
     const [userLiked, setUserLiked] = useState(false)
@@ -266,45 +272,42 @@ export default function CommentItem({ comment, level, forumId, userId, refresh }
 
                 {/* Menu ba chấm */}
                 <div className="relative">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0 text-muted-foreground"
-                        onClick={() => setShowMenu(!showMenu)}
-                    >
-                        <MoreHorizontal className="w-4 h-4" />
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button className="p-2 hover:bg-gray-100 rounded-full">
+                                <MoreVertical className="h-5 w-5 text-gray-500" />
+                            </button>
+                        </DropdownMenuTrigger>
 
-                    {showMenu && (
-                        <div className="absolute right-0 top-6 bg-white shadow-lg rounded-md text-sm border border-gray-200 z-10">
+                        <DropdownMenuContent align="end" className="w-48">
                             {isMyComment ? (
                                 <>
-                                    <button
-                                        onClick={handleDelete}
-                                        className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 w-full text-red-600"
-                                    >
-                                        <Trash2 className="w-4 h-4" /> Xóa bình luận
-                                    </button>
-                                    <button
+                                    <DropdownMenuItem
+                                        className="text-blue-600 focus:text-blue-700"
                                         onClick={() => {
-                                            setIsEditing(true)
-                                            setShowMenu(false)
+                                            setIsEditing(true);
                                         }}
-                                        className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 w-full text-blue-600"
                                     >
-                                        <PenOffIcon className="w-4 h-4" /> Chỉnh sửa bình luận
-                                    </button>
+                                        <PenOffIcon className="w-4 h-4 mr-2" /> Chỉnh sửa bình luận
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="text-red-600 focus:text-red-700"
+                                        onClick={handleDelete}
+                                    >
+                                        <Trash2 className="w-4 h-4 mr-2" /> Xóa bình luận
+                                    </DropdownMenuItem>
                                 </>
                             ) : (
-                                <button
+                                <DropdownMenuItem
+                                    className="text-yellow-600 focus:text-yellow-700"
                                     onClick={handleReport}
-                                    className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 w-full text-yellow-600"
                                 >
-                                    <Flag className="w-4 h-4" /> Báo cáo bình luận
-                                </button>
+                                    <Flag className="w-4 h-4 mr-2" /> Báo cáo bình luận
+                                </DropdownMenuItem>
                             )}
-                        </div>
-                    )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
                 </div>
             </div>
         </div>

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
+import authService from "@/services/authService";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -35,12 +36,16 @@ const Login = () => {
     }
   };
 
+  const onGoogleSignIn = () => {
+    authService.googleSignIn();
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 bg-white shadow-xl rounded-2xl overflow-hidden">
         {/* Form Section */}
         <div className="p-6 sm:p-8 lg:p-12 flex flex-col justify-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 text-center lg:text-left">
+          <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-6 text-center lg:text-left">
             Sign in
           </h2>
 
@@ -102,7 +107,7 @@ const Login = () => {
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-[#4F39F6] text-white hover:bg-[#3e2adf] focus:ring-0"
               size="lg"
               disabled={isSubmitting}
             >
@@ -120,15 +125,16 @@ const Login = () => {
               </div>
             </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full bg-transparent"
-              size="lg"
-            >
-              <FcGoogle className="mr-2 h-5 w-5" />
-              Sign in with Google
-            </Button>
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={onGoogleSignIn}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 bg-white hover:bg-gray-50"
+              >
+                <FcGoogle className="w-5 h-5" size={20} />
+                Continue with Google
+              </button>
+            </div>
 
             <p className="text-center text-sm text-gray-600 pt-2">
               Don't have an account?{" "}

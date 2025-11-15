@@ -20,8 +20,8 @@ const paymentService = {
             const orderCode = paymentHelper.randomNumber();
             const amount = data.total_amount;
             const description = data.description || `Thanh toan hoa don`;
-            const returnUrl = `${FRONTEND_URL}/payment/success`;
-            const cancelUrl = `${FRONTEND_URL}/payment/cancel`;
+            const returnUrl = `${FRONTEND_URL}/checkout/success`;
+            const cancelUrl = `${FRONTEND_URL}/checkout/fail`;
 
             const paymentData = {
                 orderCode: orderCode,
@@ -46,15 +46,12 @@ const paymentService = {
                 }
             );
 
-            const payosResponseData = response.data.data;
+            const payosResponseData = response.data?.data || response.data;
 
             return {
                 status: system_enum.STATUS_CODE.OK,
-                message: system_enum.SYSTEM_MESSAGE.SUCCESS,
-                data: {
-                    qrCode: payosResponseData.qrCode,
-                    paymentLink: payosResponseData.checkoutUrl,
-                },
+                message: "Thanh toan thanh cong",
+                data: payosResponseData,
             };
         } catch (err) {
             console.error("Error creating PayOS payment:", err.response ? err.response.data : err.message);

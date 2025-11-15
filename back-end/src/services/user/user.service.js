@@ -1,7 +1,7 @@
 const { system_enum } = require("../../config/enum/system.constant");
 const { user_enum } = require("../../config/enum/user.constants");
 const { userRepository } = require("../../repositories/user.repository");
-const { generateOtp, hashOtp, sendOtpEmail, compareOtp } = require("../../utils/mail.util");
+const { generateOtp, hashOtp, sendOtpEmail, compareOtp, send_NewPassword_Email } = require("../../utils/mail.util");
 const { upLoadImage } = require("../../utils/response.util");
 const { userHelper } = require("./user.helper");
 const { authHelper } = require("../auth/auth.helper");
@@ -10,10 +10,17 @@ const { courseRepository } = require("../../repositories/course.repository");
 const userService = {
     getProfile: async (id) => {
         try {
-            if (!id) return { status: system_enum.STATUS_CODE.CONFLICT, message: user_enum.USER_MESSAGE.FAIL_GET_DATA };
+            if (!id)
+                return {
+                    status: system_enum.STATUS_CODE.CONFLICT,
+                    message: user_enum.USER_MESSAGE.FAIL_GET_DATA,
+                };
             const result = await userRepository.findById(id);
             if (!result)
-                return { status: system_enum.STATUS_CODE.NOT_FOUND, message: user_enum.USER_MESSAGE.USER_NOT_FOUND };
+                return {
+                    status: system_enum.STATUS_CODE.NOT_FOUND,
+                    message: user_enum.USER_MESSAGE.USER_NOT_FOUND,
+                };
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: user_enum.USER_MESSAGE.GET_PROFILE_SUCCESS,
@@ -27,7 +34,10 @@ const userService = {
         try {
             const result = await courseRepository.getInstructor_sort_by_rating();
             if (!result)
-                return { status: system_enum.STATUS_CODE.NOT_FOUND, message: user_enum.USER_MESSAGE.USER_NOT_FOUND };
+                return {
+                    status: system_enum.STATUS_CODE.NOT_FOUND,
+                    message: user_enum.USER_MESSAGE.USER_NOT_FOUND,
+                };
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: user_enum.USER_MESSAGE.GET_PROFILE_SUCCESS,
@@ -70,10 +80,17 @@ const userService = {
 
     closeAccount: async (id) => {
         try {
-            if (!id) return { status: system_enum.STATUS_CODE.CONFLICT, message: user_enum.USER_MESSAGE.FAIL_GET_DATA };
+            if (!id)
+                return {
+                    status: system_enum.STATUS_CODE.CONFLICT,
+                    message: user_enum.USER_MESSAGE.FAIL_GET_DATA,
+                };
             const user = await userRepository.close(id);
             if (!user)
-                return { status: system_enum.STATUS_CODE.NOT_FOUND, message: user_enum.USER_MESSAGE.USER_NOT_FOUND };
+                return {
+                    status: system_enum.STATUS_CODE.NOT_FOUND,
+                    message: user_enum.USER_MESSAGE.USER_NOT_FOUND,
+                };
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: user_enum.USER_MESSAGE.CLOSE_ACCOUNT_SUCCESS,
@@ -87,7 +104,10 @@ const userService = {
     requestResetPassword: async (email) => {
         try {
             if (!email)
-                return { status: system_enum.STATUS_CODE.CONFLICT, message: user_enum.USER_MESSAGE.FAIL_GET_DATA };
+                return {
+                    status: system_enum.STATUS_CODE.CONFLICT,
+                    message: user_enum.USER_MESSAGE.FAIL_GET_DATA,
+                };
             const user = await userRepository.findByEmail(email);
             if (!user)
                 return {
@@ -162,8 +182,10 @@ const userService = {
             user.resetOtpHash = null;
             user.resetOtpExpires = null;
             user.resetOtpAttempts = 0;
-            user.password = await authHelper.hashPassword("12345678");
+            const rawPassword = userHelper.generatePassword(8);
+            user.password = await authHelper.hashPassword(rawPassword);
             await userRepository.save(user);
+            await send_NewPassword_Email(user.email, rawPassword);
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: system_enum.SYSTEM_MESSAGE.RESET_PASSWORD_SUCCESS,

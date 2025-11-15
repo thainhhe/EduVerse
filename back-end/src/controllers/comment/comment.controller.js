@@ -5,97 +5,115 @@ const { commentService } = require("../../services/comment/comment.service");
 const { response, error_response } = require("../../utils/response.util");
 
 const commentController = {
-  async getCommentsByForum(req, res) {
-    try {
-      const forumId = req.params.forumId;
-      console.log("forumId", forumId);
-      const result = await commentService.getCommentsByForum(forumId);
-      return response(res, result);
-    } catch (error) {
-      return error_response(res, error);
-    }
-  },
+    async getCommentsByForum(req, res) {
+        try {
+            const forumId = req.params.forumId;
+            console.log("forumId", forumId);
+            const result = await commentService.getCommentsByForum(forumId);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
 
-  async createComment(req, res) {
-    try {
-      const data = req.body;
-      const userId = req.user?._id || req.body.userId;
-      const result = await commentService.createComment(data, userId);
-      return response(res, result, 201);
-    } catch (error) {
-      return error_response(res, error);
-    }
-  },
+    async getCommentsByForumInstructor(req, res) {
+        try {
+            const forumId = req.params.forumId;
+            console.log("forumId", forumId);
+            const result = await commentService.getCommentsByForumInstructor(forumId);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
 
-  async updateComment(req, res) {
-    try {
-      const { id } = req.params;
-      const { content } = req.body;
-      const userId = req.user?._id || req.body.userId;
+    async createComment(req, res) {
+        try {
+            const data = req.body;
+            const userId = req.user?._id || req.body.userId;
+            const result = await commentService.createComment(data, userId);
+            return response(res, result, 201);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
 
-      const result = await commentService.updateComment(id, userId, content);
-      return response(res, result);
-    } catch (error) {
-      return error_response(res, error);
-    }
-  },
+    async updateComment(req, res) {
+        try {
+            const { id } = req.params;
+            const { content } = req.body;
+            const userId = req.user?._id || req.body.userId;
 
-  async deleteComment(req, res) {
-    try {
-      const { id } = req.params;
-      const userId = req.user?._id || req.body.userId;
+            const result = await commentService.updateComment(id, userId, content);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
 
-      const result = await commentService.deleteComment(id, userId);
-      return response(res, result);
-    } catch (error) {
-      return error_response(res, error);
-    }
-  },
+    async deleteComment(req, res) {
+        try {
+            const { id } = req.params;
+            const userId = req.user?._id || req.body.userId;
 
-  // 🟢 Like / Dislike comment
-  async likeComment(req, res) {
-    try {
-      const { id } = req.params;
-      const { action } = req.body;
+            const result = await commentService.deleteComment(id, userId);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
 
-      const result = await commentService.reactComment(id, action);
+    async hiddenComment(req, res) {
+        try {
+            const { id } = req.params;
+            const result = await commentService.hiddenComment(id);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
 
-      // Nếu service trả lỗi (not found, bad request, ...)
-      if (!result.success) {
-        return error_response(res, result, result.status);
-      }
+    // 🟢 Like / Dislike comment
+    async likeComment(req, res) {
+        try {
+            const { id } = req.params;
+            const { action } = req.body;
 
-      return response(res, result);
-    } catch (error) {
-      return error_response(res, error);
-    }
-  },
+            const result = await commentService.reactComment(id, action);
 
-  // 🟢 Báo cáo comment
-  async reportComment(req, res) {
-    try {
-      const { id } = req.params;
-      const { reason } = req.body;
-      const userId = req.user?._id || req.body.userId;
+            // Nếu service trả lỗi (not found, bad request, ...)
+            if (!result.success) {
+                return error_response(res, result, result.status);
+            }
 
-      const comment = await Comment.findById(id);
-      if (!comment) return error_response(res, "Comment không tồn tại", 404);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
 
-      // Kiểm tra đã báo cáo chưa
-      const alreadyReported = comment.reported.some(
-        (r) => r.user_id.toString() === userId.toString()
-      );
-      if (alreadyReported)
-        return error_response(res, "Bạn đã báo cáo comment này rồi", 400);
+    // 🟢 Báo cáo comment
+    async reportComment(req, res) {
+        try {
+            const { id } = req.params;
+            const { reason } = req.body;
+            const userId = req.user?._id || req.body.userId;
 
-      comment.reported.push({ user_id: userId, reason });
-      await comment.save();
+            const comment = await Comment.findById(id);
+            if (!comment) return error_response(res, "Comment không tồn tại", 404);
 
-      return response(res, { message: "Đã gửi báo cáo" });
-    } catch (error) {
-      return error_response(res, error);
-    }
-  },
+            // Kiểm tra đã báo cáo chưa
+            const alreadyReported = comment.reported.some((r) => r.user_id.toString() === userId.toString());
+            if (alreadyReported) return error_response(res, "Bạn đã báo cáo comment này rồi", 400);
+
+            comment.reported.push({ user_id: userId, reason });
+            await comment.save();
+
+            return response(res, { message: "Đã gửi báo cáo" });
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
 };
 
 module.exports = { commentController };

@@ -10,10 +10,8 @@ forumRouter.get("/", forumController.getAllForums);
 forumRouter.get("/:forumId", forumController.getForumById);
 forumRouter.get("/course/:courseId", forumController.getForumByCourseId);
 
-forumRouter.post(
-  "/create-forum",
-  validate_schema(createForumSchema),
-  forumController.createForum
-);
+forumRouter.post("/create-forum", validate_schema(createForumSchema), forumController.createForum);
+
+forumRouter.put("/update/:id", validate_schema(createForumSchema), forumController.updateForum);
 
 module.exports = forumRouter;

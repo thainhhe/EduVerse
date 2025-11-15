@@ -2,6 +2,8 @@ const { lesson_enum } = require("../../config/enum/lesson.constants");
 const { system_enum } = require("../../config/enum/system.constant");
 const lessonRepository = require("../../repositories/lesson.repository");
 const { lessonHelper } = require("./lesson.helper");
+const Module = require("../../models/Module");
+const enrollmentRepository = require("../../repositories/enroll.repository");
 
 const lessonService = {
     getAllLesson: async () => {
@@ -108,6 +110,93 @@ const lessonService = {
             throw new Error(error);
         }
     },
+
+    // Mark lesson as completed and recalculate progress
+    markLessonCompleted: async (lessonId, userId) => {
+        try {
+            console.log(`🎯 Service: Marking lesson ${lessonId} as completed for user ${userId}`);
+
+            // 1. Mark lesson as completed
+            const result = await lessonRepository.markLessonCompleted(lessonId, userId);
+
+            // 2. Get courseId from lesson -> module
+            const lesson = await lessonRepository.findById(lessonId);
+            if (!lesson) {
+                throw new Error('Lesson not found');
+            }
+
+            const module = await Module.findById(lesson.moduleId);
+            if (!module) {
+                throw new Error('Module not found');
+            }
+
+            const courseId = module.courseId;
+
+            // 3. Recalculate progress
+            const progressData = await enrollmentRepository.calculateUserProgress(userId, courseId);
+
+            console.log(`Service: Lesson completed and progress updated`);
+
+            return {
+                ...result,
+                progress: progressData
+            };
+        } catch (error) {
+            console.error('Service Error - markLessonCompleted:', error);
+            throw error;
+        }
+    },
+
+    // Unmark lesson and recalculate progress
+    unmarkLessonCompleted: async (lessonId, userId) => {
+        try {
+            console.log(`Service: Unmarking lesson ${lessonId} for user ${userId}`);
+
+            // 1. Unmark lesson
+            const result = await lessonRepository.unmarkLessonCompleted(lessonId, userId);
+
+            // 2. Get courseId from lesson -> module
+            const lesson = await lessonRepository.findById(lessonId);
+            if (!lesson) {
+                throw new Error('Lesson not found');
+            }
+
+            const module = await Module.findById(lesson.moduleId);
+            if (!module) {
+                throw new Error('Module not found');
+            }
+
+            const courseId = module.courseId;
+
+            // 3. Recalculate progress
+            const progressData = await enrollmentRepository.calculateUserProgress(userId, courseId);
+
+            console.log(`Service: Lesson unmarked and progress updated`);
+
+            return {
+                ...result,
+                progress: progressData
+            };
+        } catch (error) {
+            console.error('Service Error - unmarkLessonCompleted:', error);
+            throw error;
+        }
+    },
+
+    // Check if lesson is completed by user
+    checkLessonCompletion: async (lessonId, userId) => {
+        try {
+            const isCompleted = await lessonRepository.isLessonCompletedByUser(lessonId, userId);
+            return {
+                lessonId,
+                userId,
+                completed: isCompleted
+            };
+        } catch (error) {
+            console.error('Service Error - checkLessonCompletion:', error);
+            throw error;
+        }
+    }
 };
 
 module.exports = { lessonService };

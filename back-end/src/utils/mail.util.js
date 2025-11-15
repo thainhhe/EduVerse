@@ -37,6 +37,39 @@ const sendOtpEmail = (toEmail, otp) => {
     return transporter.sendMail(mailOptions);
 };
 
+const escapeHtml = (text) =>
+    text.replace(
+        /[&<>"']/g,
+        (m) =>
+            ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#039;",
+            }[m])
+    );
+
+const send_NewPassword_Email = (toEmail, new_password) => {
+    const safePassword = escapeHtml(new_password);
+
+    const mailOptions = {
+        from: process.env.EMAIL_FROM || '"Your App" <no-reply@yourapp.com>',
+        to: toEmail,
+        subject: "Mật khẩu đã được đặt lại",
+        text: `Nếu bạn không yêu cầu, hãy bỏ qua email này.`,
+        html: `
+            <p>Xin chào!</p>
+            <p><strong>Mật khẩu mới của bạn là:</strong></p>
+            <p style="font-size: 18px; font-weight: bold; color: #1a73e8;">${safePassword}</p>
+            <p>Vui lòng đăng nhập và đổi mật khẩu sau khi đăng nhập.</p>
+            <p>Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.</p>
+        `,
+    };
+
+    return transporter.sendMail(mailOptions);
+};
+
 const sendInviteInstructorEmail = (toEmail, inviteLink, inviterName = "EduVerse Team", courseName) => {
     const mailOptions = {
         from: process.env.EMAIL_FROM || `"${inviterName}" <no-reply@eduverse.com>`,
@@ -64,4 +97,4 @@ const sendInviteInstructorEmail = (toEmail, inviteLink, inviterName = "EduVerse 
     return transporter.sendMail(mailOptions);
 };
 
-module.exports = { generateOtp, hashOtp, compareOtp, sendOtpEmail, sendInviteInstructorEmail };
+module.exports = { generateOtp, hashOtp, compareOtp, sendOtpEmail, sendInviteInstructorEmail, send_NewPassword_Email };

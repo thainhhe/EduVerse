@@ -5,17 +5,31 @@ const { verifyToken } = require("../middlewares/auth/authMiddleware");
 
 scoreRouter.get("/", verifyToken, scoreController.getAllScores);
 
-// new route: get score for a user in a specific quiz (includes scope info)
+// get score for a user in a specific quiz
 scoreRouter.get(
   "/user/:userId/quiz/:quizId",
-  verifyToken,
+  // verifyToken,
   scoreController.getUserQuizScore
 );
 
 scoreRouter.get("/:id", verifyToken, scoreController.getScoreById);
-scoreRouter.get("/user/:userId", verifyToken, scoreController.getScoresByUser);
+scoreRouter.get(
+  "/user/:userId",
+  // verifyToken,
+  scoreController.getScoresByUser
+);
 scoreRouter.get("/quiz/:quizId", verifyToken, scoreController.getScoresByQuiz);
-scoreRouter.post("/submit", verifyToken, scoreController.submitQuiz);
+scoreRouter.post(
+  "/submit",
+  // verifyToken,
+  scoreController.submitQuiz
+);
 scoreRouter.delete("/:id", verifyToken, scoreController.deleteScore);
+scoreRouter.get(
+  "/check/:userId/quiz/:quizId",
+  // verifyToken,
+  scoreController.checkQuizCompletion
+);
+
 
 module.exports = scoreRouter;
