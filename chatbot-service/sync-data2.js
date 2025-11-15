@@ -28,7 +28,7 @@ const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY;
 const buildText = (type, doc) => {
   switch (type) {
     case "course":
-      // Thêm duration và main_instructor_name hiển thị rõ ràng
+      // Thêm duration, main_instructor_name, subject và job_title
       const durationStr =
         doc.duration && typeof doc.duration === "object"
           ? `${doc.duration.value ?? ""} ${doc.duration.unit ?? ""}`.trim()
@@ -39,25 +39,37 @@ const buildText = (type, doc) => {
         doc.status || "N/A"
       }. Instructor: ${
         doc.main_instructor_name || doc.main_instructor || "N/A"
-      }. Duration: ${durationStr}.`;
+      } (${
+        doc.main_instructor_job_title || doc.main_instructor_job_title || "N/A"
+      } - ${
+        doc.main_instructor_subject || doc.main_instructor_subject || "N/A"
+      }). Duration: ${durationStr}.`;
     case "category":
       return `Category: ${doc.name || "Untitled"}. Description: ${
         doc.description || ""
       }.`;
     case "module":
-      // 'doc' từ API đã chứa course_title và course_price
+      // 'doc' từ API đã chứa course_title và course_price + course_main_instructor_*
       return `Module: ${doc.title || "Untitled"}. Description: ${
         doc.description || ""
       }. Course: ${doc.course_title || doc.courseId || "N/A"} (Price: ${
         doc.course_price ?? "N/A"
-      }). Order: ${doc.order ?? "N/A"}.`;
+      }). Instructor: ${doc.course_main_instructor_name || "N/A"} (${
+        doc.course_main_instructor_job_title || "N/A"
+      } - ${doc.course_main_instructor_subject || "N/A"}). Order: ${
+        doc.order ?? "N/A"
+      }.`;
     case "lesson":
       // 'doc' từ API đã chứa module_title, course_title, course_price
       return `Lesson: ${doc.title || "Untitled"}. Content: ${
         doc.content || ""
       }. Module: ${doc.module_title || doc.moduleId || "N/A"}. Course: ${
         doc.course_title || doc.courseId || "N/A"
-      } (Price: ${doc.course_price ?? "N/A"}). Order: ${doc.order ?? "N/A"}.`;
+      } (Price: ${doc.course_price ?? "N/A"}). Instructor: ${
+        doc.course_main_instructor_name || "N/A"
+      } (${doc.course_main_instructor_job_title || "N/A"} - ${
+        doc.course_main_instructor_subject || "N/A"
+      }). Order: ${doc.order ?? "N/A"}.`;
     case "material":
       // 'doc' từ API đã chứa course_title
       return `Material: ${doc.title || "Untitled"}. Description: ${
@@ -195,6 +207,9 @@ const syncData = async () => {
         type: "course",
         title: c.title || "",
         price: c.price != null ? c.price : null,
+        main_instructor_name: c.main_instructor_name || null,
+        main_instructor_subject: c.main_instructor_subject || null,
+        main_instructor_job_title: c.main_instructor_job_title || null,
       },
     });
 
@@ -246,6 +261,12 @@ const syncData = async () => {
         title: m.title || "",
         courseId: m.courseId ? String(m.courseId) : undefined,
         course_price: m.course_price ?? null, // Lấy trực tiếp từ 'm'
+        // propagate instructor fields from backend-enriched module
+        course_main_instructor_name: m.course_main_instructor_name || null,
+        course_main_instructor_subject:
+          m.course_main_instructor_subject || null,
+        course_main_instructor_job_title:
+          m.course_main_instructor_job_title || null,
       },
     });
   });
@@ -265,6 +286,12 @@ const syncData = async () => {
         moduleId: l.moduleId ? String(l.moduleId) : undefined,
         courseId: l.courseId ? String(l.courseId) : undefined, // API cung cấp
         course_price: l.course_price ?? null, // API cung cấp
+        // instructor fields
+        course_main_instructor_name: l.course_main_instructor_name || null,
+        course_main_instructor_subject:
+          l.course_main_instructor_subject || null,
+        course_main_instructor_job_title:
+          l.course_main_instructor_job_title || null,
       },
     });
   });
@@ -281,6 +308,11 @@ const syncData = async () => {
         title: m.title || "",
         courseId: m.courseId ? String(m.courseId) : undefined,
         course_price: m.course_price ?? null, // API cung cấp
+        course_main_instructor_name: m.course_main_instructor_name || null,
+        course_main_instructor_subject:
+          m.course_main_instructor_subject || null,
+        course_main_instructor_job_title:
+          m.course_main_instructor_job_title || null,
       },
     });
   });
@@ -299,6 +331,11 @@ const syncData = async () => {
         moduleId: q.moduleId ? String(q.moduleId) : undefined,
         courseId: q.courseId ? String(q.courseId) : undefined, // API cung cấp
         course_price: q.course_price ?? null, // API cung cấp
+        course_main_instructor_name: q.course_main_instructor_name || null,
+        course_main_instructor_subject:
+          q.course_main_instructor_subject || null,
+        course_main_instructor_job_title:
+          q.course_main_instructor_job_title || null,
       },
     });
   });
@@ -316,6 +353,11 @@ const syncData = async () => {
         userId: r.userId ? String(r.userId) : undefined,
         rating: r.rating,
         course_price: r.course_price ?? null, // API cung cấp
+        course_main_instructor_name: r.course_main_instructor_name || null,
+        course_main_instructor_subject:
+          r.course_main_instructor_subject || null,
+        course_main_instructor_job_title:
+          r.course_main_instructor_job_title || null,
       },
     });
   });
@@ -332,6 +374,11 @@ const syncData = async () => {
         courseId: en.courseId ? String(en.courseId) : undefined,
         userId: en.userId ? String(en.userId) : undefined,
         course_price: en.course_price ?? null, // API cung cấp
+        course_main_instructor_name: en.course_main_instructor_name || null,
+        course_main_instructor_subject:
+          en.course_main_instructor_subject || null,
+        course_main_instructor_job_title:
+          en.course_main_instructor_job_title || null,
       },
     });
   });
@@ -343,9 +390,16 @@ const syncData = async () => {
         c.duration && typeof c.duration === "object"
           ? `${c.duration.value ?? ""} ${c.duration.unit ?? ""}`.trim()
           : c.duration || "N/A";
+      // include job_title and subject in summary string
+      const jt = c.main_instructor_job_title || "N/A";
+      const subj = c.main_instructor_subject
+        ? Array.isArray(c.main_instructor_subject)
+          ? c.main_instructor_subject.join(",")
+          : String(c.main_instructor_subject)
+        : "N/A";
       return `${c.title || "Untitled"} (Giá: ${c.price ?? "N/A"}; Giảng viên: ${
         c.main_instructor_name || "N/A"
-      }; Duration: ${durationStr})`;
+      } - ${jt}; Subjects: ${subj}; Duration: ${durationStr})`;
     })
     .join(", ");
 
