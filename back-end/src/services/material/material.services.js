@@ -96,10 +96,13 @@ const materialServices = {
 
     uploadMaterial: async (file, materialData) => {
         try {
+            console.log('📝 Step 1: Validating material data...');
             const validatedData = materialValidator.validateMaterialData(materialData, false);
 
+            console.log('📤 Step 2: Uploading file to Google Drive...');
             const driveFile = await googleDriveService.uploadFile(file, validatedData.type);
 
+            console.log('💾 Step 3: Saving material to database...');
             const materialToCreate = {
                 ...validatedData,
                 url: driveFile.fileUrl,
@@ -177,6 +180,7 @@ const materialServices = {
 
             // Delete from Google Drive if it has fileId
             if (existingMaterial.fileId) {
+                console.log('🗑️ Deleting file from Google Drive...');
                 await googleDriveService.deleteFile(existingMaterial.fileId);
             }
 

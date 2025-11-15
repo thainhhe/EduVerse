@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { FaSignInAlt, FaUserPlus, FaSearch } from "react-icons/fa";
@@ -9,6 +9,7 @@ import { Menu, X } from "lucide-react";
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showSignupMenu, setShowSignupMenu] = useState(false);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
@@ -19,7 +20,7 @@ const Header = () => {
     { to: "/", text: "Home" },
     { to: "/courses", text: "Courses" },
     { to: "/instructors", text: "Instructors" },
-    { to: "/blogs", text: "Blog/News" },
+    { to: "/course/rooms", text: "Ongoing Classroom " },
     { to: "/contacts", text: "Contact" },
   ];
 
@@ -40,6 +41,7 @@ const Header = () => {
   const onLogout = async () => {
     await logout();
     setShowAvatarMenu(false);
+    navigate("/login");
   };
 
   const initials = (name) => {
@@ -97,7 +99,7 @@ const Header = () => {
               <>
                 <Button variant="outline" asChild>
                   <Link to="/login">
-                    <FaSignInAlt className="mr-2" /> Login
+                    <FaSignInAlt className="mr-2" /> Sign in
                   </Link>
                 </Button>
 
@@ -117,14 +119,14 @@ const Header = () => {
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         onClick={() => setShowSignupMenu(false)}
                       >
-                        Register as Learner
+                        Sign up as Learner
                       </Link>
                       <Link
                         to="/register-instructor"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         onClick={() => setShowSignupMenu(false)}
                       >
-                        Register as Instructor
+                        Sign up as Instructor
                       </Link>
                     </div>
                   )}
@@ -144,11 +146,11 @@ const Header = () => {
                 {showAvatarMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-white border rounded-md shadow-lg z-50">
                     <Link
-                      to="/profile"
+                      to="/settings"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setShowAvatarMenu(false)}
                     >
-                      Profile
+                      Settings
                     </Link>
 
                     {/* show different menu item based on role */}
@@ -163,13 +165,23 @@ const Header = () => {
                     )}
 
                     {user?.role === "instructor" && (
-                      <Link
-                        to="/mycourses"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={() => setShowAvatarMenu(false)}
-                      >
-                        My Courses
-                      </Link>
+                      <>
+                        <Link
+                          to="/mycourses"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setShowAvatarMenu(false)}
+                        >
+                          My Courses
+                        </Link>
+
+                        <Link
+                          to="/dashboard-instructor"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setShowAvatarMenu(false)}
+                        >
+                          Dashboard
+                        </Link>
+                      </>
                     )}
 
                     <button
@@ -220,7 +232,7 @@ const Header = () => {
                 <>
                   <Button variant="outline" asChild>
                     <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                      Login
+                      Sign in
                     </Link>
                   </Button>
 
@@ -230,25 +242,25 @@ const Header = () => {
                       onClick={() => setIsMenuOpen(false)}
                       className="w-full text-center px-4 py-2 rounded-md bg-indigo-500 text-white hover:bg-indigo-600"
                     >
-                      Signup as Learner
+                      Sign up as Learner
                     </Link>
                     <Link
                       to="/register-instructor"
                       onClick={() => setIsMenuOpen(false)}
                       className="w-full text-center mt-2 px-4 py-2 rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50"
                     >
-                      Signup as Instructor
+                      Sign up as Instructor
                     </Link>
                   </div>
                 </>
               ) : (
                 <>
                   <Link
-                    to="/profile"
+                    to="/settings"
                     onClick={() => setIsMenuOpen(false)}
                     className="w-full text-center px-4 py-2 rounded-md bg-white text-gray-700 hover:bg-gray-50"
                   >
-                    Profile
+                    Settings
                   </Link>
 
                   {user?.role === "learner" && (
@@ -270,11 +282,21 @@ const Header = () => {
                       My Courses
                     </Link>
                   )}
+                  {user?.role === "instructor" && (
+                    <Link
+                      to="/dashboard-instructor"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="w-full text-center px-4 py-2 rounded-md bg-white text-gray-700 hover:bg-gray-50"
+                    >
+                      Dashboard
+                    </Link>
+                  )}
 
                   <button
-                    onClick={() => {
-                      logout();
+                    onClick={async () => {
+                      await logout();
                       setIsMenuOpen(false);
+                      navigate("/login");
                     }}
                     className="w-full text-center px-4 py-2 rounded-md bg-red-50 text-red-600 hover:bg-red-100"
                   >

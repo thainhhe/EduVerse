@@ -1,18 +1,60 @@
-import { Link } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useEnrollment } from "@/context/EnrollmentContext";
+import { enrollmentService } from "@/services/enrollmentService";
 
 const PaymentConfirmationPage = () => {
-  // Dữ liệu này sẽ được truyền từ trang trước hoặc lấy từ API
-  const transactionDetails = {
-    courseName: "Advanced React Development",
-    transactionId: "TXN-83749201-XYZ",
-    amountPaid: 199.99,
+  const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const orderId = queryParams.get("id");
+  const orderCode = queryParams.get("orderCode");
+  const status = queryParams.get("status");
+  const code = queryParams.get("code");
+  const { user } = useAuth();
+  const { courseId, courseTitle, coursePrice } = location.state || {};
+  console.log(
+    "courseId, courseTitle, coursePrice",
+    courseId,
+    courseTitle,
+    coursePrice
+  );
+  const [courseInfo, setCourseInfo] = useState({});
+  const { refreshEnrollments } = useEnrollment();
+
+  const createEnrollment = async () => {
+    await enrollmentService.createEnrollment({
+      userId: user._id,
+      courseId: courseInfo.courseId,
+      enrollmentDate: Date.now(),
+      status: "enrolled",
+      grade: "Incomplete",
+    });
   };
+
+  useEffect(() => {
+    if (status === "PAID") {
+      createEnrollment();
+    }
+  }, [status]);
+  const handleContinue = () => {
+    refreshEnrollments();
+    navigate(`/dashboard`);
+  };
+  useEffect(() => {
+    const savedInfo = localStorage.getItem("payment_course_info");
+    console.log("savedInfo", savedInfo);
+    if (savedInfo) {
+      setCourseInfo(JSON.parse(savedInfo));
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg text-center bg-white p-8 sm:p-12 rounded-xl shadow-lg">
+      <div className="w-full max-w-2xl text-center bg-white p-8 sm:p-12 rounded-xl shadow-lg">
         <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-6" />
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
           Payment Successful!
@@ -24,31 +66,44 @@ const PaymentConfirmationPage = () => {
 
         <div className="bg-gray-50 rounded-lg p-6 text-left space-y-4 mb-8 border">
           <div className="flex justify-between">
-            <span className="text-gray-500">Course Name:</span>
+            <span className="text-gray-500">OrderID:</span>
+            <span className="font-medium text-gray-800">{orderId}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-500">Course Title:</span>
             <span className="font-medium text-gray-800">
-              {transactionDetails.courseName}
+              {courseInfo?.courseTitle}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Transaction ID:</span>
+            <span className="text-gray-500">Course Price:</span>
             <span className="font-medium text-gray-800">
-              {transactionDetails.transactionId}
+              {courseInfo?.coursePrice?.toLocaleString("vi-VN", {
+                style: "currency",
+                currency: "VND",
+              })}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">Amount Paid:</span>
-            <span className="font-medium text-gray-800">
-              ${transactionDetails.amountPaid}
-            </span>
+            <span className="text-gray-500">Order Code:</span>
+            <span className="font-medium text-gray-800">{orderCode}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-500">Status:</span>
+            <span className="font-medium text-gray-800">${status}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-500">Code:</span>
+            <span className="font-medium text-gray-800">{code}</span>
           </div>
         </div>
 
         <Button
           size="lg"
-          asChild
+          onClick={handleContinue}
           className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700"
         >
-          <Link to="/learning/1">Continue Learning</Link>
+          Continue Learning
         </Button>
       </div>
     </div>

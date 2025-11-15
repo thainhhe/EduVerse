@@ -2,6 +2,12 @@ const yup = require("yup");
 
 const reviewValidator = {
     createReviewSchema: yup.object().shape({
+        userId: yup
+            .string()
+            .required("User ID is required."),
+        courseId: yup
+            .string()
+            .required("Course ID is required."),
         rating: yup
             .number()
             .required("Rating is required.")

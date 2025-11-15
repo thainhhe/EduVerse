@@ -1,25 +1,17 @@
-const express = require('express');
-const materialRouter = express.Router();
-const materialController = require('../controllers/lesson/material.controller');
-const { uploadFile } = require('../middlewares/system/materialUpload.middleware');
+// routes/material.route.js
+const express = require("express");
+const router = express.Router();
+const materialController = require("../controllers/lesson/material.controller");
+const upload = require("../middlewares/system/materialUpload.middleware");
 
-// get all materials
-materialRouter.get('/', materialController.getAllMaterials);
-// get material by id
-materialRouter.get('/:id', materialController.getMaterialById);
-// get materials by type
-materialRouter.get('/type/:type', materialController.getMaterialsByType);
-// get materials by user
-materialRouter.get('/user/:userId', materialController.getMaterialsByUser);
-// create material with link
-materialRouter.post('/link', materialController.createMaterialWithLink);
-// upload material file
-materialRouter.post('/upload', uploadFile, materialController.uploadMaterial);
-// update material
-materialRouter.put('/:id', materialController.updateMaterial);
-// delete material
-materialRouter.delete('/:id', materialController.deleteMaterial);
-// track material download
-materialRouter.post('/:id/download', materialController.trackDownload);
+// POST /api/v1/material
+router.post("/", upload.single("file"), materialController.uploadMaterial);
+// get /api/v1/material
+// Lấy tất cả các material theo lessonId
+// 📦 Lấy tất cả material theo lessonId
+router.get("/:lessonId", materialController.getMaterialsByLessonId);
 
-module.exports = materialRouter;
+// GET /api/v1/material/:id/view
+router.get("/:id/view", materialController.getMaterialView);
+
+module.exports = router;

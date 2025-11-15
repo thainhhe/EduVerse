@@ -4,21 +4,23 @@ const SideBar = () => {
     const navItems = [
         { name: "Modules", path: "modules" },
         { name: "Room Meeting", path: "room-meeting" },
+        { name: "Forums", path: "forums" },
         { name: "Announcements", path: "announcements" },
-        { name: "Grades", path: "grades" },
+        { name: "Permissions", path: "permissions" },
     ];
 
     return (
-        <aside className="w-64 p-4">
-            <nav className="space-y-1">
+        <aside className="w-64">
+            <nav className="space-y-1 pt-4">
                 {navItems.map((item) => (
                     <NavLink
                         key={item.path}
                         to={item.path}
                         className={({ isActive }) =>
-                            `block w-full rounded-md px-3 py-2 text-sm font-medium ${isActive
-                                ? "bg-muted text-indigo-600"
-                                : "text-foreground hover:bg-muted"
+                            `block w-full px-3 py-2 text-sm font-medium ${
+                                isActive
+                                    ? "bg-white text-indigo-600 border border-white border-l-2 border-l-indigo-600"
+                                    : "text-foreground hover:bg-muted"
                             }`
                         }
                     >

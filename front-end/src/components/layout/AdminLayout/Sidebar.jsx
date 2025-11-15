@@ -18,12 +18,12 @@ const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "User Management", href: "/admin/users", icon: Users },
   { name: "Course Management", href: "/admin/courses", icon: Book },
-  { name: "Comment Management", href: "#", icon: MessageSquare },
-  { name: "Notifications", href: "#", icon: Bell },
-  { name: "Analytics", href: "#", icon: BarChart2 },
-  { name: "Chatbot Management", href: "#", icon: Bot },
-  { name: "System Settings", href: "#", icon: Settings },
-  { name: "Admin Profile", href: "#", icon: UserCircle },
+  { name: "Comment Management", href: "/admin/comments", icon: MessageSquare },
+  // { name: "Notifications", href: "#", icon: Bell },
+  // { name: "Analytics", href: "/admin/analytics", icon: BarChart2 },
+  { name: "Chatbot Management", href: "/admin/chatbot", icon: Bot },
+  // { name: "System Settings", href: "#", icon: Settings },
+  { name: "Admin Profile", href: "/admin/profile", icon: UserCircle },
 ];
 
 export function Sidebar({ className }) {

@@ -86,6 +86,7 @@ const forumService = {
     try {
       const forum = await Forum.findOne({
         courseId: new mongoose.Types.ObjectId(courseId),
+        isPublic: true,
       });
       // .populate("courseId", "title description")
       // .sort({ createdAt: -1 });

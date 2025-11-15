@@ -10,10 +10,17 @@ const { courseRepository } = require("../../repositories/course.repository");
 const userService = {
     getProfile: async (id) => {
         try {
-            if (!id) return { status: system_enum.STATUS_CODE.CONFLICT, message: user_enum.USER_MESSAGE.FAIL_GET_DATA };
+            if (!id)
+                return {
+                    status: system_enum.STATUS_CODE.CONFLICT,
+                    message: user_enum.USER_MESSAGE.FAIL_GET_DATA,
+                };
             const result = await userRepository.findById(id);
             if (!result)
-                return { status: system_enum.STATUS_CODE.NOT_FOUND, message: user_enum.USER_MESSAGE.USER_NOT_FOUND };
+                return {
+                    status: system_enum.STATUS_CODE.NOT_FOUND,
+                    message: user_enum.USER_MESSAGE.USER_NOT_FOUND,
+                };
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: user_enum.USER_MESSAGE.GET_PROFILE_SUCCESS,
@@ -27,7 +34,10 @@ const userService = {
         try {
             const result = await courseRepository.getInstructor_sort_by_rating();
             if (!result)
-                return { status: system_enum.STATUS_CODE.NOT_FOUND, message: user_enum.USER_MESSAGE.USER_NOT_FOUND };
+                return {
+                    status: system_enum.STATUS_CODE.NOT_FOUND,
+                    message: user_enum.USER_MESSAGE.USER_NOT_FOUND,
+                };
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: user_enum.USER_MESSAGE.GET_PROFILE_SUCCESS,
@@ -70,10 +80,17 @@ const userService = {
 
     closeAccount: async (id) => {
         try {
-            if (!id) return { status: system_enum.STATUS_CODE.CONFLICT, message: user_enum.USER_MESSAGE.FAIL_GET_DATA };
+            if (!id)
+                return {
+                    status: system_enum.STATUS_CODE.CONFLICT,
+                    message: user_enum.USER_MESSAGE.FAIL_GET_DATA,
+                };
             const user = await userRepository.close(id);
             if (!user)
-                return { status: system_enum.STATUS_CODE.NOT_FOUND, message: user_enum.USER_MESSAGE.USER_NOT_FOUND };
+                return {
+                    status: system_enum.STATUS_CODE.NOT_FOUND,
+                    message: user_enum.USER_MESSAGE.USER_NOT_FOUND,
+                };
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: user_enum.USER_MESSAGE.CLOSE_ACCOUNT_SUCCESS,
@@ -87,7 +104,10 @@ const userService = {
     requestResetPassword: async (email) => {
         try {
             if (!email)
-                return { status: system_enum.STATUS_CODE.CONFLICT, message: user_enum.USER_MESSAGE.FAIL_GET_DATA };
+                return {
+                    status: system_enum.STATUS_CODE.CONFLICT,
+                    message: user_enum.USER_MESSAGE.FAIL_GET_DATA,
+                };
             const user = await userRepository.findByEmail(email);
             if (!user)
                 return {

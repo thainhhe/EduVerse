@@ -21,7 +21,7 @@ const paymentService = {
             const amount = data.total_amount;
             const description = data.description || `Thanh toan hoa don`;
             const returnUrl = `${FRONTEND_URL}/checkout/success`;
-            const cancelUrl = `${FRONTEND_URL}/checkout/cancel`;
+            const cancelUrl = `${FRONTEND_URL}/checkout/fail`;
 
             const paymentData = {
                 orderCode: orderCode,

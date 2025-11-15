@@ -2,6 +2,9 @@
 # Node.js / Express Backend
 # =========================
 
+# Front-end test files
+my-drive-app/
+
 # Node modules
 node_modules/
 

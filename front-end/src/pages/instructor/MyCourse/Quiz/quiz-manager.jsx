@@ -1,288 +1,531 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { QuestionForm } from "./question-form";
 import { QuestionGrid } from "./question-grid";
 import { ImportSection } from "./import-section";
 import { Button } from "@/components/ui/button";
 import { notifySuccess } from "@/lib/toastHelper";
-import { createQuiz, updateQuiz } from "@/services/courseService";
+import {
+    createQuiz,
+    updateQuiz,
+    getQuizzesByCourse,
+    getQuizzesByModule,
+    getQuizzesByLesson,
+    getQuizById,
+} from "@/services/courseService";
+import { Trash2, Plus, CloverIcon, X } from "lucide-react";
 
 const QuizManager = ({
-  mode = "add",
-  quizData = null,
-  courseId,
-  moduleId,
-  lessonId,
-  onClose,
+    mode: initialMode = "list", // default show list
+    quizData: initialQuizData = null,
+    courseId,
+    moduleId,
+    lessonId,
+    onClose,
 }) => {
-  const [quizInfo, setQuizInfo] = useState({
-    title: "",
-    description: "",
-    timeLimit: 0,
-    passingScore: 0,
-    attemptsAllowed: 1,
-    isPublished: false,
-  });
+    const [mode, setMode] = useState(initialMode); // 'list' | 'add' | 'edit'
+    const [quizzes, setQuizzes] = useState([]);
+    const [loadingList, setLoadingList] = useState(false);
 
-  console.log({ quizData, courseId, moduleId, lessonId });
-  const [questions, setQuestions] = useState([]);
+    const [quizInfo, setQuizInfo] = useState({
+        title: "",
+        description: "",
+        timeLimit: 0,
+        passingScore: 0,
+        attemptsAllowed: 1,
+        isPublished: false,
+    });
+    const [questions, setQuestions] = useState([]);
+    const [editingQuizId, setEditingQuizId] = useState(null);
 
-  useEffect(() => {
-    if (mode === "edit" && quizData) {
-      setQuizInfo({
-        title: quizData.title || "",
-        description: quizData.description || "",
-        timeLimit: quizData.timeLimit || 0,
-        passingScore: quizData.passingScore || 0,
-        attemptsAllowed: quizData.attemptsAllowed || 1,
-        isPublished: quizData.isPublished || false,
-      });
-
-      setQuestions(
-        quizData.questions?.map((q, idx) => ({
-          id: `Q-${idx + 1}`,
-          text: q.questionText,
-          type: q.questionType || "multiple_choice",
-          options: q.options.map((opt) => ({
-            id: crypto.randomUUID(),
-            text: opt,
-            isCorrect: q.correctAnswer.includes(opt),
-          })),
-          explanation: q.explanation || "",
-          points: q.points || 1,
-        })) || []
-      );
-    }
-  }, [mode, quizData]);
-
-  const handleAddQuestion = (question) => {
-    const newQuestion = {
-      ...question,
-      id: `Q-${String(
-        Math.max(
-          ...questions.map((q) => Number.parseInt(q.id.split("-")[1])),
-          1000
-        ) + 1
-      )}`,
-    };
-    setQuestions([...questions, newQuestion]);
-  };
-
-  const handleDeleteQuestion = (id) =>
-    setQuestions(questions.filter((q) => q.id !== id));
-  const handleEditQuestion = (id, updatedQuestion) =>
-    setQuestions(questions.map((q) => (q.id === id ? updatedQuestion : q)));
-
-  // ✅ Gửi toàn bộ quiz lên backend (sử dụng courseService API)
-  const handleSaveQuiz = async () => {
-    const title = (quizInfo.title ?? "").trim();
-    if (!title) return alert("Please enter quiz title!");
-
-    // normalize question type from UI -> backend enum (multiple_choice / true_false / checkbox)
-    const normalizeType = (t) =>
-      (t ?? "").toString().replace(/[-\s]/g, "_").toLowerCase();
-
-    const normalizedQuestions = (questions || [])
-      .map((q, idx) => {
-        const questionText = ((q.text ?? q.questionText) + "").trim();
-        const optionsArr = (q.options || [])
-          .map((opt) =>
-            typeof opt === "string" ? opt : (opt?.text ?? "").trim()
-          )
-          .filter(Boolean);
-        const correct = (q.options || [])
-          .filter((opt) => opt?.isCorrect)
-          .map((opt) =>
-            typeof opt === "string" ? opt : (opt?.text ?? "").trim()
-          )
-          .filter(Boolean);
-
-        if (!questionText || optionsArr.length === 0) return null;
-
+    // Normalize server quiz -> local editor shape if needed
+    const mapServerToLocal = (q) => {
+        if (!q) return null;
         return {
-          questionText,
-          questionType: normalizeType(q.type) || "multiple_choice",
-          options: optionsArr,
-          correctAnswer: correct.length ? correct : [],
-          explanation: (q.explanation ?? "").trim() || undefined,
-          points: Number(q.points) || 1,
-          order: idx + 1,
+            id: q._id ?? q.id ?? q.quizId ?? null,
+            title: q.title ?? q.name ?? "",
+            description: q.description ?? q.desc ?? "",
+            timeLimit: q.timeLimit ?? q.duration ?? 0,
+            passingScore: q.passingScore ?? q.passing ?? 0,
+            attemptsAllowed: q.attemptsAllowed ?? q.attempt ?? 1,
+            isPublished: !!q.isPublished,
+            questions:
+                (q.questions || q.items || []).map((qq) => ({
+                    questionText: qq.questionText ?? qq.text ?? "",
+                    questionType: qq.questionType ?? qq.type ?? "multiple_choice",
+                    options: qq.options ?? qq.choices ?? [],
+                    correctAnswer: qq.correctAnswer ?? qq.answer ?? [],
+                    explanation: qq.explanation ?? qq.feedback ?? "",
+                    points: qq.points ?? 1,
+                })) || [],
         };
-      })
-      .filter(Boolean);
-
-    if (normalizedQuestions.length === 0)
-      return alert("Please add at least one valid question with options.");
-
-    // choose single scope id only
-    const isObjectId = (id) =>
-      typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
-    const scope = {};
-    if (isObjectId(lessonId)) scope.lessonId = lessonId;
-    else if (isObjectId(moduleId)) scope.moduleId = moduleId;
-    else if (isObjectId(courseId)) scope.courseId = courseId;
-
-    const payload = {
-      title,
-      description: (quizInfo.description ?? "").trim() || undefined,
-      timeLimit: Number(quizInfo.timeLimit) || 0,
-      passingScore: Number(quizInfo.passingScore) || 0,
-      attemptsAllowed: Number(quizInfo.attemptsAllowed) || 1,
-      isPublished: !!quizInfo.isPublished,
-      questions: normalizedQuestions,
-      ...scope, // only one of courseId/moduleId/lessonId will be included
     };
 
-    try {
-      const res =
-        mode === "edit" && quizData?.id
-          ? await updateQuiz(quizData.id, payload)
-          : await createQuiz(payload);
-
-      // normalize/detect success for various response shapes:
-      const normalizeSuccess = (r) => {
-        if (!r) return false;
-        // axios response with HTTP status
-        if (typeof r.status === "number")
-          return r.status >= 200 && r.status < 300;
-        // axios response with .data wrapper
-        if (r.data && typeof r.data === "object") {
-          if (typeof r.data.success === "boolean")
-            return r.data.success === true;
-          if (r.data.id || r.data._id) return true;
+    const loadQuizzes = useCallback(async () => {
+        const scopeName = lessonId ? "lesson" : moduleId ? "module" : courseId ? "course" : null;
+        if (!scopeName) {
+            setQuizzes([]);
+            return;
         }
-        // direct object returned (no wrapper)
-        if (typeof r.success === "boolean") return r.success === true;
-        if (r.id || r._id) return true;
-        return false;
-      };
+        setLoadingList(true);
+        try {
+            let res;
+            if (lessonId) res = await getQuizzesByLesson(lessonId);
+            else if (moduleId) res = await getQuizzesByModule(moduleId);
+            else res = await getQuizzesByCourse(courseId);
 
-      if (normalizeSuccess(res)) {
-        notifySuccess("Thêm quizzz thành công!");
-        onClose();
-      } else {
-        console.error("Save quiz failed:", res?.data ?? res);
-        alert("❌ Failed to save quiz. See console/server response.");
-      }
-    } catch (err) {
-      console.error("Save quiz error:", err.response?.data ?? err);
-      const serverMsg =
-        err.response?.data?.message ?? err.response?.data ?? err.message;
-      alert(
-        "Failed to save quiz: " +
-          (typeof serverMsg === "string"
-            ? serverMsg
-            : JSON.stringify(serverMsg))
-      );
-    }
-  };
+            // courseService returns axios .get result (api interceptor returns response.data)
+            // normalize to array
+            const arr = Array.isArray(res)
+                ? res
+                : Array.isArray(res?.data)
+                ? res.data
+                : Array.isArray(res?.data?.data)
+                ? res.data.data
+                : res?.data?.items ?? [];
+            // map to minimal preview info
+            const mapped = (arr || []).map((q) => ({
+                id: q._id ?? q.id ?? q.quizId ?? null,
+                title: q.title ?? q.name ?? "(untitled)",
+                isPublished: !!q.isPublished,
+                raw: q,
+            }));
+            setQuizzes(mapped);
+        } catch (err) {
+            console.error("Failed to load quizzes:", err);
+            setQuizzes([]);
+        } finally {
+            setLoadingList(false);
+        }
+    }, [courseId, moduleId, lessonId]);
 
-  return (
-    <div className="p-6 bg-background">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="mb-6 text-2xl font-bold text-foreground">
-          Quiz Builder
-        </h1>
+    useEffect(() => {
+        loadQuizzes();
+    }, [loadQuizzes]);
 
-        {/* --- Quiz Metadata Form --- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <div>
-            <label className="text-sm font-medium">Quiz Title</label>
-            <input
-              type="text"
-              className="w-full border rounded-lg p-2 mt-1"
-              placeholder="Enter quiz title..."
-              value={quizInfo.title}
-              onChange={(e) =>
-                setQuizInfo({ ...quizInfo, title: e.target.value })
-              }
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Time Limit (minutes)</label>
-            <input
-              type="number"
-              className="w-full border rounded-lg p-2 mt-1"
-              value={quizInfo.timeLimit}
-              onChange={(e) =>
-                setQuizInfo({ ...quizInfo, timeLimit: Number(e.target.value) })
-              }
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Passing Score (%)</label>
-            <input
-              type="number"
-              className="w-full border rounded-lg p-2 mt-1"
-              value={quizInfo.passingScore}
-              onChange={(e) =>
-                setQuizInfo({
-                  ...quizInfo,
-                  passingScore: Number(e.target.value),
+    // prepare editor for new quiz
+    const startAdd = () => {
+        setMode("add");
+        setEditingQuizId(null);
+        setQuizInfo({
+            title: "",
+            description: "",
+            timeLimit: 0,
+            passingScore: 0,
+            attemptsAllowed: 1,
+            isPublished: false,
+        });
+        setQuestions([]);
+    };
+
+    // open existing quiz for edit (fetch full quiz with answers when needed)
+    const startEdit = async (quizRaw) => {
+        const local = mapServerToLocal(quizRaw);
+        if (!local) return;
+
+        // If questions exist but seem to lack correctAnswer info, try fetching full quiz
+        let source = local;
+        try {
+            const firstQ = (local.questions || [])[0];
+            const missingCorrect =
+                firstQ &&
+                (!("correctAnswer" in firstQ) ||
+                    (Array.isArray(firstQ.correctAnswer) && firstQ.correctAnswer.length === 0));
+            if (missingCorrect && local.id) {
+                const res = await getQuizById(`${local.id}?includeAnswers=true`);
+                const quizObj = res?.data?.data ?? res?.data ?? res;
+                const full = mapServerToLocal(quizObj);
+                if (full) source = full;
+            }
+        } catch (err) {
+            console.warn("Failed to fetch full quiz (includeAnswers); using provided data.", err);
+        }
+
+        setMode("edit");
+        setEditingQuizId(source.id);
+        setQuizInfo({
+            title: source.title,
+            description: source.description,
+            timeLimit: source.timeLimit,
+            passingScore: source.passingScore,
+            attemptsAllowed: source.attemptsAllowed,
+            isPublished: source.isPublished,
+        });
+
+        // map to UI question shape used in QuestionForm/QuestionGrid
+        const mappedQuestions = (source.questions || []).map((q, idx) => {
+            const correctArr = Array.isArray(q.correctAnswer) ? q.correctAnswer : [];
+            const hasNumeric = correctArr.some((c) => typeof c === "number" || /^\d+$/.test(String(c)));
+            const hasIdLike = correctArr.some((c) => typeof c === "string" && /^[0-9a-fA-F]{24}$/.test(c));
+
+            const options = (q.options || []).map((opt, i) => {
+                const text = typeof opt === "string" ? opt : opt?.text ?? "";
+                let isCorrect = false;
+
+                if (hasNumeric) {
+                    const numericSet = new Set(correctArr.map((c) => Number(c)));
+                    isCorrect = numericSet.has(i);
+                } else if (hasIdLike && typeof opt === "object" && opt.id) {
+                    isCorrect = correctArr.includes(String(opt.id));
+                } else {
+                    // compare by text/value
+                    isCorrect = correctArr.some((c) => String(c) === String(text));
+                }
+
+                return typeof opt === "string"
+                    ? { id: String(i + 1), text, isCorrect }
+                    : { ...opt, id: opt.id ?? String(i + 1), text, isCorrect };
+            });
+
+            return {
+                id: `Q-${idx + 1}`,
+                text: q.questionText,
+                type: (q.questionType || "multiple_choice").toString().replace(/_/g, "-"),
+                options,
+                explanation: q.explanation || "",
+                points: q.points || 1,
+                _originalCorrectAnswer: correctArr,
+            };
+        });
+        setQuestions(mappedQuestions);
+    };
+
+    const handleSaveQuiz = async () => {
+        const title = (quizInfo.title ?? "").trim();
+        if (!title) return alert("Please enter quiz title!");
+
+        const normalizeType = (t) => (t ?? "").toString().replace(/[-\s]/g, "_").toLowerCase();
+
+        let normalizedQuestions;
+        try {
+            normalizedQuestions = (questions || [])
+                .map((q, idx) => {
+                    const questionText = ((q.text ?? q.questionText) + "").trim();
+
+                    const rawOptions = q.options || [];
+                    const optionTexts = rawOptions
+                        .map((opt) => (typeof opt === "string" ? opt : (opt?.text ?? "").toString().trim()))
+                        .filter(Boolean);
+
+                    // Build correct answers:
+                    // 1) prefer explicit isCorrect flags on option objects
+                    // 2) else fallback to stored _originalCorrectAnswer (could be indices / texts / ids)
+                    let correct = [];
+                    const optsWithFlags = rawOptions.filter(
+                        (opt) => opt && typeof opt === "object" && "isCorrect" in opt
+                    );
+
+                    if (optsWithFlags.length) {
+                        correct = rawOptions
+                            .filter((opt) => opt && typeof opt === "object" && opt.isCorrect)
+                            .map((opt) => (typeof opt === "string" ? opt : (opt?.text ?? "").toString().trim()))
+                            .filter(Boolean);
+                    } else if (Array.isArray(q._originalCorrectAnswer) && q._originalCorrectAnswer.length) {
+                        const orig = q._originalCorrectAnswer;
+                        const hasNumeric = orig.some((c) => typeof c === "number" || /^\d+$/.test(String(c)));
+                        const hasIdLike = orig.some((c) => typeof c === "string" && /^[0-9a-fA-F]{24}$/.test(c));
+
+                        if (hasNumeric) {
+                            correct = orig
+                                .map((c) => {
+                                    const idxOpt = Number(c);
+                                    return optionTexts[idxOpt] ?? null;
+                                })
+                                .filter(Boolean);
+                        } else if (hasIdLike) {
+                            // try to match option.id -> optionTexts
+                            correct = rawOptions
+                                .map((opt) => {
+                                    if (opt && typeof opt === "object" && opt.id && orig.includes(String(opt.id))) {
+                                        return opt.text ?? "";
+                                    }
+                                    return null;
+                                })
+                                .filter(Boolean);
+                        } else {
+                            // assume orig are texts
+                            correct = orig.map((c) => String(c)).filter((c) => optionTexts.includes(c));
+                        }
+                    } else if (Array.isArray(q.correctAnswer) && q.correctAnswer.length) {
+                        correct = q.correctAnswer
+                            .map((c) => (typeof c === "number" ? optionTexts[c] : c))
+                            .map((c) => (c ?? "").toString().trim())
+                            .filter((c) => optionTexts.includes(c));
+                    } else {
+                        // no flags and no original correct info -> try infer (none)
+                        correct = [];
+                    }
+
+                    if (!questionText || optionTexts.length === 0) return null;
+                    if (!correct || correct.length === 0) {
+                        // surface friendly error and stop saving
+                        throw new Error(`Question ${idx + 1} requires at least one correct answer`);
+                    }
+
+                    return {
+                        questionText,
+                        questionType: normalizeType(q.type) || "multiple_choice",
+                        options: optionTexts,
+                        correctAnswer: correct,
+                        explanation: (q.explanation ?? "").trim() || undefined,
+                        points: Number(q.points) || 1,
+                        order: idx + 1,
+                    };
                 })
-              }
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Attempts Allowed</label>
-            <input
-              type="number"
-              className="w-full border rounded-lg p-2 mt-1"
-              value={quizInfo.attemptsAllowed}
-              onChange={(e) =>
-                setQuizInfo({
-                  ...quizInfo,
-                  attemptsAllowed: Number(e.target.value),
-                })
-              }
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="text-sm font-medium">Description</label>
-            <textarea
-              className="w-full border rounded-lg p-2 mt-1"
-              rows={2}
-              placeholder="Short description about this quiz..."
-              value={quizInfo.description}
-              onChange={(e) =>
-                setQuizInfo({ ...quizInfo, description: e.target.value })
-              }
-            />
-          </div>
-        </div>
+                .filter(Boolean);
+        } catch (mapErr) {
+            console.error("Quiz mapping error:", mapErr);
+            return alert(mapErr.message || "Question mapping error. Check questions and correct answers.");
+        }
 
-        {/* --- Questions Section --- */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-1">
-            <QuestionForm onAddQuestion={handleAddQuestion} />
-          </div>
-          <div className="lg:col-span-1">
-            <QuestionGrid
-              questions={questions}
-              onDeleteQuestion={handleDeleteQuestion}
-              onEditQuestion={handleEditQuestion}
-            />
-          </div>
-          <div className="lg:col-span-1">
-            <ImportSection
-              onImportQuestions={(imported) =>
-                setQuestions([...questions, ...imported])
-              }
-            />
-          </div>
-        </div>
+        if (normalizedQuestions.length === 0)
+            return alert("Please add at least one valid question with options and correct answer.");
 
-        {/* --- Save Button --- */}
-        <div className="mt-8 flex justify-end">
-          <Button
-            onClick={handleSaveQuiz}
-            className="bg-indigo-600 text-white hover:bg-indigo-700"
-          >
-            Save Quiz
-          </Button>
+        const isObjectId = (id) => typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
+        const scope = {};
+        if (isObjectId(lessonId)) scope.lessonId = lessonId;
+        else if (isObjectId(moduleId)) scope.moduleId = moduleId;
+        else if (isObjectId(courseId)) scope.courseId = courseId;
+
+        const payload = {
+            title: title,
+            description: (quizInfo.description ?? "").trim() || undefined,
+            timeLimit: Number(quizInfo.timeLimit) || 0,
+            passingScore: Number(quizInfo.passingScore) || 0,
+            attemptsAllowed: Number(quizInfo.attemptsAllowed) || 1,
+            isPublished: !!quizInfo.isPublished,
+            questions: normalizedQuestions,
+            ...scope,
+        };
+
+        try {
+            const res =
+                mode === "edit" && editingQuizId ? await updateQuiz(editingQuizId, payload) : await createQuiz(payload);
+
+            const ok =
+                (res && res.status >= 200 && res.status < 300) ||
+                (res && res.data && (res.data.id || res.data._id)) ||
+                (res && (res.id || res._id));
+            if (ok) {
+                notifySuccess("Saved quiz successfully");
+                await loadQuizzes();
+                setMode("list");
+            } else {
+                console.error("Failed saving quiz:", res);
+                alert("Failed to save quiz. See console.");
+            }
+        } catch (err) {
+            console.error("Save quiz error:", err);
+            const msg = err?.message || err?.response?.data?.message || "server error";
+            alert("Failed to save quiz: " + msg);
+        }
+    };
+
+    const handleDelete = async (quizId) => {
+        if (!confirm("Delete this quiz?")) return;
+        try {
+            await fetch(`/quiz/${quizId}`, { method: "DELETE" }); // fallback if courseService.deleteQuiz not present
+            await loadQuizzes();
+        } catch (err) {
+            console.error("Delete failed", err);
+            alert("Delete failed");
+        }
+    };
+
+    return (
+        <div className="p-2 bg-white rounded-md">
+            <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Quiz Manager</h2>
+                <div className="flex gap-2">
+                    <Button
+                        variant="ghost"
+                        className="bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors duration-200"
+                        onClick={() => {
+                            setMode("list");
+                            startAdd();
+                        }}
+                    >
+                        <Plus /> New Quiz
+                    </Button>
+                    <Button
+                        onClick={onClose}
+                        className="bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors duration-200"
+                    >
+                        <X className="w-5 h-5" /> Close
+                    </Button>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* left: quizzes list */}
+                <div className="col-span-1 border rounded-md p-2 max-h-[60vh] overflow-auto">
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm text-muted-foreground">Quizzes</div>
+                        <div className="text-xs text-muted-foreground">
+                            {loadingList ? "Loading..." : `${quizzes.length}`}
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        {quizzes.map((q) => (
+                            <div
+                                key={q.id}
+                                className="p-2 border-1 rounded hover:bg-muted/50 flex items-center justify-between cursor-pointer"
+                                onClick={() => startEdit(q.raw)}
+                            >
+                                <div className="truncate">
+                                    <div className="font-medium">{q.title}</div>
+                                    <div className="text-xs text-muted-foreground">
+                                        {q.isPublished ? "Published" : "Draft"}
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        className="bg-white border p-1 rounded border-indigo-600 hover:bg-red-600 hover:text-white transition-colors duration-200 text-sm text-red-600"
+                                        onClick={() => handleDelete(q.id)}
+                                        title="Delete"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                        {quizzes.length === 0 && (
+                            <div className="text-sm text-muted-foreground">No quizzes found for this scope.</div>
+                        )}
+                    </div>
+                </div>
+
+                {/* middle: editor / details */}
+                <div className="col-span-1 lg:col-span-2">
+                    {mode === "list" && (
+                        <div className="p-4 border rounded-md">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-md font-semibold">Scope</h3>
+                                    <div className="text-sm text-muted-foreground">
+                                        {lessonId
+                                            ? `Lesson: ${lessonId}`
+                                            : moduleId
+                                            ? `Module: ${moduleId}`
+                                            : `Course: ${courseId}`}
+                                    </div>
+                                </div>
+                                <div>
+                                    <Button
+                                        onClick={startAdd}
+                                        className="bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors duration-200"
+                                    >
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Create Quiz
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div className="mt-4">
+                                <p className="text-sm text-muted-foreground">
+                                    Select a quiz from the left to edit, or create a new one.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {(mode === "add" || mode === "edit") && (
+                        <div className="space-y-4">
+                            {/* metadata */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-sm font-medium">Quiz Title</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg p-2 mt-1"
+                                        placeholder="Enter quiz title..."
+                                        value={quizInfo.title}
+                                        onChange={(e) => setQuizInfo({ ...quizInfo, title: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium">Time Limit (minutes)</label>
+                                    <input
+                                        type="number"
+                                        className="w-full border rounded-lg p-2 mt-1"
+                                        value={quizInfo.timeLimit}
+                                        onChange={(e) =>
+                                            setQuizInfo({
+                                                ...quizInfo,
+                                                timeLimit: Number(e.target.value),
+                                            })
+                                        }
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium">Passing Score (%)</label>
+                                    <input
+                                        type="number"
+                                        className="w-full border rounded-lg p-2 mt-1"
+                                        value={quizInfo.passingScore}
+                                        onChange={(e) =>
+                                            setQuizInfo({
+                                                ...quizInfo,
+                                                passingScore: Number(e.target.value),
+                                            })
+                                        }
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium">Attempts Allowed</label>
+                                    <input
+                                        type="number"
+                                        className="w-full border rounded-lg p-2 mt-1"
+                                        value={quizInfo.attemptsAllowed}
+                                        onChange={(e) =>
+                                            setQuizInfo({
+                                                ...quizInfo,
+                                                attemptsAllowed: Number(e.target.value),
+                                            })
+                                        }
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="text-sm font-medium">Description</label>
+                                    <textarea
+                                        className="w-full border rounded-lg p-2 mt-1"
+                                        rows={2}
+                                        placeholder="Short description..."
+                                        value={quizInfo.description}
+                                        onChange={(e) => setQuizInfo({ ...quizInfo, description: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Questions grid + add form */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <div>
+                                    <QuestionForm onAddQuestion={(q) => setQuestions((prev) => [...prev, q])} />
+                                </div>
+                                <div>
+                                    <QuestionGrid
+                                        questions={questions}
+                                        onDeleteQuestion={(id) => setQuestions(questions.filter((q) => q.id !== id))}
+                                        onEditQuestion={(id, updated) =>
+                                            setQuestions(questions.map((q) => (q.id === id ? updated : q)))
+                                        }
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-2">
+                                <Button variant="outline" onClick={() => setMode("list")}>
+                                    Cancel
+                                </Button>
+                                <Button onClick={handleSaveQuiz} className="bg-indigo-600 text-white">
+                                    Save Quiz
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default QuizManager;

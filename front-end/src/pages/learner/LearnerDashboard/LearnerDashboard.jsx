@@ -12,55 +12,12 @@ import { MdDashboard } from "react-icons/md";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useEnrollment } from "@/context/EnrollmentContext";
 
 const Dashboard = () => {
   const { user } = useAuth();
-
-  const enrolledCourses = [
-    {
-      id: 1,
-      title: "Advanced Web Development with React",
-      instructor: "Jane Doe",
-      progress: 75,
-      image: "/react-web-development.png",
-    },
-    {
-      id: 2,
-      title: "Introduction to Artificial Intelligence",
-      instructor: "John Smith",
-      progress: 40,
-      image: "/artificial-intelligence-network.png",
-    },
-    {
-      id: 3,
-      title: "UI/UX Design Fundamentals",
-      instructor: "Emily White",
-      progress: 90,
-      image: "/ui-ux-design-concept.png",
-    },
-    {
-      id: 4,
-      title: "Data Science for Beginners",
-      instructor: "Michael Green",
-      progress: 20,
-      image: "/data-science-concept.png",
-    },
-    {
-      id: 5,
-      title: "Music Theory and Composition",
-      instructor: "Sarah Brown",
-      progress: 60,
-      image: "/music-theory-guitar.jpg",
-    },
-    {
-      id: 6,
-      title: "Urban Planning and Development",
-      instructor: "David Lee",
-      progress: 85,
-      image: "/urban-planning-city.jpg",
-    },
-  ];
-
+  const { enrollments } = useEnrollment();
+  console.log("enrollments", enrollments);
   const upcomingDeadlines = [
     { title: "React Project Milestone 2", date: "2024-07-25" },
     { title: "AI Ethics Essay Submission", date: "2024-07-28" },
@@ -74,7 +31,7 @@ const Dashboard = () => {
       <div className="container mx-auto px-4">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Welcome Back, {user.name}!
+            Welcome Back, {user.username}!
           </h1>
           <p className="text-gray-600">
             Here's an overview of your progress and upcoming activities.
@@ -87,31 +44,44 @@ const Dashboard = () => {
             Your Enrolled Courses
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
-            {enrolledCourses.map((course) => (
+            {enrollments.map((course) => (
               <Card
                 key={course.id}
-                className="overflow-hidden hover:shadow-lg transition-shadow"
+                className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col"
               >
                 <img
-                  src={course.image || "/placeholder.svg"}
+                  src={course.thumbnail || "/placeholder.svg"}
                   alt={course.title}
                   className="w-full h-40 object-cover"
                 />
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-2">{course.title}</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    {course.instructor}
-                  </p>
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">
-                        Progress: {course.progress}%
-                      </span>
+                <CardContent className="p-6 flex flex-col flex-grow">
+                  <div className="flex-grow">
+                    <h3 className="text-lg font-semibold mb-2">
+                      {course.courseTitle}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      {course.instructor}
+                    </p>
+                    <div className="space-y-2 mb-4 flex-row">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">
+                          Date start:{" "}
+                          {new Date(course.lastAccessed).toLocaleDateString(
+                            "vi-VN"
+                          )}
+                        </span>
+                      </div>
+                      {/* <Progress value={course.progress} className="h-2" /> */}
                     </div>
-                    <Progress value={course.progress} className="h-2" />
                   </div>
-                  <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
-                    Continue Learning
+                  <Button
+                    asChild
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <Link to={`/courses/${course.courseId}`}>
+                      {" "}
+                      Continue Learning
+                    </Link>
                   </Button>
                 </CardContent>
               </Card>

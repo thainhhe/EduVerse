@@ -1,63 +1,97 @@
 import api from "./api";
+import { API_BASE_URL } from "@/config/constants";
 
-export const authService = {
+const authService = {
   login: async (email, password) => {
-    const response = await api.post("/auth/login", { email, password });
-    return response;
+    const res = await api.post("/auth/login", { email, password });
+    return res;
   },
 
-  register: async (userData) => {
-    const response = await api.post("/auth/register", userData);
-    return response;
+  register: async (payload) => {
+    const res = await api.post("/auth/register", payload);
+    return res;
+  },
+
+  changePassword: async (id, payload) => {
+    const res = await api.post(`/auth/change-password/${id}`, payload);
+    return res;
   },
 
   logout: async () => {
-    const response = await api.post("/auth/logout");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
-    return response;
-  },
-
-  // accept optional id; if id provided call /user/profile/:id which matches backend router
-  getCurrentUser: async (id = null) => {
-    if (id) {
-      const response = await api.get(`/users/profile/${id}`);
-      // api interceptor returns response.data already
-      return response;
-    }
-
-    // fallback: try common endpoints
-    const endpoints = ["/auth/me", "/auth/profile", "/users/me"];
-    for (const ep of endpoints) {
-      try {
-        const data = await api.get(ep);
-        return data;
-      } catch (err) {
-        if (err?.response?.status === 404) continue;
-        throw err;
-      }
-    }
-
-    const e = new Error("Current user endpoint not found");
-    e.response = { status: 404 };
-    throw e;
   },
 
   forgotPassword: async (email) => {
-    const response = await api.post("/auth/forgot-password", { email });
-    return response;
+    const res = await api.post("/users/reset-password", { email });
+    return res;
   },
 
-  resetPassword: async (token, newPassword) => {
-    const response = await api.post("/auth/reset-password", {
+  resetPassword: async (token, password) => {
+    const res = await api.post("/users/reset-password", {
       token,
-      newPassword,
+      password,
     });
-    return response;
+    return res;
   },
 
-  updateProfile: async (userData) => {
-    const response = await api.put("/auth/profile", userData);
-    return response;
+  verifyOtp: async (payload) => {
+    // backend: POST /api/v1/users/verify-otp
+    const res = await api.post("/users/verify-otp", payload);
+    return res;
+  },
+
+  getCurrentUser: async (id) => {
+    // nếu caller truyền id thì dùng luôn
+    if (id) {
+      const res = await api.get(`/users/profile/${id}`);
+      return res;
+    }
+
+    // lấy accessToken từ localStorage
+    const token = localStorage.getItem("accessToken");
+    if (!token) return null;
+
+    try {
+      const parts = token.split(".");
+      if (parts.length < 2) return null;
+
+      // base64url -> base64
+      const payloadBase64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+      // decode base64 and handle unicode
+      const decoded = decodeURIComponent(
+        Array.prototype.map
+          .call(atob(payloadBase64), (c) => {
+            return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+          })
+          .join("")
+      );
+      const payload = JSON.parse(decoded);
+      const userId = payload.id || payload._id || payload.sub || payload.userId;
+      if (!userId) return null;
+
+      const res = await api.get(`/users/profile/${userId}`);
+      return res;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  updateProfile: async (id, payload) => {
+    const res = await api.put(`/users/profile/${id}`, payload); // backend has PUT /profile/:id
+    return res;
+  },
+
+  googleSignIn: () => {
+    const base = (API_BASE_URL || "").replace(/\/+$/, "");
+    const url = `${base}/auth/google`;
+    window.location.href = url;
+  },
+
+  handleGoogleCallbackTokens: ({ accessToken, refreshToken }) => {
+    if (accessToken) localStorage.setItem("accessToken", accessToken);
+    if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
   },
 };
+
+export default authService;

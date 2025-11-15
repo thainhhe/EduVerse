@@ -1,61 +1,87 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { getMyCourses } from "@/services/courseService";
+import { useAuth } from "@/hooks/useAuth";
+import { getAllInstructor } from "@/services/userService";
+import { User } from "lucide-react";
 
 const Instructors = () => {
-  const [instructors] = useState([
-    {
-      id: 1,
-      name: "Instructor 1",
-      specialty: "Data Science",
-      image: "/female-instructor.png",
-    },
-    {
-      id: 2,
-      name: "Instructor 2",
-      specialty: "Web Development",
-      image: "/male-instructor-with-glasses.jpg",
-    },
-    {
-      id: 3,
-      name: "Instructor 3",
-      specialty: "Artificial Intelligence",
-      image: "/female-instructor-professional.jpg",
-    },
-    {
-      id: 4,
-      name: "Instructor 4",
-      specialty: "Graphic Design",
-      image: "/male-instructor-creative.jpg",
-    },
-    {
-      id: 5,
-      name: "Instructor 5",
-      specialty: "Cybersecurity",
-      image: "/male-instructor-security-expert.jpg",
-    },
-    {
-      id: 6,
-      name: "Instructor 6",
-      specialty: "Digital Marketing",
-      image: "/male-instructor-business.jpg",
-    },
-    {
-      id: 7,
-      name: "Instructor 7",
-      specialty: "UX/UI Design",
-      image: "/female-instructor-designer.jpg",
-    },
-    {
-      id: 8,
-      name: "Instructor 8",
-      specialty: "Cloud Computing",
-      image: "/male-instructor-tech-expert.jpg",
-    },
-  ]);
+  // const [instructors] = useState([
+  //   {
+  //     id: 1,
+  //     name: "Instructor 1",
+  //     specialty: "Data Science",
+  //     image: "/female-instructor.png",
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "Instructor 2",
+  //     specialty: "Web Development",
+  //     image: "/male-instructor-with-glasses.jpg",
+  //   },
+  //   {
+  //     id: 3,
+  //     name: "Instructor 3",
+  //     specialty: "Artificial Intelligence",
+  //     image: "/female-instructor-professional.jpg",
+  //   },
+  //   {
+  //     id: 4,
+  //     name: "Instructor 4",
+  //     specialty: "Graphic Design",
+  //     image: "/male-instructor-creative.jpg",
+  //   },
+  //   {
+  //     id: 5,
+  //     name: "Instructor 5",
+  //     specialty: "Cybersecurity",
+  //     image: "/male-instructor-security-expert.jpg",
+  //   },
+  //   {
+  //     id: 6,
+  //     name: "Instructor 6",
+  //     specialty: "Digital Marketing",
+  //     image: "/male-instructor-business.jpg",
+  //   },
+  //   {
+  //     id: 7,
+  //     name: "Instructor 7",
+  //     specialty: "UX/UI Design",
+  //     image: "/female-instructor-designer.jpg",
+  //   },
+  //   {
+  //     id: 8,
+  //     name: "Instructor 8",
+  //     specialty: "Cloud Computing",
+  //     image: "/male-instructor-tech-expert.jpg",
+  //   },
+  // ]);
+
+  const { user } = useAuth();
+  console.log("user", user)
+  const [instructors, setInstructors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const fetchInstructors = async () => {
+    setLoading(true);
+    const res = await getAllInstructor()
+    console.log("res", res)
+    if (res?.success) {
+      const data = res.data || [];
+      setInstructors(data)
+      console.log("data", data)
+    } else {
+      // ⚠️ Khi API trả về success = false
+      console.error("Lỗi từ server:", res?.message || "Không xác định");
+      ToastHelper.error(res?.message || "Đã xảy ra lỗi khi lấy danh sách khóa học!");
+    }
+  }
+  useEffect(() => {
+    fetchInstructors();
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -76,25 +102,27 @@ const Instructors = () => {
               className="hover:shadow-lg transition-shadow"
             >
               <CardContent className="flex flex-col items-center p-6 space-y-4">
-                <Avatar className="w-24 h-24">
-                  <AvatarImage
-                    src={instructor.image || "/placeholder.svg"}
-                    alt={instructor.name}
-                  />
-                  <AvatarFallback>{instructor.name.charAt(0)}</AvatarFallback>
+                <Avatar className="w-12 h-12">
+                  {instructor.avatar ? (
+                    <AvatarImage src={instructor.avatar} alt={instructor.username} />
+                  ) : (
+                    <AvatarFallback>
+                      <User className="w-6 h-6 text-gray-500" />
+                    </AvatarFallback>
+                  )}
                 </Avatar>
                 <h3 className="text-xl font-semibold text-gray-900">
-                  {instructor.name}
+                  {instructor.username}
                 </h3>
                 <Badge className="bg-indigo-600 hover:bg-indigo-700">
-                  {instructor.specialty}
+                  Total course: {instructor.totalCourses}
                 </Badge>
                 <Button
                   asChild
                   variant="outline"
                   className="w-full bg-transparent"
                 >
-                  <Link to={`/instructors/${instructor.id}`}>View Profile</Link>
+                  <Link to={`/instructors/${instructor.instructorId}`}>View Profile</Link>
                 </Button>
               </CardContent>
             </Card>
