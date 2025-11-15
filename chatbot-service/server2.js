@@ -21,6 +21,7 @@ const CHROMA_URL = "http://localhost:8000";
 const COLLECTION_NAME = "eduverse_rag";
 
 const { ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings } = gg;
+const { runSync } = require("./sync-data2"); // Import runSync để trigger đồng bộ từ endpoint
 
 // 1. Khởi tạo Model và Embeddings (Không đổi)
 const model = new ChatGoogleGenerativeAI({
@@ -340,4 +341,36 @@ function isCourseIntentText(text, knownCategories = []) {
 
 app.listen(PORT, () => {
   console.log(`Chatbot Service đang chạy ở http://localhost:${PORT}`);
+});
+
+// Endpoint bảo mật để trigger RAG sync (fire-and-forget)
+app.post("/trigger-sync", (req, res) => {
+  const incomingKey = req.headers["x-internal-api-key"];
+  const expectedKey = process.env.INTERNAL_API_KEY;
+  if (
+    !expectedKey ||
+    !incomingKey ||
+    String(incomingKey) !== String(expectedKey)
+  ) {
+    return res.status(403).json({ success: false, message: "Forbidden" });
+  }
+
+  // Fire-and-forget: gọi runSync nhưng không await
+  try {
+    runSync().catch((err) => {
+      console.error("[Trigger-Sync] runSync failed:", err?.message || err);
+    });
+  } catch (err) {
+    console.error(
+      "[Trigger-Sync] Failed to start runSync:",
+      err?.message || err
+    );
+  }
+
+  return res
+    .status(202)
+    .json({
+      success: true,
+      message: "Đã chấp nhận yêu cầu. Quá trình đồng bộ đang chạy ngầm.",
+    });
 });

@@ -1,8 +1,11 @@
+const axios = require("axios");
 const courseManagementRepository = require("../../repositories/admin/courseManagement.repository");
 const { course_enum } = require("../../config/enum/course.constants");
 const { system_enum } = require("../../config/enum/system.constant");
-const { sendCourseApprovalEmail,
-  sendCourseRejectionEmail, } = require("../../utils/mail.util");
+const {
+  sendCourseApprovalEmail,
+  sendCourseRejectionEmail,
+} = require("../../utils/mail.util");
 
 const courseManagementService = {
   getAllCourses: async () => {
@@ -87,13 +90,12 @@ const courseManagementService = {
         console.log("Chuẩn bị gửi mail. Thông tin giảng viên:", instructor);
 
         if (instructor && instructor.email) {
-
           // <-- 🚀 THÊM DÒNG NÀY ĐỂ KIỂM TRA
           console.log(`Đang gửi mail approve tới: ${instructor.email}`);
 
           await sendCourseApprovalEmail(
             instructor.email,
-            instructor.username || 'Giảng viên',
+            instructor.username || "Giảng viên",
             courseTitle
           );
         } else {
@@ -104,13 +106,50 @@ const courseManagementService = {
         console.error("Failed to send approval email:", emailError);
       }
 
+      // Trigger RAG sync (fire-and-forget) so search/index cập nhật
+      try {
+        const CHATBOT_SERVICE_URL = process.env.CHATBOT_SERVICE_URL;
+        const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY;
+        if (!CHATBOT_SERVICE_URL || !INTERNAL_API_KEY) {
+          console.warn(
+            "[triggerRagSync] CHATBOT_SERVICE_URL or INTERNAL_API_KEY missing; skipping trigger."
+          );
+        } else {
+          axios
+            .post(
+              `${CHATBOT_SERVICE_URL.replace(/\/$/, "")}/trigger-sync`,
+              null,
+              {
+                headers: { "x-internal-api-key": INTERNAL_API_KEY },
+                timeout: 3000,
+              }
+            )
+            .then(() => {
+              console.log(
+                "[triggerRagSync] Triggered chatbot-service /trigger-sync successfully."
+              );
+            })
+            .catch((err) => {
+              console.warn(
+                "[triggerRagSync] Failed to call /trigger-sync:",
+                err?.message || err
+              );
+            });
+        }
+      } catch (err) {
+        console.warn(
+          "[triggerRagSync] Unexpected error when triggering sync:",
+          err?.message || err
+        );
+      }
+
       return {
         status: system_enum.STATUS_CODE.OK,
         success: true,
-        message: 'Course approved and published successfully',
+        message: "Course approved and published successfully",
         data: {
           course: result.course,
-          quizzesPublished: result.quizzesPublished
+          quizzesPublished: result.quizzesPublished,
         },
       };
     } catch (error) {
@@ -122,13 +161,16 @@ const courseManagementService = {
   // Reject course
   rejectCourse: async (courseId, reasonReject) => {
     try {
-      if (!reasonReject || reasonReject.trim() === '') {
+      if (!reasonReject || reasonReject.trim() === "") {
         // ... (validation không đổi) ...
       }
 
       // 🌟 QUAN TRỌNG: Đảm bảo hàm rejectCourse của repo trả về
       // course object đã được populate 'main_instructor'
-      const result = await courseManagementRepository.rejectCourse(courseId, reasonReject);
+      const result = await courseManagementRepository.rejectCourse(
+        courseId,
+        reasonReject
+      );
 
       if (!result) {
         // ... (not found không đổi) ...
@@ -142,7 +184,7 @@ const courseManagementService = {
         if (instructor && instructor.email) {
           await sendCourseRejectionEmail(
             instructor.email,
-            instructor.username || 'Giảng viên',
+            instructor.username || "Giảng viên",
             courseTitle,
             reasonReject // Gửi kèm lý do
           );
@@ -156,14 +198,14 @@ const courseManagementService = {
       return {
         status: system_enum.STATUS_CODE.OK,
         success: true,
-        message: 'Course rejected successfully',
+        message: "Course rejected successfully",
         data: result,
       };
     } catch (error) {
       console.error("Error in rejectCourse:", error);
       // ... (error handling không đổi) ...
     }
-  }
+  },
 };
 
 module.exports = { courseManagementService };

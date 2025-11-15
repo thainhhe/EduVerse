@@ -3,6 +3,7 @@ import { useAuth } from "@hooks/useAuth";
 import MainLayout from "@components/layout/MainLayout";
 import PrivateRoute from "@routes/PrivateRoute";
 import PermissionBasedRoute from "@routes/PermissionBasedRoute";
+import React from "react";
 
 // Pages
 import Home from "@/pages/common/Home/Home";
@@ -49,6 +50,7 @@ import ChatbotManagementPage from "./pages/admin/ChatbotManagement/ChatbotManage
 import CommentManagementPage from "./pages/admin/CommentManagement/CommentManagementPage";
 import PaymentFailPage from "./pages/common/checkout/PaymentFailPage";
 import RoomList from "./pages/learner/RoomList/RoomList";
+import { ChatbotWidget } from "./components/chatbot/ChatbotWidget";
 
 function App() {
   const { loading } = useAuth();
@@ -63,83 +65,110 @@ function App() {
   }
 
   return (
-    <Routes>
-      {/* Public routes */}
-      <Route path="/" element={<MainLayout />}>
-        <Route index element={<Home />} />
-        <Route path="login" element={<Login />} />
-        <Route path="register-instructor" element={<Register />} />
-        <Route path="courses" element={<Courses />} />
-        <Route path="/course/rooms" element={<RoomList />} />
+    <>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<MainLayout />}>
+          <Route index element={<Home />} />
+          <Route path="login" element={<Login />} />
+          <Route path="register-instructor" element={<Register />} />
+          <Route path="courses" element={<Courses />} />
+          <Route path="/course/rooms" element={<RoomList />} />
 
-        <Route path="courses/:id" element={<CourseDetail />} />
-        {/* Instructor public detail (management view for instructor) */}
-        <Route
-          path="instructor/courses/:id"
-          element={<InstructorCourseDetail />}
-        />
-        <Route path="mycourses" element={<MyCourse />} />
-        <Route path="register-learner" element={<RegisterLearner />} />
-        <Route path="instructors" element={<Instructors />} />
-        <Route path="instructors/:id" element={<InstructorProfile />} />
-        <Route path="settings" element={<Settings />} />
-        <Route path="/quiz-detail/:quizId" element={<QuizDetail />} />
-        <Route path="forgot-password" element={<ForgotPassword />} />
-        <Route path="reset-password/:token" element={<ResetPassword />} />
-
-        <Route path="quiz" element={<Quiz />} />
-        <Route path="forgot-password" element={<ForgotPassword />} />
-        {/* Accept both /reset-password?email=...&otp=... and /reset-password/:token */}
-        <Route path="reset-password/:token?" element={<ResetPassword />} />
-        <Route path="learning/:courseId" element={<Learning />} />
-        <Route path="dashboard-test" element={<Dashboard />} />
-        <Route path="/google-auth/success" element={<GoogleCallback />} />
-        <Route path="dashboard-instructor" element={<DashboardInstructor />} />
-        <Route path="create-course" element={<CreateCourse />} />
-        {/* 2️⃣ Các bước sau khi tạo khóa học (có sidebar) */}
-        <Route path="create-course" element={<CourseBuilderLayout />}>
-          <Route path="modules" element={<ModulesPage />} />
-          <Route path="announcements" element={<AnnouncementsPage />} />
-          <Route path="grades" element={<GradesPage />} />
-          <Route path="room-meeting" element={<RoomMeeting />} />
-        </Route>
-        <Route path="permission" element={<PermissionsPage />} />
-        <Route path="comment-thread" element={<CommentThread />} />
-
-        <Route path="checkout" element={<PaymentPage />} />
-        <Route path="checkout/fail" element={<PaymentFailPage />} />
-        <Route path="checkout/success" element={<PaymentConfirmationPage />} />
-        {/* Private routes */}
-        <Route element={<PrivateRoute />}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="learning/:courseId" element={<Learning />} />
-          <Route path="classroom/:roomId" element={<Classroom />} />
-          <Route path="forum" element={<Forum />} />
+          <Route path="courses/:id" element={<CourseDetail />} />
+          {/* Instructor public detail (management view for instructor) */}
+          <Route
+            path="instructor/courses/:id"
+            element={<InstructorCourseDetail />}
+          />
+          <Route path="mycourses" element={<MyCourse />} />
+          <Route path="register-learner" element={<RegisterLearner />} />
+          <Route path="instructors" element={<Instructors />} />
+          <Route path="instructors/:id" element={<InstructorProfile />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="/quiz-detail/:quizId" element={<QuizDetail />} />
+          <Route path="forgot-password" element={<ForgotPassword />} />
+          <Route path="reset-password/:token" element={<ResetPassword />} />
+
+          <Route path="quiz" element={<Quiz />} />
+          <Route path="forgot-password" element={<ForgotPassword />} />
+          {/* Accept both /reset-password?email=...&otp=... and /reset-password/:token */}
+          <Route path="reset-password/:token?" element={<ResetPassword />} />
+          <Route path="learning/:courseId" element={<Learning />} />
+          <Route path="dashboard-test" element={<Dashboard />} />
+          <Route path="/google-auth/success" element={<GoogleCallback />} />
+          <Route
+            path="dashboard-instructor"
+            element={<DashboardInstructor />}
+          />
+          <Route path="create-course" element={<CreateCourse />} />
+          {/* 2️⃣ Các bước sau khi tạo khóa học (có sidebar) */}
+          <Route path="create-course" element={<CourseBuilderLayout />}>
+            <Route path="modules" element={<ModulesPage />} />
+            <Route path="announcements" element={<AnnouncementsPage />} />
+            <Route path="grades" element={<GradesPage />} />
+            <Route path="room-meeting" element={<RoomMeeting />} />
+          </Route>
+          <Route path="permission" element={<PermissionsPage />} />
+          <Route path="comment-thread" element={<CommentThread />} />
+
           <Route path="checkout" element={<PaymentPage />} />
-          <Route path="checkout/success" element={<PaymentConfirmationPage />} />
+          <Route path="checkout/fail" element={<PaymentFailPage />} />
+          <Route
+            path="checkout/success"
+            element={<PaymentConfirmationPage />}
+          />
+          {/* Private routes */}
+          <Route element={<PrivateRoute />}>
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="learning/:courseId" element={<Learning />} />
+            <Route path="classroom/:roomId" element={<Classroom />} />
+            <Route path="forum" element={<Forum />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="checkout" element={<PaymentPage />} />
+            <Route
+              path="checkout/success"
+              element={<PaymentConfirmationPage />}
+            />
+          </Route>
+
+          {/* Permission-based routes */}
+          <Route
+            element={
+              <PermissionBasedRoute
+                allowedPermissions={["create:courses", "edit:courses"]}
+              />
+            }
+          >
+            <Route
+              path="instructor/*"
+              element={<div>Instructor Dashboard</div>}
+            />
+          </Route>
+        </Route>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route path="users" element={<UserManagementPage />} />
+          <Route
+            path="users/instructor/:userId"
+            element={<InstructorProfileDetail />}
+          />
+          <Route
+            path="users/learner/:userId"
+            element={<LearnerProfileDetail />}
+          />
+          <Route path="courses" element={<CourseManagementPage />} />
+          <Route path="courses/:id" element={<CourseDetailPage />} />
+
+          {/* Admin management pages */}
+          <Route path="chatbot" element={<ChatbotManagementPage />} />
+          <Route path="comments" element={<CommentManagementPage />} />
         </Route>
 
-        {/* Permission-based routes */}
-        <Route element={<PermissionBasedRoute allowedPermissions={["create:courses", "edit:courses"]} />}>
-          <Route path="instructor/*" element={<div>Instructor Dashboard</div>} />
-        </Route>
-      </Route>
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route path="dashboard" element={<AdminDashboardPage />} />
-        <Route path="users" element={<UserManagementPage />} />
-        <Route path="users/instructor/:userId" element={<InstructorProfileDetail />} />
-        <Route path="users/learner/:userId" element={<LearnerProfileDetail />} />
-        <Route path="courses" element={<CourseManagementPage />} />
-        <Route path="courses/:id" element={<CourseDetailPage />} />
-
-        {/* Admin management pages */}
-        <Route path="chatbot" element={<ChatbotManagementPage />} />
-        <Route path="comments" element={<CommentManagementPage />} />
-      </Route>
-
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      <ChatbotWidget />
+    </>
   );
 }
 
