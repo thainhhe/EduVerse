@@ -6,6 +6,7 @@ import { FaRegStar } from "react-icons/fa";
 import { getAllCoursePublished } from "@/services/courseService";
 import { useEnrollment } from "@/context/EnrollmentContext";
 import { useAuth } from "@/hooks/useAuth";
+import categoryService from "@/services/categoryService";
 
 const Courses = () => {
   const [courses, setCourses] = useState([]);
@@ -49,12 +50,26 @@ const Courses = () => {
 
     fetchCourses();
   }, []);
-
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const list = await categoryService.getAll();
+        setCategories(list);
+      } catch (err) {
+        console.error("Failed to load categories:", err);
+        setCategories([]);
+      }
+    };
+    fetchCategories();
+  }, []);
+  console.log("category", categories)
+  console.log("selectedCategory._id", selectedCategory)
   const filteredCourses =
     selectedCategory === "All"
       ? courses
-      : courses.filter((c) => c.category === selectedCategory);
+      : courses.filter((c) => c.category?._id === selectedCategory);
 
+  console.log("filteredCourses", filteredCourses)
   // ✅ Loading hoặc lỗi
   if (loading)
     return (
@@ -88,23 +103,38 @@ const Courses = () => {
 
         <div className="mb-8">
           <h2 className="text-xl sm:text-2xl font-semibold mb-4">Categories</h2>
+
           <div className="flex flex-wrap gap-2">
+
+            {/* 🔹 Button ALL */}
+            <Button
+              variant={selectedCategory === "All" ? "default" : "outline"}
+              onClick={() => setSelectedCategory("All")}
+              className={`transition-colors ${selectedCategory === "All"
+                ? "bg-indigo-600 hover:bg-indigo-700 text-white"
+                : "bg-white"
+                }`}
+            >
+              All
+            </Button>
+
             {categories.map((category) => (
               <Button
-                key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
-                onClick={() => setSelectedCategory(category)}
-                className={`transition-colors ${
-                  selectedCategory === category
-                    ? "bg-indigo-600 hover:bg-indigo-700 text-white"
-                    : "bg-white"
-                }`}
+                key={category.id}
+                variant={selectedCategory === category.id ? "default" : "outline"}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`transition-colors ${selectedCategory === category.id
+                  ? "bg-indigo-600 hover:bg-indigo-700 text-white"
+                  : "bg-white"
+                  }`}
               >
-                {category}
+                {category.name}
               </Button>
+
             ))}
           </div>
         </div>
+
 
         {paginatedCourses.length === 0 ? (
           <p className="text-gray-500 text-center mt-10">

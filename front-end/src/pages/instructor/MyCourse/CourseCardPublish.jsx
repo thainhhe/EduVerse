@@ -69,8 +69,11 @@ const CourseCardPublish = ({ course, role }) => {
                     className="object-cover transition-transform group-hover:scale-105 w-full h-full"
                 />
             </div>
-            <CardContent className="p-4">
-                <h3 className="mb-3 text-lg font-semibold text-card-foreground">{course.title}</h3>
+            <CardContent className="p-4 h-32">
+                <h3 className="mb-3 text-lg font-semibold text-card-foreground line-clamp-2">
+                    {course.title}
+                </h3>
+
                 <div className="flex items-center gap-1 text-sm">
                     <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
                     <span className="font-medium text-foreground">{course.rating}</span>

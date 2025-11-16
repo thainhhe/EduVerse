@@ -109,7 +109,15 @@ const CourseDetail = () => {
             } else {
                 res = await reviewService.addReview(reviewData);
                 if (res) {
-                    setReviews((prev) => [...prev, res.data]);
+                    const newReview = {
+                        ...res.data,
+                        userId: {
+                            _id: user._id,
+                            username: user.username,
+                            avatar: user.avatar,
+                        },
+                    };
+                    setReviews((prev) => [...prev, newReview]);
                     ToastHelper.success(res?.message || "Thêm đánh giá thành công!");
                 }
             }
@@ -149,6 +157,7 @@ const CourseDetail = () => {
             ToastHelper.error("Có lỗi xảy ra khi xóa đánh giá!");
         }
     };
+
 
     if (loading) return <div>Đang tải dữ liệu...</div>;
     if (error) return <div className="text-red-500">{error}</div>;
@@ -362,6 +371,16 @@ const CourseDetail = () => {
 // Reusable card
 const EnrollCard = ({ price, onEnroll, isEnrolled, course }) => {
     const navigate = useNavigate();
+    const { user } = useAuth();
+
+    const handleEnrollClick = () => {
+        if (!user?._id) {
+            navigate("/login", { state: { redirectTo: `/checkout` } });
+            return;
+        }
+        onEnroll();
+    };
+
     return (
         <Card>
             <CardHeader>
@@ -376,17 +395,26 @@ const EnrollCard = ({ price, onEnroll, isEnrolled, course }) => {
                 {isEnrolled ? (
                     <Button
                         size="lg"
-                        className="w-full bg-green-600 hover:bg-green-700"
+                        className="w-full bg-green-600 text-white font-semibold rounded-lg shadow-md
+                 hover:animate-bounceHover transition-transform duration-300"
                         onClick={() => navigate(`/learning/${course._id}`)}
                     >
                         Đi đến khóa học
                     </Button>
                 ) : (
-                    <Button size="lg" className="w-full bg-indigo-600 hover:bg-indigo-700" onClick={onEnroll}>
-                        Enroll Now
+                    <Button
+                        className="w-full bg-indigo-600 text-white font-semibold rounded-lg shadow-md
+             hover:animate-spinBounce transition-transform duration-500"
+                        onClick={handleEnrollClick}
+                    >
+                        Đăng ký ngay
                     </Button>
+
                 )}
             </CardContent>
+
+
+
         </Card>
     );
 };
