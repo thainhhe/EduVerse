@@ -63,42 +63,61 @@ export const ChatbotWidget = () => {
     // tách phần "Nguồn" (có thể là "Nguồn:" hoặc "**Nguồn:**")
     const sourceMatch = text.match(/(?:\*\*)?Nguồn(?:\*\*)?:\s*([\s\S]*)$/i);
     const source = sourceMatch ? sourceMatch[1].trim() : null;
-    const main = sourceMatch
+    let main = sourceMatch
       ? text.slice(0, sourceMatch.index).trim()
       : text.trim();
 
-    // bật bỏ markdown-style bullets: dòng bắt đầu bằng * hoặc - hoặc •
-    const lines = main.split(/\r?\n/).map((l) => l.trim());
+    // 1) Loại bỏ các ký tự thừa ở đầu/cuối do format lạ: ví dụ "*( " hoặc trailing ")"
+    main = main.replace(/^[\s\*\(\-]+/, "").replace(/[\s\*\)\-]+$/, "");
+
+    // 2) Giải mã markdown bold **...** và inline links [text](url) -> text
+    main = main.replace(/\*\*(.+?)\*\*/gs, "$1");
+    main = main.replace(/\[(.+?)\]\((?:.+?)\)/gs, "$1");
+
+    // 3) Nếu không có newline nhưng có nhiều phần ngăn bằng "*", coi đó là inline bullets
+    if (!main.includes("\n") && /\*\s*[^ ]+/.test(main)) {
+      const parts = main
+        .split(/\s*\*\s*/)
+        .map((s) => s.replace(/^\s+|\s+$/g, ""))
+        .filter(Boolean);
+      if (parts.length > 1) {
+        // remove possible surrounding bold/italics in each part
+        const cleaned = parts.map((p) =>
+          p.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1")
+        );
+        return { paragraphs: [], bullets: cleaned, source };
+      }
+    }
+
+    // 4) Xử lý theo dòng: giữ bullets bắt đầu bằng '*', '-' hoặc '•'
+    const lines = main.split(/\r?\n/).map((l) => l.replace(/^\s+|\s+$/g, ""));
     const bullets = [];
     const paragraphs = [];
     let currentPara = [];
 
     lines.forEach((line) => {
-      if (/^(\*|-|\u2022)\s+/.test(line)) {
-        // bullet line
-        bullets.push(line.replace(/^(\*|-|\u2022)\s+/, "").trim());
-      } else if (line === "") {
+      // normalize inner markdown for the line (but keep leading bullet marker)
+      const isBulletLine = /^(\*|-|\u2022)\s+/.test(line);
+      const content = isBulletLine
+        ? line.replace(/^(\*|-|\u2022)\s+/, "")
+        : line;
+      // remove bold/italic inside
+      const cleanedLine = content
+        .replace(/\*\*(.+?)\*\*/g, "$1")
+        .replace(/\*(.+?)\*/g, "$1");
+      if (isBulletLine) {
+        bullets.push(cleanedLine.trim());
+      } else if (cleanedLine === "") {
         if (currentPara.length) {
           paragraphs.push(currentPara.join(" "));
           currentPara = [];
         }
       } else {
-        currentPara.push(line);
+        currentPara.push(cleanedLine);
       }
     });
-    if (currentPara.length) paragraphs.push(currentPara.join(" "));
 
-    // also try to extract inline bullets like "* item * item" (single-line)
-    if (!bullets.length) {
-      const inlineBullets = main
-        .split(/\*+/)
-        .map((s) => s.trim())
-        .filter(Boolean);
-      if (inlineBullets.length > 1 && inlineBullets.length <= 20) {
-        // likely a compact bullet list
-        bullets.push(...inlineBullets);
-      }
-    }
+    if (currentPara.length) paragraphs.push(currentPara.join(" "));
 
     return { paragraphs, bullets, source };
   };

@@ -18,21 +18,19 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const BACKEND_API_URL = process.env.BACKEND_API_URL;
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY;
 
-// LOẠI BỎ: const MONGO_URI = process.env.MONGO_URI;
-
-/**
- * Hàm buildText giữ nguyên, không thay đổi.
- * Nó được thiết kế để nhận các đối tượng JSON đã được làm giàu
- * (denormalized) mà API back-end của chúng ta hiện đang cung cấp.
- */
 const buildText = (type, doc) => {
   switch (type) {
     case "course":
-      // Thêm duration, main_instructor_name, subject và job_title
       const durationStr =
         doc.duration && typeof doc.duration === "object"
           ? `${doc.duration.value ?? ""} ${doc.duration.unit ?? ""}`.trim()
           : doc.duration || "N/A";
+      // NOTE: use "Instructor subjects" label to avoid implying these are course topics
+      const instrSubjects =
+        doc.main_instructor_subject &&
+        Array.isArray(doc.main_instructor_subject)
+          ? doc.main_instructor_subject.join(",")
+          : doc.main_instructor_subject || "N/A";
       return `Course: ${doc.title || "Untitled"}. Description: ${
         doc.description || ""
       }. Price: ${doc.price ?? "N/A"}. Status: ${
@@ -40,10 +38,8 @@ const buildText = (type, doc) => {
       }. Instructor: ${
         doc.main_instructor_name || doc.main_instructor || "N/A"
       } (${
-        doc.main_instructor_job_title || doc.main_instructor_job_title || "N/A"
-      } - ${
-        doc.main_instructor_subject || doc.main_instructor_subject || "N/A"
-      }). Duration: ${durationStr}.`;
+        doc.main_instructor_job_title || "N/A"
+      }). Instructor subjects: ${instrSubjects}. Duration: ${durationStr}.`;
     case "category":
       return `Category: ${doc.name || "Untitled"}. Description: ${
         doc.description || ""
@@ -137,9 +133,6 @@ async function runSync() {
   }
 
   try {
-    // --- LOẠI BỎ: Kết nối Mongoose ---
-    // Logic gốc tiếp tục ở đây (giữ nguyên nhưng nằm trong try)
-
     let apiData;
     try {
       console.log(`Fetching data from ${BACKEND_API_URL}/rag/sync-data ...`);
@@ -167,10 +160,6 @@ async function runSync() {
       );
       return;
     }
-
-    // --- Tiếp tục toàn bộ logic build documents + indexing (giữ nguyên) ---
-    // ...existing code...
-    // Lưu ý: phần lớn logic hiện tại (tạo documents, tính toán, indexing) giữ nguyên.
   } catch (err) {
     console.error("Sync run failed:", err?.message || err);
   } finally {
@@ -178,5 +167,4 @@ async function runSync() {
   }
 }
 
-// Export runSync và buildText để server có thể gọi
 module.exports = { runSync, buildText };
