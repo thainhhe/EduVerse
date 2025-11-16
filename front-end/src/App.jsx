@@ -50,6 +50,7 @@ import ChatbotManagementPage from "./pages/admin/ChatbotManagement/ChatbotManage
 import CommentManagementPage from "./pages/admin/CommentManagement/CommentManagementPage";
 import PaymentFailPage from "./pages/common/checkout/PaymentFailPage";
 import RoomList from "./pages/learner/RoomList/RoomList";
+import ForumManagement from "./pages/instructor/forum/ForumInstructor";
 import { ChatbotWidget } from "./components/chatbot/ChatbotWidget";
 
 function App() {
@@ -108,6 +109,7 @@ function App() {
             <Route path="announcements" element={<AnnouncementsPage />} />
             <Route path="grades" element={<GradesPage />} />
             <Route path="room-meeting" element={<RoomMeeting />} />
+            <Route path="forums" element={<ForumManagement />} />
           </Route>
           <Route path="permission" element={<PermissionsPage />} />
           <Route path="comment-thread" element={<CommentThread />} />

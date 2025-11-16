@@ -46,122 +46,131 @@ const courseManagementRepository = {
 
   //get a course details with all populated fields: modules, lessons, materials, quizzes, reviews, enrollments
   getCourseDetailsById: async (courseId) => {
-    // Get course with populated basic fields
-    const course = await Course.findById(courseId)
-      .populate("category")
-      .populate("main_instructor")
-      .populate("instructors.id")
-      .populate("instructors.permission")
-      .exec();
+    try {
+      // 1️⃣ Lấy course với các thông tin cơ bản
+      const course = await Course.findById(courseId)
+        .populate("category")
+        .populate("main_instructor", "name email")
+        .populate("instructors.id", "name email")
+        .lean();
 
-    if (!course) {
-      return null;
-    }
+      if (!course) return null;
 
-    // Get modules for this course
-    const modules = await Module.find({ courseId }).sort({ order: 1 }).exec();
+      const courseIdStr = course._id.toString();
 
-    // Get all lessons for these modules
-    const moduleIds = modules.map((m) => m._id);
-    const lessons = await Lesson.find({ moduleId: { $in: moduleIds } })
-      .populate("materials")
-      .sort({ order: 1 })
-      .exec();
+      // 2️⃣ Lấy modules
+      const modules = await Module.find({ courseId: courseIdStr }).lean();
+      const moduleIds = modules.map((m) => m._id?.toString()).filter(Boolean);
 
-    // Get all lesson IDs
-    const lessonIds = lessons.map((l) => l._id);
+      // 3️⃣ Lấy lessons cho các modules (không populate materials)
+      const lessons = await Lesson.find({
+        moduleId: { $in: moduleIds },
+      }).lean();
+      const lessonIds = lessons.map((l) => l._id?.toString()).filter(Boolean);
 
-    // Get quizzes for these lessons
-    const lessonQuizzes = await Quiz.find({ lessonId: { $in: lessonIds } })
-      .populate("createdBy", "name email")
-      .exec();
+      // 4️⃣ Lấy materials cho lessons
+      const materials = await Material.find({ lessonId: { $in: lessonIds } })
+        .populate({ path: "uploadedBy", select: "name email role" })
+        .lean();
 
-    // Create a map for quick quiz lookup by lessonId
-    const quizByLessonMap = {};
-    lessonQuizzes.forEach((quiz) => {
-      if (quiz.lessonId) {
-        quizByLessonMap[quiz.lessonId.toString()] = quiz;
-      }
-    });
+      // Gom materials theo lessonId
+      const materialsByLesson = {};
+      materials.forEach((mat) => {
+        const lid = mat.lessonId?.toString();
+        if (lid) {
+          if (!materialsByLesson[lid]) materialsByLesson[lid] = [];
+          materialsByLesson[lid].push(mat);
+        }
+      });
 
-    // Get reviews with user info
-    const reviews = await Review.find({ courseId })
-      .populate("userId", "name email")
-      .sort({ createdAt: -1 })
-      .exec();
+      // 5️⃣ Lấy quizzes cho lesson, module, course
+      const lessonQuizzes = await Quiz.find({
+        lessonId: { $in: lessonIds },
+      }).lean();
+      const moduleQuizzes = await Quiz.find({
+        moduleId: { $in: moduleIds },
+        lessonId: null,
+      }).lean();
+      const courseQuizzes = await Quiz.find({
+        courseId: courseIdStr,
+        moduleId: null,
+        lessonId: null,
+      }).lean();
 
-    // Calculate average rating and total reviews
-    const totalReviews = reviews.length;
-    const averageRating =
-      totalReviews > 0
-        ? reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+      // 6️⃣ Gom quizzes theo lessonId
+      const quizByLesson = {};
+      lessonQuizzes.forEach((q) => {
+        const lid = q.lessonId?.toString();
+        if (lid) {
+          if (!quizByLesson[lid]) quizByLesson[lid] = [];
+          quizByLesson[lid].push(q);
+        }
+      });
+
+      // 7️⃣ Gắn quizzes và materials vào lessons
+      lessons.forEach((lesson) => {
+        const lid = lesson._id?.toString();
+        lesson.quizzes = quizByLesson[lid] || [];
+        lesson.materials = materialsByLesson[lid] || [];
+      });
+
+      // 8️⃣ Gom quizzes theo module
+      const quizByModule = {};
+      moduleQuizzes.forEach((q) => {
+        const mid = q.moduleId?.toString();
+        if (mid) {
+          if (!quizByModule[mid]) quizByModule[mid] = [];
+          quizByModule[mid].push(q);
+        }
+      });
+
+      // 9️⃣ Gom lessons theo module và attach quizzes module
+      const lessonsByModule = {};
+      lessons.forEach((l) => {
+        const mid = l.moduleId?.toString();
+        if (mid) {
+          if (!lessonsByModule[mid]) lessonsByModule[mid] = [];
+          lessonsByModule[mid].push(l);
+        }
+      });
+
+      modules.forEach((m) => {
+        const mid = m._id?.toString();
+        m.lessons = lessonsByModule[mid] || [];
+        m.moduleQuizzes = quizByModule[mid] || [];
+      });
+
+      // 10️⃣ Gắn quizzes cấp course
+      course.courseQuizzes = courseQuizzes;
+
+      // 11️⃣ Lấy reviews
+      const reviews = await Review.find({ courseId: courseIdStr })
+        .populate("userId", "name email")
+        .sort({ createdAt: -1 })
+        .lean();
+      const totalReviews = reviews.length;
+      const averageRating = totalReviews
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews
         : 0;
 
-    // Get enrollment count
-    const totalEnrollments = await Enrollment.countDocuments({ courseId });
+      // 12️⃣ Tổng số enrollments
+      const totalEnrollments = await Enrollment.countDocuments({
+        courseId: courseIdStr,
+      });
 
-    // Get quizzes at course level
-    const courseQuizzes = await Quiz.find({ courseId })
-      .populate("createdBy", "name email")
-      .exec();
-
-    // Get quizzes at module level
-    const moduleQuizzes = await Quiz.find({ moduleId: { $in: moduleIds } })
-      .populate("createdBy", "name email")
-      .exec();
-
-    // Create a map for module quizzes
-    const quizByModuleMap = {};
-    moduleQuizzes.forEach((quiz) => {
-      if (quiz.moduleId) {
-        const modId = quiz.moduleId.toString();
-        if (!quizByModuleMap[modId]) {
-          quizByModuleMap[modId] = [];
-        }
-        quizByModuleMap[modId].push(quiz);
-      }
-    });
-
-    // Organize lessons by module and attach quiz data
-    const modulesWithLessons = modules.map((module) => {
-      const moduleLessons = lessons
-        .filter(
-          (lesson) => lesson.moduleId.toString() === module._id.toString()
-        )
-        .map((lesson) => {
-          const lessonObj = lesson.toObject();
-          // Attach quiz if exists for this lesson
-          const lessonQuiz = quizByLessonMap[lesson._id.toString()];
-          if (lessonQuiz) {
-            lessonObj.quiz = lessonQuiz;
-          }
-          return lessonObj;
-        });
-
-      const moduleObj = module.toObject();
-      moduleObj.lessons = moduleLessons;
-
-      // Attach quizzes at module level
-      const modQuizzes = quizByModuleMap[module._id.toString()] || [];
-      if (modQuizzes.length > 0) {
-        moduleObj.quizzes = modQuizzes;
-      }
-
-      return moduleObj;
-    });
-
-    // Build complete course object
-    const courseDetails = {
-      ...course.toObject(),
-      modules: modulesWithLessons,
-      reviews: reviews,
-      quizzes: courseQuizzes, // quizzes at course level
-      averageRating: parseFloat(averageRating.toFixed(2)),
-      totalReviews,
-      totalEnrollments,
-    };
-
-    return courseDetails;
+      // 13️⃣ Trả về course chi tiết
+      return {
+        ...course,
+        modules,
+        reviews,
+        averageRating: parseFloat(averageRating.toFixed(2)),
+        totalReviews,
+        totalEnrollments,
+      };
+    } catch (err) {
+      console.error("❌ Error in getCourseDetailsById:", err);
+      throw err;
+    }
   },
 
   // ✅ Approve course and publish all related quizzes + create/update forum

@@ -14,7 +14,7 @@ const Learning = () => {
   const { courseId } = useParams();
   const { user } = useAuth();
   const [courseData, setCourseData] = useState(null);
-  const [selectedItem, setSelectedItem] = useState(null); // Có thể là lesson hoặc quiz
+  const [selectedItem, setSelectedItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quizStatus, setQuizStatus] = useState(null);
   const [checkingQuiz, setCheckingQuiz] = useState(false);

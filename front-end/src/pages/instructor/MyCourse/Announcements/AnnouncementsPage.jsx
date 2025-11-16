@@ -1,9 +1,18 @@
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ChevronDown, ChevronRight, Eye, Pencil, Trash2 } from 'lucide-react'
-import React, { useState } from 'react'
-import { AnnouncementDialog } from './AnnouncementForm'
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+    Table,
+    TableBody,
+    TableCaption,
+    TableCell,
+    TableFooter,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { ChevronDown, ChevronRight, Eye, Pencil, Trash2 } from "lucide-react";
+import React, { useState } from "react";
+import { AnnouncementDialog } from "./AnnouncementForm";
 
 const AnnouncementsPage = () => {
     const [announcements, setAnnouncements] = useState([
@@ -11,26 +20,26 @@ const AnnouncementsPage = () => {
             id: 1,
             date: "2024-10-10",
             title: "Live Q&A Session Tomorrow!",
-            message: "Message 1"
+            message: "Message 1",
         },
         {
             id: 2,
             date: "2024-10-08",
             title: "Assignment",
-            message: "Message 2"
+            message: "Message 2",
         },
         {
             id: 3,
             date: "2024-10-05",
             title: "New Module Released",
-            message: "Message 3"
+            message: "Message 3",
         },
         {
             id: 4,
             date: "2024-10-01",
             title: "Course Introduction",
-            message: "Message 4"
-        }
+            message: "Message 4",
+        },
     ]);
 
     const [pastAnnouncements, setPastAnnouncements] = useState([
@@ -48,39 +57,36 @@ const AnnouncementsPage = () => {
         },
     ]);
 
-
-    const [openDialog, setOpenDialog] = useState(false)
-    const [dialogMode, setDialogMode] = useState("add")
-    const [selectedAnnouncement, setSelectedAnnouncement] = useState(null)
+    const [openDialog, setOpenDialog] = useState(false);
+    const [dialogMode, setDialogMode] = useState("add");
+    const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
 
     const handleAdd = () => {
-        setDialogMode("add")
-        setSelectedAnnouncement(null)
-        setOpenDialog(true)
-    }
+        setDialogMode("add");
+        setSelectedAnnouncement(null);
+        setOpenDialog(true);
+    };
 
     const handleEdit = (announcement) => {
-        setDialogMode("edit")
-        setSelectedAnnouncement(announcement)
-        setOpenDialog(true)
-    }
+        setDialogMode("edit");
+        setSelectedAnnouncement(announcement);
+        setOpenDialog(true);
+    };
 
     const handleSubmit = (data) => {
         if (dialogMode === "add") {
-            console.log("Adding new announcement:", data)
+            console.log("Adding new announcement:", data);
         } else {
-            console.log("Updating announcement:", data)
+            console.log("Updating announcement:", data);
         }
-    }
-
+    };
 
     return (
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-full">
             <Card>
                 <CardHeader>
-
-                    <div className='flex justify-between'>
-                        <div className='text-xl font-semibold flex items-center gap-2'>
+                    <div className="flex justify-between">
+                        <div className="text-xl font-semibold flex items-center gap-2">
                             <span className="w-1.5 h-6 rounded bg-indigo-500" />
                             Announcements
                         </div>
@@ -98,9 +104,7 @@ const AnnouncementsPage = () => {
                 </CardHeader>
                 <CardContent>
                     <div className="mb-6 border rounded-xl p-4 shadow-sm bg-white mt-5">
-
-
-                        <div className='flex items-center gap-2 mb-4 font-bold'>
+                        <div className="flex items-center gap-2 mb-4 font-bold">
                             <ChevronDown className="h-7 w-7 text-muted-foreground" />
                             Current Announcements (4)
                         </div>
@@ -110,7 +114,7 @@ const AnnouncementsPage = () => {
                                     <TableHead>Date</TableHead>
                                     <TableHead>Title</TableHead>
                                     <TableHead>Message Summary</TableHead>
-                                    <TableHead >Actions</TableHead>
+                                    <TableHead>Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -144,7 +148,6 @@ const AnnouncementsPage = () => {
                         </Table>
                     </div>
                     <div className="mb-6 border rounded-xl p-4 shadow-sm bg-white mt-5">
-
                         <div className="flex items-center gap-2 mt-10 mb-4 font-bold">
                             <ChevronDown className="h-7 w-7 text-muted-foreground" />
                             Past Announcements ({pastAnnouncements.length})
@@ -167,9 +170,7 @@ const AnnouncementsPage = () => {
                                         </TableCell>
                                         <TableCell>{item.message}</TableCell>
                                         <TableCell className="space-x-2">
-                                            <Button variant="ghost" size="icon"
-                                                onClick={() => handleEdit(item)}
-                                            >
+                                            <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}>
                                                 <Pencil className="h-4 w-4" />
                                             </Button>
                                             <Button variant="ghost" size="icon">
@@ -194,10 +195,8 @@ const AnnouncementsPage = () => {
                     </div>
                 </CardContent>
             </Card>
-
         </div>
+    );
+};
 
-    )
-}
-
-export default AnnouncementsPage
+export default AnnouncementsPage;

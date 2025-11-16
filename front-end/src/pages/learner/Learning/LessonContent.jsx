@@ -19,6 +19,7 @@ const LessonContent = ({ lesson, course }) => {
             try {
                 const res = await api.get(`/material/${lesson._id}`);
                 if (res.success) setMaterials(res.data);
+                else setMaterials([]);
             } catch (error) {
                 console.error("Lỗi lấy materials:", error);
             } finally {
@@ -51,31 +52,24 @@ const LessonContent = ({ lesson, course }) => {
                     <p>Vui lòng cung cấp File ID để xem video.</p>
                 )}
             </div> */}
-            <div className="aspect-video bg-black rounded-lg overflow-hidden mb-6">
-                {materials.length > 0 ? (
-                    // Tìm video đầu tiên trong danh sách materials
-                    (() => {
-                        const videoMaterial = materials.find((m) => m.type === "video");
-                        return videoMaterial ? (
-                            <iframe
-                                src={videoMaterial.url}
-                                width="100%"
-                                height="100%"
-                                allow="autoplay; encrypted-media"
-                                allowFullScreen
-                                title={videoMaterial.title}
-                                style={{ border: "0" }}
-                            />
-                        ) : (
-                            <p className="text-white text-center mt-20">
-                                Không có video nào cho bài học này.
-                            </p>
-                        );
-                    })()
-                ) : (
-                    <p className="text-white text-center mt-20">Đang tải video...</p>
-                )}
-            </div>
+
+            {materials.length > 0 && (
+                materials.find((m) => m.type === "video" && m.lessonId === lesson._id) && (
+                    <div className="aspect-video bg-black rounded-lg overflow-hidden mb-6">
+                        <iframe
+                            src={
+                                materials.find((m) => m.type === "video" && m.lessonId === lesson._id).url
+                            }
+                            width="100%"
+                            height="100%"
+                            allow="autoplay; encrypted-media"
+                            allowFullScreen
+                            title="Video bài học"
+                            style={{ border: "0" }}
+                        />
+                    </div>
+                )
+            )}
 
             <Tabs defaultValue="discussion" className="w-full">
                 <TabsList className="mb-4">
@@ -87,7 +81,7 @@ const LessonContent = ({ lesson, course }) => {
 
                 <TabsContent value="summary">
                     <p>
-                        <strong>Mô tả khóa học:</strong> {course.description || "Chưa có mô tả khóa học."}
+                        <strong>Mô tả bài học:</strong> {lesson.content || "Chưa có mô tả bài học."}
                     </p>
                 </TabsContent>
 
@@ -114,18 +108,20 @@ const LessonContent = ({ lesson, course }) => {
                 </TabsContent>
 
                 <TabsContent value="resources">
-                    {materials.length === 0 ? (
-                        <p>Không có tài liệu nào cho bài học này.</p>
-                    ) : (
-                        <div className="space-y-4">
-                            {materials
-                                .filter((item) => item.type !== "video") // 👈 chỉ lấy tài liệu, loại bỏ video
-                                .map((item) => (
+                    {(() => {
+                        const documents = materials.filter(
+                            (item) => item.type !== "video" && item.lessonId === lesson._id
+                        );
+
+                        return documents.length === 0 ? (
+                            <p>Không có tài liệu nào cho bài học này.</p>
+                        ) : (
+                            <div className="space-y-4">
+                                {documents.map((item) => (
                                     <div key={item._id} className="border rounded-lg p-3">
                                         <h3 className="font-semibold mb-1">{item.title}</h3>
                                         <p className="text-sm text-gray-600 mb-2">{item.description}</p>
 
-                                        {/* Link mở tài liệu */}
                                         <a
                                             href={item.url}
                                             target="_blank"
@@ -135,16 +131,19 @@ const LessonContent = ({ lesson, course }) => {
                                             📄 Xem / tải tài liệu
                                         </a>
 
-                                        {/* Thông tin thêm */}
                                         <div className="mt-2 text-xs text-gray-500">
                                             <span>Tải lên bởi: {item.uploadedBy}</span> •{" "}
-                                            <span>Kích thước: {(item.fileSize / 1024 / 1024).toFixed(2)} MB</span>
+                                            {item.fileSize && (
+                                                <span>Kích thước: {(item.fileSize / 1024 / 1024).toFixed(2)} MB</span>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
-                        </div>
-                    )}
+                            </div>
+                        );
+                    })()}
                 </TabsContent>
+
 
 
 

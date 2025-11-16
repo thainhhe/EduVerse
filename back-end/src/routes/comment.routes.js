@@ -1,7 +1,5 @@
 const express = require("express");
-const {
-  commentController,
-} = require("../controllers/comment/comment.controller");
+const { commentController } = require("../controllers/comment/comment.controller");
 
 const commentRouter = express.Router();
 
@@ -10,12 +8,14 @@ const commentRouter = express.Router();
  * GET /api/comments/forum/:forumId
  */
 commentRouter.get("/forum/:forumId", commentController.getCommentsByForum);
+commentRouter.get("/forum-instructor/:forumId", commentController.getCommentsByForumInstructor);
 
 /**
  * 🟢 Tạo mới comment
  * POST /api/comments
  */
 commentRouter.post("/create-comment", commentController.createComment);
+commentRouter.post("/forum-instructor/hidden/:id", commentController.hiddenComment);
 
 /**
  * 🟢 Trả lời comment (reply)
