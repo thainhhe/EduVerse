@@ -48,39 +48,6 @@ const Home = () => {
     },
   ];
 
-  const categories = [
-    {
-      icon: <FaLaptopCode />,
-      title: "Information Technology",
-      description: "Master web development, cybersecurity, and cloud computing",
-    },
-    {
-      icon: <FaLanguage />,
-      title: "Languages",
-      description: "Become fluent in new languages with interactive lessons",
-    },
-    {
-      icon: <FaBriefcase />,
-      title: "Business",
-      description: "Develop leadership, marketing, and financial skills",
-    },
-    {
-      icon: <FaPalette />,
-      title: "Design & Creativity",
-      description: "Unleash your artistic potential with graphic design, UI/UX",
-    },
-    {
-      icon: <FaComments />,
-      title: "Soft Skills",
-      description: "Enhance communication, problem-solving, and teamwork",
-    },
-    {
-      icon: <FaChartLine />,
-      title: "Personal Development",
-      description: "Improve productivity, mindfulness, and goal-setting",
-    },
-  ];
-
   const courses = [
     {
       id: 1,
@@ -217,43 +184,16 @@ const Home = () => {
     },
   ];
 
-  const blogPosts = [
-    {
-      id: 1,
-      image: "/education-future.jpg",
-      date: "May 15, 2024",
-      title: "The Future of AI in Education",
-      excerpt:
-        "Explore how artificial intelligence is revolutionizing the way we learn and teach in modern classrooms.",
-    },
-    {
-      id: 2,
-      image: "/study-skills.png",
-      date: "May 10, 2024",
-      title: "Top 5 Study Skills for 2024",
-      excerpt:
-        "Discover the latest research-backed study techniques that can boost your learning efficiency.",
-    },
-    {
-      id: 3,
-      image: "/online-learning-concept.png",
-      date: "May 5, 2024",
-      title: "Mastering Online Learning: A Comprehensive Guide",
-      excerpt:
-        "Learn proven strategies to stay motivated and succeed in your online education journey.",
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-gray-50">
       <HeroSection />
       <FeaturesSection features={features} />
-      <CategoriesSection categories={categories} />
+      <CategoriesSection />
       <PopularCoursesSection courses={courses} />
-      <InstructorsSection instructors={instructors} />
+      <InstructorsSection />
       <BenefitsSection benefits={benefits} />
       <TestimonialsSection testimonials={testimonials} />
-      <BlogSection blogPosts={blogPosts} />
+      {/* <BlogSection blogPosts={blogPosts} /> */}
     </div>
   );
 };

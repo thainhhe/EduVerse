@@ -113,7 +113,6 @@ const getSyncData = async () => {
   );
 
   // 3. Denormalize (làm giàu) dữ liệu
-  // Chúng ta không buildText ở đây, chỉ cần trả về JSON đã xử lý
 
   const processedModules = modules.map((m) => {
     const course = m.courseId
