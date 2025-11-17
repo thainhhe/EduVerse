@@ -2,6 +2,8 @@ const scoreRepository = require("../../repositories/score.repository");
 const quizRepository = require("../../repositories/quiz.repository");
 const scoreValidator = require("../../validator/score.validator");
 const scoreHelper = require("./score.helper");
+const progressRepository = require("../../repositories/progress.repository");
+const Module = require("../../models/Module");
 
 const scoreServices = {
   getAllScores: async (filters = {}) => {
@@ -71,21 +73,14 @@ const scoreServices = {
   submitQuiz: async (submitData) => {
     try {
       const validatedData = scoreValidator.validateSubmitQuiz(submitData);
-      console.log("validatedData", validatedData);
       const quiz = await quizRepository.getQuizById(validatedData.quizId);
 
       if (!quiz) {
-        return {
-          status: 404,
-          message: "Quiz not found",
-        };
+        return { status: 404, message: "Quiz not found" };
       }
 
       if (!quiz.isPublished) {
-        return {
-          status: 400,
-          message: "Quiz is not published",
-        };
+        return { status: 400, message: "Quiz is not published" };
       }
 
       const previousAttempts = await scoreRepository.getUserAttempts(
@@ -101,7 +96,6 @@ const scoreServices = {
       }
 
       const result = scoreHelper.calculateScore(quiz, validatedData.answers);
-      console.log("result", result);
       const scoreData = {
         userId: validatedData.userId,
         quizId: validatedData.quizId,
@@ -111,7 +105,7 @@ const scoreServices = {
         answers: result.answers,
         timeTaken: validatedData.timeTaken,
         attemptNumber: previousAttempts.length + 1,
-        status: result.status,
+        status: result.status, // Phải là "passed" hoặc "failed"
         remarks:
           result.status === "passed"
             ? "Congratulations! You passed the quiz."
@@ -120,6 +114,38 @@ const scoreServices = {
 
       const newScore = await scoreRepository.createScore(scoreData);
 
+      // ✨ --- TRIGGER CẬP NHẬT TIẾN ĐỘ (ĐÃ SỬA) --- ✨
+      if (result.status === "passed") {
+
+        // 1. Tìm courseId (Phần code bạn bị thiếu)
+        let courseId = null;
+        if (quiz.courseId) {
+          courseId = quiz.courseId;
+        } else if (quiz.moduleId) {
+          const module = await Module.findById(quiz.moduleId).select('courseId').lean();
+          if (module) courseId = module.courseId;
+        } else if (quiz.lessonId) {
+          // Logic này chỉ chạy khi pass quiz lesson, 
+          // nhưng service `markLessonCompleted` đã xử lý rồi.
+          // Tuy nhiên, để an toàn, vẫn nên trigger:
+          const lesson = await Lesson.findById(quiz.lessonId).select('moduleId').lean();
+          if (lesson && lesson.moduleId) {
+            const module = await Module.findById(lesson.moduleId).select('courseId').lean();
+            if (module) courseId = module.courseId;
+          }
+        }
+
+        // 2. Gọi hàm cập nhật
+        if (courseId) { // Bây giờ courseId sẽ được tìm thấy
+          console.log(`🎯 Trigger: Quiz passed. Updating progress for user ${validatedData.userId} on course ${courseId}`);
+          await progressRepository.calculateUserProgress(
+            validatedData.userId,
+            courseId.toString()
+          );
+        }
+      }
+      // ✨ --- HẾT PHẦN SỬA --- ✨
+
       return {
         status: 201,
         message: "Quiz submitted successfully",
@@ -127,7 +153,6 @@ const scoreServices = {
       };
     } catch (error) {
       console.error("Service Error - submitQuiz:", error);
-
       if (error.isValidation) {
         return {
           status: 400,
@@ -135,7 +160,6 @@ const scoreServices = {
           errors: error.validationErrors,
         };
       }
-
       throw error;
     }
   },
@@ -185,14 +209,14 @@ const scoreServices = {
           ...(ans.toObject?.() || ans),
           question: question
             ? {
-                questionText: question.questionText,
-                questionType: question.questionType,
-                options: question.options,
-                correctAnswer: question.correctAnswer,
-                explanation: question.explanation,
-                points: question.points,
-                order: question.order,
-              }
+              questionText: question.questionText,
+              questionType: question.questionType,
+              options: question.options,
+              correctAnswer: question.correctAnswer,
+              explanation: question.explanation,
+              points: question.points,
+              order: question.order,
+            }
             : null,
         };
       });
@@ -217,26 +241,26 @@ const scoreServices = {
           : { id: quiz.lessonId?.toString?.() || quiz.lessonId, title: null };
         scope.module = moduleFromLesson
           ? {
-              id: moduleFromLesson._id?.toString() || moduleFromLesson.id,
-              title: moduleFromLesson.title,
-            }
+            id: moduleFromLesson._id?.toString() || moduleFromLesson.id,
+            title: moduleFromLesson.title,
+          }
           : quiz.moduleId
-          ? {
+            ? {
               id: quiz.moduleId._id?.toString() || quiz.moduleId,
               title: quiz.moduleId?.title || null,
             }
-          : null;
+            : null;
         scope.course = courseFromLesson
           ? {
-              id: courseFromLesson._id?.toString() || courseFromLesson.id,
-              title: courseFromLesson.title,
-            }
+            id: courseFromLesson._id?.toString() || courseFromLesson.id,
+            title: courseFromLesson.title,
+          }
           : quiz.courseId
-          ? {
+            ? {
               id: quiz.courseId._id?.toString() || quiz.courseId,
               title: quiz.courseId?.title || null,
             }
-          : null;
+            : null;
       }
       // If quiz has moduleId (and no lesson)
       else if (quiz.moduleId) {
@@ -249,15 +273,15 @@ const scoreServices = {
           : { id: quiz.moduleId?.toString?.() || quiz.moduleId, title: null };
         scope.course = courseFromModule
           ? {
-              id: courseFromModule._id?.toString() || courseFromModule.id,
-              title: courseFromModule.title,
-            }
+            id: courseFromModule._id?.toString() || courseFromModule.id,
+            title: courseFromModule.title,
+          }
           : quiz.courseId
-          ? {
+            ? {
               id: quiz.courseId._id?.toString() || quiz.courseId,
               title: quiz.courseId?.title || null,
             }
-          : null;
+            : null;
       }
       // If quiz has courseId only
       else if (quiz.courseId) {
@@ -339,15 +363,15 @@ const scoreServices = {
           },
           latestScore: latestAttempt
             ? {
-                id: latestAttempt._id,
-                score: latestAttempt.score,
-                totalPoints: latestAttempt.totalPoints,
-                percentage: latestAttempt.percentage,
-                status: latestAttempt.status,
-                attemptNumber: latestAttempt.attemptNumber,
-                dateSubmitted: latestAttempt.dateSubmitted,
-                passed: latestAttempt.status === "passed",
-              }
+              id: latestAttempt._id,
+              score: latestAttempt.score,
+              totalPoints: latestAttempt.totalPoints,
+              percentage: latestAttempt.percentage,
+              status: latestAttempt.status,
+              attemptNumber: latestAttempt.attemptNumber,
+              dateSubmitted: latestAttempt.dateSubmitted,
+              passed: latestAttempt.status === "passed",
+            }
             : null,
         },
       };

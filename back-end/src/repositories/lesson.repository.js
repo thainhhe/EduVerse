@@ -32,22 +32,35 @@ const lessonRepository = {
     // Mark lesson as completed by user
     markLessonCompleted: async (lessonId, userId) => {
         try {
-            // Kiểm tra xem user đã complete lesson này chưa
             const lesson = await Lesson.findById(lessonId);
 
             if (!lesson) {
                 throw new Error('Lesson not found');
             }
 
-            // Nếu userId chưa có trong user_completed thì thêm vào
-            if (!lesson.user_completed.includes(userId)) {
-                lesson.user_completed.push(userId);
-                await lesson.save();
-                console.log(`User ${userId} completed lesson ${lessonId}`);
-                return { success: true, message: 'Lesson marked as completed' };
+            // Kiểm tra xem user ID đã tồn tại chưa
+            const isAlreadyCompleted = lesson.user_completed.some(
+                id => id.toString() === userId.toString()
+            );
+
+            if (isAlreadyCompleted) {
+                return {
+                    success: true,
+                    isNewCompletion: false, // ✨ TRẢ VỀ CỜ NÀY
+                    message: 'Lesson already completed'
+                };
             }
 
-            return { success: true, message: 'Lesson already completed' };
+            // Nếu chưa, thêm vào và lưu
+            lesson.user_completed.push(userId);
+            await lesson.save();
+            console.log(`User ${userId} completed lesson ${lessonId}`);
+
+            return {
+                success: true,
+                isNewCompletion: true, // ✨ TRẢ VỀ CỜ NÀY
+                message: 'Lesson marked as completed'
+            };
         } catch (error) {
             console.error('Repository Error - markLessonCompleted:', error);
             throw error;

@@ -1,35 +1,54 @@
-const yup = require("yup");
+const yup = require('yup');
+const mongoose = require('mongoose');
 
-const reportValidator = {
-    createReportSchema: yup.object().shape({
-        issueType: yup
-            .string()
-            .required("Issue type is required.")
-            .oneOf(["bug", "feature", "other"], "Invalid issue type. Allowed types are: bug, feature, other."),
-        description: yup
-            .string()
-            .required("Description is required.")
-            .max(1000, "Description cannot exceed 1000 characters."),
-        fileAttachment: yup
-            .array()
-            .of(yup.string())
-            .max(5, "File attachment cannot exceed 5 files.")
-            .notRequired(),
-    }),
-
-    validateReportData: (data) => {
-        try {
-            const validatedData = reportValidator.createReportSchema.validateSync(data, { abortEarly: false });
-            return validatedData;
-        } catch (validationError) {
-            const errors = validationError.inner.map(err => ({
-                field: err.path,
-                message: err.message
-            }));
-            throw new Error(JSON.stringify(errors));
-        }
+// Helper Yup để kiểm tra ObjectId
+const objectIdValidator = yup.string().test(
+    'is-object-id',
+    '${path} must be a valid MongoDB ObjectId',
+    (value) => {
+        if (!value) return true; 
+        return mongoose.Types.ObjectId.isValid(value);
     }
+);
 
+// Schema để tạo report
+const createReportSchema = yup.object({
+    userId: objectIdValidator.required("userId is required in the body"),
+
+    scope: yup.string().oneOf(['course', 'system']).required(),
+    
+    courseId: yup.string().when('scope', {
+        is: 'course',
+        then: (schema) => schema.concat(objectIdValidator)
+                                .required('courseId is required for course scope'),
+        otherwise: (schema) => schema.nullable(),
+    }),
+    
+    issueType: yup.string().oneOf(['bug', 'feature', 'other']).required(),
+    description: yup.string().min(10, 'Description must be at least 10 characters').required(),
+    fileAttachment: yup.array().of(yup.string().url()).optional(),
+});
+
+// Schema để cập nhật status (Dùng cho cả Admin và Instructor)
+const updateStatusSchema = yup.object({
+    status: yup.string().oneOf(['open', 'inprogress', 'resolved']).required(),
+});
+
+// Middleware (Không đổi)
+const validate = (schema) => async (req, res, next) => {
+    try {
+        await schema.validate(req.body, { abortEarly: false, stripUnknown: true });
+        next();
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: 'Validation Error',
+            errors: error.errors,
+        });
+    }
 };
 
-module.exports = { reportValidator };
+module.exports = {
+    validateCreateReport: validate(createReportSchema),
+    validateUpdateStatus: validate(updateStatusSchema),
+};

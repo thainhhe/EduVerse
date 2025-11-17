@@ -1,3 +1,5 @@
+// File: services/enroll/enroll.helper.js
+
 const enrollHelper = {
     formatEnrollment: (data) => {
         if (!data) return null;
@@ -24,39 +26,50 @@ const enrollHelper = {
         return enrollments.map((enrollment) => enrollHelper.formatEnrollment(enrollment));
     },
 
+    /**
+     * ✨ HÀM ĐÃ ĐƯỢC SỬA LẠI HOÀN CHỈNH ✨
+     */
     formatDetailedEnrollment: (enrollment) => {
         const course = enrollment.courseId || {};
         const userId = enrollment.userId?._id?.toString();
 
-        const totalLessons = course.modules?.reduce((sum, m) => sum + (m.lessons?.length || 0), 0) || 0;
-        const completedLessons = course.modules?.reduce(
-            (sum, m) =>
-                sum +
-                (m.lessons?.filter((l) => l.user_completed?.some((u) => u._id?.toString() === userId)).length || 0),
-            0
-        ) || 0;
-
-        const calculatedProgress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+        // ✨ --- ĐÃ XÓA LOGIC TÍNH TOÁN SAI --- ✨
+        // const totalLessons = ... (ĐÃ XÓA)
+        // const completedLessons = ... (ĐÃ XÓA)
+        // const calculatedProgress = ... (ĐÃ XÓA)
 
         return {
             _id: enrollment._id?.toString(),
-            userId: enrollment.userId,
+            userId: enrollment.userId, // Giữ object user đầy đủ
             enrollmentDate: enrollment.enrollmentDate,
+
+            // Đây là progress ĐÚNG (75%) từ DB
             progress: enrollment.progress || 0,
             status: enrollment.status || "enrolled",
-            calculatedProgress,
+
+            // ✨ THÊM TRƯỜNG 'GRADE' VÀO ✨
+            grade: enrollment.grade || "Incomplete",
+
+            // calculatedProgress, // <-- ĐÃ XÓA BỎ TRƯỜNG NÀY
+
+            // Các thống kê này vẫn hữu ích
             totalQuizzes: enrollment.totalQuizzes || 0,
             completedQuizzes: enrollment.completedQuizzes || 0,
             averageScore: enrollment.averageScore || 0,
+
             courseId: {
                 ...course,
+                // Format lại sub-documents (nếu cần)
                 modules: course.modules?.map((module) => ({
                     ...module,
                     lessons: module.lessons?.map((lesson) => ({
                         ...lesson,
-                        quiz: lesson.quiz || null, // Đảm bảo quiz được bao gồm
+                        // Cập nhật lại logic check user_completed
+                        isCompleted: lesson.user_completed?.some(id => id.toString() === userId),
+                        quiz: lesson.quiz || null,
                         quizScores: lesson.quizScores || [],
                     })) || [],
+                    moduleQuizzes: module.moduleQuizzes || [],
                 })) || [],
                 courseQuizzes: course.courseQuizzes || [],
             },
