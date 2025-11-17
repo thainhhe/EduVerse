@@ -6,7 +6,7 @@ import { FaArrowRight } from "react-icons/fa";
 import userService from "@/services/userService";
 import { toast } from "react-toastify";
 
-const InstructorsSection = ({ instructors: propsInstructors }) => {
+const InstructorsSection = ({ instructors: propsInstructors, limit = 4 }) => {
   const [instructors, setInstructors] = useState(propsInstructors ?? []);
   const [loading, setLoading] = useState(!propsInstructors);
 
@@ -17,8 +17,7 @@ const InstructorsSection = ({ instructors: propsInstructors }) => {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await userService.getAllInstructor();
-        // normalize axios response -> array
+        const res = await userService.getPopularInstructors(limit);
         const data = res?.data?.data ?? res?.data ?? res;
         if (!cancelled) setInstructors(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -33,7 +32,7 @@ const InstructorsSection = ({ instructors: propsInstructors }) => {
     return () => {
       cancelled = true;
     };
-  }, [propsInstructors]);
+  }, [propsInstructors, limit]);
 
   return (
     <section className="py-16 md:py-20 bg-white">

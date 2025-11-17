@@ -2,6 +2,8 @@ import api from "./api";
 
 // Instructors
 export const getAllInstructor = () => api.get(`/users/instructor`);
+export const getPopularInstructors = (limit = 4) =>
+  api.get(`/users/instructor/popular?limit=${limit}`);
 
 // Permissions
 export const getPermissions = () => api.get(`/users/permission`);
@@ -12,6 +14,7 @@ export const invitePermission = (payload) =>
 
 export default {
   getAllInstructor,
+  getPopularInstructors,
   getPermissions,
   assignPermission,
   invitePermission,

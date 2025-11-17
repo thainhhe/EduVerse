@@ -189,7 +189,7 @@ const Home = () => {
       <HeroSection />
       <FeaturesSection features={features} />
       <CategoriesSection />
-      <PopularCoursesSection courses={courses} />
+      <PopularCoursesSection />
       <InstructorsSection />
       <BenefitsSection benefits={benefits} />
       <TestimonialsSection testimonials={testimonials} />

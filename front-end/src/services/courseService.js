@@ -2,6 +2,8 @@ import api from "./api";
 
 // Courses
 export const getAllCoursePublished = () => api.get(`/courses/learner/common`);
+export const getPopularCourses = (limit = 6) =>
+  api.get(`/courses/popular?limit=${limit}`);
 export const getMyCourses = (id) => api.get(`/courses/instructor/${id}`);
 export const getCourseById = (id) => api.get(`/courses/${id}`);
 export const createCourse = (payload) => api.post("/courses/create", payload);
@@ -61,3 +63,14 @@ export const getQuizzesByLesson = (lessonId) =>
 // --- instructor dashboard stats ---
 export const getInstructorDashboard = (instructorId) =>
   api.get(`/instructors/stat/${instructorId}`);
+
+export default {
+  getAllCoursePublished,
+  getPopularCourses,
+  getMyCourses,
+  getCourseById,
+  createCourse,
+  updateCourse,
+  deleteCourse,
+  // ...other exports...
+};

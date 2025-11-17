@@ -106,6 +106,16 @@ const courseController = {
       return error_response(res, error);
     }
   },
+
+  getPopularCourses: async (req, res) => {
+    try {
+      const limit = req.query.limit || 6;
+      const result = await courseService.getPopularCourses(limit);
+      return response(res, result);
+    } catch (error) {
+      return error_response(res, error);
+    }
+  },
 };
 
 module.exports = { courseController };

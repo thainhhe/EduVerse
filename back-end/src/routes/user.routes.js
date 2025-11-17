@@ -6,11 +6,9 @@ const {
   permissionController,
 } = require("../controllers/permission/permission.controller");
 const userRouter = express.Router();
-userRouter.get(
-  "/profile/:id",
-  //  verifyToken,
-  userController.getProfile
-);
+
+userRouter.get("/profile/:id", userController.getProfile);
+userRouter.get("/instructor/popular", userController.getPopularInstructors);
 userRouter.get("/instructor", userController.getInstructor);
 userRouter.put(
   "/profile/:id",
