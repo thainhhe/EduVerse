@@ -118,8 +118,7 @@ const lessonService = {
         try {
             console.log(`🎯 Service: Attempting to mark lesson ${lessonId} for user ${userId}`);
 
-            // --- BƯỚC 1: LOGIC CHẶN (QUAN TRỌNG) ---
-
+            // --- BƯỚC 1: KIỂM TRA QUIZ (NẾU CÓ) ---
             // 1.1. Tìm xem lesson này có quiz nào không
             const associatedQuiz = await Quiz.findOne({
                 lessonId: lessonId,
@@ -156,13 +155,12 @@ const lessonService = {
             if (result.isNewCompletion) {
                 console.log(`New completion detected. Recalculating progress...`);
 
-                // Tìm courseId (như code cũ của bạn)
-                const lesson = await lessonRepository.findById(lessonId); // Dùng repo cho nhất quán
+                // Tìm courseId
+                const lesson = await lessonRepository.findById(lessonId);
                 if (!lesson || !lesson.moduleId) {
                     throw new Error('Lesson or Module not found while recalculating progress');
                 }
 
-                // Bạn có thể cache `moduleId` ở `lesson` để không phải query lại
                 const module = await Module.findById(lesson.moduleId).select('courseId').lean();
                 if (!module) {
                     throw new Error('Module not found while recalculating progress');
@@ -192,7 +190,6 @@ const lessonService = {
 
         } catch (error) {
             console.error('Service Error - markLessonCompleted:', error);
-            // Ném lỗi để controller có thể bắt
             throw error;
         }
     },

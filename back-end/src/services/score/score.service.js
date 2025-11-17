@@ -114,10 +114,9 @@ const scoreServices = {
 
       const newScore = await scoreRepository.createScore(scoreData);
 
-      // ✨ --- TRIGGER CẬP NHẬT TIẾN ĐỘ (ĐÃ SỬA) --- ✨
       if (result.status === "passed") {
 
-        // 1. Tìm courseId (Phần code bạn bị thiếu)
+        // 1. Tìm courseId
         let courseId = null;
         if (quiz.courseId) {
           courseId = quiz.courseId;
@@ -125,9 +124,7 @@ const scoreServices = {
           const module = await Module.findById(quiz.moduleId).select('courseId').lean();
           if (module) courseId = module.courseId;
         } else if (quiz.lessonId) {
-          // Logic này chỉ chạy khi pass quiz lesson, 
-          // nhưng service `markLessonCompleted` đã xử lý rồi.
-          // Tuy nhiên, để an toàn, vẫn nên trigger:
+          // Logic này chỉ chạy khi pass quiz lesson,
           const lesson = await Lesson.findById(quiz.lessonId).select('moduleId').lean();
           if (lesson && lesson.moduleId) {
             const module = await Module.findById(lesson.moduleId).select('courseId').lean();
@@ -136,7 +133,7 @@ const scoreServices = {
         }
 
         // 2. Gọi hàm cập nhật
-        if (courseId) { // Bây giờ courseId sẽ được tìm thấy
+        if (courseId) {
           console.log(`🎯 Trigger: Quiz passed. Updating progress for user ${validatedData.userId} on course ${courseId}`);
           await progressRepository.calculateUserProgress(
             validatedData.userId,
@@ -144,7 +141,6 @@ const scoreServices = {
           );
         }
       }
-      // ✨ --- HẾT PHẦN SỬA --- ✨
 
       return {
         status: 201,

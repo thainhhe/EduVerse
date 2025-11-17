@@ -320,7 +320,6 @@ const enrollmentRepository = {
           (q) => q.quizScores || []
         );
 
-        // --- CHỈ GIỮ LẠI LOGIC THỐNG KÊ (KHÔNG TÍNH PROGRESS) ---
         const totalQuizzes =
           allLessonQuizzes.length +
           allModuleQuizzes.length +
@@ -345,7 +344,6 @@ const enrollmentRepository = {
               uniqueScores.length
             )
             : 0;
-        // --- HẾT LOGIC THỐNG KÊ ---
 
         course.modules = courseModules;
         course.courseQuizzes = courseQuizList;

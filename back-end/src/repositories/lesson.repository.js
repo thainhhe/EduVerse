@@ -46,7 +46,7 @@ const lessonRepository = {
             if (isAlreadyCompleted) {
                 return {
                     success: true,
-                    isNewCompletion: false, // ✨ TRẢ VỀ CỜ NÀY
+                    isNewCompletion: false,
                     message: 'Lesson already completed'
                 };
             }
@@ -58,7 +58,7 @@ const lessonRepository = {
 
             return {
                 success: true,
-                isNewCompletion: true, // ✨ TRẢ VỀ CỜ NÀY
+                isNewCompletion: true,
                 message: 'Lesson marked as completed'
             };
         } catch (error) {
