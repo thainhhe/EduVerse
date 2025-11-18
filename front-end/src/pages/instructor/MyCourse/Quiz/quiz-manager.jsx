@@ -36,6 +36,7 @@ const QuizManager = ({
   });
   const [questions, setQuestions] = useState([]);
   const [editingQuizId, setEditingQuizId] = useState(null);
+  const [errors, setErrors] = useState({});
 
   // Normalize server quiz -> local editor shape if needed
   const mapServerToLocal = (q) => {
@@ -131,12 +132,14 @@ const QuizManager = ({
       isPublished: false,
     });
     setQuestions([]);
+    setErrors({});
   };
 
   // open existing quiz for edit (fetch full quiz with answers when needed)
   const startEdit = async (quizRaw) => {
     const local = mapServerToLocal(quizRaw);
     if (!local) return;
+    setErrors({});
 
     // If questions exist but seem to lack correctAnswer info, try fetching full quiz
     let source = local;
@@ -217,7 +220,15 @@ const QuizManager = ({
 
   const handleSaveQuiz = async () => {
     const title = (quizInfo.title ?? "").trim();
-    if (!title) return alert("Please enter quiz title!");
+    if (!title) {
+      setErrors({ title: "Please enter quiz title!" });
+      // focus title input if available
+      document
+        .querySelector('input[placeholder="Enter quiz title..."]')
+        ?.focus();
+      return;
+    }
+    setErrors({});
 
     const normalizeType = (t) =>
       (t ?? "").toString().replace(/[-\s]/g, "_").toLowerCase();
@@ -325,16 +336,24 @@ const QuizManager = ({
         .filter(Boolean);
     } catch (mapErr) {
       console.error("Quiz mapping error:", mapErr);
-      return alert(
-        mapErr.message ||
-          "Question mapping error. Check questions and correct answers."
-      );
+      // show inline error instead of browser alert
+      setErrors((prev) => ({
+        ...prev,
+        questions:
+          mapErr.message ||
+          "Question mapping error. Check questions and correct answers.",
+      }));
+      return;
     }
 
-    if (normalizedQuestions.length === 0)
-      return alert(
-        "Please add at least one valid question with options and correct answer."
-      );
+    if (normalizedQuestions.length === 0) {
+      setErrors((prev) => ({
+        ...prev,
+        questions:
+          "Please add at least one valid question with options and correct answer.",
+      }));
+      return;
+    }
 
     const isObjectId = (id) =>
       typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
@@ -376,7 +395,10 @@ const QuizManager = ({
       console.error("Save quiz error:", err);
       const msg =
         err?.message || err?.response?.data?.message || "server error";
-      alert("Failed to save quiz: " + msg);
+      setErrors((prev) => ({
+        ...prev,
+        general: "Failed to save quiz: " + msg,
+      }));
     }
   };
 
@@ -505,13 +527,20 @@ const QuizManager = ({
                   <label className="text-sm font-medium">Quiz Title</label>
                   <input
                     type="text"
-                    className="w-full border rounded-lg p-2 mt-1"
+                    className={`w-full border rounded-lg p-2 mt-1 ${
+                      errors.title ? "border-red-500" : ""
+                    }`}
                     placeholder="Enter quiz title..."
                     value={quizInfo.title}
-                    onChange={(e) =>
-                      setQuizInfo({ ...quizInfo, title: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setQuizInfo({ ...quizInfo, title: e.target.value });
+                      if (errors.title)
+                        setErrors((prev) => ({ ...prev, title: undefined }));
+                    }}
                   />
+                  {errors.title && (
+                    <p className="text-sm text-red-600 mt-1">{errors.title}</p>
+                  )}
                 </div>
                 <div>
                   <label className="text-sm font-medium">
@@ -580,7 +609,12 @@ const QuizManager = ({
                 {/* Add form - full width */}
                 <div className="w-full">
                   <QuestionForm
-                    onAddQuestion={(q) => setQuestions((prev) => [...prev, q])}
+                    onAddQuestion={(q) =>
+                      setQuestions((prev) => {
+                        setErrors((p) => ({ ...p, questions: undefined }));
+                        return [...prev, q];
+                      })
+                    }
                   />
                 </div>
 
@@ -589,15 +623,24 @@ const QuizManager = ({
                   <QuestionGrid
                     questions={questions}
                     onDeleteQuestion={(id) =>
-                      setQuestions(questions.filter((q) => q.id !== id))
+                      setQuestions((prev) => {
+                        setErrors((p) => ({ ...p, questions: undefined }));
+                        return prev.filter((q) => q.id !== id);
+                      })
                     }
                     onEditQuestion={(id, updated) =>
-                      setQuestions(
-                        questions.map((q) => (q.id === id ? updated : q))
-                      )
+                      setQuestions((prev) => {
+                        setErrors((p) => ({ ...p, questions: undefined }));
+                        return prev.map((q) => (q.id === id ? updated : q));
+                      })
                     }
                   />
                 </div>
+                {errors.questions && (
+                  <div className="text-sm text-red-600 mt-2">
+                    {errors.questions}
+                  </div>
+                )}
               </div>
 
               {/* Footer buttons below scrollable area */}
