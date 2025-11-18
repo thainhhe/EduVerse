@@ -63,6 +63,7 @@ const enrollmentServices = {
         enrollData,
         false
       );
+      console.log("validatedData", validatedData);
 
       const existingEnrollment =
         await enrollmentRepository.getEnrollmentByUserAndCourse(
@@ -81,7 +82,7 @@ const enrollmentServices = {
         validatedData
       );
       const formattedData = enrollmentHelper.formatEnrollment(newEnrollment);
-
+      console.log("formattedData", formattedData);
       return {
         status: system_enum.STATUS_CODE.CREATED,
         message: enrollment_enum.ENROLLMENT_MESSAGE.ENROLL_SUCCESS,
