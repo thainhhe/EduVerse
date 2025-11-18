@@ -43,6 +43,9 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
 
   const { draft, update: updateDraft, clear: clearDraft } = useCourseDraft();
 
+  // inline validation errors
+  const [errors, setErrors] = useState({});
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -167,17 +170,26 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
   };
 
   const handleNext = async () => {
-    if (!title.trim()) {
-      alert("Title is required.");
-      return;
-    }
-    if (!newCategory && !category) {
-      alert("Please select or enter a category.");
+    // clear previous errors
+    setErrors({});
+
+    const nextErrors = {};
+    if (!title.trim()) nextErrors.title = "Course title is required.";
+    if (!newCategory && !category)
+      nextErrors.category = "Please select or enter a category.";
+
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      // focus first invalid input (optional)
+      const firstKey = Object.keys(nextErrors)[0];
+      if (firstKey === "title") document.getElementById("title")?.focus();
+      if (firstKey === "category") document.getElementById("category")?.focus();
       return;
     }
 
     try {
       setSaving(true);
+      setErrors({});
 
       let categoryId = category;
       if (newCategory && newCategory.trim()) {
@@ -391,6 +403,9 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
+              {errors.title && (
+                <p className="text-sm text-red-600 mt-1">{errors.title}</p>
+              )}
             </div>
 
             <div>
@@ -417,6 +432,9 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                   )}
                 </SelectContent>
               </Select>
+              {errors.category && (
+                <p className="text-sm text-red-600 mt-1">{errors.category}</p>
+              )}
 
               <div className="mt-2">
                 <Label htmlFor="newCategory" className="mb-2 text-sm">
@@ -428,6 +446,10 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                   onChange={(e) => setNewCategory(e.target.value)}
                   placeholder="Enter new category name"
                 />
+                {/* show same category error near newCategory when applicable */}
+                {errors.category && !category && (
+                  <p className="text-sm text-red-600 mt-1">{errors.category}</p>
+                )}
                 <p className="text-xs text-gray-500 mt-1">
                   If you enter a new category, it will be used instead of the
                   selected one.

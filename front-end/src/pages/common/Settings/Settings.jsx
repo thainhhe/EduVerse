@@ -264,7 +264,7 @@ const Settings = () => {
                 }}
               />
 
-              <div className="flex-1">
+              <div className="flex-1 space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>
                 <Input
                   id="fullName"
@@ -277,7 +277,7 @@ const Settings = () => {
               </div>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
               <Input
                 id="email"
@@ -288,7 +288,7 @@ const Settings = () => {
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               {!showChangeForm ? (
                 <div className="flex gap-2">
@@ -310,7 +310,7 @@ const Settings = () => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="currentPassword">Current password</Label>
                     <Input
                       id="currentPassword"
@@ -319,7 +319,7 @@ const Settings = () => {
                       onChange={(e) => setCurrentPassword(e.target.value)}
                     />
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="newPassword">New password</Label>
                     <Input
                       id="newPassword"
@@ -328,7 +328,7 @@ const Settings = () => {
                       onChange={(e) => setNewPassword(e.target.value)}
                     />
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="confirmPassword">Confirm password</Label>
                     <Input
                       id="confirmPassword"
