@@ -58,50 +58,113 @@ export const ChatbotWidget = () => {
   }, [messages, open]);
 
   const parseBotText = (text) => {
-    if (!text) return { paragraphs: [], bullets: [], source: null };
+    if (!text)
+      return { numbered: false, paragraphs: [], bullets: [], source: null };
 
-    // tách phần "Nguồn" (có thể là "Nguồn:" hoặc "**Nguồn:**")
-    const sourceMatch = text.match(/(?:\*\*)?Nguồn(?:\*\*)?:\s*([\s\S]*)$/i);
-    const source = sourceMatch ? sourceMatch[1].trim() : null;
-    let main = sourceMatch
-      ? text.slice(0, sourceMatch.index).trim()
-      : text.trim();
+    // If text contains numbered list items (e.g. "1. ...\n2. ..."), parse per-item
+    if (/\n\s*\d+\.\s/.test("\n" + text)) {
+      const rawItems = text
+        .split(/\n\s*(?=\d+\.\s)/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const items = rawItems.map((item) => {
+        // remove leading "1. " prefix
+        const m = item.match(/^\s*\d+\.\s*(.*)$/s);
+        let body = m ? m[1].trim() : item;
 
-    // 1) Loại bỏ các ký tự thừa ở đầu/cuối do format lạ: ví dụ "*( " hoặc trailing ")"
+        // Extract a "Nguồn: ..." fragment if present in this item's body.
+        // We look for the last occurrence of the token 'Nguồn' to avoid grabbing following items.
+        const srcIdx = body.search(/Nguồn\s*[:\-–]\s*/i);
+        let source = null;
+        if (srcIdx !== -1) {
+          source = body
+            .slice(srcIdx)
+            .replace(/^[^\:]*[:\-–]\s*/i, "")
+            .trim();
+          body = body.slice(0, srcIdx).trim();
+        }
+
+        // Clean markdown bullets/asterisks and surrounding punctuation
+        body = body
+          .replace(/^\s*[\*\-]+\s*/, "")
+          .replace(/^\*+|\*+$/g, "")
+          .trim();
+        if (source)
+          source = source
+            .replace(/^\*+|\*+$/g, "")
+            .replace(/[\)\s]+$/g, "")
+            .trim();
+
+        // Normalize inline markdown emphasis
+        body = body
+          .replace(/\*\*(.+?)\*\*/gs, "$1")
+          .replace(/\*(.+?)\*/gs, "$1");
+
+        return { content: body, source };
+      });
+
+      return { numbered: true, items };
+    }
+
+    // Fallback: original single-document parsing (paragraphs/bullets + global source)
+    const rawLines = text.split(/\r?\n/);
+    const lines = rawLines.map((l) => l.replace(/^\s+|\s+$/g, ""));
+
+    let source = null;
+
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const withoutBullet = lines[i].replace(/^(\*+|\-|\u2022)\s*/, "").trim();
+      const normalized = withoutBullet.replace(/^[\(\*\s]+|[\)\*\s]+$/g, "");
+      const startMatch = normalized.match(
+        /^(?:\*{0,2})?Nguồn\b\s*[:\-–]?\s*(.*)$/i
+      );
+      if (startMatch) {
+        source = startMatch[1] ? startMatch[1].trim() : "";
+        lines.splice(i, 1);
+        break;
+      }
+      const inlineMatch = lines[i].match(/Nguồn\s*[:\-–]\s*([^\)\n\r]*)/i);
+      if (inlineMatch) {
+        source = inlineMatch[1].trim();
+        lines[i] = lines[i].replace(inlineMatch[0], "").trim();
+        if (!lines[i]) lines.splice(i, 1);
+        break;
+      }
+    }
+
+    let main = lines.join("\n").trim();
     main = main.replace(/^[\s\*\(\-]+/, "").replace(/[\s\*\)\-]+$/, "");
+    if (source)
+      source = source.replace(/^[\s\*\(\-]+/, "").replace(/[\s\*\)\-]+$/, "");
+    main = main
+      .replace(/\*\*(.+?)\*\*/gs, "$1")
+      .replace(/\[(.+?)\]\((?:.+?)\)/gs, "$1");
 
-    // 2) Giải mã markdown bold **...** và inline links [text](url) -> text
-    main = main.replace(/\*\*(.+?)\*\*/gs, "$1");
-    main = main.replace(/\[(.+?)\]\((?:.+?)\)/gs, "$1");
-
-    // 3) Nếu không có newline nhưng có nhiều phần ngăn bằng "*", coi đó là inline bullets
     if (!main.includes("\n") && /\*\s*[^ ]+/.test(main)) {
       const parts = main
         .split(/\s*\*\s*/)
         .map((s) => s.replace(/^\s+|\s+$/g, ""))
         .filter(Boolean);
       if (parts.length > 1) {
-        // remove possible surrounding bold/italics in each part
         const cleaned = parts.map((p) =>
           p.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1")
         );
-        return { paragraphs: [], bullets: cleaned, source };
+        return { numbered: false, paragraphs: [], bullets: cleaned, source };
       }
     }
 
-    // 4) Xử lý theo dòng: giữ bullets bắt đầu bằng '*', '-' hoặc '•'
-    const lines = main.split(/\r?\n/).map((l) => l.replace(/^\s+|\s+$/g, ""));
+    const finalLines = main
+      .split(/\r?\n/)
+      .map((l) => l.replace(/^\s+|\s+$/g, ""));
     const bullets = [];
     const paragraphs = [];
     let currentPara = [];
 
-    lines.forEach((line) => {
-      // normalize inner markdown for the line (but keep leading bullet marker)
+    for (const line of finalLines) {
       const isBulletLine = /^(\*|-|\u2022)\s+/.test(line);
       const content = isBulletLine
         ? line.replace(/^(\*|-|\u2022)\s+/, "")
         : line;
-      // remove bold/italic inside
       const cleanedLine = content
         .replace(/\*\*(.+?)\*\*/g, "$1")
         .replace(/\*(.+?)\*/g, "$1");
@@ -115,26 +178,33 @@ export const ChatbotWidget = () => {
       } else {
         currentPara.push(cleanedLine);
       }
-    });
+    }
 
     if (currentPara.length) paragraphs.push(currentPara.join(" "));
 
-    return { paragraphs, bullets, source };
+    return { numbered: false, paragraphs, bullets, source };
   };
 
   const handleSend = async () => {
     const text = value.trim();
     if (!text) return;
     const userMsg = { sender: "user", text };
+
+    // append user message immediately
     setMessages((s) => [...s, userMsg]);
     setValue("");
     setLoading(true);
 
-    const history = messages.map((m) => ({ sender: m.sender, text: m.text }));
+    // construct history that INCLUDES the new user message
+    const history = [...messages, userMsg].map((m) => ({
+      sender: m.sender,
+      text: m.text,
+    }));
+
     try {
       const data = await sendChatQuery(text, history);
-      const botText =
-        data?.reply || data?.data?.reply || "Xin lỗi, tôi đang gặp lỗi.";
+      const botText = data?.reply ?? "Xin lỗi, tôi đang gặp lỗi.";
+      // append bot reply
       setMessages((s) => [...s, { sender: "bot", text: botText }]);
     } catch (err) {
       setMessages((s) => [
@@ -147,7 +217,37 @@ export const ChatbotWidget = () => {
   };
 
   const renderBotMessage = (text, idx) => {
-    const { paragraphs, bullets, source } = parseBotText(text);
+    const parsed = parseBotText(text);
+
+    // If we have numbered items, render each item separately with its own (per-item) source.
+    if (parsed.numbered && Array.isArray(parsed.items)) {
+      return (
+        <div key={idx} style={{ marginBottom: 8, width: "100%" }}>
+          {parsed.items.map((it, i) => (
+            <div key={i} style={{ marginBottom: 12 }}>
+              <div
+                style={{ color: "#222", lineHeight: "1.4", marginBottom: 6 }}
+              >
+                {it.content}
+              </div>
+              {it.source && (
+                <div style={sourceBoxStyle}>
+                  <strong style={{ display: "block", marginBottom: 6 }}>
+                    Nguồn
+                  </strong>
+                  <div style={{ whiteSpace: "pre-wrap", fontSize: 12 }}>
+                    {it.source}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // Existing render logic for non-numbered responses
+    const { paragraphs, bullets, source } = parsed;
     return (
       <div key={idx} style={{ marginBottom: 8, width: "100%" }}>
         {paragraphs.map((p, i) => (

@@ -125,14 +125,25 @@ const PopularCoursesSection = ({ courses: propsCourses, limit = 6 }) => {
                     </span>
                   </div>
                   <div className="text-indigo-600 font-bold text-lg mt-auto mb-4 pt-2">
-                    {price}
+                    {(() => {
+                      const priceVal =
+                        typeof course?.price === "number"
+                          ? course.price
+                          : Number(course?.displayPrice ?? 0);
+                      return priceVal
+                        ? priceVal.toLocaleString("vi-VN", {
+                            style: "currency",
+                            currency: "VND",
+                          })
+                        : "Free";
+                    })()}
                   </div>
                   <Button
                     asChild
                     className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-lg shadow-none"
                   >
                     <Link to={`/courses/${id}`}>
-                      Register Now <FaArrowRight className="ml-2" />
+                      Enroll Now <FaArrowRight className="ml-2" />
                     </Link>
                   </Button>
                 </div>
