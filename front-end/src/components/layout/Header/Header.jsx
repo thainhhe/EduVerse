@@ -156,11 +156,11 @@ const Header = () => {
                     {/* show different menu item based on role */}
                     {user?.role === "learner" && (
                       <Link
-                        to="/courses/purchased"
+                        to="/dashboard"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         onClick={() => setShowAvatarMenu(false)}
                       >
-                        Purchased Courses
+                        Dashboard
                       </Link>
                     )}
 

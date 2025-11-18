@@ -23,17 +23,14 @@ export function AddLessonModal({
 }) {
   const [lessonTitle, setLessonTitle] = useState("");
   const [contentGroup, setContentGroup] = useState("");
-  const [quiz, setQuiz] = useState(""); // nếu có selector quiz, giữ state ở đây
-  const [errors, setErrors] = useState({}); // inline validation / server errors
+  const [quiz, setQuiz] = useState("");
+  const [errors, setErrors] = useState({});
 
   const handleSave = async () => {
-    // clear previous errors
     setErrors({});
 
-    // client-side validation
     if (!lessonTitle || !lessonTitle.trim()) {
       setErrors({ lessonTitle: "Lesson title is required." });
-      // focus the field so user sees it
       document.getElementById("lesson-title")?.focus();
       return;
     }
