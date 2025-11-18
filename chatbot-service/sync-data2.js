@@ -2,11 +2,10 @@
 // PHIÊN BẢN CẬP NHẬT - GỌI QUA API BACKEND
 
 require("dotenv").config();
-// LOẠI BỎ: const mongoose = require("mongoose");
 const { ChromaClient } = require("chromadb");
 const { Chroma } = require("@langchain/community/vectorstores/chroma");
 const { GoogleGenerativeAIEmbeddings } = require("@langchain/google-genai");
-const axios = require("axios"); // <-- THÊM MỚI
+const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 
@@ -14,7 +13,6 @@ const CHROMA_URL = process.env.CHROMA_URL || "http://localhost:8000";
 const COLLECTION_NAME = process.env.CHROMA_COLLECTION || "eduverse_rag";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-// --- BIẾN MỚI TỪ .env ---
 const BACKEND_API_URL = process.env.BACKEND_API_URL;
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY;
 
@@ -25,7 +23,6 @@ const buildText = (type, doc) => {
         doc.duration && typeof doc.duration === "object"
           ? `${doc.duration.value ?? ""} ${doc.duration.unit ?? ""}`.trim()
           : doc.duration || "N/A";
-      // NOTE: use "Instructor subjects" label to avoid implying these are course topics
       const instrSubjects =
         doc.main_instructor_subject &&
         Array.isArray(doc.main_instructor_subject)
@@ -45,7 +42,6 @@ const buildText = (type, doc) => {
         doc.description || ""
       }.`;
     case "module":
-      // 'doc' từ API đã chứa course_title và course_price + course_main_instructor_*
       return `Module: ${doc.title || "Untitled"}. Description: ${
         doc.description || ""
       }. Course: ${doc.course_title || doc.courseId || "N/A"} (Price: ${
@@ -56,7 +52,6 @@ const buildText = (type, doc) => {
         doc.order ?? "N/A"
       }.`;
     case "lesson":
-      // 'doc' từ API đã chứa module_title, course_title, course_price
       return `Lesson: ${doc.title || "Untitled"}. Content: ${
         doc.content || ""
       }. Module: ${doc.module_title || doc.moduleId || "N/A"}. Course: ${
@@ -67,14 +62,12 @@ const buildText = (type, doc) => {
         doc.course_main_instructor_subject || "N/A"
       }). Order: ${doc.order ?? "N/A"}.`;
     case "material":
-      // 'doc' từ API đã chứa course_title
       return `Material: ${doc.title || "Untitled"}. Description: ${
         doc.description || ""
       }. Type: ${doc.type || "N/A"}. URL: ${doc.url || "N/A"}. Course: ${
         doc.course_title || doc.courseId || "N/A"
       }.`;
     case "quiz": {
-      // 'doc' từ API đã chứa lesson_title, module_title, course_title, course_price
       const questionsText = Array.isArray(doc.questions)
         ? doc.questions
             .map(
@@ -97,14 +90,12 @@ const buildText = (type, doc) => {
       }. ${parent}. ${questionsText}`;
     }
     case "review":
-      // 'doc' từ API đã chứa course_title, user_name, course_price
       return `Review for Course ${
         doc.course_title || doc.courseId || "N/A"
       } by ${doc.user_name || doc.userId || "N/A"}. Rating: ${
         doc.rating ?? "N/A"
       }. Comment: ${doc.comment || ""}.`;
     case "enrollment":
-      // 'doc' từ API đã chứa course_title, user_name, course_price
       return `Enrollment: User ${
         doc.user_name || doc.userId || "N/A"
       } enrolled in Course ${
@@ -115,17 +106,27 @@ const buildText = (type, doc) => {
   }
 };
 
-// Exportable function để gọi từ server (event-driven). KHÔNG tự chạy khi import.
-async function runSync() {
-  console.log("Start syncing from BACKEND API to ChromaDB..."); // <-- Log đã cập nhật
+// --------- Prevent concurrent runs ----------
+let isSyncing = false;
 
-  // --- KIỂM TRA BIẾN MÔI TRƯỜNG MỚI ---
+// Exportable function to call from server/CLI
+async function runSync() {
+  if (isSyncing) {
+    console.warn("[Sync] Previous sync is still running. Skipping this run.");
+    return;
+  }
+  isSyncing = true;
+  console.log("Start syncing from BACKEND API to ChromaDB...");
+
+  // Basic env checks
   if (!BACKEND_API_URL) {
     console.error("MISSING BACKEND_API_URL in .env");
-    return; // không process.exit để tránh kill server khi gọi từ /trigger-sync
+    isSyncing = false;
+    return;
   }
   if (!INTERNAL_API_KEY) {
     console.error("MISSING INTERNAL_API_KEY in .env. Cannot authenticate.");
+    isSyncing = false;
     return;
   }
   if (!GEMINI_API_KEY) {
@@ -140,6 +141,7 @@ async function runSync() {
         headers: {
           "x-internal-api-key": INTERNAL_API_KEY,
         },
+        timeout: 120000,
       });
       if (response.data && response.data.success && response.data.data) {
         apiData = response.data.data;
@@ -160,10 +162,55 @@ async function runSync() {
       );
       return;
     }
+
+    // ------------------------------------------------------------------
+    // --- SAU KHI ĐÃ LƯU VÀO CHROMADB, HÃY TẠO FILE SUMMARY.JSON MỚI ---
+    // (Ở đây giả định bạn đã push dữ liệu vào Chroma; tạo summary.json dựa trên apiData)
+    if (apiData && Array.isArray(apiData.courses)) {
+      try {
+        console.log("[Sync] Generating new summary.json...");
+
+        const summaryLines = apiData.courses.map((c) => {
+          const instr = c.main_instructor_name || "N/A";
+          const price = c.price ?? "N/A";
+          return `${c.title} (Giá: ${price}; GV: ${instr})`;
+        });
+
+        const summaryText = `Đây là danh sách tóm tắt tất cả các khóa học hiện có: ${summaryLines.join(
+          ", "
+        )}. Tổng cộng có ${apiData.courses.length} khóa học.`;
+
+        const summaryDoc = {
+          pageContent: summaryText,
+          metadata: {
+            id: "all_courses_summary_list",
+            type: "course_summary_list",
+            updatedAt: new Date().toISOString(),
+          },
+        };
+
+        const summaryPath = path.join(__dirname, "summary.json");
+        fs.writeFileSync(
+          summaryPath,
+          JSON.stringify(summaryDoc, null, 2),
+          "utf8"
+        );
+
+        console.log(
+          `[Sync] Updated summary.json with ${apiData.courses.length} courses.`
+        );
+      } catch (err) {
+        console.error("[Sync] Failed to update summary.json:", err);
+      }
+    }
+    // ------------------------------------------------------------------
+
+    // NOTE: here you can add code to push documents into ChromaDB using embeddings if needed.
   } catch (err) {
     console.error("Sync run failed:", err?.message || err);
   } finally {
-    console.log("Sync run finished (end of runSync).");
+    isSyncing = false;
+    console.log("Sync run finished.");
   }
 }
 

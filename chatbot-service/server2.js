@@ -5,6 +5,9 @@ require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
 
+// --- THÊM MỚI: Import node-cron ---
+const cron = require("node-cron");
+
 const { Chroma } = require("@langchain/community/vectorstores/chroma");
 const { ChromaClient } = require("chromadb");
 const gg = require("@langchain/google-genai");
@@ -103,6 +106,26 @@ const summaryRetriever = {
 };
 
 console.log("[Chatbot] General and Summary retrievers are active.");
+
+// ==========================================
+// 🚀 CẤU HÌNH CRON JOB (CHẠY 15 PHÚT/LẦN)
+// ==========================================
+console.log("[Cron] Initializing scheduled tasks...");
+
+// Cấu trúc: "*/15 * * * *" nghĩa là chạy vào phút thứ 0, 15, 30, 45 mỗi giờ
+cron.schedule("*/15 * * * *", async () => {
+  console.log(
+    `[Cron] ⏰ Triggering auto-sync at ${new Date().toISOString()}...`
+  );
+  try {
+    // Gọi hàm đồng bộ dữ liệu
+    await runSync();
+    console.log("[Cron] ✅ Auto-sync completed successfully.");
+  } catch (err) {
+    console.error("[Cron] ❌ Auto-sync failed:", err?.message || err);
+  }
+});
+// ==========================================
 
 // 4. TỐI ƯU: Định nghĩa các chain xử lý chính
 const formatDocs = (docs) => docs.map((doc) => doc.pageContent).join("\n\n");
@@ -367,10 +390,8 @@ app.post("/trigger-sync", (req, res) => {
     );
   }
 
-  return res
-    .status(202)
-    .json({
-      success: true,
-      message: "Đã chấp nhận yêu cầu. Quá trình đồng bộ đang chạy ngầm.",
-    });
+  return res.status(202).json({
+    success: true,
+    message: "Đã chấp nhận yêu cầu. Quá trình đồng bộ đang chạy ngầm.",
+  });
 });
