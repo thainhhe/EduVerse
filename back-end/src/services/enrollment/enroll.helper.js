@@ -8,6 +8,7 @@ const enrollHelper = {
       userName: data.userId?.name || data.userId?.username || null,
       courseId: data.courseId?._id?.toString() || data.courseId,
       thumbnail: data.courseId?.thumbnail || null,
+      thumbnail: data.courseId?.thumbnail || null,
       courseTitle: data.courseId?.title || null,
       enrollmentDate: data.enrollmentDate,
       endDate: data.endDate,
@@ -44,21 +45,52 @@ const enrollHelper = {
         0
       ) || 0;
 
-    const calculatedProgress =
-      totalLessons > 0
-        ? Math.round((completedLessons / totalLessons) * 100)
-        : 0;
+    // const calculatedProgress =
+    //   totalLessons > 0
+    //     ? Math.round((completedLessons / totalLessons) * 100)
+    //     : 0;
+    // formatDetailedEnrollment: (enrollment) => {
+    //     const course = enrollment.courseId || {};
+    //     const userId = enrollment.userId?._id?.toString();
 
+    //   return {
+    //     _id: enrollment._id?.toString(),
+    //     userId: enrollment.userId,
+    //     enrollmentDate: enrollment.enrollmentDate,
+    //     progress: enrollment.progress || 0,
+    //     status: enrollment.status || "enrolled",
+    //     calculatedProgress,
+    //     totalQuizzes: enrollment.totalQuizzes || 0,
+    //     completedQuizzes: enrollment.completedQuizzes || 0,
+    //     averageScore: enrollment.averageScore || 0,
+    //     courseId: {
+    //       ...course,
+    //       modules:
+    //         course.modules?.map((module) => ({
+    //           ...module,
+    //           lessons:
+    //             module.lessons?.map((lesson) => ({
+    //               ...lesson,
+    //               quiz: lesson.quiz || null, // Đảm bảo quiz được bao gồm
+    //               quizScores: lesson.quizScores || [],
+    //             })) || [],
+    //         })) || [],
+    //       courseQuizzes: course.courseQuizzes || [],
+    //     },
+    //     allScores: enrollment.allScores || [],
+    //   };
+    // },
     return {
       _id: enrollment._id?.toString(),
       userId: enrollment.userId,
       enrollmentDate: enrollment.enrollmentDate,
       progress: enrollment.progress || 0,
       status: enrollment.status || "enrolled",
-      calculatedProgress,
+      grade: enrollment.grade || "Incomplete",
       totalQuizzes: enrollment.totalQuizzes || 0,
       completedQuizzes: enrollment.completedQuizzes || 0,
       averageScore: enrollment.averageScore || 0,
+
       courseId: {
         ...course,
         modules:
@@ -67,9 +99,13 @@ const enrollHelper = {
             lessons:
               module.lessons?.map((lesson) => ({
                 ...lesson,
-                quiz: lesson.quiz || null, // Đảm bảo quiz được bao gồm
+                isCompleted: lesson.user_completed?.some(
+                  (id) => id.toString() === userId
+                ),
+                quiz: lesson.quiz || null,
                 quizScores: lesson.quizScores || [],
               })) || [],
+            moduleQuizzes: module.moduleQuizzes || [],
           })) || [],
         courseQuizzes: course.courseQuizzes || [],
       },

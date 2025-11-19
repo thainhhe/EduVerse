@@ -3,6 +3,7 @@ const { enrollment_enum } = require("../../config/enum/enroll.constants");
 const enrollmentRepository = require("../../repositories/enroll.repository");
 const enrollValidator = require("../../validator/enroll.validator");
 const enrollmentHelper = require("./enroll.helper");
+const progressRepository = require("../../repositories/progress.repository");
 
 const enrollmentServices = {
   getAllEnrollments: async () => {
@@ -245,30 +246,42 @@ const enrollmentServices = {
       };
     }
   },
+
+  
   // Recalculate progress for a specific enrollment
   recalculateProgress: async (userId, courseId) => {
-    try {
-      console.log(
-        `Service: Recalculating progress for user ${userId} in course ${courseId}`
-      );
+        try {
+            console.log(
+                `Service: Recalculating progress for user ${userId} in course ${courseId}`
+            );
 
-      const progressData = await enrollmentRepository.calculateUserProgress(
-        userId,
-        courseId
-      );
+            // ✨ SỬA LỖI: Gọi đúng repository ✨
+            const progressData = await progressRepository.calculateUserProgress(
+                userId,
+                courseId
+            );
 
-      if (!progressData.enrollment) {
-        throw new Error("Enrollment not found");
-      }
+            if (!progressData) { // Sửa check: progressData là enrollment đã update
+                throw new Error("Enrollment not found or failed to update");
+            }
 
-      console.log(`Service: Progress recalculated successfully`);
+            console.log(`Service: Progress recalculated successfully`);
 
-      return progressData;
-    } catch (error) {
-      console.error("Service Error - recalculateProgress:", error);
-      throw error;
-    }
-  },
+            // progressData chính là enrollment đã được cập nhật
+            return {
+                status: system_enum.STATUS_CODE.OK,
+                message: "Progress recalculated",
+                data: {
+                    progress: progressData.progress,
+                    status: progressData.status
+                }
+            };
+
+        } catch (error) {
+            console.error("Service Error - recalculateProgress:", error);
+            throw error;
+        }
+    },
 
   getEnrollmentByUserAndCourse: async (userId, courseId) => {
     try {
