@@ -1,29 +1,46 @@
-const Report = require("../models/IssueReport");
+const IssueReport = require('../models/IssueReport');
 
 const reportRepository = {
-    getAllReports: async () => {
-        return await Report.find().exec();
-    },
-
-    getReportById: async (id) => {
-        return await Report.findById(id).exec();
-    },
-
-    createReport: async (data) => {
-        const report = new Report(data);
+    create: async (reportData) => {
+        const report = new IssueReport(reportData);
         return await report.save();
     },
 
-    updateReport: async (id, data) => {
-        return await Report.findByIdAndUpdate(id, data, { new: true }).exec();
-    },
-    
-    deleteReport: async (id) => {
-        return await Report.findByIdAndDelete(id).exec();
+    findById: async (id) => {
+        return await IssueReport.findById(id)
+            .populate('userId', 'username email')
+            .populate('assigneeId', 'username email')
+            .populate('courseId', 'title');
     },
 
-    save: async (data) => {
-        return data.save();
+    findByUserId: async (userId) => {
+        return await IssueReport.find({ userId: userId })
+            .populate('assigneeId', 'username email')
+            .populate('courseId', 'title')
+            .sort({ createdAt: -1 });
+    },
+
+    findByAssigneeId: async (assigneeId) => {
+        return await IssueReport.find({ assigneeId: assigneeId })
+            .populate('userId', 'username email')
+            .populate('courseId', 'title')
+            .sort({ status: 1, createdAt: -1 });
+    },
+
+    findAll: async () => {
+        return await IssueReport.find({})
+            .populate('userId', 'username email')
+            .populate('assigneeId', 'username email')
+            .populate('courseId', 'title')
+            .sort({ createdAt: -1 });
+    },
+
+    updateById: async (id, updateData) => {
+        return await IssueReport.findByIdAndUpdate(id, updateData, { new: true });
+    },
+
+    deleteById: async (id) => {
+        return await IssueReport.findByIdAndDelete(id);
     },
 };
 

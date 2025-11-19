@@ -47,6 +47,31 @@ export const updateLesson = (id, payload) =>
   api.put(`/lessons/update/${id}`, payload);
 export const deleteLesson = (id) => api.delete(`/lessons/delete/${id}`);
 
+export const completeLesson = async (lessonId, userId) => {
+  try {
+    const res = await api.post(`lessons/${lessonId}/complete`, { userId });
+    return res;
+  } catch (err) {
+    // Nếu backend trả về lỗi, lấy data trong response
+    if (err.response && err.response.data) {
+      return err.response.data;
+    }
+    throw err;
+  }
+};
+
+export const uncompleteLesson = async (lessonId, userId) => {
+  try {
+    const res = await api.post(`lessons/${lessonId}/uncomplete`, { userId });
+    return res;
+  } catch (err) {
+    if (err.response && err.response.data) {
+      return err.response.data;
+    }
+    throw err;
+  }
+};
+
 // Quiz
 export const getQuizById = (id) => api.get(`/quiz/${id}`);
 export const getAllQuizzes = () => api.get(`/quiz`);

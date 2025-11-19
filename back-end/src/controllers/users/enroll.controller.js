@@ -64,6 +64,7 @@ const getAllEnrollmentByUser = async (req, res) => {
 const createEnrollment = async (req, res) => {
   try {
     const enrollData = req.body;
+    console.log("enrollData", enrollData);
     const result = await enrollmentServices.createEnrollment(enrollData);
     return res.status(result.status).json({
       message: result.message,
