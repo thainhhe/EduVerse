@@ -134,16 +134,16 @@ const initClients = async () => {
     model: "models/text-embedding-004",
   });
 
-  // Chroma client methods can be sync or async depending on version; normalize with Promise.resolve
-  const collection = chromaClient.collection
-    ? chromaClient.collection(COLLECTION_NAME)
-    : chromaClient.getCollection
-    ? await chromaClient.getCollection(COLLECTION_NAME)
-    : null;
+  // FIX: Sử dụng getOrCreateCollection để đảm bảo collection luôn tồn tại
+  // trước khi tiến hành upsert.
+  const collection = await chromaClient.getOrCreateCollection({
+    name: COLLECTION_NAME,
+    embeddingFunction: { name: "all-MiniLM-L6-v2" },
+  });
 
   return {
     chromaClient,
-    collection: await Promise.resolve(collection),
+    collection,
     embeddings,
   };
 };
@@ -306,7 +306,13 @@ async function runSync() {
         const summaryLines = apiData.courses.map((c) => {
           const instr = c.main_instructor_name || "N/A";
           const price = c.price ?? "N/A";
-          return `${c.title || "Untitled"} (Giá: ${price}; GV: ${instr})`;
+          const durationStr =
+            c.duration && typeof c.duration === "object"
+              ? `${c.duration.value ?? ""} ${c.duration.unit ?? ""}`.trim()
+              : c.duration || "N/A";
+          return `${
+            c.title || "Untitled"
+          } (Giá: ${price}; GV: ${instr}; Thời lượng: ${durationStr})`;
         });
 
         const summaryText = `Đây là danh sách tóm tắt tất cả các khóa học hiện có: ${summaryLines.join(
