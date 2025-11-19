@@ -3,7 +3,6 @@
 
 require("dotenv").config();
 const { ChromaClient } = require("chromadb");
-const { Chroma } = require("@langchain/community/vectorstores/chroma");
 const { GoogleGenerativeAIEmbeddings } = require("@langchain/google-genai");
 const axios = require("axios");
 const fs = require("fs");
@@ -16,9 +15,12 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const BACKEND_API_URL = process.env.BACKEND_API_URL;
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY;
 
+// batch size for embedding/upsert
+const BATCH_SIZE = Number(process.env.SYNC_BATCH_SIZE) || 128;
+
 const buildText = (type, doc) => {
   switch (type) {
-    case "course":
+    case "course": {
       const durationStr =
         doc.duration && typeof doc.duration === "object"
           ? `${doc.duration.value ?? ""} ${doc.duration.unit ?? ""}`.trim()
@@ -26,7 +28,7 @@ const buildText = (type, doc) => {
       const instrSubjects =
         doc.main_instructor_subject &&
         Array.isArray(doc.main_instructor_subject)
-          ? doc.main_instructor_subject.join(",")
+          ? doc.main_instructor_subject.join(", ")
           : doc.main_instructor_subject || "N/A";
       return `Course: ${doc.title || "Untitled"}. Description: ${
         doc.description || ""
@@ -36,7 +38,8 @@ const buildText = (type, doc) => {
         doc.main_instructor_name || doc.main_instructor || "N/A"
       } (${
         doc.main_instructor_job_title || "N/A"
-      }). Instructor subjects: ${instrSubjects}. Duration: ${durationStr}.`;
+      }). Subjects: ${instrSubjects}. Duration: ${durationStr}.`;
+    }
     case "category":
       return `Category: ${doc.name || "Untitled"}. Description: ${
         doc.description || ""
@@ -94,7 +97,7 @@ const buildText = (type, doc) => {
         doc.course_title || doc.courseId || "N/A"
       } by ${doc.user_name || doc.userId || "N/A"}. Rating: ${
         doc.rating ?? "N/A"
-      }. Comment: ${doc.comment || ""}.`;
+      }. Comment: ${doc.comment || doc.content || ""}.`;
     case "enrollment":
       return `Enrollment: User ${
         doc.user_name || doc.userId || "N/A"
@@ -108,6 +111,122 @@ const buildText = (type, doc) => {
 
 // --------- Prevent concurrent runs ----------
 let isSyncing = false;
+
+// helpers to init chroma & embeddings
+const parseChromaUrl = (urlStr) => {
+  try {
+    const u = new URL(urlStr);
+    return {
+      host: u.hostname,
+      port: u.port ? Number(u.port) : 8000,
+      ssl: u.protocol === "https:",
+    };
+  } catch (e) {
+    return { host: "localhost", port: 8000, ssl: false };
+  }
+};
+
+const initClients = async () => {
+  const { host, port, ssl } = parseChromaUrl(CHROMA_URL);
+  const chromaClient = new ChromaClient({ host, port, ssl });
+  const embeddings = new GoogleGenerativeAIEmbeddings({
+    apiKey: GEMINI_API_KEY,
+    model: "models/text-embedding-004",
+  });
+
+  // Chroma client methods can be sync or async depending on version; normalize with Promise.resolve
+  const collection = chromaClient.collection
+    ? chromaClient.collection(COLLECTION_NAME)
+    : chromaClient.getCollection
+    ? await chromaClient.getCollection(COLLECTION_NAME)
+    : null;
+
+  return {
+    chromaClient,
+    collection: await Promise.resolve(collection),
+    embeddings,
+  };
+};
+
+const pushDocumentsToChroma = async (apiData) => {
+  // Backend returns an object with keys exactly:
+  // { courses, categories, modules, lessons, materials, quizzes, reviews, enrollments }
+  const types = [
+    { key: "courses", type: "course" },
+    { key: "categories", type: "category" },
+    { key: "modules", type: "module" },
+    { key: "lessons", type: "lesson" },
+    { key: "materials", type: "material" },
+    { key: "quizzes", type: "quiz" },
+    { key: "reviews", type: "review" },
+    { key: "enrollments", type: "enrollment" },
+  ];
+
+  const ids = [];
+  const docs = [];
+  const metas = [];
+
+  for (const t of types) {
+    const arr = Array.isArray(apiData[t.key]) ? apiData[t.key] : [];
+    for (const d of arr) {
+      // backend uses Mongo _id; require it to create stable id
+      const origId = d._id ?? d.id;
+      if (!origId) {
+        // skip malformed doc
+        console.warn(`[Sync] skipping ${t.type} without _id`);
+        continue;
+      }
+      const id = `${t.type}_${String(origId)}`;
+      ids.push(id);
+      docs.push(buildText(t.type, d));
+      metas.push({
+        type: t.type,
+        originalId: String(origId),
+        title: d.title || d.name || "",
+      });
+    }
+  }
+
+  if (ids.length === 0) {
+    console.log("[Sync] No documents to push to Chroma.");
+    return;
+  }
+
+  const { collection, embeddings } = await initClients();
+  if (!collection) {
+    console.error("[Sync] Chroma collection unavailable. Abort push.");
+    return;
+  }
+
+  // batch upload with embeddings
+  for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+    const chunkIds = ids.slice(i, i + BATCH_SIZE);
+    const chunkDocs = docs.slice(i, i + BATCH_SIZE);
+    const chunkMetas = metas.slice(i, i + BATCH_SIZE);
+
+    try {
+      // create embeddings via Google Generative AI
+      const vectors = await embeddings.embedDocuments(chunkDocs);
+      await collection.upsert({
+        ids: chunkIds,
+        documents: chunkDocs,
+        metadatas: chunkMetas,
+        embeddings: vectors,
+      });
+      console.log(
+        `[Sync] Upserted ${chunkIds.length} docs to Chroma (batch ${Math.floor(
+          i / BATCH_SIZE
+        )})`
+      );
+    } catch (err) {
+      console.error(
+        "[Sync] Failed to upsert batch to Chroma:",
+        err?.message || err
+      );
+      // optional: implement retry/backoff here
+    }
+  }
+};
 
 // Exportable function to call from server/CLI
 async function runSync() {
@@ -143,17 +262,23 @@ async function runSync() {
         },
         timeout: 120000,
       });
+
+      // Backend response util returns { success, message, data }
       if (response.data && response.data.success && response.data.data) {
+        apiData = response.data.data;
+      } else if (response.data && response.data.data) {
+        // tolerate non-success wrapper (defensive)
         apiData = response.data.data;
       } else {
         throw new Error("Invalid API response structure from backend.");
       }
+
       console.log(
         `Fetched from API - courses:${
           apiData.courses?.length || 0
         }, categories:${apiData.categories?.length || 0}, modules:${
           apiData.modules?.length || 0
-        }, ...`
+        }`
       );
     } catch (e) {
       console.error(
@@ -163,9 +288,17 @@ async function runSync() {
       return;
     }
 
-    // ------------------------------------------------------------------
-    // --- SAU KHI ĐÃ LƯU VÀO CHROMADB, HÃY TẠO FILE SUMMARY.JSON MỚI ---
-    // (Ở đây giả định bạn đã push dữ liệu vào Chroma; tạo summary.json dựa trên apiData)
+    // Push documents into Chroma (embeddings + upsert)
+    try {
+      await pushDocumentsToChroma(apiData);
+    } catch (err) {
+      console.error(
+        "[Sync] pushDocumentsToChroma failed:",
+        err?.message || err
+      );
+    }
+
+    // Generate/update summary.json (same fields backend provides)
     if (apiData && Array.isArray(apiData.courses)) {
       try {
         console.log("[Sync] Generating new summary.json...");
@@ -173,7 +306,7 @@ async function runSync() {
         const summaryLines = apiData.courses.map((c) => {
           const instr = c.main_instructor_name || "N/A";
           const price = c.price ?? "N/A";
-          return `${c.title} (Giá: ${price}; GV: ${instr})`;
+          return `${c.title || "Untitled"} (Giá: ${price}; GV: ${instr})`;
         });
 
         const summaryText = `Đây là danh sách tóm tắt tất cả các khóa học hiện có: ${summaryLines.join(
@@ -203,9 +336,6 @@ async function runSync() {
         console.error("[Sync] Failed to update summary.json:", err);
       }
     }
-    // ------------------------------------------------------------------
-
-    // NOTE: here you can add code to push documents into ChromaDB using embeddings if needed.
   } catch (err) {
     console.error("Sync run failed:", err?.message || err);
   } finally {

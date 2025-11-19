@@ -36,6 +36,10 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
   const [description, setDescription] = useState("");
   const [bio, setBio] = useState("");
 
+  // NEW: duration state
+  const [durationValue, setDurationValue] = useState("");
+  const [durationUnit, setDurationUnit] = useState("day"); // "day" | "month" | "year"
+
   // Thumbnail states
   const [existingThumbnailUrl, setExistingThumbnailUrl] = useState(null); // url from backend
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
@@ -73,6 +77,15 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
     );
     setThumbnailPreview(null);
     setRemoveThumbnail(false);
+
+    // NEW: populate duration from courseData if present
+    if (courseData.duration) {
+      setDurationValue(courseData.duration.value ?? "");
+      setDurationUnit(courseData.duration.unit ?? "day");
+    } else {
+      setDurationValue("");
+      setDurationUnit("day");
+    }
   }, [courseData]);
 
   // If there's draft in context and no courseData, apply it
@@ -86,6 +99,9 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
     setPrice((v) => (v ? v : draft.price ?? ""));
     setExistingThumbnailUrl((v) => (v ? v : draft.thumbnailUrl ?? null));
     setRemoveThumbnail(!!draft.removeThumbnail);
+    // NEW: restore duration from draft if present
+    setDurationValue((v) => (v ? v : draft.durationValue ?? ""));
+    setDurationUnit((v) => (v ? v : draft.durationUnit ?? "day"));
     // note: draft.hasNewFile cannot restore File object; user must re-select if needed
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft, courseData]);
@@ -103,6 +119,9 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
         hasNewFile: !!file,
         removeThumbnail,
         updatedAt: Date.now(),
+        // NEW: duration saved in draft
+        durationValue,
+        durationUnit,
       });
     } catch (e) {
       console.warn("Failed to update draft:", e);
@@ -116,6 +135,8 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
     existingThumbnailUrl,
     file,
     removeThumbnail,
+    durationValue,
+    durationUnit,
     updateDraft,
   ]);
 
@@ -219,6 +240,10 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
         main_instructor: user?._id || user?.id || null,
         category: categoryId,
         price: price !== "" ? Number(price) : undefined,
+        // NEW: include duration if provided
+        ...(durationValue !== ""
+          ? { duration: { value: Number(durationValue), unit: durationUnit } }
+          : {}),
         // instructor_bio: bio,
         ...(removeThumbnail ? { removeThumbnail: true } : {}),
       };
@@ -457,6 +482,7 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
               </div>
             </div>
 
+            {/* PRICE + DURATION ROW */}
             <div className="col-span-2 grid grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="price" className="mb-2">
@@ -470,6 +496,36 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                 />
+              </div>
+
+              {/* NEW: Duration input */}
+              <div>
+                <Label htmlFor="durationValue" className="mb-2">
+                  Duration
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="durationValue"
+                    type="number"
+                    min="0"
+                    value={durationValue}
+                    onChange={(e) => setDurationValue(e.target.value)}
+                    placeholder="e.g. 30"
+                  />
+                  <Select
+                    value={durationUnit}
+                    onValueChange={(v) => setDurationUnit(v)}
+                  >
+                    <SelectTrigger id="durationUnit" className="w-36">
+                      <SelectValue placeholder="Unit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="day">Day(s)</SelectItem>
+                      <SelectItem value="month">Month(s)</SelectItem>
+                      <SelectItem value="year">Year(s)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 

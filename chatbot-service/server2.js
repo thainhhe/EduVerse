@@ -364,6 +364,13 @@ function isCourseIntentText(text, knownCategories = []) {
 
 app.listen(PORT, () => {
   console.log(`Chatbot Service đang chạy ở http://localhost:${PORT}`);
+
+  // GỌI runSync MỘT LẦN KHI STARTUP (không block)
+  runSync()
+    .then(() => console.log("[Startup] Initial runSync completed"))
+    .catch((err) =>
+      console.error("[Startup] Initial runSync failed:", err?.message || err)
+    );
 });
 
 // Endpoint bảo mật để trigger RAG sync (fire-and-forget)
