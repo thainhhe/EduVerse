@@ -1,31 +1,24 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Star, Users, Clock } from "lucide-react";
-import { useState } from "react";
+import { Clock, Star, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const CourseCardPublish = ({ course }) => {
+export const CoCourse = ({ course }) => {
     const navigate = useNavigate();
     const mainInstructor = course?.main_instructor?.username || "Giảng viên";
     const price = course?.price ? course.price.toLocaleString("vi-VN") + "đ" : "Miễn phí";
     const rating = course?.rating || 0;
     const enrolls = course?.totalEnrollments || 0;
-    const lastUpdated = course?.lastUpdated ?? "Không rõ";
+    const duration = course?.duration?.value ? `${course.duration.value} ${course.duration.unit}` : "Không rõ";
 
-    const handleOpenCourseQuiz = (e) => {
-        e?.stopPropagation?.();
-        const id = course._id ?? course.id ?? course.idStr;
-        navigate("/create-course/modules", { state: { id, openQuiz: true } });
-    };
-
-    // Card click -> open create-course basics (instead of modules) if you prefer:
     const openModuleManager = () => {
         const id = course._id ?? course.id ?? course.idStr;
         if (!id) return;
         console.log("courseData", course);
         sessionStorage.setItem("currentCourseData", JSON.stringify(course));
         sessionStorage.setItem("currentCourseId", id);
-        navigate("/create-course-basic", { state: { id, isUpdate: true } });
+        // open Basics edit view
+        navigate("/create-course-basic");
     };
 
     return (
@@ -51,7 +44,7 @@ const CourseCardPublish = ({ course }) => {
                         <Users size={16} /> {enrolls}
                     </span>
                     <span className="flex items-center gap-1">
-                        <Clock size={16} /> {lastUpdated}
+                        <Clock size={16} /> {duration}
                     </span>
                 </div>
             </CardContent>
@@ -69,4 +62,3 @@ const CourseCardPublish = ({ course }) => {
         </Card>
     );
 };
-export default CourseCardPublish;

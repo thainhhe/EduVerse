@@ -10,17 +10,42 @@ const api = axios.create({
 });
 
 // Request interceptor
+// api.interceptors.request.use(
+//     (config) => {
+//         const token = localStorage.getItem("accessToken");
+//         if (token) {
+//             config.headers.Authorization = `Bearer ${token}`;
+//         }
+//         return config;
+//     },
+//     (error) => {
+//         return Promise.reject(error);
+//     }
+// );
+
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem("accessToken");
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+
+        const currentCourseId = sessionStorage.getItem("currentCourseId");
+        if (!currentCourseId) return config;
+        if (config.method === "get") {
+            config.params = {
+                ...config.params,
+                courseId: currentCourseId,
+            };
+        } else {
+            config.data = {
+                ...config.data,
+                currentCourseId: currentCourseId,
+            };
+        }
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
 // Response interceptor

@@ -10,7 +10,7 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
     const [loading, setLoading] = useState(false);
     const [newComment, setNewComment] = useState("");
 
-    console.log("canComment", canComment);
+    console.log("main?", isMainInstructor);
     // 🔹 Load danh sách bình luận
     const fetchComments = async () => {
         setLoading(true);
@@ -91,7 +91,7 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
 
     return (
         <div className="max-w-full space-y-1 mx-auto mt-2">
-            <div className="flex-1">
+            <div className="flex-1 flex gap-2 items-center">
                 <select value={filter} onChange={(e) => setFilter(e.target.value)} className="text-sm">
                     <option value="all">Tất cả bình luận</option>
                     <option value="newest">Mới nhất</option>
@@ -104,6 +104,7 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
                         </>
                     )}
                 </select>
+                <span className="text-indigo-600">{displayComments.length} bình luận</span>
             </div>
             {/* Danh sách bình luận */}
             <div className="max-h-[500px] overflow-y-auto">

@@ -50,6 +50,7 @@ import CommentManagementPage from "./pages/admin/CommentManagement/CommentManage
 import PaymentFailPage from "./pages/common/checkout/PaymentFailPage";
 import RoomList from "./pages/learner/RoomList/RoomList";
 import ForumManagement from "./pages/instructor/forum/ForumInstructor";
+import LearnerList from "./pages/instructor/MyCourse/Learner/LearnerList";
 
 function App() {
     const { loading } = useAuth();
@@ -93,7 +94,7 @@ function App() {
                 <Route path="dashboard-test" element={<Dashboard />} />
                 <Route path="/google-auth/success" element={<GoogleCallback />} />
                 <Route path="dashboard-instructor" element={<DashboardInstructor />} />
-                <Route path="create-course" element={<CreateCourse />} />
+                <Route path="create-course-basic" element={<CreateCourse />} />
                 {/* 2️⃣ Các bước sau khi tạo khóa học (có sidebar) */}
                 <Route path="create-course" element={<CourseBuilderLayout />}>
                     <Route path="modules" element={<ModulesPage />} />
@@ -101,8 +102,10 @@ function App() {
                     <Route path="grades" element={<GradesPage />} />
                     <Route path="room-meeting" element={<RoomMeeting />} />
                     <Route path="forums" element={<ForumManagement />} />
+                    <Route path="learners" element={<LearnerList />} />
+                    <Route path="permissions" element={<PermissionsPage />} />
                 </Route>
-                <Route path="permission" element={<PermissionsPage />} />
+                {/* <Route path="permission" element={<PermissionsPage />} /> */}
                 <Route path="comment-thread" element={<CommentThread />} />
 
                 <Route path="checkout" element={<PaymentPage />} />

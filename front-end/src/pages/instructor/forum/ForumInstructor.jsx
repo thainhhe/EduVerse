@@ -30,7 +30,7 @@ export default function ForumManagement() {
         fetchForum();
     }, [sessionCourseId]);
 
-    const isMainInstructor = sessionCourseData.main_instructor === user?.id || user?.id;
+    const isMainInstructor = sessionCourseData?.main_instructor === user?._id;
 
     return (
         <div className="max-w-full">
