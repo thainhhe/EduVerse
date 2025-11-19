@@ -5,15 +5,19 @@ import { Filter, Plus } from "lucide-react";
 import CourseCardPublish from "./CourseCardPublish";
 import CourseCardUnPublish from "./CourseCardUnPublish";
 import { Link } from "react-router-dom";
-import { getMyCourses } from "@/services/courseService";
+import { getCollaborativeCourse, getMyCourses } from "@/services/courseService";
+import { useAuth } from "@/hooks/useAuth";
+import { CoCourse } from "./CollaborativeCourse";
 
 const MyCourse = () => {
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    const itemsPerPage = 3;
 
     const [allCourses, setAllCourses] = useState([]);
+    const [collaborativeCourses, setAllCollaborativeCourse] = useState([]);
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState("published");
+    const { user } = useAuth();
 
     useEffect(() => {
         const getCurrentUserId = () => {
@@ -52,7 +56,7 @@ const MyCourse = () => {
 
                 const res = await getMyCourses(userId);
                 console.debug("getMyCourses raw response:", res);
-                const body = res?.data ?? res; // axios response -> res.data is API body
+                const body = res?.data ?? res;
 
                 const normalizeCourses = (payload) => {
                     if (!payload) return [];
@@ -81,6 +85,7 @@ const MyCourse = () => {
                     id: c._id ?? c.id ?? `missing-${idx}`,
                     title: c.title || c.name || "Untitled course",
                     image: c.thumbnail || c.image || "/placeholder.svg",
+                    price: c.price ?? 0,
                     rating: c.rating ?? 0,
                     reviewCount: Array.isArray(c.reviews) ? c.reviews.length : c.reviewCount ?? 0,
                     studentsEnrolled: c.totalEnrollments ?? c.students ?? 0,
@@ -100,7 +105,18 @@ const MyCourse = () => {
             }
         };
 
+        const fetchCollaborativeCourse = async () => {
+            try {
+                const res = await getCollaborativeCourse(user._id);
+                console.log("dfdhsff:", res.data);
+                if (res.success) setAllCollaborativeCourse(res?.data || []);
+            } catch (error) {
+                console.log("err_:", err);
+            }
+        };
+
         fetchCourses();
+        fetchCollaborativeCourse();
     }, []);
 
     // derived lists
@@ -114,7 +130,12 @@ const MyCourse = () => {
 
     const total = activeTab === "published" ? publishedList.length : unpublishedList.length;
     const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
-    const currentList = activeTab === "published" ? publishedList : unpublishedList;
+    const currentList =
+        activeTab === "published"
+            ? publishedList
+            : activeTab === "unpublished"
+            ? unpublishedList
+            : collaborativeCourses;
     const paginated = currentList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     return (
@@ -142,6 +163,7 @@ const MyCourse = () => {
                     <TabsList className="mb-8">
                         <TabsTrigger value="published">Published Courses</TabsTrigger>
                         <TabsTrigger value="unpublished">Unpublished Courses</TabsTrigger>
+                        <TabsTrigger value="collaborative">Collaborative Courses</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="published" className="space-y-8">
@@ -196,12 +218,58 @@ const MyCourse = () => {
 
                     <TabsContent value="unpublished">
                         {/* Course Grid */}
-                        <div className="grid gap-6 grid-cols-1">
+                        <div className="grid gap-6 grid-cols-1 mb-6">
                             {loading ? (
                                 <div>Loading...</div>
                             ) : (
                                 paginated.map((course) => <CourseCardUnPublish key={course._id} course={course} />)
                             )}
+                        </div>
+
+                        {/* Pagination */}
+                        <div className="flex items-center justify-between border-t border-border pt-6">
+                            <p className="text-sm text-muted-foreground">
+                                Show {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                                {Math.min(currentPage * itemsPerPage, total)} of {total} results
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    Previous
+                                </Button>
+                                <div className="flex items-center gap-1">
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                        <Button
+                                            key={page}
+                                            variant={currentPage === page ? "default" : "ghost"}
+                                            size="sm"
+                                            onClick={() => setCurrentPage(page)}
+                                            className="h-8 w-8 p-0"
+                                        >
+                                            {page}
+                                        </Button>
+                                    ))}
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Next
+                                </Button>
+                            </div>
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="collaborative">
+                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-6">
+                            {collaborativeCourses.map((course) => (
+                                <CoCourse key={course._id} course={course} />
+                            ))}
                         </div>
 
                         {/* Pagination */}

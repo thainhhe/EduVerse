@@ -19,6 +19,10 @@ courseRouter.get(
     // checkPermission(["admin", "instructor"], ["manage_course"]),
     courseController.getAllCourseInstructor
 );
+
+courseRouter.get("/instructor-collaborative/:userId", courseController.getCollaborativeCourse);
+courseRouter.get("/instructor/course-user/:courseId", courseController.getAllUserEnrollCourse);
+
 courseRouter.post(
     "/create",
     verifyToken,

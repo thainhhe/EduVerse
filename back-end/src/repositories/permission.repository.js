@@ -1,3 +1,4 @@
+const Course = require("../models/Course");
 const Permission = require("../models/Permission");
 
 const permissionRepository = {
