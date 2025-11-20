@@ -16,7 +16,8 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
     const { user } = useAuth() || {};
     const { draft, updateDraft, clearDraft, isMainInstructor } = useCourse();
 
-    const isEditable = !!isMainInstructor;
+    const isNew = !courseId;
+    const isEditable = isNew || !!isMainInstructor;
 
     const [file, setFile] = useState(null);
     const [saving, setSaving] = useState(false);
@@ -31,6 +32,9 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
     const [existingThumbnailUrl, setExistingThumbnailUrl] = useState(null);
     const [thumbnailPreview, setThumbnailPreview] = useState(null);
     const [removeThumbnail, setRemoveThumbnail] = useState(false);
+
+    const [durationValue, setDurationValue] = useState("");
+    const [durationUnit, setDurationUnit] = useState("day"); // "day" | "month" | "year"
 
     // Load categories
     useEffect(() => {
@@ -54,6 +58,8 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
         setPrice(courseData.price ?? "");
         setExistingThumbnailUrl(courseData.thumbnail ?? courseData.image ?? courseData.imageUrl ?? null);
         setRemoveThumbnail(false);
+        setDurationValue(courseData.duration.value ?? "");
+        setDurationUnit(courseData.duration.unit ?? "day");
     }, [courseData]);
 
     // Load draft
@@ -66,6 +72,8 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
         setPrice((v) => v || draft.price || "");
         setExistingThumbnailUrl((v) => v || draft.thumbnailUrl || null);
         setRemoveThumbnail(!!draft.removeThumbnail);
+        setDurationValue((v) => (v ? v : draft.durationValue ?? ""));
+        setDurationUnit((v) => (v ? v : draft.durationUnit ?? "day"));
     }, [draft, courseData]);
 
     // Persist draft
@@ -80,9 +88,24 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                 hasNewFile: !!file,
                 removeThumbnail,
                 updatedAt: Date.now(),
+                duration: {
+                    unit: durationUnit,
+                    value: durationValue,
+                },
             });
         } catch {}
-    }, [title, description, category, price, existingThumbnailUrl, file, removeThumbnail, updateDraft]);
+    }, [
+        title,
+        description,
+        category,
+        price,
+        existingThumbnailUrl,
+        file,
+        removeThumbnail,
+        updateDraft,
+        durationUnit,
+        durationValue,
+    ]);
 
     useEffect(() => {
         return () => {
@@ -105,13 +128,6 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
             setThumbnailPreview(previewUrl);
             setRemoveThumbnail(false);
         }
-    };
-
-    const handleCancel = () => {
-        if (!isEditable) return;
-        if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
-        setFile(null);
-        setThumbnailPreview(null);
     };
 
     const handleRemoveThumbnail = () => {
@@ -150,7 +166,8 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                 main_instructor: user?._id,
                 category: categoryId,
                 price: price !== "" ? Number(price) : undefined,
-                ...(removeThumbnail ? { removeThumbnail: true } : {}),
+                ...(durationValue !== "" ? { duration: { value: Number(durationValue), unit: durationUnit } } : {}),
+                ...(removeThumbnail ? { thumbnail: "" } : {}),
             };
 
             let res;
@@ -233,9 +250,6 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                             </div>
 
                             <div className="absolute bottom-4 right-4 flex gap-3">
-                                <Button variant="outline" disabled={!isEditable} onClick={handleCancel}>
-                                    Cancel
-                                </Button>
                                 {(thumbnailPreview || existingThumbnailUrl) && (
                                     <Button
                                         variant="ghost"
@@ -285,10 +299,15 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
 
                         <div>
                             <Label className="mb-2">Category</Label>
+
                             <Select
                                 disabled={!isEditable}
                                 value={category}
-                                onValueChange={(v) => isEditable && setCategory(v)}
+                                onValueChange={(v) => {
+                                    if (!isEditable) return;
+                                    setCategory(v);
+                                    setNewCategory(""); // xoá category mới nếu chọn category cũ
+                                }}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select category" />
@@ -310,8 +329,49 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                                     id="newCategory"
                                     disabled={!isEditable}
                                     value={newCategory}
-                                    onChange={(e) => isEditable && setNewCategory(e.target.value)}
+                                    placeholder="New category..."
+                                    onChange={(e) => {
+                                        if (!isEditable) return;
+                                        const value = e.target.value;
+                                        setNewCategory(value);
+
+                                        // Nếu nhập mới → bỏ chọn category cũ
+                                        if (value.trim() !== "") {
+                                            setCategory("");
+                                        }
+                                    }}
                                 />
+                            </div>
+                        </div>
+
+                        <div>
+                            <Label htmlFor="durationValue" className="mb-2">
+                                Duration
+                            </Label>
+                            <div className="flex gap-2">
+                                <Input
+                                    disabled={!isEditable}
+                                    id="durationValue"
+                                    type="number"
+                                    min="0"
+                                    value={durationValue}
+                                    onChange={(e) => setDurationValue(e.target.value)}
+                                    placeholder="e.g. 30"
+                                />
+                                <Select
+                                    disabled={!isEditable}
+                                    value={durationUnit}
+                                    onValueChange={(v) => setDurationUnit(v)}
+                                >
+                                    <SelectTrigger id="durationUnit" className="w-36">
+                                        <SelectValue placeholder="Unit" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="day">Day(s)</SelectItem>
+                                        <SelectItem value="month">Month(s)</SelectItem>
+                                        <SelectItem value="year">Year(s)</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
 

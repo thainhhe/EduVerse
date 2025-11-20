@@ -1,22 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Star, Users, Clock } from "lucide-react";
+import { Star, Users, Clock, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const CourseCardPublish = ({ course }) => {
+    console.log("c:", course);
     const navigate = useNavigate();
     const mainInstructor = course?.main_instructor?.username || "Giảng viên";
     const price = course?.price ? course.price.toLocaleString("vi-VN") + "đ" : "Miễn phí";
     const rating = course?.rating || 0;
     const enrolls = course?.totalEnrollments || 0;
     const lastUpdated = course?.lastUpdated ?? "Không rõ";
-
-    const handleOpenCourseQuiz = (e) => {
-        e?.stopPropagation?.();
-        const id = course._id ?? course.id ?? course.idStr;
-        navigate("/create-course/modules", { state: { id, openQuiz: true } });
-    };
+    const isDeleted = course?.isDeleted;
 
     // Card click -> open create-course basics (instead of modules) if you prefer:
     const openModuleManager = () => {
@@ -59,12 +55,16 @@ const CourseCardPublish = ({ course }) => {
             {/* Footer */}
             <CardFooter className="border-t p-4 flex justify-between items-center">
                 <span className="font-semibold text-primary">{price}</span>
-                <Button
-                    className="bg-white border-accent-foreground text-black hover:bg-indigo-600 hover:text-white transition-colors duration-200"
-                    onClick={openModuleManager}
-                >
-                    Xem khóa học
-                </Button>
+                {isDeleted ? (
+                    <span className="text-red-600">Khóa học đã bị xóa</span>
+                ) : (
+                    <Button
+                        className="bg-white border-1 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors duration-200"
+                        onClick={openModuleManager}
+                    >
+                        Xem chi tiết <ArrowRight />
+                    </Button>
+                )}
             </CardFooter>
         </Card>
     );

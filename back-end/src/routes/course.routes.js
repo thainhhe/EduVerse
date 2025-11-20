@@ -41,7 +41,7 @@ courseRouter.put(
 );
 courseRouter.delete(
     "/delete/:id",
-    verifyToken,
+    // verifyToken,
     // checkPermission(["admin", "instructor"], ["manage_course"]),
     courseController.deleteCourse
 );

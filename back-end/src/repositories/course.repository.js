@@ -255,7 +255,16 @@ const courseRepository = {
     },
 
     delete: async (id) => {
-        return await Course.findByIdAndUpdate(id, { isDeleted: true }).exec();
+        const course = await Course.findById(id);
+        if (!course) throw new Error("Course not found");
+        if (course.status === "pending") {
+            return await Course.findByIdAndDelete(id);
+        }
+        if (course.status === "approve") {
+            course.isDeleted = true;
+            return await course.save();
+        }
+        throw new Error("Unsupported status for delete action");
     },
 
     save: async (data) => {

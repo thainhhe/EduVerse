@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import CommentList from "./CommentList";
 import { Edit } from "lucide-react";
 import { EditForum } from "./EditForum";
+import { useCourse } from "@/context/CourseProvider";
 
 export default function ForumManagement() {
     const sessionCourseId = typeof window !== "undefined" ? sessionStorage.getItem("currentCourseId") : null;
@@ -30,7 +31,8 @@ export default function ForumManagement() {
         fetchForum();
     }, [sessionCourseId]);
 
-    const isMainInstructor = sessionCourseData?.main_instructor === user?._id;
+    const { isMainInstructor, hasPermission } = useCourse();
+    const isCollab = hasPermission("manage_forum") || isMainInstructor;
 
     return (
         <div className="max-w-full">
@@ -48,8 +50,9 @@ export default function ForumManagement() {
                     userId={user?._id}
                     forumId={forum?._id}
                     courseId={[]}
-                    canComment={true}
+                    canComment={isCollab}
                     isMainInstructor={isMainInstructor}
+                    isCollab={isCollab}
                 />
             </div>
             <EditForum open={isOpenEdit} onOpenChange={setIsOpenEdit} onUpdate={fetchForum} forum={forum} />
