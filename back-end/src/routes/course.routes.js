@@ -10,6 +10,7 @@ const courseRouter = express.Router();
 
 courseRouter.get("/mine", verifyToken, courseController.getMyCourses);
 courseRouter.get("/", courseController.getAllCourse);
+courseRouter.get("/popular", courseController.getPopularCourses); // <-- new
 courseRouter.get("/:id", courseController.getCourseById);
 
 courseRouter.get("/learner/common", courseController.getAllCourseForLearner);
@@ -41,7 +42,7 @@ courseRouter.put(
 );
 courseRouter.delete(
     "/delete/:id",
-    // verifyToken,
+    verifyToken,
     // checkPermission(["admin", "instructor"], ["manage_course"]),
     courseController.deleteCourse
 );

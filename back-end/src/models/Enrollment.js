@@ -9,7 +9,7 @@ const enrollmentSchema = new mongoose.Schema(
         progress: { type: Number, default: 0, min: 0, max: 100 },
         status: { type: String, enum: ["enrolled", "completed", "dropped"], default: "enrolled" },
         lastAccessed: { type: Date, default: Date.now },
-        grade: { type: String, enum: ["A", "B", "C", "D", "F", "Incomplete"], default: "Incomplete" },
+        grade: { type: String, default: "Incomplete" },
     },
     {
         timestamps: true,

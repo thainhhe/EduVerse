@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "start": "node server2.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -10,13 +11,19 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@chroma-core/default-embed": "^0.1.9",
+    "@langchain/classic": "^1.0.3",
+    "@langchain/cohere": "^1.0.0",
     "@langchain/community": "^1.0.0",
     "@langchain/core": "^1.0.2",
     "@langchain/google-genai": "^1.0.0",
+    "axios": "^1.13.2",
     "chromadb": "^3.0.17",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
+    "dotenv": "^16.6.1",
     "express": "^5.1.0",
-    "mongoose": "^8.19.2"
+    "langchain": "^1.0.4",
+    "mongoose": "^8.19.2",
+    "node-cron": "^4.2.1"
   }
 }

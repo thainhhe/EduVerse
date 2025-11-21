@@ -56,23 +56,11 @@ const ForgotPassword = () => {
     setOtpSubmitting(true);
     try {
       const body = { email: sentEmail, otp: payload.otp };
-      const res = await authService.verifyOtp(body);
-      toast.success("OTP verified. Redirecting to reset password...");
+      await authService.verifyOtp(body);
 
-      // try extract token from response (be flexible)
-      const token =
-        (res && (res.token || res.accessToken || res.data?.token)) || null;
-
-      if (token) {
-        navigate(`/reset-password?token=${encodeURIComponent(token)}`);
-      } else {
-        // if backend doesn't return token, navigate to reset page letting user enter new password (frontend may accept OTP)
-        navigate(
-          `/reset-password?email=${encodeURIComponent(
-            sentEmail
-          )}&otp=${encodeURIComponent(payload.otp)}`
-        );
-      }
+      // Thay đổi: thông báo người dùng check email và redirect về login
+      toast.success("OTP verified. Check your email for the new password.");
+      navigate("/login");
     } catch (error) {
       toast.error(error.response?.data?.message || "OTP verification failed.");
     } finally {
@@ -112,14 +100,43 @@ const ForgotPassword = () => {
           <form
             onSubmit={handleSubmitOtp(onVerifyOtp)}
             className="space-y-6 text-left"
+            autoComplete="off" // <-- thêm
           >
+            {/* Hidden dummy email để trình duyệt autofill vào chỗ khác */}
+            <input
+              type="email"
+              name="username"
+              defaultValue={sentEmail}
+              autoComplete="username"
+              tabIndex={-1}
+              style={{
+                position: "absolute",
+                left: -9999,
+                width: 1,
+                height: 1,
+                overflow: "hidden",
+              }}
+              readOnly
+            />
+
             <div className="space-y-2">
               <Label htmlFor="otp">Enter OTP</Label>
               <Input
                 id="otp"
+                name="otp"
                 type="text"
+                autoComplete="one-time-code"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
                 placeholder="Enter code from email"
                 {...registerOtp("otp")}
+                spellCheck="false"
+                onFocus={(e) => {
+                  // remove readonly attribute if browser put it; prevents some autofill behaviors
+                  e.currentTarget.removeAttribute("readonly");
+                }}
+                readOnly // keep readonly until focused to reduce autofill
               />
               {otpErrors.otp && (
                 <p className="text-sm text-red-500">{otpErrors.otp.message}</p>

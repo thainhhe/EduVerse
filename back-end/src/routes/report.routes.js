@@ -1,18 +1,47 @@
-const express = require("express");
-const reportController = require("../controllers/users/report.controller");
-const { verifyToken } = require("../middlewares/auth/authMiddleware");
+const express = require('express');
+const router = express.Router();
+const reportController = require('../controllers/users/report.controller');
+const { validateCreateReport, validateUpdateStatus } = require('../validator/report.validator');
 
-const reportRouter = express.Router();
+// === Student Routes ===
+router.post(
+    '/',
+    validateCreateReport,
+    reportController.createReport
+);
 
-// Get all reports
-reportRouter.get('/', reportController.getAllReports);
-// Get report by ID
-reportRouter.get('/:id', reportController.getReportById);
-// Create new report
-reportRouter.post('/', reportController.createReport);
-// Update report by ID
-reportRouter.put('/:id', reportController.updateReport);
-// Delete report by ID
-reportRouter.delete('/:id', reportController.deleteReport);
+router.get(
+    '/my-reports/:userId',
+    reportController.getMyReports
+);
 
-module.exports = reportRouter;
+// === Instructor Routes ===
+router.get(
+    '/assigned/:instructorId', 
+    reportController.getAssignedReports
+);
+
+router.put(
+    '/:id/status',
+    validateUpdateStatus,
+    reportController.updateReportStatus
+);
+
+// === Admin Routes ===
+router.get(
+    '/all',
+    reportController.getAllReports
+);
+
+router.put(
+    '/:id/admin-update',
+    validateUpdateStatus,
+    reportController.adminUpdateReport
+);
+
+router.delete(
+    '/:id/admin',
+    reportController.adminDeleteReport
+);
+
+module.exports = router;

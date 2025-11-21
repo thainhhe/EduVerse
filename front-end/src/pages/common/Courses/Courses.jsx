@@ -6,6 +6,7 @@ import { FaRegStar } from "react-icons/fa";
 import { getAllCoursePublished } from "@/services/courseService";
 import { useEnrollment } from "@/context/EnrollmentContext";
 import { useAuth } from "@/hooks/useAuth";
+import categoryService from "@/services/categoryService";
 
 const Courses = () => {
   const [courses, setCourses] = useState([]);
@@ -49,12 +50,26 @@ const Courses = () => {
 
     fetchCourses();
   }, []);
-
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const list = await categoryService.getAll();
+        setCategories(list);
+      } catch (err) {
+        console.error("Failed to load categories:", err);
+        setCategories([]);
+      }
+    };
+    fetchCategories();
+  }, []);
+  console.log("category", categories);
+  console.log("selectedCategory._id", selectedCategory);
   const filteredCourses =
     selectedCategory === "All"
       ? courses
-      : courses.filter((c) => c.category === selectedCategory);
+      : courses.filter((c) => c.category?._id === selectedCategory);
 
+  console.log("filteredCourses", filteredCourses);
   // ✅ Loading hoặc lỗi
   if (loading)
     return (
@@ -88,19 +103,35 @@ const Courses = () => {
 
         <div className="mb-8">
           <h2 className="text-xl sm:text-2xl font-semibold mb-4">Categories</h2>
+
           <div className="flex flex-wrap gap-2">
+            {/* 🔹 Button ALL */}
+            <Button
+              variant={selectedCategory === "All" ? "default" : "outline"}
+              onClick={() => setSelectedCategory("All")}
+              className={`transition-colors ${
+                selectedCategory === "All"
+                  ? "bg-indigo-600 hover:bg-indigo-700 text-white"
+                  : "bg-white"
+              }`}
+            >
+              All
+            </Button>
+
             {categories.map((category) => (
               <Button
-                key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
-                onClick={() => setSelectedCategory(category)}
+                key={category.id}
+                variant={
+                  selectedCategory === category.id ? "default" : "outline"
+                }
+                onClick={() => setSelectedCategory(category.id)}
                 className={`transition-colors ${
-                  selectedCategory === category
+                  selectedCategory === category.id
                     ? "bg-indigo-600 hover:bg-indigo-700 text-white"
                     : "bg-white"
                 }`}
               >
-                {category}
+                {category.name}
               </Button>
             ))}
           </div>
@@ -129,35 +160,58 @@ const Courses = () => {
                     {course?.title}
                   </h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    By {course?.main_instructor.username || "Unknown"}
+                    By{" "}
+                    {course?.main_instructor?.username ||
+                      course?.main_instructor?.name ||
+                      course?.main_instructor ||
+                      "Unknown"}
                   </p>
 
                   <div className="flex items-center mb-4">
-                    {[...Array(5)].map((_, index) => {
-                      const ratingValue = index + 1;
-                      return ratingValue <= Math.round(course?.rating || 0) ? (
-                        <FaRegStar
-                          key={index}
-                          className="text-yellow-400 text-base"
-                        />
-                      ) : (
-                        <FaRegStar
-                          key={index}
-                          className="text-gray-300 text-base"
-                        />
+                    {(() => {
+                      const rating = Number(
+                        course?.avgRating ?? course?.rating ?? 0
                       );
-                    })}
-                    <span className="ml-2 text-gray-500 text-sm">
-                      ({course.rating || "N/A"})
-                    </span>
+                      const reviewsCount =
+                        course?.reviewsCount ?? course?.totalEnrollments ?? 0;
+                      return (
+                        <>
+                          {[...Array(5)].map((_, index) => {
+                            const ratingValue = index + 1;
+                            return (
+                              <FaRegStar
+                                key={index}
+                                className={
+                                  ratingValue <= Math.round(rating)
+                                    ? "text-yellow-400 text-base"
+                                    : "text-gray-300 text-base"
+                                }
+                              />
+                            );
+                          })}
+                          <span className="ml-2 text-gray-500 text-sm">
+                            {rating > 0 ? `${rating.toFixed(1)}` : "N/A"} (
+                            {reviewsCount})
+                          </span>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   <div className="mt-auto pt-2 flex items-center justify-between">
                     <span className="text-lg font-bold text-indigo-600">
-                      {course.price.toLocaleString("vi-VN", {
-                        style: "currency",
-                        currency: "VND",
-                      }) || 0}
+                      {(() => {
+                        const priceVal =
+                          typeof course?.price === "number"
+                            ? course.price
+                            : Number(course?.displayPrice ?? 0);
+                        return priceVal
+                          ? priceVal.toLocaleString("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            })
+                          : "Free";
+                      })()}
                     </span>
                     {enrollments.some((e) => e.courseId === course._id) ? (
                       <Button

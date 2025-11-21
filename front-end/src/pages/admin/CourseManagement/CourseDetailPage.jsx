@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { approveCourse, getAllCourseById, rejectCourse } from "@/services/courseService";
 import { ToastHelper } from "@/helper/ToastHelper";
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
+import api from "@/services/api";
 
 const CourseDetailPage = () => {
   const [course, setCourse] = useState([]);
@@ -16,6 +17,8 @@ const CourseDetailPage = () => {
   const [answers, setAnswers] = useState([]);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  const [lessonMaterials, setLessonMaterials] = useState([]);
+
   useEffect(() => {
     const fetchCourses = async () => {
       setLoading(true);
@@ -29,7 +32,18 @@ const CourseDetailPage = () => {
     };
     fetchCourses();
   }, [id]);
+  const fetchMaterials = async (lessonId) => {
+    try {
+      const res = await api.get(`/material/${lessonId}`);
+      if (res.success) setLessonMaterials(res.data);
+      else setLessonMaterials([]);
+    } catch (error) {
+      console.error("Lỗi lấy materials:", error);
+      setLessonMaterials([]);
+    }
+  };
 
+  console.log('lessonMaterials', lessonMaterials);
   const toggleSection = (moduleId) => {
     setExpandedSections((prev) => ({
       ...prev,
@@ -38,8 +52,22 @@ const CourseDetailPage = () => {
   };
 
   const handleSelectItem = (item, type) => {
-    setSelectedItem({ ...item, type });
+    let quizzes = [];
+
+    if (type === "lesson") {
+      quizzes = item.quiz ? [item.quiz] : [];
+      fetchMaterials(item._id);
+    } else if (type === "module") {
+      quizzes = item.moduleQuizzes || [];
+    } else if (type === "course") {
+      quizzes = item.courseQuizzes || [];
+    } else if (type === "quiz") {
+      quizzes = [item]; // khi click trực tiếp quiz
+    }
+
+    setSelectedItem({ ...item, type, quizzes });
   };
+  console.log("selectedItem", selectedItem)
 
   const handleChange = (questionIndex, option, isCheckbox) => {
     setAnswers((prevAnswers) => {
@@ -55,7 +83,6 @@ const CourseDetailPage = () => {
       return updated;
     });
   };
-  console.log("selectedItem", selectedItem)
   const handleApprove = async () => {
     const res = await approveCourse(id);
     if (res?.success) {
@@ -195,89 +222,104 @@ const CourseDetailPage = () => {
 
                 {/* Nếu là bài học */}
                 {selectedItem.type === "lesson" && (
-                  <div className="text-gray-800 bg-white rounded-xl shadow-md p-6 border border-gray-100">
-                    <div className="mb-5 space-y-3">
-                      {selectedItem.content ? (
-                        <p className="leading-relaxed text-gray-700 whitespace-pre-line">
-                          Content: {selectedItem.content}
-                        </p>
-                      ) : (
-                        <p className="italic text-gray-400">No content available for this lesson.</p>
-                      )}
-                    </div>
+                  <div className="text-gray-800 bg-white rounded-xl shadow-md p-6 border border-gray-100 space-y-4">
 
-                    {/* Video */}
-                    {selectedItem.videoUrl ? (
-                      <div className="relative rounded-lg overflow-hidden shadow-sm border border-gray-200">
-                        <video
-                          src={selectedItem.videoUrl}
-                          controls
-                          className="w-full rounded-lg"
-                        />
+                    {/* Lesson content */}
+                    {selectedItem.content && (
+                      <p className="leading-relaxed text-gray-700 whitespace-pre-line">
+                        {selectedItem.content}
+                      </p>
+                    )}
+
+                    {/* Video material */}
+                    {lessonMaterials.filter(m => m.type === "video").length > 0 && (
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-gray-800">Video Materials:</h4>
+                        {lessonMaterials.filter(m => m.type === "video").map((m, i) => (
+                          <div key={i} className="border rounded-md overflow-hidden shadow-sm">
+                            <p className="px-3 py-2 font-medium text-gray-700">{m.title}</p>
+                            <div className="aspect-video bg-black rounded-lg overflow-hidden mb-6">
+                              <iframe
+                                src={m.url}
+                                width="100%"
+                                height="100%"
+                                allow="autoplay; encrypted-media"
+                                allowFullScreen
+                                title="Video bài học"
+                                style={{ border: "0" }}
+                              />
+                            </div>
+                          </div>
+
+                        ))}
                       </div>
-                    ) : (
-                      <div className="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-6 text-center">
-                        <p className="italic text-gray-500">🎥 No video available for this lesson.</p>
+                    )}
+
+                    {/* Document material */}
+                    {lessonMaterials.filter(m => m.type === "document").length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-gray-800">Documents:</h4>
+                        <ul className="list-disc list-inside text-gray-700">
+                          {lessonMaterials.filter(m => m.type === "document").map((m, i) => (
+                            <li key={i}>
+                              <a
+                                href={m.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-indigo-600 hover:underline"
+                              >
+                                {m.title}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
+                    )}
+
+                    {lessonMaterials.length === 0 && (
+                      <p className="italic text-gray-400 mt-2">No materials available.</p>
                     )}
                   </div>
                 )}
 
 
-                {/* Nếu là quiz */}
-                {selectedItem.type === "quiz" && selectedItem.questions?.length > 0 ? (
-                  <div className="max-h-[1000px] overflow-y-auto pr-2 custom-scroll">
-                    {selectedItem.questions.map((q, index) => (
-                      <div
-                        key={index}
-                        className="mb-6 p-5 border border-gray-200 rounded-lg bg-gray-50 shadow-sm hover:shadow-md transition"
-                      >
-                        <p className="font-semibold text-gray-800 mb-4">
-                          {index + 1}. {q.questionText}
-                        </p>
 
-                        <div className="space-y-2">
-                          {q.options?.map((option, i) => {
-                            const isChecked =
-                              q.questionType === "checkbox"
-                                ? answers[index]?.includes(option)
-                                : answers[index] === option;
+                {selectedItem.type === "quiz" ? (
+                  selectedItem.questions?.length > 0 ? (
+                    <div className="space-y-6 max-h-[800px] overflow-y-auto pr-2 custom-scroll">
+                      {selectedItem.questions.map((q, index) => (
+                        <div
+                          key={index}
+                          className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 hover:shadow-md transition"
+                        >
+                          {/* Question */}
+                          <p className="text-lg font-semibold text-gray-900 mb-4">
+                            {index + 1}. {q.questionText}
+                          </p>
 
-                            return (
-                              <label
+                          {/* Options */}
+                          <div className="space-y-2">
+                            {q.options?.map((option, i) => (
+                              <div
                                 key={i}
-                                className={`flex items-center p-2 border rounded-md cursor-pointer transition ${isChecked
-                                  ? "border-indigo-500 bg-indigo-50"
-                                  : "border-gray-200 hover:bg-gray-100"
-                                  }`}
+                                className="flex items-center gap-3 bg-gray-50 p-3 rounded-md border border-gray-100 shadow-sm"
                               >
-                                <input
-                                  type={
-                                    q.questionType === "checkbox" ? "checkbox" : "radio"
-                                  }
-                                  name={`question-${index}`}
-                                  value={option}
-                                  checked={isChecked}
-                                  onChange={() =>
-                                    handleChange(
-                                      index,
-                                      option,
-                                      q.questionType === "checkbox"
-                                    )
-                                  }
-                                  className="mr-3 accent-indigo-600 w-4 h-4"
-                                />
-                                <span className="text-gray-700">{option}</span>
-                              </label>
-                            );
-                          })}
+                                <span className="w-5 h-5 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-700 font-semibold">
+                                  {String.fromCharCode(65 + i)}
+                                </span>
+                                <span className="text-gray-800">{option}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : selectedItem.type === "quiz" ? (
-                  <p className="text-gray-500 italic">No questions available.</p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 italic text-center py-6">No questions available.</p>
+                  )
                 ) : null}
+
+
               </div>
             ) : (
               <div className="text-gray-400 text-center py-16">
@@ -340,60 +382,123 @@ const CourseDetailPage = () => {
             </div>
           )}
 
-          {course?.modules?.map((module) => (
-            <div key={module._id} className="bg-white border rounded-xl shadow-sm">
-              <button
-                onClick={() => toggleSection(module._id)}
-                className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-100 transition-colors"
-              >
-                <p className="text-sm font-medium text-gray-900">{module.title}</p>
-                <ChevronDown
-                  className={`w-4 h-4 text-gray-500 transition-transform ${expandedSections[module._id] ? "rotate-180" : ""
-                    }`}
-                />
-              </button>
+          <div className="divide-y divide-gray-200">
+            {/* Course-level quizzes */}
+            {course.courseQuizzes?.length > 0 && (
+              <div className="bg-white border-y border-gray-200">
+                <h3 className="px-4 py-2 font-semibold text-gray-800 border-b">
+                  Course Quizzes
+                </h3>
+                {course.courseQuizzes.map((quiz) => (
+                  <button
+                    key={quiz._id}
+                    onClick={() => handleSelectItem(quiz, "quiz")}
+                    className={`w-full text-left px-6 py-2 hover:bg-gray-100 flex items-center justify-between ${selectedItem?.data?._id === quiz._id ? "bg-gray-100" : ""
+                      }`}
+                  >
+                    <span className="text-sm text-gray-700">{quiz.title}</span>
+                    <Circle className="w-4 h-4 text-gray-400" />
+                  </button>
+                ))}
+              </div>
+            )}
 
-              {expandedSections[module._id] && (
-                <div className="bg-gray-50 border-t border-gray-200">
-                  {module.lessons?.map((lesson) => (
-                    <div
-                      key={lesson._id}
-                      className="border-b border-gray-100 last:border-0"
-                    >
-                      <button
-                        onClick={() => handleSelectItem(lesson, "lesson")}
-                        className="w-full flex items-start gap-3 px-4 py-2 hover:bg-indigo-50 transition"
-                      >
-                        <div className="flex-1 min-w-0 text-left">
-                          <p className="text-sm font-medium text-gray-800 truncate">
-                            {lesson.title}
-                          </p>
-                          <p className="text-xs text-gray-500 capitalize">
-                            {lesson.type}
-                          </p>
-                        </div>
-                      </button>
+            {course?.modules?.map((module) => (
+              <div key={module._id} className="bg-white">
+                {/* Module Header */}
+                <button
+                  onClick={() => toggleSection(module._id)}
+                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-100 transition-colors"
+                >
+                  <span className="text-left">
+                    <p className="text-sm font-medium text-gray-900">
+                      {module.title}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {module.lessons?.filter((l) => l.user_completed?.length > 0).length || 0}/
+                      {module.lessons?.length || 0}
+                    </p>
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-gray-500 transition-transform ${expandedSections[module._id] ? "rotate-180" : ""
+                      }`}
+                  />
+                </button>
 
-                      {lesson.quiz && (
-                        <div className="pl-8 pr-4 py-2 bg-gray-50 border-t border-gray-100">
-                          <p className="text-xs text-gray-600 font-semibold mb-1">
-                            Lesson Quiz
-                          </p>
-                          <button
-                            onClick={() => handleSelectItem(lesson.quiz, "quiz")}
-                            className="w-full text-left text-sm text-gray-700 hover:bg-indigo-50 px-3 py-1.5 rounded-md flex items-center gap-2 transition"
-                          >
-                            <Circle className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                            <span className="truncate">{lesson.quiz.title}</span>
-                          </button>
+                {expandedSections[module._id] && (
+                  <div className="bg-gray-50 border-t border-gray-200">
+                    {module.lessons?.map((lesson) => (
+                      <div key={lesson._id} className="border-b border-gray-100 last:border-0">
+                        {/* 🎓 Lesson */}
+                        <button
+                          onClick={() => handleSelectItem(lesson, "lesson")}
+                          className={`w-full flex items-start gap-3 px-4 py-2 hover:bg-gray-100 transition ${selectedItem?.data?._id === lesson._id ? "bg-gray-100" : ""
+                            }`}
+                        >
+                          {lesson.user_completed?.length > 0 ? (
+                            <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
+                          ) : (
+                            <Circle className="w-4 h-4 text-gray-400 mt-0.5" />
+                          )}
+                          <div className="flex-1 min-w-0 text-left">
+                            <p className="text-sm font-medium text-gray-800 truncate">
+                              {lesson.title}
+                            </p>
+                            <p className="text-xs text-gray-500 capitalize">{lesson.type}</p>
+                          </div>
+                        </button>
+
+                        {/* 🧩 Lesson-level Quizzes */}
+                        {lesson.quizzes?.length > 0 && (
+                          <div className="pl-8 pr-4 py-2 bg-gray-50 border-t border-gray-100">
+                            <p className="text-xs text-gray-600 font-semibold mb-1">
+                              Lesson Quizzes
+                            </p>
+                            <div className="space-y-1">
+                              {lesson.quizzes.map((quiz) => (
+                                <button
+                                  key={quiz._id}
+                                  onClick={() => handleSelectItem(quiz, "quiz")}
+                                  className={`w-full text-left text-sm text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-md flex items-center gap-2 transition ${selectedItem?.data?._id === quiz._id ? "bg-gray-100" : ""
+                                    }`}
+                                >
+                                  <Circle className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                                  <span className="truncate">{quiz.title}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+
+                    {module.moduleQuizzes?.length > 0 && (
+                      <div className="px-6 py-3 border-t border-gray-200 bg-gray-50">
+                        <p className="text-xs text-gray-600 font-semibold mb-1">
+                          Module Quizzes
+                        </p>
+                        <div className="space-y-1">
+                          {module.moduleQuizzes.map((quiz) => (
+                            <button
+                              key={quiz._id}
+                              onClick={() => handleSelectItem(quiz, "quiz")}
+                              className={`w-full text-left text-sm text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-md flex items-center gap-2 transition ${selectedItem?.data?._id === quiz._id ? "bg-gray-100" : ""
+                                }`}
+                            >
+                              <Circle className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                              <span className="truncate">{quiz.title}</span>
+                            </button>
+                          ))}
                         </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+              </div>
+            ))}
+          </div>
+
         </div>
         {/* Modal Reject */}
         {showRejectModal && (

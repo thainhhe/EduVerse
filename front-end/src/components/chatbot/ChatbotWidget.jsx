@@ -1,0 +1,402 @@
+import React, { useState, useRef, useEffect } from "react";
+import { sendChatQuery } from "../../services/chatbotService";
+
+const widgetBox = {
+  position: "fixed",
+  right: 20,
+  bottom: 90,
+  width: 360,
+  height: 480,
+  background: "#fff",
+  border: "1px solid #ddd",
+  borderRadius: 10,
+  boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+  display: "flex",
+  flexDirection: "column",
+  overflow: "hidden",
+  zIndex: 1200,
+};
+
+const toggleBtnStyle = {
+  position: "fixed",
+  right: 20,
+  bottom: 20,
+  width: 60,
+  height: 60,
+  borderRadius: "50%",
+  background: "#0b74ff",
+  color: "#fff",
+  border: "none",
+  cursor: "pointer",
+  zIndex: 1300,
+};
+
+const sourceBoxStyle = {
+  marginTop: 8,
+  padding: 8,
+  background: "#f7f7f8",
+  borderRadius: 6,
+  fontSize: 12,
+  color: "#444",
+  border: "1px solid #eee",
+  maxHeight: 120,
+  overflow: "auto",
+};
+
+export const ChatbotWidget = () => {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState([
+    { sender: "bot", text: "Chào bạn! Tôi có thể giúp gì cho bạn?" },
+  ]);
+  const [value, setValue] = useState("");
+  const [loading, setLoading] = useState(false);
+  const listRef = useRef(null);
+
+  useEffect(() => {
+    if (listRef.current)
+      listRef.current.scrollTop = listRef.current.scrollHeight;
+  }, [messages, open]);
+
+  const parseBotText = (text) => {
+    if (!text)
+      return { numbered: false, paragraphs: [], bullets: [], source: null };
+
+    // If text contains numbered list items (e.g. "1. ...\n2. ..."), parse per-item
+    if (/\n\s*\d+\.\s/.test("\n" + text)) {
+      const rawItems = text
+        .split(/\n\s*(?=\d+\.\s)/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const items = rawItems.map((item) => {
+        // remove leading "1. " prefix
+        const m = item.match(/^\s*\d+\.\s*(.*)$/s);
+        let body = m ? m[1].trim() : item;
+
+        // Extract a "Nguồn: ..." fragment if present in this item's body.
+        // We look for the last occurrence of the token 'Nguồn' to avoid grabbing following items.
+        const srcIdx = body.search(/Nguồn\s*[:\-–]\s*/i);
+        let source = null;
+        if (srcIdx !== -1) {
+          source = body
+            .slice(srcIdx)
+            .replace(/^[^\:]*[:\-–]\s*/i, "")
+            .trim();
+          body = body.slice(0, srcIdx).trim();
+        }
+
+        // Clean markdown bullets/asterisks and surrounding punctuation
+        body = body
+          .replace(/^\s*[\*\-]+\s*/, "")
+          .replace(/^\*+|\*+$/g, "")
+          .trim();
+        if (source)
+          source = source
+            .replace(/^\*+|\*+$/g, "")
+            .replace(/[\)\s]+$/g, "")
+            .trim();
+
+        // Normalize inline markdown emphasis
+        body = body
+          .replace(/\*\*(.+?)\*\*/gs, "$1")
+          .replace(/\*(.+?)\*/gs, "$1");
+
+        return { content: body, source };
+      });
+
+      return { numbered: true, items };
+    }
+
+    // Fallback: original single-document parsing (paragraphs/bullets + global source)
+    const rawLines = text.split(/\r?\n/);
+    const lines = rawLines.map((l) => l.replace(/^\s+|\s+$/g, ""));
+
+    let source = null;
+
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const withoutBullet = lines[i].replace(/^(\*+|\-|\u2022)\s*/, "").trim();
+      const normalized = withoutBullet.replace(/^[\(\*\s]+|[\)\*\s]+$/g, "");
+      const startMatch = normalized.match(
+        /^(?:\*{0,2})?Nguồn\b\s*[:\-–]?\s*(.*)$/i
+      );
+      if (startMatch) {
+        source = startMatch[1] ? startMatch[1].trim() : "";
+        lines.splice(i, 1);
+        break;
+      }
+      const inlineMatch = lines[i].match(/Nguồn\s*[:\-–]\s*([^\)\n\r]*)/i);
+      if (inlineMatch) {
+        source = inlineMatch[1].trim();
+        lines[i] = lines[i].replace(inlineMatch[0], "").trim();
+        if (!lines[i]) lines.splice(i, 1);
+        break;
+      }
+    }
+
+    let main = lines.join("\n").trim();
+    main = main.replace(/^[\s\*\(\-]+/, "").replace(/[\s\*\)\-]+$/, "");
+    if (source)
+      source = source.replace(/^[\s\*\(\-]+/, "").replace(/[\s\*\)\-]+$/, "");
+    main = main
+      .replace(/\*\*(.+?)\*\*/gs, "$1")
+      .replace(/\[(.+?)\]\((?:.+?)\)/gs, "$1");
+
+    if (!main.includes("\n") && /\*\s*[^ ]+/.test(main)) {
+      const parts = main
+        .split(/\s*\*\s*/)
+        .map((s) => s.replace(/^\s+|\s+$/g, ""))
+        .filter(Boolean);
+      if (parts.length > 1) {
+        const cleaned = parts.map((p) =>
+          p.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1")
+        );
+        return { numbered: false, paragraphs: [], bullets: cleaned, source };
+      }
+    }
+
+    const finalLines = main
+      .split(/\r?\n/)
+      .map((l) => l.replace(/^\s+|\s+$/g, ""));
+    const bullets = [];
+    const paragraphs = [];
+    let currentPara = [];
+
+    for (const line of finalLines) {
+      const isBulletLine = /^(\*|-|\u2022)\s+/.test(line);
+      const content = isBulletLine
+        ? line.replace(/^(\*|-|\u2022)\s+/, "")
+        : line;
+      const cleanedLine = content
+        .replace(/\*\*(.+?)\*\*/g, "$1")
+        .replace(/\*(.+?)\*/g, "$1");
+      if (isBulletLine) {
+        bullets.push(cleanedLine.trim());
+      } else if (cleanedLine === "") {
+        if (currentPara.length) {
+          paragraphs.push(currentPara.join(" "));
+          currentPara = [];
+        }
+      } else {
+        currentPara.push(cleanedLine);
+      }
+    }
+
+    if (currentPara.length) paragraphs.push(currentPara.join(" "));
+
+    return { numbered: false, paragraphs, bullets, source };
+  };
+
+  const handleSend = async () => {
+    const text = value.trim();
+    if (!text) return;
+    const userMsg = { sender: "user", text };
+
+    // append user message immediately
+    setMessages((s) => [...s, userMsg]);
+    setValue("");
+    setLoading(true);
+
+    // construct history that INCLUDES the new user message
+    const history = [...messages, userMsg].map((m) => ({
+      sender: m.sender,
+      text: m.text,
+    }));
+
+    try {
+      const data = await sendChatQuery(text, history);
+      const botText = data?.reply ?? "Xin lỗi, tôi đang gặp lỗi.";
+      // append bot reply
+      setMessages((s) => [...s, { sender: "bot", text: botText }]);
+    } catch (err) {
+      setMessages((s) => [
+        ...s,
+        { sender: "bot", text: "Lỗi kết nối. Vui lòng thử lại." },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderBotMessage = (text, idx) => {
+    const parsed = parseBotText(text);
+
+    // If we have numbered items, render each item separately with its own (per-item) source.
+    if (parsed.numbered && Array.isArray(parsed.items)) {
+      return (
+        <div key={idx} style={{ marginBottom: 8, width: "100%" }}>
+          {parsed.items.map((it, i) => (
+            <div key={i} style={{ marginBottom: 12 }}>
+              <div
+                style={{ color: "#222", lineHeight: "1.4", marginBottom: 6 }}
+              >
+                {it.content}
+              </div>
+              {it.source && (
+                <div style={sourceBoxStyle}>
+                  <strong style={{ display: "block", marginBottom: 6 }}>
+                    Nguồn
+                  </strong>
+                  <div style={{ whiteSpace: "pre-wrap", fontSize: 12 }}>
+                    {it.source}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // Existing render logic for non-numbered responses
+    const { paragraphs, bullets, source } = parsed;
+    return (
+      <div key={idx} style={{ marginBottom: 8, width: "100%" }}>
+        {paragraphs.map((p, i) => (
+          <div
+            key={i}
+            style={{ marginBottom: 6, color: "#222", lineHeight: "1.4" }}
+          >
+            {p}
+          </div>
+        ))}
+
+        {bullets.length > 0 && (
+          <ul style={{ margin: "6px 0 0 18px", padding: 0 }}>
+            {bullets.map((b, i) => (
+              <li key={i} style={{ marginBottom: 6, color: "#222" }}>
+                {b}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {source && (
+          <div style={sourceBoxStyle}>
+            <strong style={{ display: "block", marginBottom: 6 }}>Nguồn</strong>
+            <div style={{ whiteSpace: "pre-wrap", fontSize: 12 }}>{source}</div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <>
+      {open && (
+        <div style={widgetBox}>
+          <div
+            style={{
+              padding: 12,
+              borderBottom: "1px solid #eee",
+              background: "#fafafa",
+            }}
+          >
+            <strong>EduVerse Bot</strong>
+          </div>
+          <div
+            ref={listRef}
+            style={{
+              flex: 1,
+              padding: 12,
+              overflowY: "auto",
+              background: "#fafcff",
+            }}
+          >
+            {messages.map((m, i) => {
+              if (m.sender === "bot") {
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      display: "flex",
+                      justifyContent: "flex-start",
+                      marginBottom: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        maxWidth: "78%",
+                        padding: "8px 12px",
+                        borderRadius: 14,
+                        background: "#eee",
+                        color: "#111",
+                      }}
+                    >
+                      {renderBotMessage(m.text, i)}
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    marginBottom: 8,
+                  }}
+                >
+                  <div
+                    style={{
+                      maxWidth: "78%",
+                      padding: "8px 12px",
+                      borderRadius: 14,
+                      background: "#0b74ff",
+                      color: "#fff",
+                    }}
+                  >
+                    {m.text}
+                  </div>
+                </div>
+              );
+            })}
+            {loading && (
+              <div style={{ fontStyle: "italic" }}>Bot đang trả lời...</div>
+            )}
+          </div>
+
+          <div
+            style={{ display: "flex", padding: 8, borderTop: "1px solid #eee" }}
+          >
+            <input
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              placeholder="Nhập tin nhắn..."
+              style={{
+                flex: 1,
+                padding: "8px 10px",
+                borderRadius: 6,
+                border: "1px solid #ddd",
+                outline: "none",
+              }}
+              disabled={loading}
+            />
+            <button
+              onClick={handleSend}
+              disabled={loading}
+              style={{
+                marginLeft: 8,
+                padding: "8px 12px",
+                borderRadius: 6,
+                background: "#0b74ff",
+                color: "#fff",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              Gửi
+            </button>
+          </div>
+        </div>
+      )}
+
+      <button
+        style={toggleBtnStyle}
+        onClick={() => setOpen((s) => !s)}
+        aria-label="Toggle chat"
+      >
+        {open ? "×" : "💬"}
+      </button>
+    </>
+  );
+};

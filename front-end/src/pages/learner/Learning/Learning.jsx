@@ -5,19 +5,36 @@ import { enrollmentService } from "@/services/enrollmentService";
 import LearningSidebar from "./LearningSidebar";
 import LessonContent from "./LessonContent";
 import QuizContent from "./QuizContent";
-import { scoreService } from "@/services/scoreService";
 import QuizResult from "./QuizResult";
+import { scoreService } from "@/services/scoreService";
 
 const Learning = () => {
   const location = useLocation();
-
   const { courseId } = useParams();
   const { user } = useAuth();
+
+  // ======= Tất cả hook phải ở đây =======
   const [courseData, setCourseData] = useState(null);
-  const [selectedItem, setSelectedItem] = useState(null); // Có thể là lesson hoặc quiz
+  const [selectedItem, setSelectedItem] = useState(null);
   const [loading, setLoading] = useState(true);
+
   const [quizStatus, setQuizStatus] = useState(null);
   const [checkingQuiz, setCheckingQuiz] = useState(false);
+  const [passedQuizzes, setPassedQuizzes] = useState([]);
+  const handleSelectQuiz = async (quiz) => {
+    setSelectedItem({ type: "quiz", data: quiz });
+    setCheckingQuiz(true);
+
+    try {
+      const result = await scoreService.checkQuizStatus(user._id, quiz._id);
+      if (result.success) setQuizStatus(result.data);
+    } catch (err) {
+      console.error("Quiz check error:", err);
+    } finally {
+      setCheckingQuiz(false);
+    }
+  };
+
   useEffect(() => {
     const fetchCourseDetail = async () => {
       try {
@@ -25,18 +42,13 @@ const Learning = () => {
           user._id,
           courseId
         );
-        console.log("Fetched course detail enrollment:", data);
-
         if (data) {
           setCourseData(data);
-
-          // ✅ Nếu có restoreLesson (từ navigate state)
+          // Restore bài học khi navigate về
           if (location.state?.restoreLesson) {
             const restored = location.state.restoreLesson;
-            console.log("Khôi phục từ location:", restored);
             setSelectedItem(restored);
 
-            // ✅ Nếu là quiz thì gọi checkQuizStatus luôn
             if (restored.type === "quiz") {
               setCheckingQuiz(true);
               try {
@@ -45,24 +57,19 @@ const Learning = () => {
                   restored.data._id
                 );
                 if (result.success) setQuizStatus(result.data);
-                else console.warn("Không thể lấy quizStatus:", result);
-              } catch (err) {
-                console.error("Lỗi khi checkQuizStatus:", err);
               } finally {
                 setCheckingQuiz(false);
               }
             }
-            return; // 👈 Dừng lại, không set bài học mặc định nữa
+            return;
           }
 
-          // 🧩 Nếu không có restoreLesson, chọn lesson đầu tiên
-          if (!selectedItem && data.courseId.modules?.[0]?.lessons?.[0]) {
-            const firstLesson = data.courseId.modules[0].lessons[0];
-            setSelectedItem({ type: "lesson", data: firstLesson });
-          }
+          // Chọn bài học đầu tiên
+          const firstLesson = data.courseId.modules?.[0]?.lessons?.[0];
+          if (firstLesson) setSelectedItem({ type: "lesson", data: firstLesson });
         }
-      } catch (err) {
-        console.error("Fetch course error:", err);
+      } catch (error) {
+        console.error("Fetch course error:", error);
       } finally {
         setLoading(false);
       }
@@ -71,44 +78,62 @@ const Learning = () => {
     fetchCourseDetail();
   }, [courseId, user._id]);
 
+  useEffect(() => {
+    const fetchPassed = async () => {
+      if (!courseData) return;
+
+      const passedIds = [];
+      const course = courseData.courseId;
+      const allQuizzes = [
+        ...(course.courseQuizzes || []),
+        ...course.modules.flatMap(module => [
+          ...(module.moduleQuizzes || []),
+          ...(module.lessons?.flatMap(lesson => lesson.quizzes || []) || []),
+        ]),
+      ];
+
+      for (let quiz of allQuizzes) {
+        console.log("quiz", quiz)
+        const res = await scoreService.checkQuizStatus(user._id, quiz._id);
+        console.log("res quiz", res)
+        console.log("res.data.latestScore.id", res.data.latestScore?.id)
+        console.log("res.data.latestScore", res.data?.latestScore)
+        if (res.success && res.data.hasCompleted && res.data.latestScore.status == "passed") passedIds.push(quiz._id);
+      }
+
+      setPassedQuizzes(passedIds);
+    };
+
+    fetchPassed();
+  }, [courseData]);
+
+  // ======= Return UI =======
   if (loading) return <p className="text-center py-10">Loading...</p>;
-  if (!courseData)
-    return <p className="text-center py-10">Không tìm thấy khóa học</p>;
+  if (!courseData) return <p className="text-center py-10">Không tìm thấy khóa học</p>;
 
-  const { courseId: course } = courseData;
-  // ✅ Khi chọn quiz
-  const handleSelectQuiz = async (quiz) => {
-    setSelectedItem({ type: "quiz", data: quiz });
-    setCheckingQuiz(true);
-    const result = await scoreService.checkQuizStatus(user._id, quiz._id);
-    console.log("✅ Kết quả quiz check:", result);
+  const course = courseData.courseId;
 
-    if (result.success) setQuizStatus(result.data);
-    setCheckingQuiz(false);
-  };
-  console.log("quizStatus", quizStatus);
-  console.log("checkingQuiz", checkingQuiz);
   return (
     <div className="flex min-h-screen bg-white">
-      {/* Sidebar */}
       <LearningSidebar
         course={course}
+        userId={user._id}
+        selectedItem={selectedItem}
+        passedQuizzes={passedQuizzes}
         onSelectItem={(item) => {
           if (item.type === "quiz") handleSelectQuiz(item.data);
           else {
-            setSelectedItem(item);
             setQuizStatus(null);
+            setSelectedItem(item);
           }
         }}
-        selectedItem={selectedItem}
       />
 
-      {/* Main Content */}
       <div className="flex-1 p-6 border-l border-gray-200 overflow-y-auto">
         {selectedItem?.type === "lesson" && (
           <LessonContent lesson={selectedItem.data} course={course} />
         )}
-        {/* 🧩 Quiz */}
+
         {selectedItem?.type === "quiz" && !checkingQuiz && quizStatus && (
           <>
             {quizStatus.hasCompleted ? (
@@ -116,15 +141,26 @@ const Learning = () => {
                 quiz={quizStatus.quiz}
                 latestScore={quizStatus.latestScore}
                 attempts={quizStatus.attempts}
-                onRetake={() =>
-                  setQuizStatus({ ...quizStatus, hasCompleted: false })
-                }
                 currentLesson={selectedItem}
+                onRetake={() => setQuizStatus({ ...quizStatus, hasCompleted: false })}
               />
             ) : (
               <QuizContent
                 quizId={selectedItem.data._id}
-                onQuizSubmitted={(newStatus) => setQuizStatus(newStatus)}
+                onQuizSubmitted={(statusData) => {
+                  setQuizStatus(statusData);
+
+                  // Nếu quiz pass thì thêm vào passedQuizzes
+                  if (statusData.hasCompleted && statusData.latestScore.status === "passed") {
+                    setPassedQuizzes((prev) => {
+                      // tránh duplicate
+                      if (!prev.includes(statusData.quiz.id)) {
+                        return [...prev, statusData.quiz.id];
+                      }
+                      return prev;
+                    });
+                  }
+                }}
               />
             )}
           </>

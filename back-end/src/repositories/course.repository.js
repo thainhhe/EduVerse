@@ -8,7 +8,7 @@ const courseRepository = {
             .sort({ createdAt: -1 })
             .populate("category")
             .populate("main_instructor", "_id username email")
-            .populate("instructors.user", "_id username email permission")
+            .populate("instructors.user", "_id username email")
             .populate("instructors.permission")
             .exec();
     },
@@ -77,17 +77,45 @@ const courseRepository = {
     },
 
     getAllForLearner: async () => {
-        return await Course.find({
-            isPublished: true,
-            status: "approve",
-            // isDeleted: false,
-        })
-            .sort({ createdAt: -1 })
-            .populate("category")
-            .populate("main_instructor", "_id username email")
-            .populate("instructors.user", "_id username email")
-            .populate("instructors.permission")
-            .exec();
+        // Aggregate: lấy course + reviews (avgRating, reviewsCount) + main_instructor (select fields)
+        return await Course.aggregate([
+            { $match: { isPublished: true, status: "approve", isDeleted: false } },
+            {
+                $lookup: {
+                    from: "reviews",
+                    localField: "_id",
+                    foreignField: "courseId",
+                    as: "reviews",
+                },
+            },
+            {
+                $addFields: {
+                    avgRating: {
+                        $cond: [{ $gt: [{ $size: "$reviews" }, 0] }, { $round: [{ $avg: "$reviews.rating" }, 2] }, 0],
+                    },
+                    reviewsCount: { $size: "$reviews" },
+                },
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "main_instructor",
+                    foreignField: "_id",
+                    as: "main_instructor",
+                },
+            },
+            {
+                $unwind: { path: "$main_instructor", preserveNullAndEmptyArrays: true },
+            },
+            {
+                $project: {
+                    reviews: 0,
+                    __v: 0,
+                    "instructors.permission": 0,
+                },
+            },
+            { $sort: { createdAt: -1 } },
+        ]).exec();
     },
 
     getAllByMainInstructor: async (id) => {
@@ -307,6 +335,49 @@ const courseRepository = {
             console.error("Lỗi trong repository getCourseByCategory:", err);
             throw err;
         }
+    },
+
+    getPopular: async (limit = 6) => {
+        // Aggregate to compute avgRating and reviewsCount, then sort and limit
+        const lim = Number(limit) || 6;
+        return await Course.aggregate([
+            { $match: { isDeleted: false, isPublished: true, status: "approve" } },
+            {
+                $lookup: {
+                    from: "reviews",
+                    localField: "_id",
+                    foreignField: "courseId",
+                    as: "reviews",
+                },
+            },
+            {
+                $addFields: {
+                    avgRating: {
+                        $cond: [{ $gt: [{ $size: "$reviews" }, 0] }, { $round: [{ $avg: "$reviews.rating" }, 2] }, 0],
+                    },
+                    reviewsCount: { $size: "$reviews" },
+                },
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "main_instructor",
+                    foreignField: "_id",
+                    as: "main_instructor",
+                },
+            },
+            {
+                $unwind: { path: "$main_instructor", preserveNullAndEmptyArrays: true },
+            },
+            {
+                $project: {
+                    reviews: 0,
+                    __v: 0,
+                },
+            },
+            { $sort: { totalEnrollments: -1, avgRating: -1 } },
+            { $limit: lim },
+        ]).exec();
     },
 };
 

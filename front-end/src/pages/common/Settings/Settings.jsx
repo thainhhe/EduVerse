@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Lock, Pencil, Trash2, Mail, Bell, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,11 @@ const Settings = () => {
     avatar: "",
     id: null,
   });
+
+  // thêm state để quản lý file avatar và preview
+  const [selectedAvatar, setSelectedAvatar] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const fileInputRef = useRef(null);
 
   const [notifications, setNotifications] = useState({
     email: false,
@@ -59,6 +64,8 @@ const Settings = () => {
             inApp: !!user.systemNotifications,
             marketing: !!user.marketingNotifications, // optional
           });
+          // set preview từ avatar hiện có
+          setAvatarPreview(user.avatar || null);
         }
       } catch (err) {
         console.warn("Failed to load current user:", err);
@@ -68,6 +75,28 @@ const Settings = () => {
     load();
   }, []);
 
+  // xử lý khi chọn file
+  const handleSelectAvatar = (file) => {
+    if (!file) return;
+    setSelectedAvatar(file);
+    const url = URL.createObjectURL(file);
+    setAvatarPreview(url);
+  };
+
+  // mở file dialog
+  const openFilePicker = () => {
+    if (fileInputRef.current) fileInputRef.current.click();
+  };
+
+  // giải phóng objectURL khi component unmount hoặc avatar thay đổi
+  useEffect(() => {
+    return () => {
+      if (avatarPreview && selectedAvatar) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview, selectedAvatar]);
+
   const handleProfileChange = (key, value) => {
     setProfile((p) => ({ ...p, [key]: value }));
   };
@@ -76,12 +105,22 @@ const Settings = () => {
     if (!profile.id) return toast.error("Missing user id");
     setLoading(true);
     try {
-      const payload = {
-        username: profile.fullName,
-        // don't allow email change here if backend disallows; keep email for completeness
-        email: profile.email,
-      };
-      await authService.updateProfile(profile.id, payload);
+      // nếu có file avatar, gửi multipart/form-data
+      if (selectedAvatar) {
+        const form = new FormData();
+        form.append("username", profile.fullName);
+        // backend middleware expects field name "avatar"
+        form.append("avatar", selectedAvatar);
+        await authService.updateProfile(profile.id, form);
+      } else {
+        const payload = {
+          username: profile.fullName,
+          // don't allow email change here if backend disallows; keep email for completeness
+          email: profile.email,
+        };
+        await authService.updateProfile(profile.id, payload);
+      }
+
       // refresh user data
       const me = await authService.getCurrentUser();
       const normalized = me?.data?.user ?? me?.data ?? me;
@@ -92,6 +131,8 @@ const Settings = () => {
           fullName: user.username || user.name || p.fullName,
           avatar: user.avatar || p.avatar,
         }));
+        setAvatarPreview(user.avatar || avatarPreview);
+        setSelectedAvatar(null);
       }
       toast.success("Profile updated");
     } catch (err) {
@@ -194,16 +235,36 @@ const Settings = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center gap-4">
-              <Avatar className="w-20 h-20">
+              <Avatar
+                className="w-20 h-20 cursor-pointer"
+                onClick={openFilePicker}
+              >
                 <AvatarImage
-                  src={profile.avatar || "/diverse-user-avatars.png"}
+                  src={
+                    avatarPreview ||
+                    profile.avatar ||
+                    "/diverse-user-avatars.png"
+                  }
                   alt={profile.fullName}
                 />
                 <AvatarFallback>
                   {(profile.fullName || "?").charAt(0)}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1">
+
+              {/* hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleSelectAvatar(f);
+                }}
+              />
+
+              <div className="flex-1 space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>
                 <Input
                   id="fullName"
@@ -216,7 +277,7 @@ const Settings = () => {
               </div>
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
               <Input
                 id="email"
@@ -227,7 +288,7 @@ const Settings = () => {
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               {!showChangeForm ? (
                 <div className="flex gap-2">
@@ -249,7 +310,7 @@ const Settings = () => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="currentPassword">Current password</Label>
                     <Input
                       id="currentPassword"
@@ -258,7 +319,7 @@ const Settings = () => {
                       onChange={(e) => setCurrentPassword(e.target.value)}
                     />
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="newPassword">New password</Label>
                     <Input
                       id="newPassword"
@@ -267,7 +328,7 @@ const Settings = () => {
                       onChange={(e) => setNewPassword(e.target.value)}
                     />
                   </div>
-                  <div>
+                  <div className="space-y-2">
                     <Label htmlFor="confirmPassword">Confirm password</Label>
                     <Input
                       id="confirmPassword"
