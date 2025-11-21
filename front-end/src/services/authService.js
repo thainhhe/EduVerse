@@ -78,7 +78,20 @@ const authService = {
   },
 
   updateProfile: async (id, payload) => {
-    const res = await api.put(`/users/profile/${id}`, payload); // backend has PUT /profile/:id
+    // If caller passed a FormData (file upload), send multipart/form-data.
+    // Some api wrappers set JSON headers by default which causes File -> {} when serialized.
+    if (payload instanceof FormData) {
+      const res = await api.put(`/users/profile/${id}`, payload, {
+        headers: {
+          // Let browser/axios set boundary; setting multipart/form-data is fine here.
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return res;
+    }
+
+    // Regular JSON payload
+    const res = await api.put(`/users/profile/${id}`, payload);
     return res;
   },
 

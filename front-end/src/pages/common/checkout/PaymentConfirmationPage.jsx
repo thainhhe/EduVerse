@@ -15,16 +15,19 @@ const PaymentConfirmationPage = () => {
   const status = queryParams.get("status");
   const code = queryParams.get("code");
   const { user } = useAuth();
-  const { courseId, courseTitle, coursePrice } = location.state || {};
-  console.log(
-    "courseId, courseTitle, coursePrice",
-    courseId,
-    courseTitle,
-    coursePrice
-  );
+  console.log("user", user)
+
+
   const [courseInfo, setCourseInfo] = useState({});
   const { refreshEnrollments } = useEnrollment();
-
+  console.log("courseInfo", courseInfo)
+  console.log({
+    userId: user._id,
+    courseId: courseInfo.courseId,
+    enrollmentDate: Date.now(),
+    status: "enrolled",
+    grade: "Incomplete",
+  })
   const createEnrollment = async () => {
     await enrollmentService.createEnrollment({
       userId: user._id,
@@ -36,10 +39,12 @@ const PaymentConfirmationPage = () => {
   };
 
   useEffect(() => {
-    if (status === "PAID") {
+    console.log("Updated courseInfo:", courseInfo);
+    if (status === "PAID" && courseInfo?.courseId && user?._id) {
       createEnrollment();
     }
-  }, [status]);
+  }, [status, courseInfo, user]);
+
   const handleContinue = () => {
     refreshEnrollments();
     navigate(`/dashboard`);

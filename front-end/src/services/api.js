@@ -4,9 +4,6 @@ import { API_BASE_URL } from "@config/constants";
 const api = axios.create({
     baseURL: API_BASE_URL,
     timeout: 10000,
-    headers: {
-        "Content-Type": "application/json",
-    },
 });
 
 // Request interceptor
@@ -38,10 +35,11 @@ api.interceptors.request.use(
                 courseId: currentCourseId,
             };
         } else {
-            config.data = {
-                ...config.data,
-                currentCourseId: currentCourseId,
-            };
+            if (config.data instanceof FormData) {
+                config.data.append("currentCourseId", currentCourseId);
+            } else {
+                config.data = { ...config.data, currentCourseId };
+            }
         }
         return config;
     },

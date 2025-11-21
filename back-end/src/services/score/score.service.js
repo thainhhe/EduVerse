@@ -2,6 +2,9 @@ const scoreRepository = require("../../repositories/score.repository");
 const quizRepository = require("../../repositories/quiz.repository");
 const scoreValidator = require("../../validator/score.validator");
 const scoreHelper = require("./score.helper");
+const progressRepository = require("../../repositories/progress.repository");
+const Module = require("../../models/Module");
+const Lesson = require("../../models/Lesson");
 
 const scoreServices = {
   getAllScores: async (filters = {}) => {
@@ -71,21 +74,14 @@ const scoreServices = {
   submitQuiz: async (submitData) => {
     try {
       const validatedData = scoreValidator.validateSubmitQuiz(submitData);
-      console.log("validatedData", validatedData);
       const quiz = await quizRepository.getQuizById(validatedData.quizId);
 
       if (!quiz) {
-        return {
-          status: 404,
-          message: "Quiz not found",
-        };
+        return { status: 404, message: "Quiz not found" };
       }
 
       if (!quiz.isPublished) {
-        return {
-          status: 400,
-          message: "Quiz is not published",
-        };
+        return { status: 400, message: "Quiz is not published" };
       }
 
       const previousAttempts = await scoreRepository.getUserAttempts(
@@ -101,7 +97,6 @@ const scoreServices = {
       }
 
       const result = scoreHelper.calculateScore(quiz, validatedData.answers);
-      console.log("result", result);
       const scoreData = {
         userId: validatedData.userId,
         quizId: validatedData.quizId,
@@ -111,7 +106,7 @@ const scoreServices = {
         answers: result.answers,
         timeTaken: validatedData.timeTaken,
         attemptNumber: previousAttempts.length + 1,
-        status: result.status,
+        status: result.status, // Phải là "passed" hoặc "failed"
         remarks:
           result.status === "passed"
             ? "Congratulations! You passed the quiz."
@@ -120,6 +115,41 @@ const scoreServices = {
 
       const newScore = await scoreRepository.createScore(scoreData);
 
+      if (result.status === "passed") {
+        // 1. Tìm courseId
+        let courseId = null;
+        if (quiz.courseId) {
+          courseId = quiz.courseId;
+        } else if (quiz.moduleId) {
+          const module = await Module.findById(quiz.moduleId)
+            .select("courseId")
+            .lean();
+          if (module) courseId = module.courseId;
+        } else if (quiz.lessonId) {
+          // Logic này chỉ chạy khi pass quiz lesson,
+          const lesson = await Lesson.findById(quiz.lessonId)
+            .select("moduleId")
+            .lean();
+          if (lesson && lesson.moduleId) {
+            const module = await Module.findById(lesson.moduleId)
+              .select("courseId")
+              .lean();
+            if (module) courseId = module.courseId;
+          }
+        }
+
+        // 2. Gọi hàm cập nhật
+        if (courseId) {
+          console.log(
+            `🎯 Trigger: Quiz passed. Updating progress for user ${validatedData.userId} on course ${courseId}`
+          );
+          await progressRepository.calculateUserProgress(
+            validatedData.userId,
+            courseId.toString()
+          );
+        }
+      }
+
       return {
         status: 201,
         message: "Quiz submitted successfully",
@@ -127,7 +157,6 @@ const scoreServices = {
       };
     } catch (error) {
       console.error("Service Error - submitQuiz:", error);
-
       if (error.isValidation) {
         return {
           status: 400,
@@ -135,7 +164,6 @@ const scoreServices = {
           errors: error.validationErrors,
         };
       }
-
       throw error;
     }
   },

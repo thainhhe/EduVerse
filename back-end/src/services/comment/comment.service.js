@@ -5,6 +5,7 @@ const Course = require("../../models/Course");
 const { STATUS_CODE, SYSTEM_MESSAGE } = require("../../config/enum/system.constant");
 const { COMMENT_ERROR_MESSAGE } = require("../../config/enum/comment.constants");
 const Enrollment = require("../../models/Enrollment");
+const Permission = require("../../models/Permission");
 const flattenToLevel3 = (comment, level = 1) => {
     // Nếu đang ở cấp 3
     if (level === 2) {
@@ -64,21 +65,24 @@ const commentService = {
             const courseId = forum.courseId; // forum gắn với 1 khóa học
 
             const course = await Course.findById(courseId);
-            console.log("course", course);
-
+            console.log("c:", course);
+            const per = await Permission.findOne({ name: "manage_forum" });
+            console.log("p_:", per);
             const isMainInstructor = course.main_instructor.equals(user._id);
-            console.log("isMain:", isMainInstructor);
+
+            const isCollab = course.instructors.some(
+                (c) => c.user.toString() === user._id.toString() && c.permission.includes(per._id)
+            );
+            console.log("issCpollab:", isCollab);
 
             const enrollment = await Enrollment.findOne({ userId, courseId });
 
-            if (!isMainInstructor) {
-                if (!enrollment) {
-                    return {
-                        status: STATUS_CODE.FORBIDDEN,
-                        message: "Bạn cần đăng ký khóa học trước khi bình luận.",
-                        success: false,
-                    };
-                }
+            if (!isMainInstructor && !enrollment && !isCollab) {
+                return {
+                    status: STATUS_CODE.FORBIDDEN,
+                    message: "Bạn cần đăng ký khóa học trước khi bình luận.",
+                    success: false,
+                };
             }
             // Tạo comment mới
             const newComment = await Comment.create({

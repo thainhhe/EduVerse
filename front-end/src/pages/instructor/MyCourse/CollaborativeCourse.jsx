@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Clock, Star, Users } from "lucide-react";
+import { ArrowRight, Clock, Star, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export const CoCourse = ({ course }) => {
     const navigate = useNavigate();
-    const mainInstructor = course?.main_instructor?.username || "Giảng viên";
+    const mainInstructor = course.main_instructor?.username || "Giảng viên";
     const price = course?.price ? course.price.toLocaleString("vi-VN") + "đ" : "Miễn phí";
     const rating = course?.rating || 0;
     const enrolls = course?.totalEnrollments || 0;
@@ -26,8 +26,8 @@ export const CoCourse = ({ course }) => {
             {/* Ảnh thumbnail */}
             <div className="relative aspect-video overflow-hidden bg-muted">
                 <img
-                    src={course.thumbnail || course.image || "/placeholder.svg"}
-                    alt={course.title}
+                    src={course?.thumbnail || course?.image || "/placeholder.svg"}
+                    alt={course?.title}
                     className="object-cover transition-transform group-hover:scale-105 w-full h-full"
                 />
             </div>
@@ -53,10 +53,10 @@ export const CoCourse = ({ course }) => {
             <CardFooter className="border-t p-4 flex justify-between items-center">
                 <span className="font-semibold text-primary">{price}</span>
                 <Button
-                    className="bg-white border-accent-foreground text-black hover:bg-indigo-600 hover:text-white transition-colors duration-200"
+                    className="bg-white border-1 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors duration-200"
                     onClick={openModuleManager}
                 >
-                    Xem khóa học
+                    Xem chi tiết <ArrowRight />
                 </Button>
             </CardFooter>
         </Card>

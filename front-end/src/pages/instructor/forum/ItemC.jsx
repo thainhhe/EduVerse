@@ -1,21 +1,6 @@
-"use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-    ThumbsUp,
-    MessageCircle,
-    MoreHorizontal,
-    Send,
-    Trash2,
-    Flag,
-    PenOffIcon,
-    Check,
-    X,
-    MoreVertical,
-    Edit2,
-    EyeOff,
-    Edit,
-} from "lucide-react";
+import { ThumbsUp, MessageCircle, Send, Trash2, Check, X, MoreVertical, EyeOff, Edit } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Avatar } from "@radix-ui/react-avatar";
@@ -28,7 +13,7 @@ import {
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 import { ToastHelper } from "@/helper/ToastHelper";
 import { commentService } from "@/services/comment";
-export default function CommentItem({ comment, level, forumId, userId, refresh, isMainInstructor }) {
+export default function CommentItem({ comment, level, forumId, userId, refresh, isMainInstructor, isCollab }) {
     const [likes, setLikes] = useState(comment.likes || 0);
     const [userLiked, setUserLiked] = useState(false);
     const [isReplying, setIsReplying] = useState(false);
@@ -50,6 +35,9 @@ export default function CommentItem({ comment, level, forumId, userId, refresh, 
 
     // 🟢 Gửi phản hồi
     const handleReply = async () => {
+        if (!isMyComment && !isMainInstructor && !isCollab) {
+            return ToastHelper.error("Bạn không có quyền!");
+        }
         if (!replyContent.trim()) return ToastHelper.info("Vui lòng nhập nội dung phản hồi!");
         try {
             const res = await fetch("http://localhost:9999/api/v1/comment/create-comment", {
@@ -78,6 +66,9 @@ export default function CommentItem({ comment, level, forumId, userId, refresh, 
 
     // 🟢 Xóa bình luận
     const handleDelete = async () => {
+        if (!isMyComment && !isMainInstructor && !isCollab) {
+            return ToastHelper.error("Bạn không có quyền!");
+        }
         try {
             const res = await fetch(`http://localhost:9999/api/v1/comment/${comment._id}`, {
                 method: "DELETE",
@@ -100,6 +91,9 @@ export default function CommentItem({ comment, level, forumId, userId, refresh, 
 
     // 🟢 Cập nhật bình luận
     const handleUpdate = async () => {
+        if (!isMyComment && !isMainInstructor && !isCollab) {
+            return ToastHelper.error("Bạn không có quyền!");
+        }
         if (!editContent.trim()) return ToastHelper.info("Nội dung bình luận không được để trống");
         try {
             const res = await fetch(`http://localhost:9999/api/v1/comment/${comment._id}`, {
@@ -145,6 +139,9 @@ export default function CommentItem({ comment, level, forumId, userId, refresh, 
     };
 
     const handleHideComment = async (id) => {
+        if (!isMyComment && !isMainInstructor && !isCollab) {
+            return ToastHelper.error("Bạn không có quyền!");
+        }
         try {
             const res = await commentService.hiddenComment(id);
             if (res.success) {
@@ -316,9 +313,8 @@ export default function CommentItem({ comment, level, forumId, userId, refresh, 
                             </DropdownMenuTrigger>
 
                             <DropdownMenuContent className="w-48">
-                                {isMyComment && isMainInstructor ? (
+                                {isMyComment || isMainInstructor || isCollab ? (
                                     <>
-                                        {/* Chỉnh sửa */}
                                         <DropdownMenuItem
                                             className="text-blue-600 focus:text-blue-700 cursor-pointer"
                                             onClick={() => setIsEditing(true)}
@@ -326,7 +322,6 @@ export default function CommentItem({ comment, level, forumId, userId, refresh, 
                                             <Edit className="w-4 h-4 mr-2" /> Chỉnh sửa bình luận
                                         </DropdownMenuItem>
 
-                                        {/* Ẩn bình luận */}
                                         <DropdownMenuItem
                                             asChild
                                             className="text-red-600 focus:text-red-700 cursor-pointer p-0"
@@ -340,11 +335,10 @@ export default function CommentItem({ comment, level, forumId, userId, refresh, 
                                                 title="Ẩn bình luận?"
                                                 description="Hành động này không thể hoàn tác."
                                                 confirmText="Ẩn"
-                                                onConfirm={() => handleHideComment(comment?.id || comment?._id)}
+                                                onConfirm={() => handleHideComment(comment?._id)}
                                             />
                                         </DropdownMenuItem>
 
-                                        {/* Xóa bình luận */}
                                         <DropdownMenuItem
                                             asChild
                                             className="text-red-600 focus:text-red-700 cursor-pointer p-0"
@@ -364,6 +358,7 @@ export default function CommentItem({ comment, level, forumId, userId, refresh, 
                                     </>
                                 ) : (
                                     <>
+                                        {/* user bình thường chỉ được ẩn + report */}
                                         <DropdownMenuItem asChild className="text-red-600 focus:text-red-700">
                                             <ConfirmationHelper
                                                 trigger={
@@ -374,20 +369,7 @@ export default function CommentItem({ comment, level, forumId, userId, refresh, 
                                                 title="Ẩn bình luận?"
                                                 description="Hành động này không thể hoàn tác."
                                                 confirmText="Ẩn"
-                                                onConfirm={() => handleHideComment(comment?.id || comment?._id)}
-                                            />
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem asChild className="text-red-600 focus:text-red-700">
-                                            <ConfirmationHelper
-                                                trigger={
-                                                    <button className="w-full flex items-center text-red-600">
-                                                        <Trash2 className="w-4 h-4 mx-2" /> Xóa bình luận
-                                                    </button>
-                                                }
-                                                title="Xóa bình luận?"
-                                                description="Hành động này không thể hoàn tác."
-                                                confirmText="Xóa"
-                                                onConfirm={handleDelete}
+                                                onConfirm={() => handleHideComment(comment?._id)}
                                             />
                                         </DropdownMenuItem>
                                     </>

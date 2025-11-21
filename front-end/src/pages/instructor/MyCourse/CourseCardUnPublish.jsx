@@ -1,7 +1,5 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const CourseCardUnPublish = ({ course }) => {
@@ -16,45 +14,40 @@ const CourseCardUnPublish = ({ course }) => {
         navigate("/create-course-basic", { state: { id, isUpdate: true } });
     };
 
-    const handleOpenCourseQuiz = () => {
-        const id = course._id ?? course.id ?? course.idStr ?? null;
-        if (id) sessionStorage.setItem("currentCourseId", id);
-
-        navigate("/create-course/modules", { state: { id, openQuiz: true } });
-    };
-
     return (
-        <Card className="flex flex-col sm:flex-row items-center gap-4 p-4 hover:shadow-md transition-all border border-border">
-            {/* Image */}
-            <div className="w-full sm:w-1/4 aspect-video bg-muted flex items-center justify-center overflow-hidden rounded-lg">
-                <img
-                    src={course.image || "/placeholder.svg"}
-                    alt={course.title}
-                    className="object-cover w-full h-full"
-                />
-            </div>
-
-            {/* Course Info */}
-            <CardContent className="flex-1 w-full space-y-2 sm:space-y-3">
-                <div>
+        <div className="flex-1 items-center gap-6 p-4 border border-border rounded-lg hover:shadow-md transition-all">
+            <div className="flex flex-1 flex-col sm:flex-row gap-6 p-4 ">
+                <div className="w-full sm:w-1/4 aspect-video bg-muted flex items-center justify-center overflow-hidden rounded-lg">
+                    <img
+                        src={course.image || "/placeholder.svg"}
+                        alt={course.title}
+                        className="object-cover w-full h-full"
+                    />
+                </div>
+                {/* Info */}
+                <div className="flex-1 w-full space-y-2 sm:space-y-3">
                     <h3 className="text-lg font-semibold">{course.title}</h3>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="font-semibold text-foreground uppercase">{course.status}</span>
-                        <span>{course.visibility}</span>
+                    <div className="flex items-center gap-2 text-sm">
+                        <span className="font-semibold uppercase">{course.status}</span>
+                        <span className="text-muted-foreground">{course.isPublished ? "Public" : "Private"}</span>
+                    </div>
+                    <div>
+                        <p className="text-sm text-muted-foreground mb-1">Progress: {course.progress}%</p>
+                        <Progress value={course.progress} className="h-2 bg-muted-foreground/20" />
                     </div>
                 </div>
-                <div>
-                    <p className="text-sm text-muted-foreground mb-1">Progress: {course.progress}%</p>
-                    <Progress value={course.progress} className="h-2 bg-muted-foreground/20" />
-                </div>
-
-                <div>
-                    <Button className="mt-2 text-sm" variant="default" onClick={handleEdit}>
-                        Continue update
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
+            </div>
+            {/* Action */}
+            <div className="flex flex-1 flex-row-reverse">
+                <Button
+                    variant="default"
+                    onClick={handleEdit}
+                    className="text-sm mr-2.5 p-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+                >
+                    Continue create
+                </Button>
+            </div>
+        </div>
     );
 };
 

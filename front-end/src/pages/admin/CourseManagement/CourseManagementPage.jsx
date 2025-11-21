@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, Eye, X } from "lucide-react";
 import { approveCourse, getAllCourse, rejectCourse } from "@/services/courseService";
 import { ToastHelper } from "@/helper/ToastHelper";
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
+import categoryService from "@/services/categoryService";
 
 const CourseManagementPage = () => {
     const [search, setSearch] = useState("");
@@ -15,10 +16,13 @@ const CourseManagementPage = () => {
     const [status, setStatus] = useState("");
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
     const [rejectReason, setRejectReason] = useState("");
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [selectedCourseId, setSelectedCourseId] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [coursesPerPage, setCoursesPerPage] = useState(5); // mỗi trang 10 khóa học
+    const [categories, setCategories] = useState(["All"]);
+    const [selectedCategory, setSelectedCategory] = useState("All");
     const fetchCourses = async () => {
         setLoading(true);
         const res = await getAllCourse();
@@ -32,6 +36,18 @@ const CourseManagementPage = () => {
             ToastHelper.error(res?.message || "Đã xảy ra lỗi khi lấy danh sách khóa học!");
         }
     };
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const list = await categoryService.getAll();
+                setCategories(list);
+            } catch (err) {
+                console.error("Failed to load categories:", err);
+                setCategories([]);
+            }
+        };
+        fetchCategories();
+    }, []);
     useEffect(() => {
         fetchCourses();
     }, []);
@@ -91,10 +107,26 @@ const CourseManagementPage = () => {
     const filteredCourses = courses.filter((course) => {
         const matchSearch =
             course.title.toLowerCase().includes(search.toLowerCase()) ||
-            course.main_instructor.username.toLowerCase().includes(search.toLowerCase());
+            course.main_instructor?.username.toLowerCase().includes(search.toLowerCase());
+
         const matchStatus = !status || course.status.toLowerCase() === status.toLowerCase();
-        return matchSearch && matchStatus;
+
+        const matchCategory = selectedCategory === "All" || course.category?._id === selectedCategory;
+
+        return matchSearch && matchStatus && matchCategory;
     });
+
+    const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
+    const pageWindow = 3;
+
+    const startPage = Math.max(1, Math.min(currentPage - 1, totalPages - pageWindow + 1));
+    const endPage = Math.min(totalPages, startPage + pageWindow - 1);
+
+    const visiblePages = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+    const indexOfLastCourse = currentPage * coursesPerPage;
+    const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
+    const currentCourses = filteredCourses.slice(indexOfFirstCourse, indexOfLastCourse);
+
     return (
         <div className="py-8 px-4 bg-[#fafafd] min-h-screen">
             <h1 className="text-3xl font-bold mb-8">Course Management</h1>
@@ -111,16 +143,20 @@ const CourseManagementPage = () => {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
+
                         <select
                             className="border border-gray-200 rounded-lg px-4 py-2 bg-white text-gray-700"
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
+                            value={selectedCategory}
+                            onChange={(e) => setSelectedCategory(e.target.value)}
                         >
-                            <option value="">All Categories</option>
-                            <option value="Programming">Programming</option>
-                            <option value="Design">Design</option>
-                            <option value="Marketing">Marketing</option>
+                            <option value="All">All</option>
+                            {categories.map((category) => (
+                                <option key={category.id} value={category.id}>
+                                    {category.name}
+                                </option>
+                            ))}
                         </select>
+
                         <select
                             className="border border-gray-200 rounded-lg px-4 py-2 bg-white text-gray-700"
                             value={status}
@@ -152,7 +188,7 @@ const CourseManagementPage = () => {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredCourses.map((course) => (
+                            {currentCourses.map((course) => (
                                 <TableRow key={course._id}>
                                     <TableCell>{course.title}</TableCell>
                                     <TableCell>{course.main_instructor?.username}</TableCell>
@@ -318,21 +354,31 @@ const CourseManagementPage = () => {
                 </div>
             )}
 
-            <div className="flex justify-center items-center gap-4 mt-6">
-                <Button variant="outline">
-                    <ChevronLeft className="h-4 w-4 mr-2" /> Previous
+            <div className="flex justify-center items-center gap-2 mt-6">
+                <Button
+                    variant="outline"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((prev) => prev - 1)}
+                >
+                    <ChevronLeft className="h-4 w-4 mr-1" /> Previous
                 </Button>
-                <Button variant="outline" className="font-bold bg-white border border-gray-300">
-                    1
-                </Button>
-                <Button variant="outline" className="bg-white border border-gray-300">
-                    2
-                </Button>
-                <Button variant="outline" className="bg-white border border-gray-300">
-                    3
-                </Button>
-                <Button variant="outline">
-                    Next <ChevronRight className="h-4 w-4 ml-2" />
+
+                {visiblePages.map((num) => (
+                    <Button
+                        key={num}
+                        variant={num === currentPage ? "default" : "outline"}
+                        onClick={() => setCurrentPage(num)}
+                    >
+                        {num}
+                    </Button>
+                ))}
+
+                <Button
+                    variant="outline"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage((prev) => prev + 1)}
+                >
+                    Next <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
             </div>
         </div>

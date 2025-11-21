@@ -2,6 +2,7 @@ import api from "./api";
 
 // Courses
 export const getAllCoursePublished = () => api.get(`/courses/learner/common`);
+export const getPopularCourses = (limit = 6) => api.get(`/courses/popular?limit=${limit}`);
 export const getMyCourses = (id) => api.get(`/courses/instructor/${id}`);
 export const getCourseById = (id) => api.get(`/courses/${id}`);
 export const getCollaborativeCourse = (id) => api.get(`/courses/instructor-collaborative/${id}`);
@@ -43,6 +44,31 @@ export const createLesson = (payload) => api.post(`/lessons/create`, payload);
 export const updateLesson = (id, payload) => api.put(`/lessons/update/${id}`, payload);
 export const deleteLesson = (id) => api.delete(`/lessons/delete/${id}`);
 
+export const completeLesson = async (lessonId, userId) => {
+    try {
+        const res = await api.post(`lessons/${lessonId}/complete`, { userId });
+        return res;
+    } catch (err) {
+        // Nếu backend trả về lỗi, lấy data trong response
+        if (err.response && err.response.data) {
+            return err.response.data;
+        }
+        throw err;
+    }
+};
+
+export const uncompleteLesson = async (lessonId, userId) => {
+    try {
+        const res = await api.post(`lessons/${lessonId}/uncomplete`, { userId });
+        return res;
+    } catch (err) {
+        if (err.response && err.response.data) {
+            return err.response.data;
+        }
+        throw err;
+    }
+};
+
 // Quiz
 export const getQuizById = (id) => api.get(`/quiz/${id}`);
 export const getAllQuizzes = () => api.get(`/quiz`);
@@ -55,3 +81,14 @@ export const getQuizzesByLesson = (lessonId) => api.get(`/quiz/lesson/${lessonId
 
 // --- instructor dashboard stats ---
 export const getInstructorDashboard = (instructorId) => api.get(`/instructors/stat/${instructorId}`);
+
+export default {
+    getAllCoursePublished,
+    getPopularCourses,
+    getMyCourses,
+    getCourseById,
+    createCourse,
+    updateCourse,
+    deleteCourse,
+    // ...other exports...
+};

@@ -56,7 +56,7 @@ const CreateCourse = () => {
                         onClick={handleBack}
                     >
                         <ArrowRight className="h-4 w-4 rotate-180" />
-                        <span className="text-sm">My Courses</span>
+                        <span className="text-sm">Khóa học của tôi</span>
                     </Button>
                 </header>
 

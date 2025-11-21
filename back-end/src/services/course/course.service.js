@@ -369,6 +369,25 @@ const courseService = {
             throw new Error(error);
         }
     },
+
+    getPopularCourses: async (limit = 6) => {
+        try {
+            const result = await courseRepository.getPopular(limit);
+            return {
+                status: system_enum.STATUS_CODE.OK,
+                success: true,
+                message: course_enum.COURSE_MESSAGE.GET_DATA_SUCCESS,
+                data: result || [],
+            };
+        } catch (error) {
+            return {
+                status: system_enum.STATUS_CODE.INTERNAL_SERVER_ERROR,
+                success: false,
+                message: error.message || "Internal error",
+                data: [],
+            };
+        }
+    },
 };
 
 module.exports = { courseService };

@@ -1,11 +1,11 @@
-"use client";
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
 import CommentItem from "./ItemC";
 import { commentService } from "@/services/comment";
+import { ToastHelper } from "@/helper/ToastHelper";
 
-export default function CommentList({ forumId, userId, canComment, isMainInstructor }) {
+export default function CommentList({ forumId, userId, canComment, isMainInstructor, isCollab }) {
     const [comments, setComments] = useState([]);
     const [loading, setLoading] = useState(false);
     const [newComment, setNewComment] = useState("");
@@ -30,12 +30,13 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
 
     const handleCreateComment = async () => {
         if (!canComment) {
-            alert("⚠️ Bạn cần đăng ký khóa học trước khi bình luận!");
+            ToastHelper.error("Bạn cần đăng ký khóa học trước khi bình luận!");
             return;
         }
         if (!newComment.trim()) return;
 
         try {
+            console.log({ forumId, userId, content: newComment, parentCommentId: null });
             const res = await fetch("http://localhost:9999/api/v1/comment/create-comment", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -44,6 +45,7 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
                     userId,
                     content: newComment,
                     parentCommentId: null,
+                    canComment,
                 }),
             });
 
@@ -52,7 +54,7 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
                 setComments((prev) => [data.data, ...prev]);
                 setNewComment("");
             } else {
-                alert("Không thể gửi bình luận!");
+                ToastHelper.error("Không thể gửi bình luận!");
             }
         } catch (err) {
             console.error(err);
@@ -96,9 +98,9 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
                     <option value="all">Tất cả bình luận</option>
                     <option value="newest">Mới nhất</option>
                     <option value="oldest">Cũ nhất</option>
+                    <option value="reported">Bị báo cáo</option>
                     {isMainInstructor && (
                         <>
-                            <option value="reported">Bị báo cáo</option>
                             <option value="hidden">Đã ẩn</option>
                             <option value="deleted">Đã xóa</option>
                         </>
@@ -120,6 +122,7 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
                             userId={userId}
                             refresh={fetchComments}
                             isMainInstructor={isMainInstructor}
+                            isCollab={isCollab}
                         />
                     ))
                 ) : (

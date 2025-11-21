@@ -10,6 +10,7 @@ const courseRouter = express.Router();
 
 courseRouter.get("/mine", verifyToken, courseController.getMyCourses);
 courseRouter.get("/", courseController.getAllCourse);
+courseRouter.get("/popular", courseController.getPopularCourses); // <-- new
 courseRouter.get("/:id", courseController.getCourseById);
 
 courseRouter.get("/learner/common", courseController.getAllCourseForLearner);

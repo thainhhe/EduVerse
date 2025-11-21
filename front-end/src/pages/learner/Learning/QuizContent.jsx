@@ -113,6 +113,7 @@ const QuizContent = ({ quizId, onQuizSubmitted }) => {
                     ToastHelper.success(message);
                 }
                 const status = await scoreService.checkQuizStatus(user._id, quizId);
+                console.log("status.data", status.data)
                 if (onQuizSubmitted) onQuizSubmitted(status.data);
             } else {
                 ToastHelper.warning(result.message);
