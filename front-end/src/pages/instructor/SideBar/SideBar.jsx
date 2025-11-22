@@ -1,18 +1,22 @@
+import { useCourse } from "@/context/CourseProvider";
+import { usePermission } from "@/context/PermissionCourseContext";
 import { NavLink } from "react-router-dom";
 
 const SideBar = () => {
+    const { isMainInstructor, permissions } = useCourse();
     const navItems = [
-        { name: "Modules", path: "modules" },
-        { name: "Room Meeting", path: "room-meeting" },
-        { name: "Forums", path: "forums" },
-        { name: "Announcements", path: "announcements" },
-        { name: "Permissions", path: "permissions" },
+        { name: "Modules", path: "modules", key: "manage_course" },
+        { name: "Room Meeting", path: "room-meeting", key: "manage_roomeeting" },
+        { name: "Forums", path: "forums", key: "manage_forum" },
+        { name: "Learner", path: "learners", key: "view_course_students" },
+        { name: "Announcements", path: "announcements", key: "announcements" },
+        { name: "Permissions", path: "permissions", key: "permissions" },
     ];
-
+    const visibleNavItems = isMainInstructor ? navItems : navItems.filter((item) => permissions.includes(item.key));
     return (
-        <aside className="w-64">
+        <aside className="w-54">
             <nav className="space-y-1 pt-4">
-                {navItems.map((item) => (
+                {visibleNavItems.map((item) => (
                     <NavLink
                         key={item.path}
                         to={item.path}

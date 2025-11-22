@@ -1,27 +1,24 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Star, Users, Clock, ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, Clock, Star, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const CourseCardPublish = ({ course }) => {
-    console.log("c:", course);
+export const CoCourse = ({ course }) => {
     const navigate = useNavigate();
-    const mainInstructor = course?.main_instructor?.username || "Giảng viên";
+    const mainInstructor = course.main_instructor?.username || "Giảng viên";
     const price = course?.price ? course.price.toLocaleString("vi-VN") + "đ" : "Miễn phí";
     const rating = course?.rating || 0;
     const enrolls = course?.totalEnrollments || 0;
-    const lastUpdated = course?.lastUpdated ?? "Không rõ";
-    const isDeleted = course?.isDeleted;
+    const duration = course?.duration?.value ? `${course.duration.value} ${course.duration.unit}` : "Không rõ";
 
-    // Card click -> open create-course basics (instead of modules) if you prefer:
     const openModuleManager = () => {
         const id = course._id ?? course.id ?? course.idStr;
         if (!id) return;
         console.log("courseData", course);
         sessionStorage.setItem("currentCourseData", JSON.stringify(course));
         sessionStorage.setItem("currentCourseId", id);
-        navigate("/create-course-basic", { state: { id, isUpdate: true } });
+        // open Basics edit view
+        navigate("/create-course-basic");
     };
 
     return (
@@ -29,8 +26,8 @@ const CourseCardPublish = ({ course }) => {
             {/* Ảnh thumbnail */}
             <div className="relative aspect-video overflow-hidden bg-muted">
                 <img
-                    src={course.thumbnail || course.image || "/placeholder.svg"}
-                    alt={course.title}
+                    src={course?.thumbnail || course?.image || "/placeholder.svg"}
+                    alt={course?.title}
                     className="object-cover transition-transform group-hover:scale-105 w-full h-full"
                 />
             </div>
@@ -47,7 +44,7 @@ const CourseCardPublish = ({ course }) => {
                         <Users size={16} /> {enrolls}
                     </span>
                     <span className="flex items-center gap-1">
-                        <Clock size={16} /> {lastUpdated}
+                        <Clock size={16} /> {duration}
                     </span>
                 </div>
             </CardContent>
@@ -55,18 +52,13 @@ const CourseCardPublish = ({ course }) => {
             {/* Footer */}
             <CardFooter className="border-t p-4 flex justify-between items-center">
                 <span className="font-semibold text-primary">{price}</span>
-                {isDeleted ? (
-                    <span className="text-red-600">Khóa học đã bị xóa</span>
-                ) : (
-                    <Button
-                        className="bg-white border-1 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors duration-200"
-                        onClick={openModuleManager}
-                    >
-                        Xem chi tiết <ArrowRight />
-                    </Button>
-                )}
+                <Button
+                    className="bg-white border-1 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors duration-200"
+                    onClick={openModuleManager}
+                >
+                    Xem chi tiết <ArrowRight />
+                </Button>
             </CardFooter>
         </Card>
     );
 };
-export default CourseCardPublish;

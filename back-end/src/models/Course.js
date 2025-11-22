@@ -10,11 +10,12 @@ const courseSchema = new mongoose.Schema(
         main_instructor: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
         instructors: [
             {
-                id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+                user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+                isAccept: { type: Boolean, default: false },
                 permission: [{ type: mongoose.Schema.Types.ObjectId, ref: "Permission" }],
             },
         ],
-        category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", default: "" },
+        category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", default: null },
         thumbnail: { type: String, default: "" },
         price: { type: Number, default: 0, min: 0 },
         rating: { type: Number, default: 0, min: 0, max: 5 },

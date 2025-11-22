@@ -20,7 +20,7 @@ const CourseManagementPage = () => {
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [selectedCourseId, setSelectedCourseId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [coursesPerPage, setCoursesPerPage] = useState(1); // mỗi trang 10 khóa học
+    const [coursesPerPage, setCoursesPerPage] = useState(5); // mỗi trang 10 khóa học
     const [categories, setCategories] = useState(["All"]);
     const [selectedCategory, setSelectedCategory] = useState("All");
     const fetchCourses = async () => {
@@ -111,12 +111,10 @@ const CourseManagementPage = () => {
 
         const matchStatus = !status || course.status.toLowerCase() === status.toLowerCase();
 
-        const matchCategory =
-            selectedCategory === "All" || course.category?._id === selectedCategory;
+        const matchCategory = selectedCategory === "All" || course.category?._id === selectedCategory;
 
         return matchSearch && matchStatus && matchCategory;
     });
-
 
     const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
     const pageWindow = 3;
@@ -128,7 +126,6 @@ const CourseManagementPage = () => {
     const indexOfLastCourse = currentPage * coursesPerPage;
     const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
     const currentCourses = filteredCourses.slice(indexOfFirstCourse, indexOfLastCourse);
-
 
     return (
         <div className="py-8 px-4 bg-[#fafafd] min-h-screen">
@@ -146,7 +143,6 @@ const CourseManagementPage = () => {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
-
 
                         <select
                             className="border border-gray-200 rounded-lg px-4 py-2 bg-white text-gray-700"
@@ -204,8 +200,8 @@ const CourseManagementPage = () => {
                                                 course.status === "approve"
                                                     ? "bg-green-500 hover:bg-green-600 text-white"
                                                     : course.status === "pending"
-                                                        ? "bg-yellow-400 hover:bg-yellow-500 text-white"
-                                                        : "bg-red-500 hover:bg-red-600 text-white"
+                                                    ? "bg-yellow-400 hover:bg-yellow-500 text-white"
+                                                    : "bg-red-500 hover:bg-red-600 text-white"
                                             }
                                         >
                                             {course.status}
@@ -385,8 +381,6 @@ const CourseManagementPage = () => {
                     Next <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
             </div>
-
-
         </div>
     );
 };

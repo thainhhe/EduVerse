@@ -120,7 +120,9 @@ const ForgotPassword = () => {
             />
 
             <div className="space-y-2">
-              <Label htmlFor="otp">Enter OTP</Label>
+              <Label htmlFor="otp">
+                Enter OTP<span className="text-red-500 -ml-1">*</span>
+              </Label>
               <Input
                 id="otp"
                 name="otp"
@@ -147,7 +149,7 @@ const ForgotPassword = () => {
               <Button
                 type="submit"
                 size="lg"
-                className="flex-1"
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
                 disabled={otpSubmitting}
               >
                 {otpSubmitting ? "Verifying..." : "Verify OTP"}
@@ -156,6 +158,7 @@ const ForgotPassword = () => {
                 variant="outline"
                 onClick={handleResend}
                 disabled={otpSubmitting}
+                className="text-indigo-600 border-indigo-600 hover:bg-indigo-50"
               >
                 Resend
               </Button>
@@ -189,11 +192,13 @@ const ForgotPassword = () => {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 text-left">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">
+              Email<span className="text-red-500 -ml-1">*</span>
+            </Label>
             <Input
               id="email"
               type="email"
-              placeholder="e.g. username@kinety.com"
+              placeholder="Enter your email"
               {...register("email")}
             />
             {errors.email && (
@@ -203,7 +208,7 @@ const ForgotPassword = () => {
           <Button
             type="submit"
             size="lg"
-            className="w-full"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
             disabled={isSubmitting}
           >
             {isSubmitting ? "Sending..." : "Send Email"}
