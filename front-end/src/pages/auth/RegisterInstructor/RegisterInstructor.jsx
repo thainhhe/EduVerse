@@ -200,7 +200,9 @@ const RegisterInstructor = () => {
             className="space-y-4"
           >
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="fullName">
+                Full Name<span className="text-red-500 -ml-1">*</span>
+              </Label>
               <Input
                 id="fullName"
                 placeholder="Full Name"
@@ -217,7 +219,9 @@ const RegisterInstructor = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email">
+                Email Address<span className="text-red-500 -ml-1">*</span>
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -236,7 +240,9 @@ const RegisterInstructor = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">
+                  Password<span className="text-red-500 -ml-1">*</span>
+                </Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -261,7 +267,9 @@ const RegisterInstructor = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword">
+                  Confirm Password<span className="text-red-500 -ml-1">*</span>
+                </Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
@@ -359,7 +367,7 @@ const RegisterInstructor = () => {
               Already have an account?{" "}
               <Link
                 to="/login"
-                className="text-primary font-semibold hover:underline"
+                className="text-indigo-600 font-semibold hover:underline"
               >
                 Sign in
               </Link>

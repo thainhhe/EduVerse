@@ -51,7 +51,9 @@ const Login = () => {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">
+                Email<span className="text-red-500 -ml-1">*</span>
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -65,7 +67,9 @@ const Login = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">
+                Password<span className="text-red-500 -ml-1">*</span>
+              </Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -90,13 +94,13 @@ const Login = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              {/* <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                 <input
                   type="checkbox"
                   className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                 />
                 Remember me
-              </label>
+              </label> */}
               <Link
                 to="/forgot-password"
                 className="text-sm font-medium text-primary hover:underline"
@@ -140,7 +144,7 @@ const Login = () => {
               Don't have an account?{" "}
               <Link
                 to="/register-learner"
-                className="text-primary font-semibold hover:underline"
+                className="text-indigo-600 font-semibold hover:underline"
               >
                 Sign up
               </Link>

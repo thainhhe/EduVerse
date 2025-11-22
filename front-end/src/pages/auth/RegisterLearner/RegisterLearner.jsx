@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // added
 
 const RegisterLearner = () => {
   const { register: registerUser } = useAuth();
@@ -20,6 +21,9 @@ const RegisterLearner = () => {
   } = useForm({
     resolver: zodResolver(registerLearnerSchema),
   });
+
+  const [showPassword, setShowPassword] = useState(false); // added
+  const [showConfirm, setShowConfirm] = useState(false); // added
 
   const onSubmit = async (data) => {
     const result = await registerUser({
@@ -61,7 +65,9 @@ const RegisterLearner = () => {
             className="space-y-4"
           >
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="fullName">
+                Full Name<span className="text-red-500 -ml-1">*</span>
+              </Label>
               <Input
                 id="fullName"
                 placeholder="Full Name"
@@ -75,7 +81,9 @@ const RegisterLearner = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email">
+                Email Address<span className="text-red-500 -ml-1">*</span>
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -92,13 +100,25 @@ const RegisterLearner = () => {
             {/* Responsive grid for passwords */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Password"
-                  {...register("password")}
-                />
+                <Label htmlFor="password">
+                  Password<span className="text-red-500 -ml-1">*</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password"
+                    className="pr-10"
+                    {...register("password")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
                 {errors.password && (
                   <p className="text-sm text-red-600 mt-1">
                     {errors.password.message}
@@ -107,13 +127,25 @@ const RegisterLearner = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Password"
-                  {...register("confirmPassword")}
-                />
+                <Label htmlFor="confirmPassword">
+                  Confirm Password<span className="text-red-500 -ml-1">*</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirm ? "text" : "password"}
+                    placeholder="Password"
+                    className="pr-10"
+                    {...register("confirmPassword")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showConfirm ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
                 {errors.confirmPassword && (
                   <p className="text-sm text-red-600 mt-1">
                     {errors.confirmPassword.message}
