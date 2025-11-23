@@ -1,96 +1,65 @@
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+"use client";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  PlusCircle,
-  File,
-  MoreHorizontal,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-
-// Thêm ID vào dữ liệu mẫu
-const users = [
-  {
-    id: "user-1", // Thêm ID
-    name: "Alice Wonderland",
-    email: "alice@example.com",
-    role: "Student",
-    status: "Active",
-    creationDate: "2023-01-15",
-    lastLogin: "2024-03-20",
-    avatar: "/student-woman.png",
-  },
-  {
-    id: "user-2", // Thêm ID
-    name: "Bob The Builder",
-    email: "bob@example.com",
-    role: "Instructor", // Giả sử Lecturer tương ứng với Instructor route
-    status: "Active",
-    creationDate: "2022-11-01",
-    lastLogin: "2024-03-19",
-    avatar: "/professional-man.jpg",
-  },
-  {
-    id: "user-3", // Thêm ID
-    name: "Charlie Chaplin",
-    email: "charlie@example.com",
-    role: "Student",
-    status: "Locked",
-    creationDate: "2023-03-10",
-    lastLogin: "2023-12-01",
-    avatar: "/student-man.jpg",
-  },
-  {
-    id: "user-4", // Thêm ID
-    name: "Diana Prince",
-    email: "diana@example.com",
-    role: "Instructor", // Giả sử Lecturer tương ứng với Instructor route
-    status: "Pending",
-    creationDate: "2024-01-05",
-    lastLogin: "N/A",
-    avatar: "/professional-woman-diverse.png",
-  },
-];
-
-const statusVariant = {
-  Active: "default",
-  Locked: "destructive",
-  Pending: "secondary",
-};
+import { PlusCircle, File, Eye, X } from "lucide-react";
+import { deleteUser, getAllUser } from "@/services/userService";
+import { ToastHelper } from "@/helper/ToastHelper";
+import Pagination from "@/helper/Pagination";
 
 const UserManagementPage = () => {
-  const navigate = useNavigate(); // Khởi tạo navigate
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
 
-  // Hàm xử lý khi click vào một dòng hoặc nút Edit
-  const handleViewDetails = (user) => {
-    if (user.role === "Student") {
-      navigate(`/admin/users/learner/${user.id}`);
-    } else if (user.role === "Instructor") {
-      // Hoặc "Instructor" nếu role khác
-      navigate(`/admin/users/instructor/${user.id}`);
-    } else {
-      // Xử lý cho các role khác nếu cần, hoặc mặc định đến một trang nào đó
-      console.warn("Unhandled user role for details view:", user.role);
-      // navigate(`/admin/users/detail/${user.id}`); // Ví dụ trang detail chung
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const res = await getAllUser();
+      console.log("res", res)
+      setUsers(res?.data || []);
+    } catch (err) {
+      console.error("Failed to fetch users", err);
+      ToastHelper.error("Không thể tải danh sách user");
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleViewDetails = (user) => {
+    if (user.role === "Student") navigate(`/admin/users/learner/${user._id}`);
+    else if (user.role === "Instructor") navigate(`/admin/users/instructor/${user._id}`);
+  };
+
+  const handleDeleteUser = async (id) => {
+    try {
+      await deleteUser(id);
+      ToastHelper.success("Xóa user thành công");
+      setShowDeleteUserModal(false);
+      setSelectedUserId(null);
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+      ToastHelper.error("Xóa user thất bại");
+    }
+  };
+
+  const totalPages = Math.ceil(users.length / pageSize);
+  const paginatedUsers = users.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <div className="py-8">
@@ -111,101 +80,119 @@ const UserManagementPage = () => {
           <CardTitle>Users</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead className="hidden md:table-cell">Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="hidden lg:table-cell">
-                  Creation Date
-                </TableHead>
-                <TableHead className="hidden sm:table-cell">
-                  Last Login
-                </TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map(
-                (
-                  user // Đổi index thành user.id làm key
-                ) => (
+          {loading ? (
+            <p>Loading...</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead className="hidden md:table-cell">Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden lg:table-cell">Creation Date</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedUsers.map((user) => (
                   <TableRow
-                    key={user.id}
-                    onClick={() => handleViewDetails(user)} // Thêm onClick vào TableRow
-                    className="cursor-pointer hover:bg-muted/50" // Thêm style khi hover
+                    key={user._id}
+                    onClick={() => handleViewDetails(user)}
+                    className="cursor-pointer hover:bg-muted/50"
                   >
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar>
-                          <AvatarImage src={user.avatar} />
-                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                          <AvatarImage src={user.avatar || ""} />
+                          <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="font-medium">{user.name}</div>
-                          <div className="text-xs text-muted-foreground hidden sm:block">
-                            {user.email}
-                          </div>
+                          <div className="text-xs text-muted-foreground hidden sm:block">{user.email}</div>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {user.role}
-                    </TableCell>
+
+                    <TableCell className="hidden md:table-cell">{user.role}</TableCell>
+
                     <TableCell>
-                      <Badge variant={statusVariant[user.status]}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-white text-xs ${user.status.toLowerCase() === "active"
+                          ? "bg-green-500"
+                          : user.status.toLowerCase() === "banned"
+                            ? "bg-red-500"
+                            : "bg-yellow-500"
+                          }`}
+                      >
                         {user.status}
-                      </Badge>
+                      </span>
                     </TableCell>
+
                     <TableCell className="hidden lg:table-cell">
-                      {user.creationDate}
+                      {new Date(user.createdAt).toLocaleString("vi-VN")}
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      {user.lastLogin}
-                    </TableCell>
-                    <TableCell
-                      onClick={(e) =>
-                        e.stopPropagation()
-                      } /* Ngăn click vào dropdown trigger click cả row */
-                    >
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          {/* Cập nhật DropdownMenuItem Edit */}
-                          <DropdownMenuItem
-                            onClick={() => handleViewDetails(user)}
+
+                    <TableCell>
+                      <div className="flex gap-2">
+                        {user.status.toLowerCase() === "active" && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="px-3"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedUserId(user._id);
+                              setShowDeleteUserModal(true);
+                            }}
                           >
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>Delete</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            ✗ Ban User
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="px-3 flex items-center gap-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Eye className="w-4 h-4" /> View
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
-                )
-              )}
-            </TableBody>
-          </Table>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
-      {/* Phần Pagination giữ nguyên */}
-      <div className="flex justify-center items-center gap-4 mt-6">
-        <Button variant="outline">
-          <ChevronLeft className="h-4 w-4 mr-2" /> Previous
-        </Button>
-        <span>1 / 3</span> {/* Logic phân trang cần cập nhật sau */}
-        <Button variant="outline">
-          Next <ChevronRight className="h-4 w-4 ml-2" />
-        </Button>
-      </div>
+      {showDeleteUserModal && selectedUserId && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-[420px] relative border border-gray-100">
+            <h2 className="text-lg font-semibold mb-4">Xác nhận xóa user</h2>
+            <p>Bạn có chắc chắn muốn xóa / banned user này không?</p>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="outline" onClick={() => setShowDeleteUserModal(false)}>Hủy</Button>
+              <Button variant="destructive" onClick={() => handleDeleteUser(selectedUserId)}>Xác nhận</Button>
+            </div>
+
+            <button
+              onClick={() => setShowDeleteUserModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={(page) => setCurrentPage(page)}
+        pageWindow={5}
+      />
     </div>
   );
 };

@@ -18,7 +18,7 @@ const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "User Management", href: "/admin/users", icon: Users },
   { name: "Course Management", href: "/admin/courses", icon: Book },
-  { name: "Comment Management", href: "/admin/comments", icon: MessageSquare },
+  { name: "Reports Management", href: "/admin/reports", icon: Flag },
   // { name: "Notifications", href: "#", icon: Bell },
   // { name: "Analytics", href: "/admin/analytics", icon: BarChart2 },
   { name: "Chatbot Management", href: "/admin/chatbot", icon: Bot },

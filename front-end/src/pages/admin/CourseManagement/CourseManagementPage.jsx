@@ -273,7 +273,7 @@ const CourseManagementPage = () => {
 
                                             {course.status === "reject" && (
                                                 <>
-                                                    {/* Chỉ hiện nút Approve */}
+
                                                     <ConfirmationHelper
                                                         trigger={
                                                             <Button
@@ -292,7 +292,7 @@ const CourseManagementPage = () => {
                                                 </>
                                             )}
 
-                                            {/* Luôn có nút xem chi tiết */}
+
                                             <Button
                                                 asChild
                                                 variant="outline"

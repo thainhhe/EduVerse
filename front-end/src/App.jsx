@@ -50,6 +50,8 @@ import CommentManagementPage from "./pages/admin/CommentManagement/CommentManage
 import PaymentFailPage from "./pages/common/checkout/PaymentFailPage";
 import RoomList from "./pages/learner/RoomList/RoomList";
 import ForumManagement from "./pages/instructor/forum/ForumInstructor";
+import MyReportsPage from "./pages/common/ReportIssue/MyReportsPage";
+import ReportManagementPage from "./pages/admin/ReportManagementPage/ReportManagementPage";
 
 function App() {
     const { loading } = useAuth();
@@ -72,7 +74,7 @@ function App() {
                 <Route path="register-instructor" element={<Register />} />
                 <Route path="courses" element={<Courses />} />
                 <Route path="/course/rooms" element={<RoomList />} />
-
+                <Route path="/reports/my-reports" element={<MyReportsPage />} />
                 <Route path="courses/:id" element={<CourseDetail />} />
                 {/* Instructor public detail (management view for instructor) */}
                 <Route path="instructor/courses/:id" element={<InstructorCourseDetail />} />
@@ -131,10 +133,11 @@ function App() {
                 <Route path="users/learner/:userId" element={<LearnerProfileDetail />} />
                 <Route path="courses" element={<CourseManagementPage />} />
                 <Route path="courses/:id" element={<CourseDetailPage />} />
-
                 {/* Admin management pages */}
                 <Route path="chatbot" element={<ChatbotManagementPage />} />
                 <Route path="comments" element={<CommentManagementPage />} />
+                <Route path="reports" element={<ReportManagementPage />} />
+
             </Route>
 
             <Route path="*" element={<NotFound />} />

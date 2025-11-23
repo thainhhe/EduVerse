@@ -21,7 +21,6 @@ const Header = () => {
     { to: "/courses", text: "Courses" },
     { to: "/instructors", text: "Instructors" },
     { to: "/course/rooms", text: "Ongoing Classroom " },
-    { to: "/contacts", text: "Contact" },
   ];
 
   // close menus when clicking outside
@@ -73,11 +72,10 @@ const Header = () => {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`font-medium transition-colors ${
-                    location.pathname === link.to
-                      ? "text-indigo-500"
-                      : "text-gray-900 hover:text-indigo-500"
-                  }`}
+                  className={`font-medium transition-colors ${location.pathname === link.to
+                    ? "text-indigo-500"
+                    : "text-gray-900 hover:text-indigo-500"
+                    }`}
                 >
                   {link.text}
                 </Link>
@@ -156,11 +154,11 @@ const Header = () => {
                     {/* show different menu item based on role */}
                     {user?.role === "learner" && (
                       <Link
-                        to="/courses/purchased"
+                        to="/reports/my-reports"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         onClick={() => setShowAvatarMenu(false)}
                       >
-                        Purchased Courses
+                        My Reports
                       </Link>
                     )}
 
@@ -218,11 +216,10 @@ const Header = () => {
                 key={link.to}
                 to={link.to}
                 onClick={() => setIsMenuOpen(false)}
-                className={`px-3 py-2 rounded-md font-medium ${
-                  location.pathname === link.to
-                    ? "bg-indigo-50 text-indigo-600"
-                    : "text-gray-900 hover:bg-gray-50"
-                }`}
+                className={`px-3 py-2 rounded-md font-medium ${location.pathname === link.to
+                  ? "bg-indigo-50 text-indigo-600"
+                  : "text-gray-900 hover:bg-gray-50"
+                  }`}
               >
                 {link.text}
               </Link>
@@ -265,11 +262,11 @@ const Header = () => {
 
                   {user?.role === "learner" && (
                     <Link
-                      to="/courses/purchased"
+                      to="/reports/my-reports"
                       onClick={() => setIsMenuOpen(false)}
                       className="w-full text-center px-4 py-2 rounded-md bg-white text-gray-700 hover:bg-gray-50"
                     >
-                      Purchased Courses
+                      My Reports
                     </Link>
                   )}
 
