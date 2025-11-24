@@ -64,6 +64,24 @@ const notificationController = {
             return error_response(res, error);
         }
     },
+    mark_as_read: async (req, res) => {
+        try {
+            const id = req.params.id;
+            const result = await notificationService.markAsRead(id);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
+    mark_all_as_read: async (req, res) => {
+        try {
+            const userId = req.params.userId;
+            const result = await notificationService.markAllAsRead(userId);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
 };
 
 module.exports = { notificationController };

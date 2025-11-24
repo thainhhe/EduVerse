@@ -6,6 +6,8 @@ import { FaSignInAlt, FaUserPlus, FaSearch } from "react-icons/fa";
 import { MdAutoAwesome } from "react-icons/md";
 import { Menu, X } from "lucide-react";
 
+import NotificationDropdown from "./NotificationDropdown";
+
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const location = useLocation();
@@ -20,7 +22,7 @@ const Header = () => {
     { to: "/", text: "Home" },
     { to: "/courses", text: "Courses" },
     { to: "/instructors", text: "Instructors" },
-    { to: "/course/rooms", text: "Ongoing Classroom " },
+    { to: "/course/rooms", text: "Live" },
     { to: "/contacts", text: "Contact" },
   ];
 
@@ -61,9 +63,7 @@ const Header = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <MdAutoAwesome className="text-3xl text-indigo-500" />
-            <span className="text-2xl font-bold italic text-indigo-500">
-              Eduverse
-            </span>
+            <span className="text-2xl font-bold italic text-indigo-500">Eduverse</span>
           </Link>
 
           {/* Desktop Menu & Search */}
@@ -74,9 +74,7 @@ const Header = () => {
                   key={link.to}
                   to={link.to}
                   className={`font-medium transition-colors ${
-                    location.pathname === link.to
-                      ? "text-indigo-500"
-                      : "text-gray-900 hover:text-indigo-500"
+                    location.pathname === link.to ? "text-indigo-500" : "text-gray-900 hover:text-indigo-500"
                   }`}
                 >
                   {link.text}
@@ -95,6 +93,7 @@ const Header = () => {
 
           {/* Desktop Auth Buttons / Avatar */}
           <div className="hidden lg:flex items-center gap-3">
+            {isAuthenticated && <NotificationDropdown />}
             {!isAuthenticated ? (
               <>
                 <Button variant="outline" asChild>
@@ -198,11 +197,7 @@ const Header = () => {
 
           {/* Mobile Menu Button */}
           <div className="lg:hidden">
-            <Button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              variant="ghost"
-              size="icon"
-            >
+            <Button onClick={() => setIsMenuOpen(!isMenuOpen)} variant="ghost" size="icon">
               {isMenuOpen ? <X /> : <Menu />}
             </Button>
           </div>
@@ -219,9 +214,7 @@ const Header = () => {
                 to={link.to}
                 onClick={() => setIsMenuOpen(false)}
                 className={`px-3 py-2 rounded-md font-medium ${
-                  location.pathname === link.to
-                    ? "bg-indigo-50 text-indigo-600"
-                    : "text-gray-900 hover:bg-gray-50"
+                  location.pathname === link.to ? "bg-indigo-50 text-indigo-600" : "text-gray-900 hover:bg-gray-50"
                 }`}
               >
                 {link.text}
