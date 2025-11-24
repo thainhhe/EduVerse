@@ -130,29 +130,17 @@ cron.schedule("*/15 * * * *", async () => {
 // 4. TỐI ƯU: Định nghĩa các chain xử lý chính
 const formatDocs = (docs) => docs.map((doc) => doc.pageContent).join("\n\n");
 
-// --- Chain RAG (Khi tìm thấy tài liệu) ---
+// --- Chain RAG (Không cần thay đổi nội dung prompt) ---
 const ragPromptTemplate = PromptTemplate.fromTemplate(
   `Bạn là trợ lý AI. Dưới đây là các trích xuất từ nội dung kho tư liệu:\n\n{context}\n\nCâu hỏi:\n{question}\n\nHãy trả lời bằng tiếng Việt, có dẫn nguồn ngắn (nếu có).`
 );
 
-const coreRagChain = RunnableSequence.from([
-  ragPromptTemplate,
-  model,
-  new StringOutputParser(),
-]);
-
-// --- Chain Fallback (Khi KHÔNG tìm thấy tài liệu) ---
+// --- Chain Fallback (Không cần thay đổi nội dung prompt) ---
 const fallbackPrompt = PromptTemplate.fromTemplate(
   `Bạn là trợ lý AI thân thiện của EduVerse. Trả lời ngắn gọn, bằng tiếng Việt.\n\nCâu hỏi:\n{question}\n\nCâu trả lời:`
 );
 
-const fallbackChain = RunnableSequence.from([
-  fallbackPrompt,
-  model,
-  new StringOutputParser(),
-]);
-
-// 5. TỐI ƯU: Endpoint /query
+// 5. TỐI ƯU: Endpoint /query (Cập nhật để hỗ trợ streaming)
 app.post("/query", async (req, res) => {
   try {
     const { message } = req.body;
@@ -160,6 +148,13 @@ app.post("/query", async (req, res) => {
 
     console.log(`[Chatbot Service] Nhận câu hỏi: ${message}`);
 
+    // Cấu hình headers cho streaming (gửi từng chunk JSON trên kết nối mở)
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+
+    // Tìm kiếm tài liệu giống logic cũ
     let docs = [];
     const lowerCaseMessage = (message || "").toLowerCase();
 
@@ -247,24 +242,82 @@ app.post("/query", async (req, res) => {
       }
     }
 
-    // Rest unchanged: fallback vs RAG
+    // Chọn chain để stream
+    let chainToStream;
+    let context = "";
+    let finalResponse = "";
+
     if (!docs || docs.length === 0) {
-      console.log("[Chatbot] No docs found, using direct model fallback");
-      const fallbackResult = await fallbackChain.invoke({ question: message });
-      console.log(`[Chatbot Service] Fallback reply: ${fallbackResult}`);
-      return res.json({ reply: String(fallbackResult) });
+      console.log(
+        "[Chatbot] No docs found, using direct model fallback stream"
+      );
+      chainToStream = fallbackPrompt.pipe(model).pipe(new StringOutputParser());
+      context = "";
     } else {
-      const context = formatDocs(docs);
-      const ragResult = await coreRagChain.invoke({
-        context: context,
-        question: message,
-      });
-      console.log(`[Chatbot Service] RAG reply: ${ragResult}`);
-      return res.json({ reply: String(ragResult) });
+      console.log(
+        `[Chatbot] Docs found, using RAG stream (${docs.length} docs)`
+      );
+      context = formatDocs(docs);
+      chainToStream = ragPromptTemplate
+        .pipe(model)
+        .pipe(new StringOutputParser());
+    }
+
+    // Khởi tạo stream từ chain
+    const stream = await chainToStream.stream({
+      context: context,
+      question: message,
+    });
+
+    // Nếu client đóng kết nối, attempt to stop reading
+    let clientClosed = false;
+    req.on("close", () => {
+      clientClosed = true;
+      console.log("[Chatbot] Client closed connection");
+    });
+
+    for await (const chunk of stream) {
+      if (clientClosed) break;
+      const chunkData = {
+        type: "text",
+        content: String(chunk),
+      };
+      // gửi từng chunk dưới dạng JSON line
+      res.write(JSON.stringify(chunkData) + "\n");
+      finalResponse += String(chunk);
+    }
+
+    // Nếu client chưa đóng, gửi end marker
+    if (!clientClosed) {
+      const endData = {
+        type: "end",
+        reply: finalResponse,
+      };
+      res.write(JSON.stringify(endData) + "\n");
+      res.end();
+    } else {
+      // ensure response ended
+      try {
+        res.end();
+      } catch (e) {
+        // ignore
+      }
     }
   } catch (error) {
     console.error("Lỗi RAG Chain:", error);
-    return res.status(500).json({ reply: "Lỗi xử lý AI" });
+    try {
+      // Nếu headers đã được gửi, cố gắng stream lỗi
+      res.write(
+        JSON.stringify({
+          type: "error",
+          message: "Lỗi xử lý AI: " + (error?.message || error),
+        }) + "\n"
+      );
+      res.end();
+    } catch (e) {
+      // fallback
+      return res.status(500).json({ reply: "Lỗi xử lý AI" });
+    }
   }
 });
 
