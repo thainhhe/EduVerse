@@ -14,7 +14,7 @@ export const registerLearnerSchema = z
     fullName: z
       .string()
       .min(2, "Full name must be at least 2 characters.") // align with backend username min
-      .max(100, "Full name must not exceed 100 characters."),
+      .max(50, "Full name must not exceed 50 characters."),
     email: z
       .string()
       .min(1, "Email is required.")
@@ -40,7 +40,7 @@ export const registerInstructorSchema = z
     fullName: z
       .string()
       .min(2, "Full name must be at least 2 characters.")
-      .max(100, "Full name must not exceed 100 characters."),
+      .max(50, "Full name must not exceed 50 characters."),
     email: z
       .string()
       .min(1, "Email is required.")

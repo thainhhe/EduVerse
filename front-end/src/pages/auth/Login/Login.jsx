@@ -71,7 +71,12 @@ const Login = () => {
             Sign in
           </h2>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-5"
+            noValidate
+            autoComplete="off"
+          >
             <div className="space-y-2">
               <Label htmlFor="email">
                 Email<span className="text-red-500 -ml-1">*</span>

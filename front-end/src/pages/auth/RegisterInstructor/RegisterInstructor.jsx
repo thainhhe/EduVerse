@@ -196,23 +196,23 @@ const RegisterInstructor = () => {
 
           <form
             onSubmit={handleSubmit(onSubmit)}
-            noValidate
             className="space-y-4"
+            noValidate
+            autoComplete="off"
           >
             <div className="space-y-2">
               <Label htmlFor="fullName">
-                Full Name<span className="text-red-500 -ml-1">*</span>
+                Full name<span className="text-red-500 -ml-1">*</span>
               </Label>
               <Input
                 id="fullName"
-                placeholder="Full Name"
-                className={`bg-gray-50 ${
-                  errors.fullName ? "border-red-500 ring-1 ring-red-500" : ""
-                }`}
                 {...register("fullName")}
+                required
+                maxLength={50}
+                aria-invalid={!!errors.fullName}
               />
               {errors.fullName && (
-                <p className="text-sm text-red-500 mt-1">
+                <p className="text-sm text-red-600 mt-1">
                   {errors.fullName.message}
                 </p>
               )}
@@ -294,25 +294,16 @@ const RegisterInstructor = () => {
               </div>
             </div>
 
+            {/* subjects multi-select */}
             <div className="space-y-2">
-              <Label htmlFor="subjects">
-                Subject(s) You Want to Teach
-                <span className="text-red-500 -ml-1">*</span>
-              </Label>
-
+              <Label htmlFor="subjects">Subjects</Label>
               <MultiSelectDropdown
-                options={SUBJECT_OPTIONS}
                 value={watchedSubjects}
-                onChange={(next) =>
-                  setValue("subjects", next, {
-                    shouldValidate: true,
-                    shouldDirty: true,
-                  })
-                }
+                onChange={(v) => setValue("subjects", v)}
+                options={SUBJECT_OPTIONS}
               />
-
               {errors.subjects && (
-                <p className="text-sm text-red-500 mt-1">
+                <p className="text-sm text-red-600 mt-1">
                   {errors.subjects.message}
                 </p>
               )}
@@ -359,7 +350,7 @@ const RegisterInstructor = () => {
               </label>
             </div>
             {errors.agreeTerms && (
-              <p className="text-sm text-red-500 mt-1">
+              <p className="text-sm text-red-600 mt-1">
                 {errors.agreeTerms.message}
               </p>
             )}

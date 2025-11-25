@@ -17,6 +17,7 @@ const RegisterLearner = () => {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(registerLearnerSchema),
@@ -26,15 +27,46 @@ const RegisterLearner = () => {
   const [showConfirm, setShowConfirm] = useState(false); // added
 
   const onSubmit = async (data) => {
-    const result = await registerUser({
-      username: data.fullName, // send username to match backend validator
-      email: data.email,
-      password: data.password,
-      role: "learner",
-    });
+    try {
+      const result = await registerUser({
+        username: data.fullName, // send username to match backend validator
+        email: data.email,
+        password: data.password,
+        role: "learner",
+      });
 
-    if (result.success) {
-      navigate("/login");
+      if (result.success) {
+        navigate("/login");
+      } else {
+        // if service returns validation-like payload
+        if (result?.errors) {
+          Object.keys(result.errors).forEach((k) => {
+            const msg = result.errors[k];
+            const field = k === "username" ? "fullName" : k;
+            setError(field, { type: "server", message: msg });
+          });
+        } else if (result?.message) {
+          toast.error(result.message);
+        }
+      }
+    } catch (err) {
+      // axios / network error -> inspect and map server-side validation
+      const res = err.response?.data;
+      if (res?.errors && typeof res.errors === "object") {
+        for (const key in res.errors) {
+          if (!Object.prototype.hasOwnProperty.call(res.errors, key)) continue;
+          const message = res.errors[key] || String(res.errors[key]);
+          const field = key === "username" ? "fullName" : key;
+          setError(field, { type: "server", message });
+        }
+      } else if (res?.message) {
+        toast.error(res.message);
+      } else {
+        toast.error(err.message || "Registration failed");
+      }
+      // keep console for debugging
+      // eslint-disable-next-line no-console
+      console.error("Register error:", err);
     }
   };
 
@@ -62,6 +94,7 @@ const RegisterLearner = () => {
           <form
             onSubmit={handleSubmit(onSubmit)}
             noValidate
+            autoComplete="off"
             className="space-y-4"
           >
             <div className="space-y-2">
@@ -72,6 +105,9 @@ const RegisterLearner = () => {
                 id="fullName"
                 placeholder="Full Name"
                 {...register("fullName")}
+                required
+                maxLength={50}
+                aria-invalid={!!errors.fullName}
               />
               {errors.fullName && (
                 <p className="text-sm text-red-600 mt-1">
@@ -89,6 +125,9 @@ const RegisterLearner = () => {
                 type="email"
                 placeholder="Email Address"
                 {...register("email")}
+                required
+                autoComplete="email"
+                aria-invalid={!!errors.email}
               />
               {errors.email && (
                 <p className="text-sm text-red-600 mt-1">
@@ -110,6 +149,10 @@ const RegisterLearner = () => {
                     placeholder="Password"
                     className="pr-10"
                     {...register("password")}
+                    required
+                    minLength={6}
+                    maxLength={50}
+                    aria-invalid={!!errors.password}
                   />
                   <button
                     type="button"
@@ -137,6 +180,10 @@ const RegisterLearner = () => {
                     placeholder="Password"
                     className="pr-10"
                     {...register("confirmPassword")}
+                    required
+                    minLength={6}
+                    maxLength={50}
+                    aria-invalid={!!errors.confirmPassword}
                   />
                   <button
                     type="button"

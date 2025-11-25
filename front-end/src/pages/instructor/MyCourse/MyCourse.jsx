@@ -5,7 +5,11 @@ import { Filter, Plus } from "lucide-react";
 import CourseCardPublish from "./CourseCardPublish";
 import CourseCardUnPublish from "./CourseCardUnPublish";
 import { Link } from "react-router-dom";
-import { getCollaborativeCourse, getMyCourses } from "@/services/courseService";
+import {
+  getCollaborativeCourse,
+  getMyCourses,
+  getUerInCourse,
+} from "@/services/courseService";
 import { useAuth } from "@/hooks/useAuth";
 import { CoCourse } from "./CollaborativeCourse";
 
@@ -21,13 +25,16 @@ const MyCourse = () => {
 
   const getCurrentUserId = () => {
     try {
-      const userStr = localStorage.getItem("user") || sessionStorage.getItem("user");
+      const userStr =
+        localStorage.getItem("user") || sessionStorage.getItem("user");
       if (userStr) {
         const u = JSON.parse(userStr);
         return u._id || u.id || u.userId || null;
       }
       const token =
-        localStorage.getItem("accessToken") || localStorage.getItem("token") || sessionStorage.getItem("accessToken");
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("accessToken");
       if (token) {
         const parts = token.split(".");
         if (parts.length === 3) {
@@ -58,8 +65,10 @@ const MyCourse = () => {
       const normalizeCourses = (payload) => {
         if (!payload) return [];
         if (Array.isArray(payload)) {
-          if (payload.length > 0 && Array.isArray(payload[0]?.courses)) return payload[0].courses;
-          if (payload.length > 0 && payload[0]?._id && payload[0]?.title) return payload;
+          if (payload.length > 0 && Array.isArray(payload[0]?.courses))
+            return payload[0].courses;
+          if (payload.length > 0 && payload[0]?._id && payload[0]?.title)
+            return payload;
           return [];
         }
         const d = payload.data ?? payload;
@@ -85,9 +94,13 @@ const MyCourse = () => {
         price: c.price ?? 0,
         rating: c.rating ?? 0,
         main_instructor: c.main_instructor ?? "_",
-        reviewCount: Array.isArray(c.reviews) ? c.reviews.length : c.reviewCount ?? 0,
+        reviewCount: Array.isArray(c.reviews)
+          ? c.reviews.length
+          : c.reviewCount ?? 0,
         studentsEnrolled: c.totalEnrollments ?? c.students ?? 0,
-        lastUpdated: c.updatedAt ? new Date(c.updatedAt).toLocaleDateString() : c.updatedAt || "—",
+        lastUpdated: c.updatedAt
+          ? new Date(c.updatedAt).toLocaleDateString()
+          : c.updatedAt || "—",
         status: c.status || "draft",
         isPublished: !!c.isPublished || c.status === "approve",
         isDeleted: c.isDeleted ?? false,
@@ -95,7 +108,31 @@ const MyCourse = () => {
         raw: c,
       }));
 
-      setAllCourses(mapped);
+      // fetch enroll counts for each course in parallel using existing API
+      const withEnrollCounts = await Promise.all(
+        mapped.map(async (c) => {
+          try {
+            const res = await getUerInCourse(c._id);
+            // normalize response -> backend likely returns { success, data: [ ... ] }
+            const payload = res?.data ?? res;
+            const arr = Array.isArray(payload?.data)
+              ? payload.data
+              : Array.isArray(payload)
+              ? payload
+              : Array.isArray(payload?.data?.data)
+              ? payload.data.data
+              : [];
+            return { ...c, studentsEnrolled: arr.length };
+          } catch (err) {
+            // on error keep existing count and continue
+            // eslint-disable-next-line no-console
+            console.warn("Failed to fetch enrollments for", c._id, err);
+            return c;
+          }
+        })
+      );
+
+      setAllCourses(withEnrollCounts);
     } catch (err) {
       console.error("Failed to load my courses", err);
       setAllCourses([]);
@@ -128,20 +165,34 @@ const MyCourse = () => {
     setCurrentPage(1);
   }, [activeTab]);
 
-  const total = activeTab === "published" ? publishedList.length : unpublishedList.length;
+  const total =
+    activeTab === "published" ? publishedList.length : unpublishedList.length;
   const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
   const currentList =
-    activeTab === "published" ? publishedList : activeTab === "unpublished" ? unpublishedList : collaborativeCourses;
-  const paginated = currentList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    activeTab === "published"
+      ? publishedList
+      : activeTab === "unpublished"
+      ? unpublishedList
+      : collaborativeCourses;
+  const paginated = currentList.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <div className="min-h-screen bg-background p-6 md:p-8 lg:p-12">
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">My Courses</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            My Courses
+          </h1>
           <div className="flex gap-3 items-center">
-            <Button variant="outline" size="default" className="gap-2 bg-transparent">
+            <Button
+              variant="outline"
+              size="default"
+              className="gap-2 bg-transparent"
+            >
               <Filter className="h-4 w-4" />
               Filter
             </Button>
@@ -184,15 +235,17 @@ const MyCourse = () => {
               {loading ? (
                 <div>Loading...</div>
               ) : (
-                paginated.map((course) => <CourseCardPublish key={course._id} course={course} />)
+                paginated.map((course) => (
+                  <CourseCardPublish key={course._id} course={course} />
+                ))
               )}
             </div>
 
             {/* Pagination */}
             <div className="flex items-center justify-between border-t border-border pt-6">
               <p className="text-sm text-muted-foreground">
-                Displaying {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, total)} of{" "}
-                {total} results
+                Displaying {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                {Math.min(currentPage * itemsPerPage, total)} of {total} results
               </p>
               <div className="flex items-center gap-2">
                 <Button
@@ -204,22 +257,26 @@ const MyCourse = () => {
                   Previous
                 </Button>
                 <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setCurrentPage(page)}
-                      className="h-8 w-8 p-0"
-                    >
-                      {page}
-                    </Button>
-                  ))}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                        className="h-8 w-8 p-0"
+                      >
+                        {page}
+                      </Button>
+                    )
+                  )}
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
                   disabled={currentPage === totalPages}
                 >
                   Next
@@ -235,7 +292,11 @@ const MyCourse = () => {
                 <div>Loading...</div>
               ) : (
                 paginated.map((course) => (
-                  <CourseCardUnPublish key={course._id} course={course} refetch={fetchCourses} />
+                  <CourseCardUnPublish
+                    key={course._id}
+                    course={course}
+                    refetch={fetchCourses}
+                  />
                 ))
               )}
             </div>
@@ -243,8 +304,8 @@ const MyCourse = () => {
             {/* Pagination */}
             <div className="flex items-center justify-between border-t border-border pt-6">
               <p className="text-sm text-muted-foreground">
-                Displaying {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, total)} of{" "}
-                {total} results
+                Displaying {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                {Math.min(currentPage * itemsPerPage, total)} of {total} results
               </p>
               <div className="flex items-center gap-2">
                 <Button
@@ -256,22 +317,26 @@ const MyCourse = () => {
                   Previous
                 </Button>
                 <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setCurrentPage(page)}
-                      className="h-8 w-8 p-0"
-                    >
-                      {page}
-                    </Button>
-                  ))}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                        className="h-8 w-8 p-0"
+                      >
+                        {page}
+                      </Button>
+                    )
+                  )}
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
                   disabled={currentPage === totalPages}
                 >
                   Next
@@ -289,8 +354,8 @@ const MyCourse = () => {
             {/* Pagination */}
             <div className="flex items-center justify-between border-t border-border pt-6">
               <p className="text-sm text-muted-foreground">
-                Displaying {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, total)} of{" "}
-                {total} results
+                Displaying {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                {Math.min(currentPage * itemsPerPage, total)} of {total} results
               </p>
               <div className="flex items-center gap-2">
                 <Button
@@ -302,22 +367,26 @@ const MyCourse = () => {
                   Previous
                 </Button>
                 <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setCurrentPage(page)}
-                      className="h-8 w-8 p-0"
-                    >
-                      {page}
-                    </Button>
-                  ))}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                        className="h-8 w-8 p-0"
+                      >
+                        {page}
+                      </Button>
+                    )
+                  )}
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
                   disabled={currentPage === totalPages}
                 >
                   Next
