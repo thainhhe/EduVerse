@@ -38,9 +38,7 @@ const PopularCoursesSection = ({ courses: propsCourses, limit = 6 }) => {
       <section className="py-16 md:py-20 bg-[#f8f8ff]">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">
-              Popular Courses
-            </h2>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">Popular Courses</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {Array.from({ length: limit }).map((_, i) => (
@@ -66,9 +64,7 @@ const PopularCoursesSection = ({ courses: propsCourses, limit = 6 }) => {
     <section className="py-16 md:py-20 bg-[#f8f8ff]">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">
-            Popular Courses
-          </h2>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">Popular Courses</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {courses.map((course) => {
@@ -76,17 +72,10 @@ const PopularCoursesSection = ({ courses: propsCourses, limit = 6 }) => {
             const img = course.image || course.thumbnail || "/placeholder.svg";
             const title = course.title || course.name || "Untitled Course";
             const instructor =
-              course.instructor ||
-              course.main_instructor?.username ||
-              course.main_instructor?.name ||
-              "Instructor";
+              course.instructor || course.main_instructor?.username || course.main_instructor?.name || "Instructor";
             // Use backend fields if available, fallback to legacy ones
             const rating = Number(course.avgRating ?? course.rating ?? 0);
-            const reviewsCount =
-              course.reviewsCount ??
-              course.totalEnrollments ??
-              course.students ??
-              0;
+            const reviewsCount = course.reviewsCount ?? course.totalEnrollments ?? course.students ?? 0;
             const price = course.price ?? course.displayPrice ?? "Free";
 
             return (
@@ -102,34 +91,26 @@ const PopularCoursesSection = ({ courses: propsCourses, limit = 6 }) => {
                   />
                 </div>
                 <div className="flex-1 flex flex-col p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">
-                    {title}
-                  </h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">{title}</h3>
                   <p className="text-sm text-gray-500 mb-2">By {instructor}</p>
-                  <div className="flex items-center mb-2">
+                  <div className="flex items-center mb-1">
                     {[...Array(5)].map((_, index) => {
                       const ratingValue = index + 1;
                       return (
                         <FaRegStar
                           key={index}
                           className={
-                            ratingValue <= Math.round(rating)
-                              ? "text-yellow-400 text-base"
-                              : "text-gray-400 text-base"
+                            ratingValue <= Math.round(rating) ? "text-yellow-400 text-base" : "text-gray-400 text-base"
                           }
                         />
                       );
                     })}
-                    <span className="ml-2 text-gray-500 text-sm">
-                      ({reviewsCount} reviews)
-                    </span>
+                    <span className="ml-2 text-gray-500 text-sm">({reviewsCount} reviews)</span>
                   </div>
-                  <div className="text-indigo-600 font-bold text-lg mt-auto mb-4 pt-2">
+                  <div className="text-indigo-600 font-bold text-lg mt-auto mb-4">
                     {(() => {
                       const priceVal =
-                        typeof course?.price === "number"
-                          ? course.price
-                          : Number(course?.displayPrice ?? 0);
+                        typeof course?.price === "number" ? course.price : Number(course?.displayPrice ?? 0);
                       return priceVal
                         ? priceVal.toLocaleString("vi-VN", {
                             style: "currency",

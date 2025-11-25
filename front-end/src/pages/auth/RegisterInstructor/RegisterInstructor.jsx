@@ -295,7 +295,10 @@ const RegisterInstructor = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="subjects">Subject(s) You Want to Teach</Label>
+              <Label htmlFor="subjects">
+                Subject(s) You Want to Teach
+                <span className="text-red-500 -ml-1">*</span>
+              </Label>
 
               <MultiSelectDropdown
                 options={SUBJECT_OPTIONS}
@@ -316,7 +319,9 @@ const RegisterInstructor = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="jobTitle">Job Title</Label>
+              <Label htmlFor="jobTitle">
+                Job Title<span className="text-red-500 -ml-1">*</span>
+              </Label>
               <select
                 id="jobTitle"
                 className="flex h-10 w-full rounded-md border border-input bg-gray-50 px-3 py-2 text-sm"
@@ -353,6 +358,11 @@ const RegisterInstructor = () => {
                 </Link>
               </label>
             </div>
+            {errors.agreeTerms && (
+              <p className="text-sm text-red-500 mt-1">
+                {errors.agreeTerms.message}
+              </p>
+            )}
 
             <Button
               type="submit"

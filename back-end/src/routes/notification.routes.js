@@ -10,5 +10,7 @@ notificationRouter.get("/receiver/:id", verifyToken, notificationController.get_
 notificationRouter.post("/create", verifyToken, notificationController.create_notification);
 notificationRouter.put("/update/:id", verifyToken, notificationController.update_notification);
 notificationRouter.delete("/delete/:id", verifyToken, notificationController.delete_notification);
+notificationRouter.put("/read/:id", verifyToken, notificationController.mark_as_read);
+notificationRouter.put("/read-all/:userId", verifyToken, notificationController.mark_all_as_read);
 
 module.exports = notificationRouter;

@@ -75,6 +75,16 @@ export default {
           "50%": { transform: "translateY(-20px) rotate(180deg)" },
           "75%": { transform: "translateY(-10px) rotate(270deg)" },
         },
+        shimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
+        blob: {
+          "0%": { transform: "translate(0px, 0px) scale(1)" },
+          "33%": { transform: "translate(30px, -50px) scale(1.1)" },
+          "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
+          "100%": { transform: "translate(0px, 0px) scale(1)" },
+        },
       },
 
       animation: {
@@ -82,6 +92,8 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         bounceHover: "bounceHover 0.6s ease-in-out",
         spinBounce: "spinBounce 1s ease-in-out infinite",
+        shimmer: "shimmer 2s infinite",
+        blob: "blob 7s infinite",
       },
     },
   },
