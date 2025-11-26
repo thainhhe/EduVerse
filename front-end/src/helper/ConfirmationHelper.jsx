@@ -9,6 +9,8 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import React from "react";
+
 export const ConfirmationHelper = ({
     trigger,
     title = "Xác nhận hành động",
@@ -19,23 +21,33 @@ export const ConfirmationHelper = ({
 }) => {
     return (
         <AlertDialog>
-            <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
-            <AlertDialogContent className="max-w-md">
+            <AlertDialogTrigger asChild>
+                {/* Ngăn trigger bubble */}
+                {React.cloneElement(trigger, {
+                    onClick: (e) => {
+                        e.stopPropagation();
+                        trigger.props.onClick?.(e);
+                    },
+                })}
+            </AlertDialogTrigger>
+
+            <AlertDialogContent className="max-w-md" onClick={(e) => e.stopPropagation()}>
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="text-lg font-semibold">
-                        {title}
-                    </AlertDialogTitle>
-                    <AlertDialogDescription className="text-gray-600">
-                        {description}
-                    </AlertDialogDescription>
+                    <AlertDialogTitle className="text-lg font-semibold">{title}</AlertDialogTitle>
+                    <AlertDialogDescription className="text-gray-600">{description}</AlertDialogDescription>
                 </AlertDialogHeader>
+
                 <AlertDialogFooter>
-                    <AlertDialogCancel className="border-gray-300">
+                    <AlertDialogCancel className="border-gray-300" onClick={(e) => e.stopPropagation()}>
                         {cancelText}
                     </AlertDialogCancel>
+
                     <AlertDialogAction
-                        onClick={onConfirm}
                         className="bg-red-500 hover:bg-red-600 text-white"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onConfirm && onConfirm(e);
+                        }}
                     >
                         {confirmText}
                     </AlertDialogAction>

@@ -4,17 +4,17 @@ import Footer from "./Footer/Footer";
 import "./MainLayout.css";
 
 const MainLayout = () => {
-  return (
-    <div className="main-layout">
-      <Header />
-      <div className="min-h-screen bg-gray-50">
-        <main className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-          <Outlet />
-        </main>
-      </div>
-      <Footer />
-    </div>
-  );
+    return (
+        <div className="main-layout">
+            <Header />
+            <div className="flex-1 bg-gray-50 w-full">
+                <main className="max-w-7xl mx-auto sm:px-6 lg:px-8 py-6">
+                    <Outlet />
+                </main>
+            </div>
+            <Footer />
+        </div>
+    );
 };
 
 export default MainLayout;
