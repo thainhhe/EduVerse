@@ -159,10 +159,26 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
 
     const newErrors = {};
 
-    if (!title.trim()) newErrors.title = "Title is required";
+    // Title validation
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) newErrors.title = "Title is required";
+    else if (trimmedTitle.length < 3) newErrors.title = "Title must be at least 3 characters";
+    else if (trimmedTitle.length > 200) newErrors.title = "Title must be at most 200 characters";
+
+    // Category validation
     if (!newCategory && !category) newErrors.category = "Category is required";
-    if (price === "" || Number(price) < 0) newErrors.price = "Price must be a positive number";
-    if (!description.trim()) newErrors.description = "Description is required";
+
+    // Price validation
+    if (price === "" || Number(price) < 1) newErrors.price = "Price must be at least 1";
+    else if (Number(price) > 999999999) newErrors.price = "Price is too large. Max is 999.999.999";
+
+
+    // Description validation
+    const trimmedDescription = description.trim();
+    if (!trimmedDescription) newErrors.description = "Description is required";
+    else if (trimmedDescription.length < 10) newErrors.description = "Description must be at least 10 characters";
+    else if (trimmedDescription.length > 5000) newErrors.description = "Description must be at most 5000 characters";
+
 
     setErrors(newErrors);
 
@@ -284,7 +300,7 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
 
           <div className="grid grid-cols-2 gap-4 mt-5">
             <div>
-              <Label htmlFor="title" className={`mb-2 ${errors.title ? "text-red-600 font-semibold" : ""}`}>
+              <Label htmlFor="title" className={`mb-2 `}>
                 Course Title <span className="text-red-500">*</span>
               </Label>
 
@@ -301,7 +317,7 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
 
 
             <div>
-              <Label htmlFor="price" className={`mb-2 ${errors.price ? "text-red-600 font-semibold" : ""}`}>
+              <Label htmlFor="price" className={`mb-2`}>
                 Price (VND) <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -309,13 +325,15 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                 type="number"
                 disabled={!isEditable}
                 value={price}
+                min={1}
+                max={9999999999}  // giới hạn giá tối đa
                 onChange={(e) => isEditable && setPrice(e.target.value)}
               />
               {errors.price && <p className="text-red-600 text-sm mt-1">{errors.price}</p>}
             </div>
 
             <div>
-              <Label className={`mb-2 ${errors.category ? "text-red-600 font-semibold" : ""}`}>
+              <Label className={`mb-2`}>
                 Category <span className="text-red-500">*</span>
               </Label>
 
@@ -347,7 +365,7 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
 
 
             <div>
-              <Label htmlFor="description" className={`mb-2 ${errors.description ? "text-red-600 font-semibold" : ""}`}>
+              <Label htmlFor="description" className={`mb-2 `}>
                 Duration
               </Label>
               <div className="flex gap-2">
@@ -382,6 +400,7 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                 disabled={!isEditable}
                 value={description}
                 onChange={(e) => isEditable && setDescription(e.target.value)}
+                className={errors.description ? "border-red-600 ring-red-600" : ""}
               />
               {errors.description && (
                 <p className="text-red-600 text-sm mt-1">{errors.description}</p>

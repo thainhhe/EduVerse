@@ -9,7 +9,6 @@ const Pagination = ({
     onPageChange,
     pageWindow = 7,
 }) => {
-    if (totalPages <= 1) return null;
 
 
     let windowStart = Math.max(1, currentPage - 1);
@@ -23,7 +22,6 @@ const Pagination = ({
 
     const pageNumbers = [];
     for (let i = windowStart; i <= windowEnd; i++) pageNumbers.push(i);
-    // console.log("pageNumbers", pageNumbers)
     return (
         <div className="flex items-center justify-center mt-4 space-x-2">
             <button

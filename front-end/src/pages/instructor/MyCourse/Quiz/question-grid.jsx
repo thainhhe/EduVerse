@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit2, Trash2, CheckCircle2, Circle } from "lucide-react";
+import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 
 const getDifficultyColor = (difficulty) => {
   switch (difficulty) {
@@ -64,11 +65,10 @@ export function QuestionGrid({ questions, onDeleteQuestion, onEditQuestion }) {
                   {question.options?.map((option) => (
                     <div
                       key={option.id}
-                      className={`flex items-center gap-2 text-sm rounded-md px-2 py-1 ${
-                        option.isCorrect
-                          ? "bg-emerald-50 text-emerald-800"
-                          : "bg-gray-50 text-gray-700"
-                      }`}
+                      className={`flex items-center gap-2 text-sm rounded-md px-2 py-1 ${option.isCorrect
+                        ? "bg-emerald-50 text-emerald-800"
+                        : "bg-gray-50 text-gray-700"
+                        }`}
                     >
                       {option.isCorrect ? (
                         <CheckCircle2 className="h-4 w-4 text-emerald-600" />
@@ -89,22 +89,24 @@ export function QuestionGrid({ questions, onDeleteQuestion, onEditQuestion }) {
 
                 {/* Action Buttons */}
                 <div className="flex gap-2 pt-2">
-                  {/* <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="flex-1 text-muted-foreground hover:text-foreground"
-                                        onClick={() => onEditQuestion(question.id, question)}
-                                    >
-                                        <Edit2 className="h-4 w-4" />
-                                    </Button> */}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="flex-1 text-destructive hover:text-destructive/80"
-                    onClick={() => onDeleteQuestion(question.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {/* Delete with Confirmation */}
+                  <ConfirmationHelper
+                    trigger={
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="flex-1 text-destructive hover:text-destructive/80"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    }
+                    title="Xác nhận xóa câu hỏi"
+                    description={`Bạn có chắc chắn muốn xóa câu hỏi: "${question.text}"?`}
+                    confirmText="Xóa"
+                    cancelText="Hủy"
+                    onConfirm={() => onDeleteQuestion(question.id)}
+                  />
                 </div>
               </CardContent>
             </Card>

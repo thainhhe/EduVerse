@@ -18,6 +18,8 @@ const QuizManager = ({
   mode: initialMode = "list", // default show list
   quizData: initialQuizData = null,
   lessonTitle,
+  moduleTitle,
+  courseTitle,
   courseId,
   moduleId,
   lessonId,
@@ -220,16 +222,58 @@ const QuizManager = ({
   };
 
   const handleSaveQuiz = async () => {
+    // const title = (quizInfo.title ?? "").trim();
+    // if (!title) {
+    //   setErrors({ title: "Please enter quiz title!" });
+    //   // focus title input if available
+    //   document
+    //     .querySelector('input[placeholder="Enter quiz title..."]')
+    //     ?.focus();
+    //   return;
+    // }
+    // setErrors({});
+    const newErrors = {};
+
+    // --- Quiz info validation ---
     const title = (quizInfo.title ?? "").trim();
-    if (!title) {
-      setErrors({ title: "Please enter quiz title!" });
-      // focus title input if available
-      document
-        .querySelector('input[placeholder="Enter quiz title..."]')
-        ?.focus();
+    if (!title) newErrors.title = "Please enter quiz title!";
+    else if (title.length < 3) newErrors.title = "Title must be at least 3 characters";
+    else if (title.length > 200) newErrors.title = "Title must be at most 200 characters";
+
+    const description = (quizInfo.description ?? "").trim();
+    if (!description) newErrors.description = "Description is required";
+    else if (description.length > 500) newErrors.description = "Description cannot exceed 500 characters";
+
+    if (quizInfo.timeLimit < 5) newErrors.timeLimit = "Time limit must be at least 5 minutes";
+    if (quizInfo.timeLimit > 720) newErrors.timeLimit = "Time limit cannot exceed 720 minutes";
+
+    if (quizInfo.passingScore < 1) newErrors.passingScore = "Passing score must be at least 1%";
+    if (quizInfo.passingScore > 100) newErrors.passingScore = "Passing score cannot exceed 100%";
+
+    if (quizInfo.attemptsAllowed < 1) newErrors.attemptsAllowed = "Attempts must be at least 1";
+
+    // --- Questions validation ---
+    if (!questions || questions.length === 0)
+      newErrors.questions = "Please add at least one question";
+
+
+
+    // Nếu có lỗi, update state và stop
+    if (Object.keys(newErrors).length > 0) {
+      console.log("%c--- VALIDATION ERRORS ---", "color: red; font-weight: bold");
+
+      Object.entries(newErrors).forEach(([key, value]) => {
+        console.log(`${key}:`, value);
+      });
+
+      setErrors(newErrors);
       return;
     }
-    setErrors({});
+
+
+    console.log("đến đấy")
+
+
 
     const normalizeType = (t) =>
       (t ?? "").toString().replace(/[-\s]/g, "_").toLowerCase();
@@ -497,8 +541,8 @@ const QuizManager = ({
                     {lessonId
                       ? `Lesson: ${lessonTitle}`
                       : moduleId
-                        ? `Module: ${moduleId}`
-                        : `Course: ${courseId}`}
+                        ? `Module: ${moduleTitle}`
+                        : `Course: ${courseTitle}`}
                   </div>
                 </div>
                 <div>
@@ -525,7 +569,7 @@ const QuizManager = ({
               {/* metadata */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium">Quiz Title</label>
+                  <label className="text-sm font-medium">Quiz Title<span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     className={`w-full border rounded-lg p-2 mt-1 ${errors.title ? "border-red-500" : ""
@@ -544,7 +588,7 @@ const QuizManager = ({
                 </div>
                 <div>
                   <label className="text-sm font-medium">
-                    Time Limit (minutes)
+                    Time Limit (minutes)<span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -557,10 +601,12 @@ const QuizManager = ({
                       })
                     }
                   />
+                  {errors.timeLimit && <p className="text-sm text-red-600 mt-1">{errors.timeLimit}</p>}
+
                 </div>
                 <div>
                   <label className="text-sm font-medium">
-                    Passing Score (%)
+                    Passing Score (%)<span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -573,10 +619,12 @@ const QuizManager = ({
                       })
                     }
                   />
+                  {errors.passingScore && <p className="text-sm text-red-600 mt-1">{errors.passingScore}</p>}
+
                 </div>
                 <div>
                   <label className="text-sm font-medium">
-                    Attempts Allowed
+                    Attempts Allowed <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -589,9 +637,11 @@ const QuizManager = ({
                       })
                     }
                   />
+                  {errors.attemptsAllowed && <p className="text-sm text-red-600 mt-1">{errors.attemptsAllowed}</p>}
+
                 </div>
                 <div className="md:col-span-2">
-                  <label className="text-sm font-medium">Description</label>
+                  <label className="text-sm font-medium">Description<span className="text-red-500">*</span></label>
                   <textarea
                     className="w-full border rounded-lg p-2 mt-1"
                     rows={2}
@@ -602,6 +652,7 @@ const QuizManager = ({
                     }
                   />
                 </div>
+                {errors.description && <p className="text-sm text-red-600 mt-1">{errors.description}</p>}
               </div>
 
               {/* Questions stacked vertically, full width, trong vùng cuộn */}

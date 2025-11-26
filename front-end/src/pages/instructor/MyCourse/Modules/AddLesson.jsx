@@ -27,18 +27,38 @@ export function AddLessonModal({
   const [errors, setErrors] = useState({});
 
   const handleSave = async () => {
-    setErrors({});
-
-    if (!lessonTitle || !lessonTitle.trim()) {
-      setErrors({ lessonTitle: "Lesson title is required." });
-      document.getElementById("lesson-title")?.focus();
-      return;
-    }
+    console.log("lessonTitle", lessonTitle)
+    console.log("lessonTitle", lessonTitle)
+    // if (!lessonTitle || !lessonTitle.trim()) {
+    //   setErrors({ lessonTitle: "Lesson title is required." });
+    //   document.getElementById("lesson-title")?.focus();
+    //   return;
+    // }
 
     if (!moduleId) {
       console.error("Missing moduleId - cannot create lesson");
       return;
     }
+    // if (!contentGroup || !contentGroup.trim()) {
+    //   setErrors({ contentGroup: "Content is required." });
+    //   document.getElementById("content-group")?.focus();
+    //   return;
+    // }
+
+    const newErrors = {};
+
+    const trimmedTitle = lessonTitle.trim();
+    if (!trimmedTitle) newErrors.lessonTitle = "Title is required";
+    else if (trimmedTitle.length < 3) newErrors.lessonTitle = "Title must be at least 3 characters";
+    else if (trimmedTitle.length > 200) newErrors.lessonTitle = "Title must be at most 200 characters";
+
+    const trimmedContent = contentGroup.trim();
+    if (!trimmedContent) newErrors.contentGroup = "Content is required";
+    else if (trimmedContent.length < 10) newErrors.contentGroup = "Content must be at least 10 characters";
+    else if (trimmedContent.length > 5000) newErrors.contentGroup = "Content must be at most 5000 characters";
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
     try {
       const payload = {
         title: lessonTitle?.trim(),
@@ -101,7 +121,7 @@ export function AddLessonModal({
           {/* Lesson Title */}
           <div className="space-y-2">
             <Label htmlFor="lesson-title" className="text-sm font-medium">
-              Lesson Title
+              Lesson Title <span className="text-red-500">*</span>
             </Label>
             <Input
               id="lesson-title"
@@ -112,34 +132,35 @@ export function AddLessonModal({
                 if (errors.lessonTitle)
                   setErrors((p) => ({ ...p, lessonTitle: undefined }));
               }}
-              className={`w-full ${
-                errors.lessonTitle ? "border-red-500 ring-1 ring-red-300" : ""
-              }`}
+              className={`w-full ${errors.lessonTitle ? "border-red-500 ring-1 ring-red-300" : ""
+                }`}
             />
-            {errors.lessonTitle && (
-              <p className="text-sm text-red-600 mt-1">{errors.lessonTitle}</p>
-            )}
+
+
+            {errors.lessonTitle && <p className="text-red-600 text-sm mt-1">{errors.lessonTitle}</p>}
           </div>
 
           {/* Content Group */}
           <div className="space-y-2">
             <Label htmlFor="content-group" className="text-sm font-medium">
-              Content
+              Content <span className="text-red-500">*</span>
             </Label>
             <Textarea
               id="content-group"
               placeholder="Enter content group"
               value={contentGroup}
               onChange={(e) => setContentGroup(e.target.value)}
-              className="w-full min-h-[170px] resize-y"
+              className={`w-full min-h-[170px] resize-y ${errors.contentGroup ? "border-red-500 ring-1 ring-red-300" : ""
+                }`}
             />
           </div>
+          {errors.contentGroup && (
+            <p className="text-sm text-red-600">{errors.contentGroup}</p>
+          )}
         </div>
 
         {/* show general/server error above footer so it's visible without scrolling */}
-        {errors.general && (
-          <div className="text-sm text-red-600 mt-2 px-1">{errors.general}</div>
-        )}
+
 
         <DialogFooter className="gap-2">
           <Button

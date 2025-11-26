@@ -299,6 +299,7 @@ const ModulesPage = () => {
       toast.error("Lỗi khi xóa!");
     }
   };
+  console.log("curentQuiz", currentQuizContext)
 
   return (
     <div className="flex-row max-w-full">
@@ -316,6 +317,7 @@ const ModulesPage = () => {
               if (!courseIdFromState) return;
               setCurrentQuizContext({
                 courseId: courseIdFromState,
+                courseTitle: sessionCourse.title,
                 moduleId: null,
                 lessonId: null,
               });
@@ -448,6 +450,7 @@ const ModulesPage = () => {
                                 setCurrentQuizContext({
                                   courseId: courseIdFromState ?? null,
                                   moduleId: module.id,
+                                  moduleTitle: module.title,
                                   lessonId: null,
                                 });
                                 setIsQuizManagerOpen(true);
@@ -587,7 +590,8 @@ const ModulesPage = () => {
                                             ...currentQuizContext,
                                             moduleId: module.id,
                                             lessonId: lesson.id,
-                                            lessonTitle: lesson.title
+                                            lessonTitle: lesson.title,
+                                            moduleTitle: module.title,
                                           });
                                           setIsQuizManagerOpen(true);
                                           setOpenLessonMenuId(null);
@@ -710,6 +714,8 @@ const ModulesPage = () => {
                     moduleId={currentQuizContext.moduleId}
                     lessonId={currentQuizContext.lessonId}
                     lessonTitle={currentQuizContext.lessonTitle}
+                    moduleTitle={currentQuizContext.moduleTitle}
+                    courseTitle={currentQuizContext.courseTitle}
                     onClose={() => setIsQuizManagerOpen(false)}
                   />
                 </div>

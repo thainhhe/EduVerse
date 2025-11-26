@@ -7,6 +7,7 @@ import { getAllCoursePublished } from "@/services/courseService";
 import { useEnrollment } from "@/context/EnrollmentContext";
 import { useAuth } from "@/hooks/useAuth";
 import categoryService from "@/services/categoryService";
+import Pagination from "@/helper/Pagination";
 
 const Courses = () => {
   const [courses, setCourses] = useState([]);
@@ -116,7 +117,11 @@ const Courses = () => {
   const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
 
   // cắt dữ liệu để hiển thị theo trang
-  const paginatedCourses = filteredCourses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedCourses = filteredCourses.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 sm:py-12">
@@ -138,11 +143,10 @@ const Courses = () => {
             <Button
               variant={selectedCategory === "All" ? "default" : "outline"}
               onClick={() => setSelectedCategory("All")}
-              className={`whitespace-nowrap rounded-full px-6 transition-all duration-200 ${
-                selectedCategory === "All"
-                  ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transform scale-105"
-                  : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
-              }`}
+              className={`whitespace-nowrap rounded-full px-6 transition-all duration-200 ${selectedCategory === "All"
+                ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transform scale-105"
+                : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
+                }`}
             >
               All
             </Button>
@@ -152,11 +156,10 @@ const Courses = () => {
                 key={category.id}
                 variant={selectedCategory === category.id ? "default" : "outline"}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`whitespace-nowrap rounded-full px-6 transition-all duration-200 ${
-                  selectedCategory === category.id
-                    ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transform scale-105"
-                    : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
-                }`}
+                className={`whitespace-nowrap rounded-full px-6 transition-all duration-200 ${selectedCategory === category.id
+                  ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transform scale-105"
+                  : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
+                  }`}
               >
                 {category.name}
               </Button>
@@ -224,9 +227,9 @@ const Courses = () => {
                           typeof course?.price === "number" ? course.price : Number(course?.displayPrice ?? 0);
                         return priceVal
                           ? priceVal.toLocaleString("vi-VN", {
-                              style: "currency",
-                              currency: "VND",
-                            })
+                            style: "currency",
+                            currency: "VND",
+                          })
                           : "Free";
                       })()}
                     </span>
@@ -246,24 +249,12 @@ const Courses = () => {
           </div>
         )}
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-3 sm:gap-4">
-            <Button variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage((prev) => prev - 1)}>
-              Previous
-            </Button>
-            <span className="text-sm text-gray-600">
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((prev) => prev + 1)}
-            >
-              Next
-            </Button>
-          </div>
-        )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => setCurrentPage(page)}
+          pageWindow={7}
+        />
       </div>
     </div>
   );

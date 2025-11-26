@@ -215,7 +215,7 @@ const CourseDetail = () => {
 
                                 <p className="text-gray-600">
                                     Giảng viên:{" "}
-                                    <Link to="#" className="font-semibold text-indigo-600 hover:underline">
+                                    <Link to={`/instructors/${course?.main_instructor?._id}`} className="font-semibold text-indigo-600 hover:underline">
                                         {course.main_instructor.username}
                                     </Link>
                                 </p>
