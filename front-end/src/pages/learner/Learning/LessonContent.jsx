@@ -3,180 +3,294 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ImageIcon, Send } from "lucide-react";
-import api from "@/services/api";
+import {
+    ImageIcon,
+    Send,
+    ChevronLeft,
+    ChevronRight,
+    FileText,
+    MessageSquare,
+    Info,
+    Download,
+    Eye,
+} from "lucide-react";
+import { getFilesByLessonId } from "@/services/minio";
+import VideoPlayer from "@/components/minio/VideoPlayer";
+import DocumentViewer from "@/components/minio/DocumentViewer";
 
 const LessonContent = ({ lesson, course }) => {
-  console.log("lesson", lesson);
-  const [materials, setMaterials] = useState([]);
-  // Tạo state nếu muốn đổi video dynamically
-  const [videoFileId, setVideoFileId] = useState(
-    lesson.videoUrlFileId || "1CjFwqQ-gU4mjyFdQ6LkmIj25GQaVZs3y"
-  );
-  useEffect(() => {
-    if (!lesson._id) return;
-    const fetchData = async () => {
-      try {
-        const res = await api.get(`/material/${lesson._id}`);
-        if (res.success) setMaterials(res.data);
-        else setMaterials([]);
-      } catch (error) {
-        console.error("Lỗi lấy materials:", error);
-      } finally {
-        // setLoading(false);
-      }
+    const [files, setFiles] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedDocument, setSelectedDocument] = useState(null);
+    const [videoIndex, setVideoIndex] = useState(0);
+
+    const loadFilesByLessonId = async () => {
+        try {
+            setLoading(true);
+            const data = await getFilesByLessonId(lesson._id);
+            setFiles(data);
+        } catch (error) {
+            console.error("Error loading files:", error);
+        } finally {
+            setLoading(false);
+        }
     };
-    fetchData();
-  }, [lesson._id]);
-  console.log(materials);
 
-  // Link iframe của Google Drive
-  const iframeSrc = `https://drive.google.com/file/d/${videoFileId}/preview`;
+    useEffect(() => {
+        if (lesson._id) {
+            loadFilesByLessonId();
+            setVideoIndex(0); // Reset video index when lesson changes
+            setSelectedDocument(null); // Reset selected document
+        } else {
+            setFiles([]);
+        }
+    }, [lesson._id]);
 
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">{lesson.title}</h1>
+    const lessonVideos = files.filter((m) => m.fileType === "video" && m.lessonId === lesson._id);
+    const lessonDocuments = files.filter((m) => m.fileType === "document" && m.lessonId === lesson._id);
 
-      {/* <div className="aspect-video bg-black rounded-lg overflow-hidden mb-6">
-                {videoFileId ? (
-                    <iframe
-                        src={iframeSrc}
-                        width="100%"
-                        height="100%"
-                        allow="autoplay; encrypted-media"
-                        allowFullScreen
-                        title="Google Drive Video"
-                        style={{ border: "0" }}
-                    />
-                ) : (
-                    <p>Vui lòng cung cấp File ID để xem video.</p>
-                )}
-            </div> */}
+    const handleNext = () => {
+        setVideoIndex((prev) => (prev < lessonVideos.length - 1 ? prev + 1 : 0));
+    };
 
-      {materials.length > 0 &&
-        materials.find(
-          (m) => m.type === "video" && m.lessonId === lesson._id
-        ) && (
-          <div className="aspect-video bg-black rounded-lg overflow-hidden mb-6">
-            <iframe
-              src={
-                materials.find(
-                  (m) => m.type === "video" && m.lessonId === lesson._id
-                ).url
-              }
-              width="100%"
-              height="100%"
-              allow="autoplay; encrypted-media"
-              allowFullScreen
-              title="Video bài học"
-              style={{ border: "0" }}
-            />
-          </div>
-        )}
+    const handlePrev = () => {
+        setVideoIndex((prev) => (prev > 0 ? prev - 1 : lessonVideos.length - 1));
+    };
 
-      <Tabs defaultValue="discussion" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="summary">Summary</TabsTrigger>
-          <TabsTrigger value="discussion">Discussion</TabsTrigger>
-          <TabsTrigger value="resources">Resources</TabsTrigger>
-          <TabsTrigger value="transcript">Transcript</TabsTrigger>
-        </TabsList>
+    const handleFileClick = (file) => {
+        if (file.fileType === "document") {
+            setSelectedDocument(file);
+        }
+    };
 
-        <TabsContent value="summary">
-          <p>
-            <strong>Mô tả bài học:</strong>{" "}
-            {lesson.content || "Chưa có mô tả bài học."}
-          </p>
-        </TabsContent>
-
-        <TabsContent value="discussion">
-          <div className="space-y-4">
-            <div className="flex items-start gap-4">
-              <Avatar>
-                <AvatarImage src="/placeholder-user.jpg" />
-                <AvatarFallback>U</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 relative">
-                <Input
-                  placeholder="Add a public comment..."
-                  className="pr-24"
-                />
-                <div className="absolute top-0 right-0 h-full flex items-center pr-2 gap-2">
-                  <Button variant="ghost" size="icon">
-                    <ImageIcon className="w-5 h-5 text-gray-500" />
-                  </Button>
-                  <Button variant="ghost" size="icon">
-                    <Send className="w-5 h-5 text-gray-500" />
-                  </Button>
-                </div>
-              </div>
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
             </div>
-          </div>
-        </TabsContent>
+        );
+    }
 
-        <TabsContent value="resources">
-          {(() => {
-            const documents = materials.filter(
-              (item) => item.type !== "video" && item.lessonId === lesson._id
-            );
+    return (
+        <div className="max-w-5xl mx-auto pb-12 min-h-screen">
+            {/* Header Section */}
+            <div className="mb-6">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">{lesson.title}</h1>
+                <p className="text-gray-500 flex items-center gap-2 text-sm">
+                    <Info size={16} />
+                    {course?.title} &bull; {lesson.type || "Lesson"}
+                </p>
+            </div>
 
-            return documents.length === 0 ? (
-              <p>Không có tài liệu nào cho bài học này.</p>
-            ) : (
-              <div className="space-y-8">
-                {documents.map((item) => (
-                  <div
-                    key={item._id}
-                    className="border rounded-lg p-4 bg-white shadow-sm"
-                  >
-                    <div className="mb-3 flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold text-lg">{item.title}</h3>
-                        <p className="text-sm text-gray-600">
-                          {item.description}
-                        </p>
-                      </div>
-                      <div className="text-xs text-gray-500 text-right">
-                        <div>
-                          {item.fileSize &&
-                            (item.fileSize / 1024 / 1024).toFixed(2)}{" "}
-                          MB
+            {/* Video Player Section */}
+            {lessonVideos.length > 0 ? (
+                <div className="mb-8 rounded-lg bg-gray-100 overflow-hidden">
+                    <div className="aspect-video w-full relative group">
+                        <div className="absolute inset-0">
+                            <VideoPlayer
+                                key={lessonVideos[videoIndex]._id}
+                                file={lessonVideos[videoIndex]}
+                                onClose={() => {}}
+                                canClose={false}
+                            />
                         </div>
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-500 hover:underline"
-                        >
-                          Mở tab mới ↗
-                        </a>
-                      </div>
                     </div>
 
-                    {/* Embedded document preview */}
-                    <div className="w-full h-[500px] bg-gray-100 rounded border overflow-hidden">
-                      <iframe
-                        src={item.url}
-                        width="100%"
-                        height="100%"
-                        title={item.title}
-                        style={{ border: "none" }}
-                        allow="autoplay; encrypted-media"
-                      ></iframe>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            );
-          })()}
-        </TabsContent>
+                    {lessonVideos.length > 1 && (
+                        <div className="p-4 flex items-center justify-between border-t border-gray-800">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handlePrev}
+                                className="text-gray-400 hover:text-white hover:bg-gray-800"
+                                disabled={lessonVideos.length <= 1}
+                            >
+                                <ChevronLeft className="mr-2 h-4 w-4" /> Previous Video
+                            </Button>
 
-        <TabsContent value="transcript">
-          <p>Bản ghi lời thoại của video.</p>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
+                            <span className="text-sm font-medium text-gray-400 bg-gray-800 px-3 py-1 rounded-full">
+                                Video {videoIndex + 1} of {lessonVideos.length}
+                            </span>
+
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleNext}
+                                className="text-gray-400 hover:text-white hover:bg-gray-800"
+                                disabled={lessonVideos.length <= 1}
+                            >
+                                Next Video <ChevronRight className="ml-2 h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <div className="mb-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 p-12 text-center">
+                    <div className="mx-auto h-12 w-12 text-gray-400 mb-4">
+                        <FileText className="h-full w-full" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900">No video content</h3>
+                    <p className="mt-1 text-gray-500">
+                        This lesson focuses on reading materials and exercises.
+                    </p>
+                </div>
+            )}
+
+            {/* Content Tabs */}
+            <Tabs defaultValue="summary" className="w-full">
+                <TabsList className="w-full justify-start border-b border-gray-200 bg-transparent p-0 h-auto rounded-none mb-6">
+                    <TabsTrigger
+                        value="summary"
+                        className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 data-[state=active]:bg-transparent font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                        Overview
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="resources"
+                        className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 data-[state=active]:bg-transparent font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                        Resources ({lessonDocuments.length})
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="discussion"
+                        className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 data-[state=active]:bg-transparent font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                        Discussion
+                    </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="summary" className="mt-0 animate-in fade-in-50 duration-300">
+                    <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">About this lesson</h3>
+                        <div className="prose prose-indigo max-w-none text-gray-600 leading-relaxed">
+                            {lesson.content ? (
+                                <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+                            ) : (
+                                <p className="italic text-gray-400">
+                                    No description available for this lesson.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="resources" className="mt-0 animate-in fade-in-50 duration-300">
+                    <div className="bg-white rounded-lg border border-gray-100 shadow-sm">
+                        {selectedDocument ? (
+                            <div className="flex flex-col h-[600px]">
+                                <div className="bg-gray-50 px-4 py-3 border-b flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <FileText className="h-5 w-5 text-indigo-600" />
+                                        <span className="font-medium text-gray-700">
+                                            {selectedDocument.originalName}
+                                        </span>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setSelectedDocument(null)}
+                                        className="text-gray-500 hover:text-gray-700"
+                                    >
+                                        Close Viewer
+                                    </Button>
+                                </div>
+                                <div className="flex-1 bg-gray-100">
+                                    <DocumentViewer
+                                        file={selectedDocument}
+                                        onClose={() => setSelectedDocument(null)}
+                                    />
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="p-6">
+                                {lessonDocuments.length > 0 ? (
+                                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                        {lessonDocuments.map((doc) => (
+                                            <div
+                                                key={doc._id}
+                                                onClick={() => handleFileClick(doc)}
+                                                className="group relative flex items-start gap-4 p-4 rounded-xl border border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all cursor-pointer"
+                                            >
+                                                <div className="flex-shrink-0 p-3 bg-indigo-50 text-indigo-600 rounded-lg group-hover:bg-indigo-100 transition-colors">
+                                                    <FileText className="h-6 w-6" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-medium text-gray-900 truncate group-hover:text-indigo-700 transition-colors">
+                                                        {doc.originalName}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        {(doc.size / 1024 / 1024).toFixed(2)} MB &bull;{" "}
+                                                        {new Date(doc.createdAt).toLocaleDateString()}
+                                                    </p>
+                                                    <div className="flex items-center gap-3 mt-3">
+                                                        <span className="text-xs font-medium text-indigo-600 flex items-center gap-1 group-hover:underline">
+                                                            <Eye className="h-3 w-3" /> Preview
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12">
+                                        <div className="mx-auto h-12 w-12 text-gray-300 mb-3">
+                                            <FileText className="h-full w-full" />
+                                        </div>
+                                        <p className="text-gray-500">No resources attached to this lesson.</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </TabsContent>
+
+                {/* <TabsContent value="discussion" className="mt-0 animate-in fade-in-50 duration-300">
+                    <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
+                        <div className="flex items-start gap-4 mb-8">
+                            <Avatar className="h-10 w-10 border border-gray-200">
+                                <AvatarImage src="/placeholder-user.jpg" />
+                                <AvatarFallback className="bg-indigo-50 text-indigo-600 font-medium">
+                                    ME
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                                <div className="relative">
+                                    <textarea
+                                        className="w-full min-h-[100px] p-4 pr-12 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none resize-none transition-all text-sm"
+                                        placeholder="Ask a question or share your thoughts..."
+                                    />
+                                    <div className="absolute bottom-3 right-3 flex items-center gap-2">
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-8 w-8 text-gray-400 hover:text-gray-600"
+                                        >
+                                            <ImageIcon className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div className="mt-3 flex justify-end">
+                                    <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
+                                        Post Comment <Send className="ml-2 h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="text-center py-12 border-t border-gray-100">
+                            <div className="mx-auto h-12 w-12 text-gray-300 mb-3">
+                                <MessageSquare className="h-full w-full" />
+                            </div>
+                            <h3 className="text-sm font-medium text-gray-900">No comments yet</h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Be the first to start the discussion!
+                            </p>
+                        </div>
+                    </div>
+                </TabsContent> */}
+            </Tabs>
+        </div>
+    );
 };
 
 export default LessonContent;

@@ -12,6 +12,8 @@ const SILENT_ENDPOINTS = [
     "/notifications", // Polling notifications
     "/chat", // Real-time chat
     "/messages",
+    "/complete",
+    "/uncomplete",
 ];
 
 const shouldSkipLoading = (config) => {

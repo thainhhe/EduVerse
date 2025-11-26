@@ -1,35 +1,38 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload } from "lucide-react";
-import React, { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Upload } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import UploadZone from "@/components/minio/UploadZone";
 
-const UploadVideoModal = ({ open, onOpenChange, lessonId, onUploaded }) => {
+const UploadMaterialModal = ({ open, onOpenChange, lessonId, onUploaded }) => {
     const { user } = useAuth();
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [accessLevel, setAccessLevel] = useState("public");
 
-    console.log(" lessonId: ", lessonId);
+    useEffect(() => {
+        setTitle("");
+        setDescription("");
+        setAccessLevel("public");
+    }, []);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-full p-6">
+            <DialogContent className="max-w-7xl p-6">
                 <div className="space-y-4">
                     <h2 className="text-xl font-semibold flex items-center gap-2">
                         <Upload className="w-5 h-5 text-indigo-500" />
-                        Upload Video
+                        Upload Material
                     </h2>
 
                     {/* Title */}
                     <div className="space-y-2">
                         <Label>Title</Label>
                         <Input
-                            placeholder="Enter video title"
+                            placeholder="Enter material title"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                         />
@@ -65,7 +68,6 @@ const UploadVideoModal = ({ open, onOpenChange, lessonId, onUploaded }) => {
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
                         <UploadZone
                             data={{ title, description, accessLevel, lessonId, uploadedBy: user._id }}
-                            type="video"
                             onUploadSuccess={onUploaded}
                         />
                     </div>
@@ -75,4 +77,4 @@ const UploadVideoModal = ({ open, onOpenChange, lessonId, onUploaded }) => {
     );
 };
 
-export default UploadVideoModal;
+export default UploadMaterialModal;

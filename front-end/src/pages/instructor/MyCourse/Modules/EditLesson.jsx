@@ -108,7 +108,7 @@ export function EditLesson({ open, onOpenChange, lesson, onUpdate }) {
                             onClick={() => setIsPublic(!isPublic)}
                         >
                             <Checkbox checked={isPublic} onCheckedChange={() => setIsPublic(!isPublic)} />
-                            <span className="text-sm text-gray-700">Công khai khóa học này</span>
+                            <span className="text-sm text-gray-700">Public lesson</span>
                         </div>
                     </div>
                 </div>
