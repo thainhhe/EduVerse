@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,18 +13,34 @@ import authService from "@/services/authService";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const { login, user } = useAuth();
   const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(loginSchema),
   });
 
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("rememberedEmail");
+    if (savedEmail) {
+      setValue("email", savedEmail);
+      setRememberMe(true);
+    }
+  }, [setValue]);
+
   const onSubmit = async (data) => {
+    if (rememberMe) {
+      localStorage.setItem("rememberedEmail", data.email);
+    } else {
+      localStorage.removeItem("rememberedEmail");
+    }
+
     const result = await login(data.email, data.password);
     if (result.success) {
       const role = result.user?.role || user?.role || "learner"; // fallback
@@ -43,15 +59,28 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 bg-white shadow-xl rounded-2xl overflow-hidden">
-        {/* Form Section */}
+        <div className="hidden lg:flex bg-gradient-to-br from-indigo-600 to-purple-600 items-center justify-center p-8">
+          <img
+            src="/login.png"
+            alt="Online learning"
+            className="w-full max-w-md"
+          />
+        </div>
         <div className="p-6 sm:p-8 lg:p-12 flex flex-col justify-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-6 text-center lg:text-left">
             Sign in
           </h2>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-5"
+            noValidate
+            autoComplete="off"
+          >
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">
+                Email<span className="text-red-500 -ml-1">*</span>
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -65,12 +94,14 @@ const Login = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">
+                Password<span className="text-red-500 -ml-1">*</span>
+              </Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter at least 8+ characters"
+                  placeholder="Enter at least 6 characters"
                   className="bg-gray-50 pr-10"
                   {...register("password")}
                 />
@@ -93,6 +124,8 @@ const Login = () => {
               <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                 <input
                   type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                 />
                 Remember me
@@ -140,21 +173,12 @@ const Login = () => {
               Don't have an account?{" "}
               <Link
                 to="/register-learner"
-                className="text-primary font-semibold hover:underline"
+                className="text-indigo-600 font-semibold hover:underline"
               >
                 Sign up
               </Link>
             </p>
           </form>
-        </div>
-
-        {/* Illustration Section */}
-        <div className="hidden lg:flex bg-gradient-to-br from-indigo-600 to-purple-600 items-center justify-center p-8">
-          <img
-            src="/login.png"
-            alt="Online learning"
-            className="w-full max-w-md"
-          />
         </div>
       </div>
     </div>

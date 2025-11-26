@@ -7,6 +7,7 @@ const roomSchema = new mongoose.Schema(
         link: { type: String },
         createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
         startTime: { type: Date, default: Date.now },
+        status: { type: String, enum: ["public", "private"], default: "private" },
         endTime: { type: Date },
     },
     {

@@ -196,28 +196,32 @@ const RegisterInstructor = () => {
 
           <form
             onSubmit={handleSubmit(onSubmit)}
-            noValidate
             className="space-y-4"
+            noValidate
+            autoComplete="off"
           >
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="fullName">
+                Full name<span className="text-red-500 -ml-1">*</span>
+              </Label>
               <Input
                 id="fullName"
-                placeholder="Full Name"
-                className={`bg-gray-50 ${
-                  errors.fullName ? "border-red-500 ring-1 ring-red-500" : ""
-                }`}
                 {...register("fullName")}
+                required
+                maxLength={50}
+                aria-invalid={!!errors.fullName}
               />
               {errors.fullName && (
-                <p className="text-sm text-red-500 mt-1">
+                <p className="text-sm text-red-600 mt-1">
                   {errors.fullName.message}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email">
+                Email Address<span className="text-red-500 -ml-1">*</span>
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -236,7 +240,9 @@ const RegisterInstructor = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">
+                  Password<span className="text-red-500 -ml-1">*</span>
+                </Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -261,7 +267,9 @@ const RegisterInstructor = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword">
+                  Confirm Password<span className="text-red-500 -ml-1">*</span>
+                </Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
@@ -286,29 +294,25 @@ const RegisterInstructor = () => {
               </div>
             </div>
 
+            {/* subjects multi-select */}
             <div className="space-y-2">
-              <Label htmlFor="subjects">Subject(s) You Want to Teach</Label>
-
+              <Label htmlFor="subjects">Subjects</Label>
               <MultiSelectDropdown
-                options={SUBJECT_OPTIONS}
                 value={watchedSubjects}
-                onChange={(next) =>
-                  setValue("subjects", next, {
-                    shouldValidate: true,
-                    shouldDirty: true,
-                  })
-                }
+                onChange={(v) => setValue("subjects", v)}
+                options={SUBJECT_OPTIONS}
               />
-
               {errors.subjects && (
-                <p className="text-sm text-red-500 mt-1">
+                <p className="text-sm text-red-600 mt-1">
                   {errors.subjects.message}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="jobTitle">Job Title</Label>
+              <Label htmlFor="jobTitle">
+                Job Title<span className="text-red-500 -ml-1">*</span>
+              </Label>
               <select
                 id="jobTitle"
                 className="flex h-10 w-full rounded-md border border-input bg-gray-50 px-3 py-2 text-sm"
@@ -345,6 +349,11 @@ const RegisterInstructor = () => {
                 </Link>
               </label>
             </div>
+            {errors.agreeTerms && (
+              <p className="text-sm text-red-600 mt-1">
+                {errors.agreeTerms.message}
+              </p>
+            )}
 
             <Button
               type="submit"
@@ -359,7 +368,7 @@ const RegisterInstructor = () => {
               Already have an account?{" "}
               <Link
                 to="/login"
-                className="text-primary font-semibold hover:underline"
+                className="text-indigo-600 font-semibold hover:underline"
               >
                 Sign in
               </Link>

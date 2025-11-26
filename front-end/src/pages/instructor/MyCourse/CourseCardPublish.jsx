@@ -1,101 +1,74 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Star, Users, Clock } from "lucide-react";
+import { Star, Users, Clock, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const CourseCardPublish = ({ course, role }) => {
-    const navigate = useNavigate();
-    const [visible, setVisible] = useState(true);
+const CourseCardPublish = ({ course }) => {
+  console.log("c:", course);
+  const navigate = useNavigate();
+  const mainInstructor = course?.main_instructor?.username || "Giảng viên";
+  const price = course?.price
+    ? course.price.toLocaleString("vi-VN") + "đ"
+    : "Miễn phí";
+  const rating = course?.rating || 0;
+  const enrolls = course?.studentsEnrolled ?? course?.totalEnrollments ?? 0;
+  const lastUpdated = course?.lastUpdated ?? "Không rõ";
+  const isDeleted = course?.isDeleted;
 
-    const handleEdit = (e) => {
-        e?.stopPropagation?.();
-        const id = course?._id || course?.id;
-        if (!id) {
-            console.warn("Missing course id when trying to edit", course);
-            return;
-        }
-        // ensure fallback for other pages
-        sessionStorage.setItem("currentCourseId", id);
-        // navigate to Basics (create-course) and mark as update
-        navigate("/create-course", { state: { id, isUpdate: true } });
-    };
+  // Card click -> open create-course basics (instead of modules) if you prefer:
+  const openModuleManager = () => {
+    const id = course._id ?? course.id ?? course.idStr;
+    if (!id) return;
+    console.log("courseData", course);
+    sessionStorage.setItem("currentCourseData", JSON.stringify(course));
+    sessionStorage.setItem("currentCourseId", id);
+    navigate("/create-course-basic", { state: { id, isUpdate: true } });
+  };
 
-    // openModules used by inner buttons (stops propagation)
-    const openModules = (e) => {
-        e?.stopPropagation?.();
-        const id = course._id ?? course.id ?? course.idStr;
-        navigate("/create-course/modules", { state: { id } });
-    };
+  return (
+    <Card className="group overflow-hidden transition-all hover:shadow-lg">
+      {/* Ảnh thumbnail */}
+      <div className="relative aspect-video overflow-hidden bg-muted">
+        <img
+          src={course.thumbnail || course.image || "/placeholder.svg"}
+          alt={course.title}
+          className="object-cover transition-transform group-hover:scale-105 w-full h-full"
+        />
+      </div>
 
-    const handleDelete = (e) => {
-        e?.stopPropagation?.();
-        if (confirm("Are you sure you want to delete this course?")) {
-            console.log("🗑️ Deleted course:", course.id);
-            // TODO: Call API here
-        }
-    };
-    const toggleVisibility = (e) => {
-        e?.stopPropagation?.();
-        setVisible(!visible);
-        console.log(`🔁 Course ${course.id} visibility: ${!visible}`);
-    };
-    const handleOpenCourseQuiz = (e) => {
-        e?.stopPropagation?.();
-        const id = course._id ?? course.id ?? course.idStr;
-        navigate("/create-course/modules", { state: { id, openQuiz: true } });
-    };
+      {/* Nội dung */}
+      <CardContent className="px-2 py-4 space-y-1">
+        <h3 className="text-lg font-semibold line-clamp-2">{course.title}</h3>
+        <p className="text-sm text-indigo-600 pb-1">{mainInstructor}</p>
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Star size={16} /> {rating}
+          </span>
+          <span className="flex items-center gap-1">
+            <Users size={16} /> {enrolls}
+          </span>
+          <span className="flex items-center gap-1">
+            <Clock size={16} /> {lastUpdated}
+          </span>
+        </div>
+      </CardContent>
 
-    // Card click -> open create-course basics (instead of modules) if you prefer:
-    const openModuleManager = () => {
-        const id = course._id ?? course.id ?? course.idStr;
-        if (!id) return;
-        console.log("courseData", course);
-        sessionStorage.setItem("currentCourseData", JSON.stringify(course));
-        sessionStorage.setItem("currentCourseId", id);
-        // open Basics edit view
-        navigate("/create-course", { state: { id, isUpdate: true } });
-    };
-
-    return (
-        <Card
-            className="group overflow-hidden transition-all hover:shadow-lg cursor-pointer"
+      {/* Footer */}
+      <CardFooter className="border-t p-4 flex justify-between items-center">
+        <span className="font-semibold text-primary">{price}</span>
+        {isDeleted ? (
+          <span className="text-red-600">Course deleted</span>
+        ) : (
+          <Button
+            className="bg-white border-1 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors duration-200"
             onClick={openModuleManager}
-        >
-            <div className="relative aspect-video overflow-hidden bg-muted">
-                <img
-                    src={course.image || "/placeholder.svg"}
-                    alt={course.title}
-                    className="object-cover transition-transform group-hover:scale-105 w-full h-full"
-                />
-            </div>
-            <CardContent className="p-4 h-32">
-                <h3 className="mb-3 text-lg font-semibold text-card-foreground line-clamp-2">
-                    {course.title}
-                </h3>
-
-                <div className="flex items-center gap-1 text-sm">
-                    <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                    <span className="font-medium text-foreground">{course.rating}</span>
-                    <span className="text-muted-foreground">({course.reviewCount} person)</span>
-                </div>
-            </CardContent>
-            <CardFooter className="flex flex-col items-start gap-2 border-t border-border p-4 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    <span>Students Enrolled: {course.studentsEnrolled}</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    <span>Last Updated: {course.lastUpdated}</span>
-                </div>
-                <div className="flex gap-2 mt-2">
-                    <Button variant="ghost" size="sm" onClick={handleOpenCourseQuiz}>
-                        Add Quiz
-                    </Button>
-                </div>
-            </CardFooter>
-        </Card>
-    );
+          >
+            View <ArrowRight />
+          </Button>
+        )}
+      </CardFooter>
+    </Card>
+  );
 };
 export default CourseCardPublish;

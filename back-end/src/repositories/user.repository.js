@@ -1,5 +1,6 @@
 const { ROLE } = require("../config/enum/permissions.constants");
 const User = require("../models/User");
+const Course = require("../models/Course");
 
 const userRepository = {
   findByEmail: async (email) => {
@@ -177,6 +178,47 @@ const userRepository = {
 
   save: async (user) => {
     return await user.save();
+  },
+
+  // return top instructors aggregated by their main_instructor courses (enrollments & rating)
+  findTopInstructors: async (limit = 4) => {
+    const pipeline = [
+      { $match: { isDeleted: false, isPublished: true, status: "approve" } },
+      {
+        $group: {
+          _id: "$main_instructor",
+          totalEnrollments: { $sum: "$totalEnrollments" },
+          avgRating: { $avg: "$rating" },
+          coursesCount: { $sum: 1 },
+        },
+      },
+      { $sort: { totalEnrollments: -1, avgRating: -1 } },
+      { $limit: Number(limit) },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "instructor",
+        },
+      },
+      { $unwind: "$instructor" },
+      {
+        $project: {
+          _id: "$instructor._id",
+          username: "$instructor.username",
+          email: "$instructor.email",
+          avatar: "$instructor.avatar",
+          role: "$instructor.role",
+          job_title: "$instructor.job_title",
+          totalEnrollments: 1,
+          avgRating: 1,
+          coursesCount: 1,
+        },
+      },
+    ];
+
+    return await Course.aggregate(pipeline).exec();
   },
 };
 

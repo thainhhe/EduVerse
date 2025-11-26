@@ -1,260 +1,223 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Trash2, Plus, Bell } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { AddInstructorModal } from "./AddInstructorModal"
-
-
-
-const initialInstructors = [
-    {
-        id: "1",
-        name: "Instructor1",
-        email: "instructor1@fpt.edu.vn",
-        role: "Owner",
-        permissions: {
-            createCourses: true,
-            manageGrades: true,
-            viewStudentDetails: true,
-            sendAnnouncements: true,
-            editProfile: true,
-            platformAdmin: true,
-        },
-    },
-    {
-        id: "2",
-        name: "Instructor2",
-        email: "instructor2@fpt.edu.vn",
-        role: "Pending",
-        permissions: {
-            createCourses: true,
-            manageGrades: false,
-            viewStudentDetails: true,
-            sendAnnouncements: false,
-            editProfile: true,
-            platformAdmin: false,
-        },
-    },
-    {
-        id: "3",
-        name: "Instructor3",
-        email: "instructor3@fpt.edu.vn",
-        role: "Instructor",
-        permissions: {
-            createCourses: true,
-            manageGrades: true,
-            viewStudentDetails: true,
-            sendAnnouncements: true,
-            editProfile: true,
-            platformAdmin: false,
-        },
-    },
-]
+import { useEffect, useState } from "react";
+import { Trash2, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AddInstructorModal } from "./AddInstructorModal";
+import { useAuth } from "@/hooks/useAuth";
+import { permissionService } from "@/services/permission";
+import { getCourseById } from "@/services/courseService";
+import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
+import { ToastHelper } from "@/helper/ToastHelper";
 
 export default function PermissionsPage() {
-    const [instructors, setInstructors] = useState(initialInstructors)
-    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [instructors, setInstructors] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [permissions, setPermissions] = useState([]);
+    const [loading, setLoading] = useState(false);
 
-    const togglePermission = (instructorId, permission) => {
-        setInstructors(
-            instructors.map((instructor) =>
-                instructor.id === instructorId
-                    ? {
-                        ...instructor,
-                        permissions: {
-                            ...instructor.permissions,
-                            [permission]: !instructor.permissions[permission],
-                        },
-                    }
-                    : instructor,
-            ),
-        )
-    }
+    const { user } = useAuth();
 
-    const deleteInstructor = (instructorId) => {
-        setInstructors(instructors.filter((i) => i.id !== instructorId))
-    }
+    const rawCourseData = typeof window !== "undefined" ? sessionStorage.getItem("currentCourseData") : null;
+    const sessionCourseData = rawCourseData ? JSON.parse(rawCourseData) : null;
 
-    const getRoleColor = (role) => {
-        switch (role) {
-            case "Owner":
-                return "bg-blue-50 text-blue-700"
-            case "Pending":
-                return "bg-yellow-50 text-yellow-700"
-            case "Instructor":
-                return "bg-gray-50 text-gray-700"
-            default:
-                return "bg-gray-50 text-gray-700"
+    const isOwner = sessionCourseData?.main_instructor === user?._id;
+
+    // 1️⃣ Fetch permission list
+    const fetchPermissions = async () => {
+        try {
+            const res = await permissionService.getAll();
+            if (res.success) setPermissions(res?.data || []);
+        } catch (error) {
+            console.log("Fetch permission error:", error);
         }
-    }
+    };
 
-    const addInstructor = (email, permissions) => {
-        const newInstructor = {
-            id: Date.now().toString(),
-            name: email.split("@")[0],
-            email,
-            role: "Pending",
-            permissions: {
-                createCourses: permissions.manageCourse || false,
-                manageGrades: permissions.cautions || false,
-                viewStudentDetails: permissions.visible || false,
-                sendAnnouncements: permissions.qa || false,
-                editProfile: permissions.reviews || false,
-                platformAdmin: permissions.performance || false,
-            },
+    // 2️⃣ Fetch instructors of this course
+    const getCourseWithPermission = async () => {
+        try {
+            const res = await getCourseById(sessionCourseData._id);
+            if (res.success) {
+                const ins = res.data?.instructors?.map((i) => ({
+                    _id: i.user._id,
+                    username: i.user.username,
+                    email: i.user.email,
+                    permissions: i.permission.map((p) => p._id),
+                    isAccept: i.isAccept,
+                }));
+                setInstructors(ins);
+            }
+        } catch (error) {
+            console.log("Load course permission error:", error);
         }
-        console.log("✅ Added Instructor:", newInstructor)
-        setInstructors([...instructors, newInstructor])
-    }
+    };
+
+    useEffect(() => {
+        fetchPermissions();
+        getCourseWithPermission();
+    }, []);
+
+    // 3️⃣ Toggle checkbox permission
+    const togglePermission = (userId, permissionId) => {
+        setInstructors((prev) =>
+            prev.map((inst) => {
+                if (inst._id !== userId) return inst;
+                const exists = inst.permissions.includes(permissionId);
+                return {
+                    ...inst,
+                    permissions: exists
+                        ? inst.permissions.filter((id) => id !== permissionId)
+                        : [...inst.permissions, permissionId],
+                };
+            })
+        );
+    };
+
+    // 5️⃣ Save changes to server
+    const saveChanges = async () => {
+        setLoading(true);
+        try {
+            const payload = {
+                instructors: instructors.map((i) => ({
+                    email: i.email,
+                    permissions: i.permissions,
+                })),
+            };
+
+            const res = await permissionService.assign(payload);
+
+            if (res.success) {
+                ToastHelper.success("Save permission successfully.");
+                getCourseWithPermission();
+            } else {
+                ToastHelper.error("Failed to update permissions!");
+            }
+        } catch (error) {
+            console.log("Save error:", error);
+        }
+        setLoading(false);
+    };
+
+    // 6️⃣ Add new instructor
+    const addInstructor = async (data) => {
+        try {
+            const res = await permissionService.assign({
+                currentCourseId: sessionCourseData._id,
+                instructors: [
+                    {
+                        email: data.email,
+                        permissions: data.permissions,
+                    },
+                ],
+            });
+
+            if (res.data[0].success) {
+                setInstructors((prev) => [
+                    ...prev,
+                    {
+                        _id: Date.now().toString(),
+                        email: data.email,
+                        permissions: data.permissions,
+                        isAccept: false,
+                    },
+                ]);
+                getCourseWithPermission();
+            } else {
+                ToastHelper.error("Thông tin không hợp lệ.");
+            }
+        } catch (error) {
+            console.log("Err Permission:", error);
+            ToastHelper.error("Có lỗi xảy ra");
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <header className="bg-white border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-sm">E</span>
-                        </div>
-                        <span className="text-xl font-semibold text-gray-900">Eduvers</span>
-                    </div>
-                    <nav className="flex items-center gap-8">
-                        <button className="text-gray-700 hover:text-gray-900 font-medium">Dashboard</button>
-                        <button className="text-gray-700 hover:text-gray-900 font-medium">Users</button>
-                        <button className="text-gray-700 hover:text-gray-900 font-medium">Settings</button>
-                        <button className="text-gray-700 hover:text-gray-900 font-medium">Reports</button>
-                    </nav>
-                    <div className="flex items-center gap-4">
-                        <button className="relative p-2 text-gray-600 hover:text-gray-900">
-                            <Bell size={20} />
-                            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                        </button>
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full"></div>
-                    </div>
-                </div>
-            </header>
-
-            {/* Main Content */}
-            <main className="max-w-7xl mx-auto px-6 py-12">
-                {/* Page Title */}
-                <div className="mb-8">
+            <div className="max-w-full mx-auto">
+                <div className="mb-5">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Instructor Permissions</h1>
-                    <p className="text-gray-600">
-                        Review and adjust access levels for all instructors, ensuring proper authorization across the platform.
-                    </p>
+                    <p className="text-gray-600">Adjust access levels for instructors in this course.</p>
                 </div>
 
-                {/* Table Card */}
-                <Card className="bg-white border border-gray-200">
-                    <div className="p-6">
-                        {/* Table Header */}
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-lg font-semibold text-gray-900">Instructor Access Table</h2>
-                            <Button onClick={() => setIsModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
-                                <Plus size={18} />
-                                Add Instructor
+                <div className="bg-white p-4 border-1">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-lg font-semibold text-gray-900">Instructor Access Table</h2>
+                        <div className="flex gap-2">
+                            <Button onClick={saveChanges} disabled={loading} className="bg-green-600 text-white">
+                                {loading ? "Saving..." : "Save Changes"}
+                            </Button>
+
+                            <Button onClick={() => setIsModalOpen(true)} className="bg-blue-600 text-white gap-2">
+                                <Plus size={18} /> Add Instructor
                             </Button>
                         </div>
-
-                        {/* Table */}
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="border-b border-gray-200">
-                                        <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Name / Email</th>
-                                        <th className="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Role</th>
-                                        <th className="text-center py-3 px-4 font-semibold text-gray-700 text-sm">Create Courses</th>
-                                        <th className="text-center py-3 px-4 font-semibold text-gray-700 text-sm">Manage Grades</th>
-                                        <th className="text-center py-3 px-4 font-semibold text-gray-700 text-sm">View Student Details</th>
-                                        <th className="text-center py-3 px-4 font-semibold text-gray-700 text-sm">Send Announcements</th>
-                                        <th className="text-center py-3 px-4 font-semibold text-gray-700 text-sm">Edit Profile</th>
-                                        <th className="text-center py-3 px-4 font-semibold text-gray-700 text-sm">Platform Admin</th>
-                                        <th className="text-center py-3 px-4 font-semibold text-gray-700 text-sm">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {instructors.map((instructor) => (
-                                        <tr key={instructor.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                                            <td className="py-4 px-4">
-                                                <div>
-                                                    <p className="font-medium text-gray-900">{instructor.name}</p>
-                                                    <p className="text-sm text-gray-500">{instructor.email}</p>
-                                                </div>
-                                            </td>
-                                            <td className="py-4 px-4">
-                                                <span
-                                                    className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(
-                                                        instructor.role,
-                                                    )}`}
-                                                >
-                                                    {instructor.role}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-4 text-center">
-                                                <Checkbox
-                                                    checked={instructor.permissions.createCourses}
-                                                    onCheckedChange={() => togglePermission(instructor.id, "createCourses")}
-                                                    className="mx-auto data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
-                                                />
-                                            </td>
-                                            <td className="py-4 px-4 text-center">
-                                                <Checkbox
-                                                    checked={instructor.permissions.manageGrades}
-                                                    onCheckedChange={() => togglePermission(instructor.id, "manageGrades")}
-                                                    className="mx-auto data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
-                                                />
-                                            </td>
-                                            <td className="py-4 px-4 text-center">
-                                                <Checkbox
-                                                    checked={instructor.permissions.viewStudentDetails}
-                                                    onCheckedChange={() => togglePermission(instructor.id, "viewStudentDetails")}
-                                                    className="mx-auto data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
-                                                />
-                                            </td>
-                                            <td className="py-4 px-4 text-center">
-                                                <Checkbox
-                                                    checked={instructor.permissions.sendAnnouncements}
-                                                    onCheckedChange={() => togglePermission(instructor.id, "sendAnnouncements")}
-                                                    className="mx-auto data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
-                                                />
-                                            </td>
-                                            <td className="py-4 px-4 text-center">
-                                                <Checkbox
-                                                    checked={instructor.permissions.editProfile}
-                                                    onCheckedChange={() => togglePermission(instructor.id, "editProfile")}
-                                                    className="mx-auto data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
-                                                />
-                                            </td>
-                                            <td className="py-4 px-4 text-center">
-                                                <Checkbox
-                                                    checked={instructor.permissions.platformAdmin}
-                                                    onCheckedChange={() => togglePermission(instructor.id, "platformAdmin")}
-                                                    className="mx-auto data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
-                                                />
-                                            </td>
-                                            <td className="py-4 px-4 text-center">
-                                                <button
-                                                    onClick={() => deleteInstructor(instructor.id)}
-                                                    className="text-red-500 hover:text-red-700 transition-colors inline-flex items-center justify-center"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
-                </Card>
-            </main>
 
-            <AddInstructorModal open={isModalOpen} onOpenChange={setIsModalOpen} onSubmit={addInstructor} />
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="text-left">
+                                <tr className="border-b border-gray-200">
+                                    <th>Name / Email</th>
+                                    <th>----</th>
+                                    {permissions.map((p) => (
+                                        <th key={p._id}>{p.name}</th>
+                                    ))}
+                                </tr>
+                            </thead>
 
+                            <tbody>
+                                {isOwner && (
+                                    <tr className="border-b border-gray-200">
+                                        {" "}
+                                        <td className="py-4">
+                                            {" "}
+                                            <p className="font-medium text-gray-900">{user?.username}</p>{" "}
+                                            <p className="text-sm text-gray-500">{user.email}</p>{" "}
+                                        </td>{" "}
+                                        <td className="text-blue-700">Owner</td>{" "}
+                                        {permissions.map((p) => (
+                                            <td key={p._id} className="text-center">
+                                                {" "}
+                                                <Checkbox
+                                                    checked={true}
+                                                    className="!rounded-none data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                                                />{" "}
+                                            </td>
+                                        ))}{" "}
+                                    </tr>
+                                )}
+                                {instructors.map((inst) => (
+                                    <tr key={inst._id} className="border-b border-gray-100">
+                                        <td className="py-3">
+                                            <p className="text-sm text-gray-900">{inst?.username}</p>
+                                            <p className="text-sm text-gray-500">{inst.email}</p>
+                                        </td>
+                                        <td>{inst.isAccept ? "Accepted" : "Pending"}</td>
 
+                                        {permissions.map((p) => (
+                                            <td key={p._id} className="text-center">
+                                                <Checkbox
+                                                    checked={inst.permissions.includes(p._id)}
+                                                    className="!rounded-none data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                                                    onCheckedChange={() => togglePermission(inst._id, p._id)}
+                                                />
+                                            </td>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <AddInstructorModal
+                open={isModalOpen}
+                onOpenChange={setIsModalOpen}
+                onSubmit={addInstructor}
+                permissionOptions={permissions}
+            />
         </div>
-    )
+    );
 }

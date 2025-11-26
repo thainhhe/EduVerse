@@ -10,6 +10,7 @@ const courseRouter = express.Router();
 
 courseRouter.get("/mine", verifyToken, courseController.getMyCourses);
 courseRouter.get("/", courseController.getAllCourse);
+courseRouter.get("/popular", courseController.getPopularCourses); // <-- new
 courseRouter.get("/:id", courseController.getCourseById);
 
 courseRouter.get("/learner/common", courseController.getAllCourseForLearner);
@@ -19,6 +20,10 @@ courseRouter.get(
     // checkPermission(["admin", "instructor"], ["manage_course"]),
     courseController.getAllCourseInstructor
 );
+
+courseRouter.get("/instructor-collaborative/:userId", courseController.getCollaborativeCourse);
+courseRouter.get("/instructor/course-user/:courseId", courseController.getAllUserEnrollCourse);
+
 courseRouter.post(
     "/create",
     verifyToken,

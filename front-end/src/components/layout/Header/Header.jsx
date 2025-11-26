@@ -6,6 +6,8 @@ import { FaSignInAlt, FaUserPlus, FaSearch } from "react-icons/fa";
 import { MdAutoAwesome } from "react-icons/md";
 import { Menu, X } from "lucide-react";
 
+import NotificationDropdown from "./NotificationDropdown";
+
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const location = useLocation();
@@ -20,7 +22,8 @@ const Header = () => {
     { to: "/", text: "Home" },
     { to: "/courses", text: "Courses" },
     { to: "/instructors", text: "Instructors" },
-    { to: "/course/rooms", text: "Ongoing Classroom " },
+    { to: "/course/rooms", text: "Live" },
+    { to: "/contacts", text: "Contact" },
   ];
 
   // close menus when clicking outside
@@ -60,9 +63,7 @@ const Header = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <MdAutoAwesome className="text-3xl text-indigo-500" />
-            <span className="text-2xl font-bold italic text-indigo-500">
-              Eduverse
-            </span>
+            <span className="text-2xl font-bold italic text-indigo-500">Eduverse</span>
           </Link>
 
           {/* Desktop Menu & Search */}
@@ -93,6 +94,7 @@ const Header = () => {
 
           {/* Desktop Auth Buttons / Avatar */}
           <div className="hidden lg:flex items-center gap-3">
+            {isAuthenticated && <NotificationDropdown />}
             {!isAuthenticated ? (
               <>
                 <Button variant="outline" asChild>
@@ -154,11 +156,11 @@ const Header = () => {
                     {/* show different menu item based on role */}
                     {user?.role === "learner" && (
                       <Link
-                        to="/reports/my-reports"
+                        to="/courses/purchased"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         onClick={() => setShowAvatarMenu(false)}
                       >
-                        My Reports
+                        Purchased Courses
                       </Link>
                     )}
 
@@ -196,11 +198,7 @@ const Header = () => {
 
           {/* Mobile Menu Button */}
           <div className="lg:hidden">
-            <Button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              variant="ghost"
-              size="icon"
-            >
+            <Button onClick={() => setIsMenuOpen(!isMenuOpen)} variant="ghost" size="icon">
               {isMenuOpen ? <X /> : <Menu />}
             </Button>
           </div>

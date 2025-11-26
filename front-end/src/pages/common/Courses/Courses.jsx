@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,6 +17,35 @@ const Courses = () => {
   const [error, setError] = useState("");
   const { user } = useAuth();
   const { enrollments } = useEnrollment();
+
+  // Drag to scroll logic
+  const scrollRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeft(scrollRef.current.scrollLeft);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // Scroll-fast
+    scrollRef.current.scrollLeft = scrollLeft - walk;
+  };
+
   console.log("enrollments", enrollments);
   // ✅ Lấy dữ liệu từ API thật
 
@@ -62,14 +91,12 @@ const Courses = () => {
     };
     fetchCategories();
   }, []);
-  console.log("category", categories)
-  console.log("selectedCategory._id", selectedCategory)
+  console.log("category", categories);
+  console.log("selectedCategory._id", selectedCategory);
   const filteredCourses =
-    selectedCategory === "All"
-      ? courses
-      : courses.filter((c) => c.category?._id === selectedCategory);
+    selectedCategory === "All" ? courses : courses.filter((c) => c.category?._id === selectedCategory);
 
-  console.log("filteredCourses", filteredCourses)
+  console.log("filteredCourses", filteredCourses);
   // ✅ Loading hoặc lỗi
   if (loading)
     return (
@@ -89,31 +116,33 @@ const Courses = () => {
   const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
 
   // cắt dữ liệu để hiển thị theo trang
-  const paginatedCourses = filteredCourses.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const paginatedCourses = filteredCourses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 sm:py-12">
       <div className="container mx-auto px-4">
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-8">
-          Browse Courses
-        </h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-8">Browse Courses</h1>
 
         <div className="mb-8">
           <h2 className="text-xl sm:text-2xl font-semibold mb-4">Categories</h2>
 
-          <div className="flex flex-wrap gap-2">
-
+          <div
+            ref={scrollRef}
+            className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 select-none cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+            onMouseDown={handleMouseDown}
+            onMouseLeave={handleMouseLeave}
+            onMouseUp={handleMouseUp}
+            onMouseMove={handleMouseMove}
+          >
             {/* 🔹 Button ALL */}
             <Button
               variant={selectedCategory === "All" ? "default" : "outline"}
               onClick={() => setSelectedCategory("All")}
-              className={`transition-colors ${selectedCategory === "All"
-                ? "bg-indigo-600 hover:bg-indigo-700 text-white"
-                : "bg-white"
-                }`}
+              className={`whitespace-nowrap rounded-full px-6 transition-all duration-200 ${
+                selectedCategory === "All"
+                  ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transform scale-105"
+                  : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
+              }`}
             >
               All
             </Button>
@@ -123,23 +152,20 @@ const Courses = () => {
                 key={category.id}
                 variant={selectedCategory === category.id ? "default" : "outline"}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`transition-colors ${selectedCategory === category.id
-                  ? "bg-indigo-600 hover:bg-indigo-700 text-white"
-                  : "bg-white"
-                  }`}
+                className={`whitespace-nowrap rounded-full px-6 transition-all duration-200 ${
+                  selectedCategory === category.id
+                    ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transform scale-105"
+                    : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
+                }`}
               >
                 {category.name}
               </Button>
-
             ))}
           </div>
         </div>
 
-
         {paginatedCourses.length === 0 ? (
-          <p className="text-gray-500 text-center mt-10">
-            No courses found in this category.
-          </p>
+          <p className="text-gray-500 text-center mt-10">No courses found in this category.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {paginatedCourses.map((course) => (
@@ -155,52 +181,61 @@ const Courses = () => {
                   />
                 </div>
                 <CardContent className="p-4 flex flex-col flex-grow">
-                  <h3 className="text-lg font-semibold mb-2">
-                    {course?.title}
-                  </h3>
+                  <h3 className="text-lg font-semibold mb-2">{course?.title}</h3>
                   <p className="text-sm text-gray-600 mb-4">
-                    By {course?.main_instructor.username || "Unknown"}
+                    By{" "}
+                    {course?.main_instructor?.username ||
+                      course?.main_instructor?.name ||
+                      course?.main_instructor ||
+                      "Unknown"}
                   </p>
 
                   <div className="flex items-center mb-4">
-                    {[...Array(5)].map((_, index) => {
-                      const ratingValue = index + 1;
-                      return ratingValue <= Math.round(course?.rating || 0) ? (
-                        <FaRegStar
-                          key={index}
-                          className="text-yellow-400 text-base"
-                        />
-                      ) : (
-                        <FaRegStar
-                          key={index}
-                          className="text-gray-300 text-base"
-                        />
+                    {(() => {
+                      const rating = Number(course?.avgRating ?? course?.rating ?? 0);
+                      const reviewsCount = course?.reviewsCount ?? course?.totalEnrollments ?? 0;
+                      return (
+                        <>
+                          {[...Array(5)].map((_, index) => {
+                            const ratingValue = index + 1;
+                            return (
+                              <FaRegStar
+                                key={index}
+                                className={
+                                  ratingValue <= Math.round(rating)
+                                    ? "text-yellow-400 text-base"
+                                    : "text-gray-300 text-base"
+                                }
+                              />
+                            );
+                          })}
+                          <span className="ml-2 text-gray-500 text-sm">
+                            {rating > 0 ? `${rating.toFixed(1)}` : "N/A"} ({reviewsCount})
+                          </span>
+                        </>
                       );
-                    })}
-                    <span className="ml-2 text-gray-500 text-sm">
-                      ({course.rating || "N/A"})
-                    </span>
+                    })()}
                   </div>
 
                   <div className="mt-auto pt-2 flex items-center justify-between">
                     <span className="text-lg font-bold text-indigo-600">
-                      {course.price.toLocaleString("vi-VN", {
-                        style: "currency",
-                        currency: "VND",
-                      }) || 0}
+                      {(() => {
+                        const priceVal =
+                          typeof course?.price === "number" ? course.price : Number(course?.displayPrice ?? 0);
+                        return priceVal
+                          ? priceVal.toLocaleString("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            })
+                          : "Free";
+                      })()}
                     </span>
                     {enrollments.some((e) => e.courseId === course._id) ? (
-                      <Button
-                        asChild
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                      >
+                      <Button asChild className="bg-green-600 hover:bg-green-700 text-white">
                         <Link to={`/courses/${course._id}`}>Go to Course</Link>
                       </Button>
                     ) : (
-                      <Button
-                        asChild
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                      >
+                      <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white">
                         <Link to={`/courses/${course._id}`}>Enroll</Link>
                       </Button>
                     )}
@@ -214,11 +249,7 @@ const Courses = () => {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-3 sm:gap-4">
-            <Button
-              variant="outline"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((prev) => prev - 1)}
-            >
+            <Button variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage((prev) => prev - 1)}>
               Previous
             </Button>
             <span className="text-sm text-gray-600">

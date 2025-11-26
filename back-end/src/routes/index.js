@@ -25,6 +25,7 @@ const notificationRouter = require("./notification.routes.js");
 
 const courseManagementRouter = require("./admin/courseManagement.routes");
 const dashboardRoutes = require("./admin/dashboard.routes");
+const ragRoutes = require("./rag.routes");
 
 //===============================GENERAL ROUTES=========================================================
 
@@ -77,5 +78,8 @@ router.use("/instructors", instructor_dashboard_router);
 router.use("/room-meeting", roomRouter);
 router.use("/payment", paymentRouter);
 router.use("/notifications", notificationRouter);
+
+// RAG Routes
+router.use("/rag", ragRoutes);
 
 module.exports = router;

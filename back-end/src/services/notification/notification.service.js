@@ -1,15 +1,10 @@
 const { system_enum } = require("../../config/enum/system.constant");
-const { notificationRepository } = require("../../repositories/motification.repository");
+const { notificationRepository } = require("../../repositories/notification.repository");
 
 const notificationService = {
     getAll: async () => {
         try {
             const result = await notificationRepository.getAll();
-            if (!result || result.length === 0)
-                return {
-                    status: system_enum.STATUS_CODE.NOT_FOUND,
-                    message: system_enum.SYSTEM_MESSAGE.NOT_FOUND,
-                };
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: system_enum.SYSTEM_MESSAGE.SUCCESS,
@@ -22,11 +17,6 @@ const notificationService = {
     getGlobal: async () => {
         try {
             const result = await notificationRepository.getGlobal();
-            if (!result || result.length === 0)
-                return {
-                    status: system_enum.STATUS_CODE.NOT_FOUND,
-                    message: system_enum.SYSTEM_MESSAGE.NOT_FOUND,
-                };
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: system_enum.SYSTEM_MESSAGE.SUCCESS,
@@ -39,15 +29,14 @@ const notificationService = {
     getByReceiverId: async (id) => {
         try {
             const result = await notificationRepository.getByReceiverId(id);
-            if (!result || result.length === 0)
-                return {
-                    status: system_enum.STATUS_CODE.NOT_FOUND,
-                    message: system_enum.SYSTEM_MESSAGE.NOT_FOUND,
-                };
+            const unreadCount = await notificationRepository.countUnread(id);
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: system_enum.SYSTEM_MESSAGE.SUCCESS,
-                data: result,
+                data: {
+                    notifications: result,
+                    unreadCount: unreadCount,
+                },
             };
         } catch (error) {
             throw new Error(error);
@@ -56,11 +45,6 @@ const notificationService = {
     getBySenderId: async (id) => {
         try {
             const result = await notificationRepository.getBySenderId(id);
-            if (!result || result.length === 0)
-                return {
-                    status: system_enum.STATUS_CODE.NOT_FOUND,
-                    message: system_enum.SYSTEM_MESSAGE.NOT_FOUND,
-                };
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: system_enum.SYSTEM_MESSAGE.SUCCESS,
@@ -72,7 +56,18 @@ const notificationService = {
     },
     create: async (data) => {
         try {
-            const result = await notificationRepository.create(data);
+            let result;
+            // Handle multiple receivers
+            if (Array.isArray(data.receiverId)) {
+                const notifications = data.receiverId.map((id) => ({
+                    ...data,
+                    receiverId: id,
+                }));
+                result = await notificationRepository.createMany(notifications);
+            } else {
+                result = await notificationRepository.create(data);
+            }
+
             if (!result)
                 return {
                     status: system_enum.STATUS_CODE.NOT_FOUND,
@@ -112,6 +107,30 @@ const notificationService = {
                     status: system_enum.STATUS_CODE.NOT_FOUND,
                     message: system_enum.SYSTEM_MESSAGE.NOT_FOUND,
                 };
+            return {
+                status: system_enum.STATUS_CODE.OK,
+                message: system_enum.SYSTEM_MESSAGE.SUCCESS,
+                data: result,
+            };
+        } catch (error) {
+            throw new Error(error);
+        }
+    },
+    markAsRead: async (id) => {
+        try {
+            const result = await notificationRepository.markAsRead(id);
+            return {
+                status: system_enum.STATUS_CODE.OK,
+                message: system_enum.SYSTEM_MESSAGE.SUCCESS,
+                data: result,
+            };
+        } catch (error) {
+            throw new Error(error);
+        }
+    },
+    markAllAsRead: async (userId) => {
+        try {
+            const result = await notificationRepository.markAllAsRead(userId);
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: system_enum.SYSTEM_MESSAGE.SUCCESS,
