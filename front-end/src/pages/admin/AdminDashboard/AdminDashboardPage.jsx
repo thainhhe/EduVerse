@@ -37,15 +37,47 @@ const AdminDashboardPage = () => {
   });
   const [topCourses, setTopCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Time filter states
+  // Default to yearly and always use selected year
+  const [timePeriod, setTimePeriod] = useState("yearly"); // 'weekly','monthly','quarterly','yearly'
   const [year, setYear] = useState(new Date().getFullYear());
+  const [month, setMonth] = useState(new Date().getMonth() + 1); // 1-12
+  const [quarter, setQuarter] = useState(
+    Math.floor((new Date().getMonth() + 3) / 3)
+  ); // 1-4
+
   const [monthlyUsers, setMonthlyUsers] = useState([]);
   const [monthlyRevenue, setMonthlyRevenue] = useState([]);
+
+  // Hàm helper để tạo đối tượng filters cho API call
+  const getFilters = () => {
+    const filters = { period: timePeriod };
+
+    // Bắt buộc phải có year vì các thống kê luôn cần năm
+    filters.year = year;
+
+    // Thêm các tham số chi tiết khác nếu cần cho back-end lọc
+    if (timePeriod === "quarterly") {
+      filters.quarter = quarter;
+    }
+
+    // Nếu chọn tháng hoặc tuần, truyền tháng (và có thể là năm)
+    if (timePeriod === "monthly" || timePeriod === "weekly") {
+      filters.month = month;
+    }
+
+    // Nếu là 'all', ta vẫn truyền year (ví dụ 2025) nhưng back-end sẽ bỏ qua các bộ lọc khác nếu cần
+    return filters;
+  };
 
   useEffect(() => {
     let mounted = true;
     const fetchOverview = async () => {
       setLoading(true);
       try {
+        const filters = getFilters();
+
         const [
           totalUsers,
           instructors,
@@ -56,14 +88,14 @@ const AdminDashboardPage = () => {
           pendingReports,
           popularCourses,
         ] = await Promise.all([
-          adminService.getTotalUsers(),
-          adminService.getTotalInstructors(),
-          adminService.getTotalLearners(),
-          adminService.getTotalCourses(),
-          adminService.getTotalApprovedCourses(),
-          adminService.getTotalPendingCourses(),
-          adminService.getTotalPendingReports(),
-          adminService.getTopPopularCourses(),
+          adminService.getTotalUsers(filters),
+          adminService.getTotalInstructors(filters),
+          adminService.getTotalLearners(filters),
+          adminService.getTotalCourses(filters),
+          adminService.getTotalApprovedCourses(filters),
+          adminService.getTotalPendingCourses(filters),
+          adminService.getTotalPendingReports(filters),
+          adminService.getTopPopularCourses(filters),
         ]);
 
         if (!mounted) return;
@@ -87,16 +119,20 @@ const AdminDashboardPage = () => {
     };
     fetchOverview();
     return () => (mounted = false);
-  }, []);
+  }, [timePeriod, year, month, quarter]);
 
   useEffect(() => {
     let mounted = true;
     const fetchMonthlyStats = async () => {
       try {
+        // Luôn truyền object filters có year để đảm bảo API nhận year trong path
+        const monthlyFilters = { year };
+
         const [usersData, revenueData] = await Promise.all([
-          adminService.getMonthlyUserStatistics(year),
-          adminService.getMonthlyRevenueStatistics(year),
+          adminService.getMonthlyUserStatistics(monthlyFilters),
+          adminService.getMonthlyRevenueStatistics(monthlyFilters),
         ]);
+
         if (!mounted) return;
         setMonthlyUsers(usersData ?? []);
         setMonthlyRevenue(revenueData ?? []);
@@ -106,7 +142,9 @@ const AdminDashboardPage = () => {
         setMonthlyRevenue([]);
       }
     };
+
     fetchMonthlyStats();
+    // Chỉ lắng nghe state 'year' vì biểu đồ này là thống kê hàng tháng của 1 năm
     return () => (mounted = false);
   }, [year]);
 
@@ -176,6 +214,17 @@ const AdminDashboardPage = () => {
 
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 6 }).map((_, i) => currentYear - i);
+  const periodOptions = [
+    { value: "yearly", label: "Năm" },
+    { value: "quarterly", label: "Quý" },
+    { value: "monthly", label: "Tháng" },
+    { value: "weekly", label: "Tuần" },
+  ];
+  const quarterOptions = [1, 2, 3, 4];
+  const monthOptions = monthLabels.map((label, index) => ({
+    value: index + 1,
+    label,
+  }));
 
   return (
     <div className="space-y-8 py-8">
@@ -183,12 +232,27 @@ const AdminDashboardPage = () => {
         <h1 className="text-3xl font-bold">Dashboard Overview</h1>
 
         <div className="flex items-center gap-4">
-          <div className="text-sm text-muted-foreground">Year:</div>
+          <div className="text-sm text-muted-foreground">Lọc theo:</div>
+          <Select value={timePeriod} onValueChange={(v) => setTimePeriod(v)}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {periodOptions.map((p) => (
+                <SelectItem key={p.value} value={p.value}>
+                  {p.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Always show Year selector (required for monthly/yearly stats) */}
+          <div className="text-sm text-muted-foreground">Năm:</div>
           <Select
             value={String(year)}
             onValueChange={(v) => setYear(Number(v))}
           >
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[100px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -199,6 +263,48 @@ const AdminDashboardPage = () => {
               ))}
             </SelectContent>
           </Select>
+
+          {timePeriod === "quarterly" && (
+            <>
+              <div className="text-sm text-muted-foreground">Quý:</div>
+              <Select
+                value={String(quarter)}
+                onValueChange={(v) => setQuarter(Number(v))}
+              >
+                <SelectTrigger className="w-[80px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {quarterOptions.map((q) => (
+                    <SelectItem key={q} value={String(q)}>
+                      Q{q}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
+
+          {(timePeriod === "monthly" || timePeriod === "weekly") && (
+            <>
+              <div className="text-sm text-muted-foreground">Tháng:</div>
+              <Select
+                value={String(month)}
+                onValueChange={(v) => setMonth(Number(v))}
+              >
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthOptions.map((m) => (
+                    <SelectItem key={m.value} value={String(m.value)}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
         </div>
       </div>
 
