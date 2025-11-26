@@ -117,7 +117,8 @@ function App() {
           <Route path="dashboard-test" element={<Dashboard />} />
           <Route path="/google-auth/success" element={<GoogleCallback />} />
           <Route path="dashboard-instructor" element={<DashboardInstructor />} />
-          <Route path="create-course" element={<CreateCourse />} />
+          {/* <Route path="create-course" element={<CreateCourse />} /> */}
+          <Route path="create-course-basic" element={<CreateCourse />} />
           {/* 2️⃣ Các bước sau khi tạo khóa học (có sidebar) */}
           <Route path="create-course" element={<CourseBuilderLayout />}>
             <Route path="modules" element={<ModulesPage />} />

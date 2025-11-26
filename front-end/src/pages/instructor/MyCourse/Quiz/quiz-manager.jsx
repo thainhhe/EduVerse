@@ -17,6 +17,7 @@ import { Trash2, Plus, CloverIcon, X } from "lucide-react";
 const QuizManager = ({
   mode: initialMode = "list", // default show list
   quizData: initialQuizData = null,
+  lessonTitle,
   courseId,
   moduleId,
   lessonId,
@@ -25,7 +26,7 @@ const QuizManager = ({
   const [mode, setMode] = useState(initialMode); // 'list' | 'add' | 'edit'
   const [quizzes, setQuizzes] = useState([]);
   const [loadingList, setLoadingList] = useState(false);
-
+  console.log("lessonTitle", lessonTitle)
   const [quizInfo, setQuizInfo] = useState({
     title: "",
     description: "",
@@ -65,10 +66,10 @@ const QuizManager = ({
     const scopeName = lessonId
       ? "lesson"
       : moduleId
-      ? "module"
-      : courseId
-      ? "course"
-      : null;
+        ? "module"
+        : courseId
+          ? "course"
+          : null;
     if (!scopeName) {
       setQuizzes([]);
       return;
@@ -85,10 +86,10 @@ const QuizManager = ({
       const arr = Array.isArray(res)
         ? res
         : Array.isArray(res?.data)
-        ? res.data
-        : Array.isArray(res?.data?.data)
-        ? res.data.data
-        : res?.data?.items ?? [];
+          ? res.data
+          : Array.isArray(res?.data?.data)
+            ? res.data.data
+            : res?.data?.items ?? [];
       // map to minimal preview info
       const mapped = (arr || []).map((q) => ({
         id: q._id ?? q.id ?? q.quizId ?? null,
@@ -494,10 +495,10 @@ const QuizManager = ({
                   <h3 className="text-md font-semibold">Scope</h3>
                   <div className="text-sm text-muted-foreground">
                     {lessonId
-                      ? `Lesson: ${lessonId}`
+                      ? `Lesson: ${lessonTitle}`
                       : moduleId
-                      ? `Module: ${moduleId}`
-                      : `Course: ${courseId}`}
+                        ? `Module: ${moduleId}`
+                        : `Course: ${courseId}`}
                   </div>
                 </div>
                 <div>
@@ -527,9 +528,8 @@ const QuizManager = ({
                   <label className="text-sm font-medium">Quiz Title</label>
                   <input
                     type="text"
-                    className={`w-full border rounded-lg p-2 mt-1 ${
-                      errors.title ? "border-red-500" : ""
-                    }`}
+                    className={`w-full border rounded-lg p-2 mt-1 ${errors.title ? "border-red-500" : ""
+                      }`}
                     placeholder="Enter quiz title..."
                     value={quizInfo.title}
                     onChange={(e) => {

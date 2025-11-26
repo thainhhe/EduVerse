@@ -24,7 +24,12 @@ const authController = {
     try {
       const id = req.params.id;
       const data = req.body;
-      const result = await authService.changePassword(id, data.newPassword);
+      console.log("data", data);
+      const result = await authService.changePassword(
+        id,
+        data.currentPassword,
+        data.newPassword
+      );
       return response(res, result);
     } catch (error) {
       return error_response(res, error);

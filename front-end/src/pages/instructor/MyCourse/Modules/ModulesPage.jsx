@@ -221,11 +221,11 @@ const ModulesPage = () => {
       // normalize to { id, name/title, lessons }
       const normalized = Array.isArray(items)
         ? items.map((m) => ({
-            id: m.id ?? m._id ?? m._id?.toString?.(),
-            name: m.title ?? m.name ?? "Untitled",
-            lessons: m.lessons ?? [],
-            ...m,
-          }))
+          id: m.id ?? m._id ?? m._id?.toString?.(),
+          name: m.title ?? m.name ?? "Untitled",
+          lessons: m.lessons ?? [],
+          ...m,
+        }))
         : [];
       setModules(normalized);
       // ngay sau khi có modules, lấy counts
@@ -587,6 +587,7 @@ const ModulesPage = () => {
                                             ...currentQuizContext,
                                             moduleId: module.id,
                                             lessonId: lesson.id,
+                                            lessonTitle: lesson.title
                                           });
                                           setIsQuizManagerOpen(true);
                                           setOpenLessonMenuId(null);
@@ -708,6 +709,7 @@ const ModulesPage = () => {
                     courseId={currentQuizContext.courseId}
                     moduleId={currentQuizContext.moduleId}
                     lessonId={currentQuizContext.lessonId}
+                    lessonTitle={currentQuizContext.lessonTitle}
                     onClose={() => setIsQuizManagerOpen(false)}
                   />
                 </div>

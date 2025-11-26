@@ -45,6 +45,7 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
 
   const [durationValue, setDurationValue] = useState("");
   const [durationUnit, setDurationUnit] = useState("day"); // "day" | "month" | "year"
+  const [errors, setErrors] = useState({});
 
   // Load categories
   useEffect(() => {
@@ -103,7 +104,7 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
           value: durationValue,
         },
       });
-    } catch {}
+    } catch { }
   }, [
     title,
     description,
@@ -155,9 +156,17 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
       return;
     }
 
-    if (!title.trim()) return alert("Title is required.");
-    if (!newCategory && !category) return alert("Please select or enter a category.");
 
+    const newErrors = {};
+
+    if (!title.trim()) newErrors.title = "Title is required";
+    if (!newCategory && !category) newErrors.category = "Category is required";
+    if (price === "" || Number(price) < 0) newErrors.price = "Price must be a positive number";
+    if (!description.trim()) newErrors.description = "Description is required";
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) return;
     try {
       setSaving(true);
 
@@ -228,7 +237,7 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
         <CardContent className="mt-10">
           <div className="space-y-3">
             <div className="font-semibold text-gray-700">Upload thumbnail</div>
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-2 bg-white shadow-sm relative">
+            <div className="border-2 border-dashed border-gray-300 rounded-xl bg-white shadow-sm relative">
               <input
                 id="fileInput"
                 type="file"
@@ -242,7 +251,7 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                   <img
                     src={thumbnailPreview || existingThumbnailUrl}
                     alt="thumbnail"
-                    className="object-cover w-full h-[250px]"
+                    className="object-cover w-full h-[250px] rounded-xl"
                   />
                 ) : (
                   <div className="flex flex-col items-center justify-center min-h-[250px]">
@@ -272,22 +281,28 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
             </div>
           </div>
 
+
           <div className="grid grid-cols-2 gap-4 mt-5">
             <div>
-              <Label htmlFor="title" className="mb-2">
-                Course Title
+              <Label htmlFor="title" className={`mb-2 ${errors.title ? "text-red-600 font-semibold" : ""}`}>
+                Course Title <span className="text-red-500">*</span>
               </Label>
+
               <Input
                 id="title"
                 disabled={!isEditable}
                 value={title}
                 onChange={(e) => isEditable && setTitle(e.target.value)}
+                className={errors.title ? "border-red-600 ring-red-600" : ""}
               />
+
+              {errors.title && <p className="text-red-600 text-sm mt-1">{errors.title}</p>}
             </div>
 
+
             <div>
-              <Label htmlFor="price" className="mb-2">
-                Price (VND)
+              <Label htmlFor="price" className={`mb-2 ${errors.price ? "text-red-600 font-semibold" : ""}`}>
+                Price (VND) <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="price"
@@ -296,10 +311,13 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                 value={price}
                 onChange={(e) => isEditable && setPrice(e.target.value)}
               />
+              {errors.price && <p className="text-red-600 text-sm mt-1">{errors.price}</p>}
             </div>
 
             <div>
-              <Label className="mb-2">Category</Label>
+              <Label className={`mb-2 ${errors.category ? "text-red-600 font-semibold" : ""}`}>
+                Category <span className="text-red-500">*</span>
+              </Label>
 
               <Select
                 disabled={!isEditable}
@@ -307,12 +325,14 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                 onValueChange={(v) => {
                   if (!isEditable) return;
                   setCategory(v);
-                  setNewCategory(""); // xoá category mới nếu chọn category cũ
+                  setNewCategory("");
+                  setErrors((prev) => ({ ...prev, category: null }));
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger className={errors.category ? "border-red-600 ring-red-600" : ""}>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
+
                 <SelectContent>
                   {categories.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
@@ -322,31 +342,12 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                 </SelectContent>
               </Select>
 
-              <div className="mt-2">
-                <Label htmlFor="newCategory" className="text-sm mb-2">
-                  Or enter new category
-                </Label>
-                <Input
-                  id="newCategory"
-                  disabled={!isEditable}
-                  value={newCategory}
-                  placeholder="New category..."
-                  onChange={(e) => {
-                    if (!isEditable) return;
-                    const value = e.target.value;
-                    setNewCategory(value);
-
-                    // Nếu nhập mới → bỏ chọn category cũ
-                    if (value.trim() !== "") {
-                      setCategory("");
-                    }
-                  }}
-                />
-              </div>
+              <p className="text-red-600 text-sm mt-1">{errors.category}</p>
             </div>
 
+
             <div>
-              <Label htmlFor="durationValue" className="mb-2">
+              <Label htmlFor="description" className={`mb-2 ${errors.description ? "text-red-600 font-semibold" : ""}`}>
                 Duration
               </Label>
               <div className="flex gap-2">
@@ -374,7 +375,7 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
 
             <div>
               <Label htmlFor="description" className="mb-2">
-                Description
+                Description  <span className="text-red-500">*</span>
               </Label>
               <Textarea
                 id="description"
@@ -382,6 +383,9 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                 value={description}
                 onChange={(e) => isEditable && setDescription(e.target.value)}
               />
+              {errors.description && (
+                <p className="text-red-600 text-sm mt-1">{errors.description}</p>
+              )}
             </div>
           </div>
 
