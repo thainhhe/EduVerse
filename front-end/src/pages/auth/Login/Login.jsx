@@ -60,14 +60,27 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 bg-white shadow-xl rounded-2xl overflow-hidden">
         <div className="hidden lg:flex bg-gradient-to-br from-indigo-600 to-purple-600 items-center justify-center p-8">
-          <img src="/login.png" alt="Online learning" className="w-full max-w-md" />
+          <img
+            src="/login.png"
+            alt="Online learning"
+            className="w-full max-w-md"
+          />
         </div>
         <div className="p-6 sm:p-8 lg:p-12 flex flex-col justify-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-6 text-center lg:text-left">Sign in</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-6 text-center lg:text-left">
+            Sign in
+          </h2>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-5"
+            noValidate
+            autoComplete="off"
+          >
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">
+                Email<span className="text-red-500 -ml-1">*</span>
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -75,16 +88,20 @@ const Login = () => {
                 className="bg-gray-50"
                 {...register("email")}
               />
-              {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+              {errors.email && (
+                <p className="text-sm text-red-500">{errors.email.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">
+                Password<span className="text-red-500 -ml-1">*</span>
+              </Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter at least 8+ characters"
+                  placeholder="Enter at least 6 characters"
                   className="bg-gray-50 pr-10"
                   {...register("password")}
                 />
@@ -96,7 +113,11 @@ const Login = () => {
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
               </div>
-              {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+              {errors.password && (
+                <p className="text-sm text-red-500">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -109,7 +130,10 @@ const Login = () => {
                 />
                 Remember me
               </label>
-              <Link to="/forgot-password" className="text-sm font-medium text-primary hover:underline">
+              <Link
+                to="/forgot-password"
+                className="text-sm font-medium text-primary hover:underline"
+              >
                 Forgot password?
               </Link>
             </div>
@@ -128,7 +152,9 @@ const Login = () => {
                 <span className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or sign in with</span>
+                <span className="px-2 bg-white text-gray-500">
+                  Or sign in with
+                </span>
               </div>
             </div>
 
@@ -145,7 +171,10 @@ const Login = () => {
 
             <p className="text-center text-sm text-gray-600 pt-2">
               Don't have an account?{" "}
-              <Link to="/register-learner" className="text-primary font-semibold hover:underline">
+              <Link
+                to="/register-learner"
+                className="text-indigo-600 font-semibold hover:underline"
+              >
                 Sign up
               </Link>
             </p>

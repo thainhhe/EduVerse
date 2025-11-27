@@ -8,9 +8,11 @@ const CourseCardPublish = ({ course }) => {
   console.log("c:", course);
   const navigate = useNavigate();
   const mainInstructor = course?.main_instructor?.username || "Giảng viên";
-  const price = course?.price ? course.price.toLocaleString("vi-VN") + "đ" : "Miễn phí";
+  const price = course?.price
+    ? course.price.toLocaleString("vi-VN") + "đ"
+    : "Miễn phí";
   const rating = course?.rating || 0;
-  const enrolls = course?.totalEnrollments || 0;
+  const enrolls = course?.studentsEnrolled ?? course?.totalEnrollments ?? 0;
   const lastUpdated = course?.lastUpdated ?? "Không rõ";
   const isDeleted = course?.isDeleted;
 

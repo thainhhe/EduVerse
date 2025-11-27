@@ -17,12 +17,13 @@ export const ConfirmationHelper = ({
     description = "Bạn có chắc chắn muốn thực hiện hành động này không?",
     confirmText = "Xác nhận",
     cancelText = "Hủy",
+    confirmBgColor = "bg-red-500 hover:bg-red-600 text-white",
+    cancelBgColor = "bg-gray-500 hover:bg-gray-600 text-white",
     onConfirm,
 }) => {
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                {/* Ngăn trigger bubble */}
                 {React.cloneElement(trigger, {
                     onClick: (e) => {
                         e.stopPropagation();
@@ -38,12 +39,12 @@ export const ConfirmationHelper = ({
                 </AlertDialogHeader>
 
                 <AlertDialogFooter>
-                    <AlertDialogCancel className="border-gray-300" onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogCancel className={cancelBgColor} onClick={(e) => e.stopPropagation()}>
                         {cancelText}
                     </AlertDialogCancel>
 
                     <AlertDialogAction
-                        className="bg-red-500 hover:bg-red-600 text-white"
+                        className={confirmBgColor}
                         onClick={(e) => {
                             e.stopPropagation();
                             onConfirm && onConfirm(e);

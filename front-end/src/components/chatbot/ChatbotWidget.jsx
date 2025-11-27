@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { sendChatQuery } from "../../services/chatbotService";
+import { streamChatQuery } from "../../services/chatbotService";
 
 const widgetBox = {
   position: "fixed",
@@ -50,6 +50,7 @@ export const ChatbotWidget = () => {
   ]);
   const [value, setValue] = useState("");
   const [loading, setLoading] = useState(false);
+  const [currentBotMessageId, setCurrentBotMessageId] = useState(null);
   const listRef = useRef(null);
 
   useEffect(() => {
@@ -61,19 +62,14 @@ export const ChatbotWidget = () => {
     if (!text)
       return { numbered: false, paragraphs: [], bullets: [], source: null };
 
-    // If text contains numbered list items (e.g. "1. ...\n2. ..."), parse per-item
     if (/\n\s*\d+\.\s/.test("\n" + text)) {
       const rawItems = text
         .split(/\n\s*(?=\d+\.\s)/)
         .map((s) => s.trim())
         .filter(Boolean);
       const items = rawItems.map((item) => {
-        // remove leading "1. " prefix
         const m = item.match(/^\s*\d+\.\s*(.*)$/s);
         let body = m ? m[1].trim() : item;
-
-        // Extract a "Nguồn: ..." fragment if present in this item's body.
-        // We look for the last occurrence of the token 'Nguồn' to avoid grabbing following items.
         const srcIdx = body.search(/Nguồn\s*[:\-–]\s*/i);
         let source = null;
         if (srcIdx !== -1) {
@@ -83,8 +79,6 @@ export const ChatbotWidget = () => {
             .trim();
           body = body.slice(0, srcIdx).trim();
         }
-
-        // Clean markdown bullets/asterisks and surrounding punctuation
         body = body
           .replace(/^\s*[\*\-]+\s*/, "")
           .replace(/^\*+|\*+$/g, "")
@@ -94,24 +88,19 @@ export const ChatbotWidget = () => {
             .replace(/^\*+|\*+$/g, "")
             .replace(/[\)\s]+$/g, "")
             .trim();
-
-        // Normalize inline markdown emphasis
         body = body
           .replace(/\*\*(.+?)\*\*/gs, "$1")
           .replace(/\*(.+?)\*/gs, "$1");
-
         return { content: body, source };
       });
 
       return { numbered: true, items };
     }
 
-    // Fallback: original single-document parsing (paragraphs/bullets + global source)
     const rawLines = text.split(/\r?\n/);
     const lines = rawLines.map((l) => l.replace(/^\s+|\s+$/g, ""));
 
     let source = null;
-
     for (let i = lines.length - 1; i >= 0; i--) {
       const withoutBullet = lines[i].replace(/^(\*+|\-|\u2022)\s*/, "").trim();
       const normalized = withoutBullet.replace(/^[\(\*\s]+|[\)\*\s]+$/g, "");
@@ -190,36 +179,94 @@ export const ChatbotWidget = () => {
     if (!text) return;
     const userMsg = { sender: "user", text };
 
-    // append user message immediately
-    setMessages((s) => [...s, userMsg]);
+    const tempBotMsgId = Date.now();
+
+    // Append user message and placeholder bot message
+    setMessages((s) => [
+      ...s,
+      userMsg,
+      { sender: "bot", text: "", id: tempBotMsgId },
+    ]);
+    setCurrentBotMessageId(tempBotMsgId);
     setValue("");
     setLoading(true);
 
-    // construct history that INCLUDES the new user message
-    const history = [...messages, userMsg].map((m) => ({
-      sender: m.sender,
-      text: m.text,
-    }));
+    // Construct simple history (optional)
+    const history = messages.map((m) => ({ sender: m.sender, text: m.text }));
+
+    // Handlers for streaming
+    const onChunk = (chunk) => {
+      setMessages((prevMessages) => {
+        // find the last message with the matching id; fallback to last element
+        const idx = prevMessages.map((m) => m.id).lastIndexOf(tempBotMsgId);
+        if (idx !== -1) {
+          const updated = [...prevMessages];
+          updated[idx] = {
+            ...updated[idx],
+            text: (updated[idx].text || "") + chunk,
+          };
+          return updated;
+        }
+        const last = prevMessages[prevMessages.length - 1];
+        if (last && last.id === tempBotMsgId) {
+          return [
+            ...prevMessages.slice(0, -1),
+            { ...last, text: (last.text || "") + chunk },
+          ];
+        }
+        return prevMessages;
+      });
+    };
+
+    const onError = (errorMsg) => {
+      setMessages((prevMessages) => {
+        const idx = prevMessages.map((m) => m.id).lastIndexOf(tempBotMsgId);
+        if (idx !== -1) {
+          const updated = [...prevMessages];
+          updated[idx] = {
+            sender: "bot",
+            text: `Lỗi: ${errorMsg}`,
+            id: tempBotMsgId,
+          };
+          return updated;
+        }
+        return [
+          ...prevMessages,
+          { sender: "bot", text: `Lỗi: ${errorMsg}`, id: tempBotMsgId },
+        ];
+      });
+      setLoading(false);
+      setCurrentBotMessageId(null);
+    };
+
+    const onEnd = (finalData) => {
+      const reply = finalData?.reply ?? "";
+      setMessages((prevMessages) => {
+        const idx = prevMessages.map((m) => m.id).lastIndexOf(tempBotMsgId);
+        if (idx !== -1) {
+          const updated = [...prevMessages];
+          updated[idx] = { sender: "bot", text: reply, id: tempBotMsgId };
+          return updated;
+        }
+        return [
+          ...prevMessages,
+          { sender: "bot", text: reply, id: tempBotMsgId },
+        ];
+      });
+      setLoading(false);
+      setCurrentBotMessageId(null);
+    };
 
     try {
-      const data = await sendChatQuery(text, history);
-      const botText = data?.reply ?? "Xin lỗi, tôi đang gặp lỗi.";
-      // append bot reply
-      setMessages((s) => [...s, { sender: "bot", text: botText }]);
+      await streamChatQuery(text, history, onChunk, onEnd, onError);
     } catch (err) {
-      setMessages((s) => [
-        ...s,
-        { sender: "bot", text: "Lỗi kết nối. Vui lòng thử lại." },
-      ]);
-    } finally {
-      setLoading(false);
+      onError("Lỗi kết nối.");
     }
   };
 
   const renderBotMessage = (text, idx) => {
     const parsed = parseBotText(text);
 
-    // If we have numbered items, render each item separately with its own (per-item) source.
     if (parsed.numbered && Array.isArray(parsed.items)) {
       return (
         <div key={idx} style={{ marginBottom: 8, width: "100%" }}>
@@ -246,7 +293,6 @@ export const ChatbotWidget = () => {
       );
     }
 
-    // Existing render logic for non-numbered responses
     const { paragraphs, bullets, source } = parsed;
     return (
       <div key={idx} style={{ marginBottom: 8, width: "100%" }}>

@@ -9,6 +9,7 @@ import "react-toastify/dist/ReactToastify.css";
 import "./styles/global.css";
 import { EnrollmentProvider } from "./context/EnrollmentContext";
 import { LoadingProvider } from "./context/LoadingContext";
+import ScrollToTop from "@components/layout/ScrollToTop";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,6 +23,7 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
+      <ScrollToTop />
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <LoadingProvider>

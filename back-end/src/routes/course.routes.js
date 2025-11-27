@@ -40,6 +40,15 @@ courseRouter.put(
     upload.single("thumbnail"),
     courseController.updateCourse
 );
+
+// update status pending
+courseRouter.put(
+    "/update-status-pending/:id",
+    verifyToken,
+    // checkPermission(["admin", "instructor"], ["manage_course"]),
+    courseController.updateStatusPending
+);
+
 courseRouter.delete(
     "/delete/:id",
     verifyToken,

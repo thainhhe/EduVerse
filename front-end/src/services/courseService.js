@@ -9,6 +9,7 @@ export const getCollaborativeCourse = (id) => api.get(`/courses/instructor-colla
 export const getUerInCourse = (id) => api.get(`/courses/instructor/course-user/${id}`);
 export const createCourse = (payload) => api.post("/courses/create", payload);
 export const updateCourse = (id, payload) => api.put(`/courses/update/${id}`, payload);
+export const updateStatusPending = (id) => api.put(`/courses/update-status-pending/${id}`);
 export const deleteCourse = (id) => api.delete(`/courses/delete/${id}`);
 
 // Courses By Admin
@@ -80,8 +81,8 @@ export const getQuizzesByModule = (moduleId) => api.get(`/quiz/module/${moduleId
 export const getQuizzesByLesson = (lessonId) => api.get(`/quiz/lesson/${lessonId}`);
 
 // --- instructor dashboard stats ---
-export const getInstructorDashboard = (instructorId) => api.get(`/instructors/stat/${instructorId}`);
-
+export const getInstructorDashboard = (instructorId, params = {}) =>
+    api.get(`/instructors/stat/${instructorId}`, { params });
 export default {
     getAllCoursePublished,
     getPopularCourses,

@@ -60,7 +60,12 @@ const notificationRepository = {
     },
 
     countUnread: async (userId) => {
-        return await Notification.countDocuments({ receiverId: userId, isRead: false });
+        return await Notification.countDocuments({
+            $or: [
+                { receiverId: userId, isRead: false },
+                { isGlobal: true, isRead: false },
+            ],
+        });
     },
 };
 

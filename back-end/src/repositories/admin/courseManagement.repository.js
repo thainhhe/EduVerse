@@ -50,7 +50,7 @@ const courseManagementRepository = {
             const course = await Course.findById(courseId)
                 .populate("category")
                 .populate("main_instructor", "name email")
-                .populate("instructors.id", "name email")
+                .populate("instructors.user", "name email")
                 .lean();
 
             if (!course) return null;
@@ -148,7 +148,9 @@ const courseManagementRepository = {
                 .sort({ createdAt: -1 })
                 .lean();
             const totalReviews = reviews.length;
-            const averageRating = totalReviews ? reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews : 0;
+            const averageRating = totalReviews
+                ? reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews
+                : 0;
 
             // 12️⃣ Tổng số enrollments
             const totalEnrollments = await Enrollment.countDocuments({

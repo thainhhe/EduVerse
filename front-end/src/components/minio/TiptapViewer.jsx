@@ -118,12 +118,12 @@ const TiptapViewer = ({ fileUrl, fileName, mimeType, onClose }) => {
 
     return (
         <div className="tiptap-viewer-container">
-            <div className="tiptap-toolbar">
+            {/* <div className="tiptap-toolbar">
                 <button onClick={handleExportPdf} className="tiptap-btn">
                     <Download size={18} />
                     Download as PDF
                 </button>
-            </div>
+            </div> */}
             <div className="tiptap-scroll-area">
                 <div className="tiptap-paper">
                     <EditorContent editor={editor} />

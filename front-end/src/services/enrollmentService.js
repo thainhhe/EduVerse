@@ -13,6 +13,11 @@ export const enrollmentService = {
     return res.data;
   },
 
+  getEnrollmentsDetailByUser: async (userId) => {
+    const res = await api.get(`/enrollment/user/${userId}/detail`);
+    return res.data?.data ?? res.data;
+  },
+
   createEnrollment: async (data) => {
     console.log("Enrollment data:", data);
     const res = await api.post(`/enrollment`, data);

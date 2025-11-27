@@ -53,6 +53,8 @@ import RoomList from "./pages/learner/RoomList/RoomList";
 import ForumManagement from "./pages/instructor/forum/ForumInstructor";
 import LearnerList from "./pages/instructor/MyCourse/Learner/LearnerList";
 import { ChatbotWidget } from "./components/chatbot/ChatbotWidget";
+import NotificationManagementPage from "./pages/admin/NotificationManagement/NotificationManagementPage";
+import ReviewPage from "./pages/instructor/MyCourse/Reviews/ReviewPage";
 function App() {
     const { loading } = useAuth();
 
@@ -127,6 +129,7 @@ function App() {
                         <Route path="forums" element={<ForumManagement />} />
                         <Route path="learners" element={<LearnerList />} />
                         <Route path="permissions" element={<PermissionsPage />} />
+                        <Route path="reviews" element={<ReviewPage />} />
                     </Route>
                     {/* <Route path="permission" element={<PermissionsPage />} /> */}
                     <Route path="comment-thread" element={<CommentThread />} />
@@ -165,6 +168,7 @@ function App() {
                     {/* Admin management pages */}
                     <Route path="chatbot" element={<ChatbotManagementPage />} />
                     <Route path="comments" element={<CommentManagementPage />} />
+                    <Route path="notifications" element={<NotificationManagementPage />} />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />

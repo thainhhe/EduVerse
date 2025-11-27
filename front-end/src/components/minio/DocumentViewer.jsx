@@ -86,7 +86,8 @@ const DocumentViewer = ({ file, onClose }) => {
         setScale((prev) => Math.max(0.5, prev - 0.2));
     };
 
-    const handleDownload = () => {
+    const handleDownload = (e) => {
+        e.stopPropagation();
         window.open(getDownloadUrl(file._id), "_blank");
     };
 
@@ -106,37 +107,57 @@ const DocumentViewer = ({ file, onClose }) => {
             </div>
 
             {isPDF && (
-                <div className="flex items-center justify-start gap-8">
+                <div className="flex items-center justify-start gap-6 bg-white p-2 rounded-xl shadow-sm border border-gray-200">
+                    {/* Pagination Controls */}
                     <div className="flex items-center gap-2">
-                        <button className="" onClick={goToPrevPage} disabled={pageNumber <= 1}>
-                            <ChevronLeft size={20} />
+                        <button
+                            onClick={goToPrevPage}
+                            disabled={pageNumber <= 1}
+                            className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-transparent transition"
+                        >
+                            <ChevronLeft size={18} />
                         </button>
-                        <span className="">
-                            Page {pageNumber} of {numPages || "..."}
+
+                        <span className="text-sm font-medium text-gray-700">
+                            Page {pageNumber} <span className="text-gray-400">/ {numPages || "..."}</span>
                         </span>
-                        <button className="" onClick={goToNextPage} disabled={pageNumber >= numPages}>
-                            <ChevronRight size={20} />
+
+                        <button
+                            onClick={goToNextPage}
+                            disabled={pageNumber >= numPages}
+                            className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-transparent transition"
+                        >
+                            <ChevronRight size={18} />
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <button className="" onClick={zoomOut}>
-                            <ZoomOut size={20} />
+                    {/* Zoom Controls */}
+                    <div className="flex items-center gap-2 border-l pl-6">
+                        <button onClick={zoomOut} className="p-2 rounded-lg hover:bg-gray-100 transition">
+                            <ZoomOut size={18} />
                         </button>
-                        <span className="">{Math.round(scale * 100)}%</span>
-                        <button className="" onClick={zoomIn}>
-                            <ZoomIn size={20} />
+
+                        <span className="text-sm font-medium text-gray-700 w-10 text-center">
+                            {Math.round(scale * 100)}%
+                        </span>
+
+                        <button onClick={zoomIn} className="p-2 rounded-lg hover:bg-gray-100 transition">
+                            <ZoomIn size={18} />
                         </button>
                     </div>
 
-                    <button className="flex items-center gap-2" onClick={handleDownload}>
-                        <Download size={20} />
-                        Download
-                    </button>
+                    {/* Download button (optional) */}
+                    {/* <button
+        onClick={(e) => handleDownload(e)}
+        className="flex items-center gap-2 ml-auto px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition text-sm font-medium"
+    >
+        <Download size={18} />
+        Download
+    </button> */}
                 </div>
             )}
 
-            <div className="flex-1">
+            <div className="flex-1 mt-4">
                 {isPDF ? (
                     <Document
                         file={fileConfig}
@@ -145,9 +166,9 @@ const DocumentViewer = ({ file, onClose }) => {
                         error={
                             <div className="flex items-center justify-center">
                                 Failed to load PDF.
-                                <button onClick={handleDownload} className="">
+                                {/* <button onClick={handleDownload} className="">
                                     Download instead
-                                </button>
+                                </button> */}
                             </div>
                         }
                         options={pdfOptions}
@@ -187,9 +208,9 @@ const DocumentViewer = ({ file, onClose }) => {
                             Please save your file as <strong>.docx</strong> and upload again to view and
                             convert to PDF.
                         </p>
-                        <button onClick={handleDownload} className="">
+                        {/* <button onClick={handleDownload} className="">
                             Download Original File
-                        </button>
+                        </button> */}
                     </div>
                 ) : isOfficeSupported ? (
                     <div className="flex-1">
@@ -208,9 +229,9 @@ const DocumentViewer = ({ file, onClose }) => {
                 ) : (
                     <div className="flex-1">
                         <p>Preview not available for this file type.</p>
-                        <button onClick={handleDownload} className="">
+                        {/* <button onClick={(e) => handleDownload(e)} className="">
                             Download to view
-                        </button>
+                        </button> */}
                     </div>
                 )}
             </div>
