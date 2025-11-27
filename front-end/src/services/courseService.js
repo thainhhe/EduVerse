@@ -9,6 +9,7 @@ export const getCollaborativeCourse = (id) => api.get(`/courses/instructor-colla
 export const getUerInCourse = (id) => api.get(`/courses/instructor/course-user/${id}`);
 export const createCourse = (payload) => api.post("/courses/create", payload);
 export const updateCourse = (id, payload) => api.put(`/courses/update/${id}`, payload);
+export const updateStatusPending = (id) => api.put(`/courses/update-status-pending/${id}`);
 export const deleteCourse = (id) => api.delete(`/courses/delete/${id}`);
 
 // Courses By Admin

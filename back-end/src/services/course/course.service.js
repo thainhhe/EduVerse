@@ -352,6 +352,25 @@ const courseService = {
             throw new Error(error);
         }
     },
+
+    updateStatusPending: async (id) => {
+        try {
+            if (!id)
+                return {
+                    status: system_enum.STATUS_CODE.CONFLICT,
+                    message: course_enum.COURSE_MESSAGE.INVALID_OBJECT_ID,
+                };
+            const result = await courseRepository.updateStatusPending(id);
+            return {
+                status: system_enum.STATUS_CODE.OK,
+                message: course_enum.COURSE_MESSAGE.UPDATE_SUCCESS,
+                data: result,
+            };
+        } catch (error) {
+            throw new Error(error);
+        }
+    },
+
     deleteCourse: async (id) => {
         try {
             if (!id)

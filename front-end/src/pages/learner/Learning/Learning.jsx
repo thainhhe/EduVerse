@@ -129,7 +129,13 @@ const Learning = () => {
 
             <div className="flex-1 p-6 border-l border-gray-200 overflow-y-auto">
                 {selectedItem?.type === "lesson" && (
-                    <LessonContent lesson={selectedItem.data} course={course} />
+                    <LessonContent
+                        lesson={selectedItem.data}
+                        course={course}
+                        module={course.modules?.find((m) =>
+                            m.lessons?.some((l) => l._id === selectedItem.data._id)
+                        )}
+                    />
                 )}
 
                 {selectedItem?.type === "quiz" && !checkingQuiz && quizStatus && (
