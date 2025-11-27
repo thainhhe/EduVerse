@@ -93,7 +93,7 @@ const LessonMaterialModal = ({ open, onOpenChange, lessonId }) => {
                     )}
 
                     {selectedDocument && (
-                        <div className="mt-6 border rounded-lg overflow-hidden bg-white shadow-lg">
+                        <div className="mt-6 border rounded-lg overflow-y-auto max-h-[500px] bg-white shadow-lg">
                             <div className="flex items-center justify-between p-3 bg-gray-50 border-b">
                                 <span className="text-sm font-medium text-gray-700 truncate">
                                     {selectedDocument.originalName}

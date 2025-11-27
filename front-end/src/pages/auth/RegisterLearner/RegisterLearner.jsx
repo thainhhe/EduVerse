@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // added
 
 const RegisterLearner = () => {
   const { register: registerUser } = useAuth();
@@ -16,21 +17,56 @@ const RegisterLearner = () => {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(registerLearnerSchema),
   });
 
-  const onSubmit = async (data) => {
-    const result = await registerUser({
-      username: data.fullName, // send username to match backend validator
-      email: data.email,
-      password: data.password,
-      role: "learner",
-    });
+  const [showPassword, setShowPassword] = useState(false); // added
+  const [showConfirm, setShowConfirm] = useState(false); // added
 
-    if (result.success) {
-      navigate("/login");
+  const onSubmit = async (data) => {
+    try {
+      const result = await registerUser({
+        username: data.fullName, // send username to match backend validator
+        email: data.email,
+        password: data.password,
+        role: "learner",
+      });
+
+      if (result.success) {
+        navigate("/login");
+      } else {
+        // if service returns validation-like payload
+        if (result?.errors) {
+          Object.keys(result.errors).forEach((k) => {
+            const msg = result.errors[k];
+            const field = k === "username" ? "fullName" : k;
+            setError(field, { type: "server", message: msg });
+          });
+        } else if (result?.message) {
+          toast.error(result.message);
+        }
+      }
+    } catch (err) {
+      // axios / network error -> inspect and map server-side validation
+      const res = err.response?.data;
+      if (res?.errors && typeof res.errors === "object") {
+        for (const key in res.errors) {
+          if (!Object.prototype.hasOwnProperty.call(res.errors, key)) continue;
+          const message = res.errors[key] || String(res.errors[key]);
+          const field = key === "username" ? "fullName" : key;
+          setError(field, { type: "server", message });
+        }
+      } else if (res?.message) {
+        toast.error(res.message);
+      } else {
+        toast.error(err.message || "Registration failed");
+      }
+      // keep console for debugging
+      // eslint-disable-next-line no-console
+      console.error("Register error:", err);
     }
   };
 
@@ -58,14 +94,20 @@ const RegisterLearner = () => {
           <form
             onSubmit={handleSubmit(onSubmit)}
             noValidate
+            autoComplete="off"
             className="space-y-4"
           >
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="fullName">
+                Full Name<span className="text-red-500 -ml-1">*</span>
+              </Label>
               <Input
                 id="fullName"
                 placeholder="Full Name"
                 {...register("fullName")}
+                required
+                maxLength={50}
+                aria-invalid={!!errors.fullName}
               />
               {errors.fullName && (
                 <p className="text-sm text-red-600 mt-1">
@@ -75,12 +117,17 @@ const RegisterLearner = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email">
+                Email Address<span className="text-red-500 -ml-1">*</span>
+              </Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="Email Address"
                 {...register("email")}
+                required
+                autoComplete="email"
+                aria-invalid={!!errors.email}
               />
               {errors.email && (
                 <p className="text-sm text-red-600 mt-1">
@@ -92,13 +139,29 @@ const RegisterLearner = () => {
             {/* Responsive grid for passwords */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Password"
-                  {...register("password")}
-                />
+                <Label htmlFor="password">
+                  Password<span className="text-red-500 -ml-1">*</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password"
+                    className="pr-10"
+                    {...register("password")}
+                    required
+                    minLength={6}
+                    maxLength={50}
+                    aria-invalid={!!errors.password}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
                 {errors.password && (
                   <p className="text-sm text-red-600 mt-1">
                     {errors.password.message}
@@ -107,13 +170,29 @@ const RegisterLearner = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Password"
-                  {...register("confirmPassword")}
-                />
+                <Label htmlFor="confirmPassword">
+                  Confirm Password<span className="text-red-500 -ml-1">*</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirm ? "text" : "password"}
+                    placeholder="Password"
+                    className="pr-10"
+                    {...register("confirmPassword")}
+                    required
+                    minLength={6}
+                    maxLength={50}
+                    aria-invalid={!!errors.confirmPassword}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showConfirm ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
                 {errors.confirmPassword && (
                   <p className="text-sm text-red-600 mt-1">
                     {errors.confirmPassword.message}

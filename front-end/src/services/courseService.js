@@ -81,8 +81,8 @@ export const getQuizzesByModule = (moduleId) => api.get(`/quiz/module/${moduleId
 export const getQuizzesByLesson = (lessonId) => api.get(`/quiz/lesson/${lessonId}`);
 
 // --- instructor dashboard stats ---
-export const getInstructorDashboard = (instructorId) => api.get(`/instructors/stat/${instructorId}`);
-
+export const getInstructorDashboard = (instructorId, params = {}) =>
+    api.get(`/instructors/stat/${instructorId}`, { params });
 export default {
     getAllCoursePublished,
     getPopularCourses,

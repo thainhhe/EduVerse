@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, ChevronDown, FileText, Info, Eye } from "luc
 import { getFilesByLessonId } from "@/services/minio";
 import VideoPlayer from "@/components/minio/VideoPlayer";
 import DocumentViewer from "@/components/minio/DocumentViewer";
+import FileList from "@/components/minio/FileList";
 
 const LessonContent = ({ lesson, course, module }) => {
     const [files, setFiles] = useState([]);
@@ -211,22 +212,6 @@ const LessonContent = ({ lesson, course, module }) => {
                     <div className="bg-white rounded-lg border border-gray-100 shadow-sm">
                         {selectedDocument ? (
                             <div className="flex flex-col h-[600px]">
-                                <div className="bg-gray-50 px-4 py-3 border-b flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <FileText className="h-5 w-5 text-indigo-600" />
-                                        <span className="font-medium text-gray-700">
-                                            {selectedDocument.originalName}
-                                        </span>
-                                    </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setSelectedDocument(null)}
-                                        className="text-gray-500 hover:text-gray-700"
-                                    >
-                                        Close Viewer
-                                    </Button>
-                                </div>
                                 <div className="flex-1 bg-gray-100">
                                     <DocumentViewer
                                         file={selectedDocument}
@@ -235,35 +220,14 @@ const LessonContent = ({ lesson, course, module }) => {
                                 </div>
                             </div>
                         ) : (
-                            <div className="p-6">
+                            <div className="px-6 w-full">
                                 {lessonDocuments.length > 0 ? (
-                                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                        {lessonDocuments.map((doc) => (
-                                            <div
-                                                key={doc._id}
-                                                onClick={() => handleFileClick(doc)}
-                                                className="group relative flex items-start gap-4 p-4 rounded-xl border border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all cursor-pointer"
-                                            >
-                                                <div className="flex-shrink-0 p-3 bg-indigo-50 text-indigo-600 rounded-lg group-hover:bg-indigo-100 transition-colors">
-                                                    <FileText className="h-6 w-6" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-medium text-gray-900 truncate group-hover:text-indigo-700 transition-colors">
-                                                        {doc.originalName}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500 mt-1">
-                                                        {(doc.size / 1024 / 1024).toFixed(2)} MB &bull;{" "}
-                                                        {new Date(doc.createdAt).toLocaleDateString()}
-                                                    </p>
-                                                    <div className="flex items-center gap-3 mt-3">
-                                                        <span className="text-xs font-medium text-indigo-600 flex items-center gap-1 group-hover:underline">
-                                                            <Eye className="h-3 w-3" /> Preview
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    <FileList
+                                        files={lessonDocuments}
+                                        onFileClick={handleFileClick}
+                                        onFileDeleted={() => {}}
+                                        canDelete={false}
+                                    />
                                 ) : (
                                     <div className="text-center py-12">
                                         <div className="mx-auto h-12 w-12 text-gray-300 mb-3">

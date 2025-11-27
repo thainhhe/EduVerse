@@ -72,26 +72,26 @@ const BuilderInner = () => {
                                     }
                                     onConfirm={handleDeleteDraft}
                                 />
-                                {sessionCourse?.status === "draft" ||
-                                    (sessionCourse?.status === "reject" && (
-                                        <ConfirmationHelper
-                                            trigger={
-                                                <Button
-                                                    variant="ghost"
-                                                    className="text-sm px-4 py-2 rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 transition-all"
-                                                >
-                                                    <Send className="h-4 w-4 mr-2" /> Submit Course
-                                                </Button>
-                                            }
-                                            title="Submit Course"
-                                            description="Are you sure you want to submit this course?"
-                                            confirmText="Submit"
-                                            cancelText="Cancel"
-                                            confirmBgColor="bg-indigo-500 hover:bg-indigo-600 text-white"
-                                            cancelBgColor="bg-gray-500 hover:bg-gray-600 text-white"
-                                            onConfirm={handleSubmitCourse}
-                                        />
-                                    ))}
+                                {(sessionCourse?.status === "draft" ||
+                                    sessionCourse?.status === "reject") && (
+                                    <ConfirmationHelper
+                                        trigger={
+                                            <Button
+                                                variant="ghost"
+                                                className="text-sm px-4 py-2 rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 transition-all"
+                                            >
+                                                <Send className="h-4 w-4 mr-2" /> Submit Course
+                                            </Button>
+                                        }
+                                        title="Submit Course"
+                                        description="Are you sure you want to submit this course?"
+                                        confirmText="Submit"
+                                        cancelText="Cancel"
+                                        confirmBgColor="bg-indigo-500 hover:bg-indigo-600 text-white"
+                                        cancelBgColor="bg-gray-500 hover:bg-gray-600 text-white"
+                                        onConfirm={handleSubmitCourse}
+                                    />
+                                )}
                             </>
                         )}
                         <div className="flex items-center gap-2 text-sm text-muted-foreground bg-gray-100 px-3 py-1.5 rounded-full">

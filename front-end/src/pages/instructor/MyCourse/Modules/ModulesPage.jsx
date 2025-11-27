@@ -15,6 +15,7 @@ import {
     Trash2,
     Eye,
     TextAlignJustify,
+    ScrollText,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useLocation, useParams } from "react-router-dom";
@@ -363,21 +364,21 @@ const ModulesPage = () => {
                                             className="flex items-center justify-between p-5 cursor-pointer group"
                                             onClick={() => toggleModule(module.id)}
                                         >
-                                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                                            <div className="flex gap-4 flex-1 min-w-0">
                                                 <div
                                                     className={cn(
-                                                        "flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300",
+                                                        "flex items-center justify-center w-12 h-12 transition-all duration-300",
                                                         isExpanded
-                                                            ? "bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-md"
-                                                            : "bg-gradient-to-br from-gray-100 to-gray-200 group-hover:from-indigo-100 group-hover:to-indigo-200"
+                                                            ? "text-gradient-to-br from-indigo-500 to-indigo-600"
+                                                            : "text-gradient-to-br from-gray-100 to-gray-200 group-hover:from-indigo-100 group-hover:to-indigo-200"
                                                     )}
                                                 >
                                                     <span
                                                         className={cn(
                                                             "text-lg font-bold transition-colors",
                                                             isExpanded
-                                                                ? "text-white"
-                                                                : "text-gray-600 group-hover:text-indigo-600"
+                                                                ? "text-indigo-600"
+                                                                : "text-gray-600 group-hover:text-indigo-600 hover:text-indigo-600"
                                                         )}
                                                     >
                                                         <TextAlignJustify />
@@ -389,18 +390,22 @@ const ModulesPage = () => {
                                                             {module.name}
                                                         </h3>
                                                         <div className="flex items-center gap-2">
-                                                            <Badge
-                                                                variant="secondary"
-                                                                className="bg-blue-50 text-blue-700 border-blue-200 text-xs"
-                                                            >
-                                                                {module.lessons.length} lessons
-                                                            </Badge>
-                                                            <Badge
-                                                                variant="secondary"
-                                                                className="bg-purple-50 text-purple-700 border-purple-200 text-xs"
-                                                            >
-                                                                {moduleQuizCounts[module.id] ?? 0} quizzes
-                                                            </Badge>
+                                                            {module.lessons.length > 0 && (
+                                                                <Badge
+                                                                    variant="secondary"
+                                                                    className="bg-blue-50 text-blue-700 border-blue-200 text-xs"
+                                                                >
+                                                                    {module.lessons.length} lessons
+                                                                </Badge>
+                                                            )}
+                                                            {moduleQuizCounts[module.id] > 0 && (
+                                                                <Badge
+                                                                    variant="secondary"
+                                                                    className="bg-purple-50 text-purple-700 border-purple-200 text-xs"
+                                                                >
+                                                                    {moduleQuizCounts[module.id]} quizzes
+                                                                </Badge>
+                                                            )}
                                                         </div>
                                                     </div>
                                                     <p className="text-sm text-gray-600 line-clamp-1 break-all">
@@ -536,14 +541,14 @@ const ModulesPage = () => {
                                                                 <div className="flex items-center justify-between gap-4">
                                                                     <div className="flex items-center gap-4 flex-1 min-w-0">
                                                                         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-100 to-indigo-200 text-indigo-700 font-semibold text-sm flex-shrink-0">
-                                                                            {lessonIndex + 1}
+                                                                            <ScrollText />
                                                                         </div>
                                                                         <div className="flex-1 min-w-0">
                                                                             <div className="flex items-center gap-2 mb-1">
                                                                                 <h4 className="font-semibold text-gray-900 truncate">
                                                                                     {lesson.title}
                                                                                 </h4>
-                                                                                <Badge
+                                                                                {/* <Badge
                                                                                     variant={
                                                                                         lesson.status ===
                                                                                         "published"
@@ -559,7 +564,7 @@ const ModulesPage = () => {
                                                                                     )}
                                                                                 >
                                                                                     {lesson.status}
-                                                                                </Badge>
+                                                                                </Badge> */}
                                                                                 <span className="text-xs text-gray-500">
                                                                                     {lessonQuizCounts[
                                                                                         lesson.id

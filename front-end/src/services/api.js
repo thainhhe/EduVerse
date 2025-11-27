@@ -14,6 +14,7 @@ const SILENT_ENDPOINTS = [
     "/messages",
     "/complete",
     "/uncomplete",
+    "/quiz",
 ];
 
 const shouldSkipLoading = (config) => {

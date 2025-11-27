@@ -85,7 +85,12 @@ const ResetPassword = () => {
           Please kindly set your new password.
         </p>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 text-left">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-5 text-left"
+          noValidate
+          autoComplete="off"
+        >
           <div className="space-y-2">
             <Label htmlFor="password">New password</Label>
             <Input id="password" type="password" {...register("password")} />
