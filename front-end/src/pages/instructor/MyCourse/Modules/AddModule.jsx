@@ -98,7 +98,9 @@ export function AddModuleModal({
               name="moduleTitle"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="!text-gray-900">Module Title</FormLabel>
+                  <FormLabel className="!text-gray-900">
+                    Module Title<span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="e.g., Introduction to Marketing"
@@ -117,7 +119,7 @@ export function AddModuleModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="!text-gray-900">
-                    Module Description
+                    Module Description<span className="text-red-500">*</span>
                   </FormLabel>
                   <FormControl>
                     <Textarea

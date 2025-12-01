@@ -18,6 +18,7 @@ export const getPermissions = () => api.get(`/users/permission`);
 export const assignPermission = (payload) => api.put(`/users/permission`, payload);
 export const invitePermission = (payload) => api.post(`/users/permission/invite`, payload);
 
+export const getAllUser = () => api.get(`/admin/manage-user`);
 export default {
     getAllUsers,
     getUserById,

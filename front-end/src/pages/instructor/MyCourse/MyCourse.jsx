@@ -118,10 +118,10 @@ const MyCourse = () => {
             const arr = Array.isArray(payload?.data)
               ? payload.data
               : Array.isArray(payload)
-              ? payload
-              : Array.isArray(payload?.data?.data)
-              ? payload.data.data
-              : [];
+                ? payload
+                : Array.isArray(payload?.data?.data)
+                  ? payload.data.data
+                  : [];
             return { ...c, studentsEnrolled: arr.length };
           } catch (err) {
             // on error keep existing count and continue
@@ -172,8 +172,8 @@ const MyCourse = () => {
     activeTab === "published"
       ? publishedList
       : activeTab === "unpublished"
-      ? unpublishedList
-      : collaborativeCourses;
+        ? unpublishedList
+        : collaborativeCourses;
   const paginated = currentList.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -242,47 +242,49 @@ const MyCourse = () => {
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between border-t border-border pt-6">
-              <p className="text-sm text-muted-foreground">
-                Displaying {(currentPage - 1) * itemsPerPage + 1} to{" "}
-                {Math.min(currentPage * itemsPerPage, total)} of {total} results
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (page) => (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "default" : "ghost"}
-                        size="sm"
-                        onClick={() => setCurrentPage(page)}
-                        className="h-8 w-8 p-0"
-                      >
-                        {page}
-                      </Button>
-                    )
-                  )}
+            {total > 0 ? <>
+              <div className="flex items-center justify-between border-t border-border pt-6">
+                <p className="text-sm text-muted-foreground">
+                  Displaying {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                  {Math.min(currentPage * itemsPerPage, total)} of {total} results
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (page) => (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className="h-8 w-8 p-0"
+                        >
+                          {page}
+                        </Button>
+                      )
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
               </div>
-            </div>
+            </> : <>Chưa có khóa học nào</>}
           </TabsContent>
 
           <TabsContent value="unpublished">
@@ -302,47 +304,50 @@ const MyCourse = () => {
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between border-t border-border pt-6">
-              <p className="text-sm text-muted-foreground">
-                Displaying {(currentPage - 1) * itemsPerPage + 1} to{" "}
-                {Math.min(currentPage * itemsPerPage, total)} of {total} results
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (page) => (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "default" : "ghost"}
-                        size="sm"
-                        onClick={() => setCurrentPage(page)}
-                        className="h-8 w-8 p-0"
-                      >
-                        {page}
-                      </Button>
-                    )
-                  )}
+            {total > 0 ? <>
+              <div className="flex items-center justify-between border-t border-border pt-6">
+                <p className="text-sm text-muted-foreground">
+                  Displaying {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                  {Math.min(currentPage * itemsPerPage, total)} of {total} results
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (page) => (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className="h-8 w-8 p-0"
+                        >
+                          {page}
+                        </Button>
+                      )
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
               </div>
-            </div>
+            </> : <>Chưa có khóa học </>}
+
           </TabsContent>
           <TabsContent value="collaborative">
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-6">
@@ -352,47 +357,50 @@ const MyCourse = () => {
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between border-t border-border pt-6">
-              <p className="text-sm text-muted-foreground">
-                Displaying {(currentPage - 1) * itemsPerPage + 1} to{" "}
-                {Math.min(currentPage * itemsPerPage, total)} of {total} results
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (page) => (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "default" : "ghost"}
-                        size="sm"
-                        onClick={() => setCurrentPage(page)}
-                        className="h-8 w-8 p-0"
-                      >
-                        {page}
-                      </Button>
-                    )
-                  )}
+            {collaborativeCourses.length > 0 ? <>
+
+              <div className="flex items-center justify-between border-t border-border pt-6">
+                <p className="text-sm text-muted-foreground">
+                  Displaying {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                  {Math.min(currentPage * itemsPerPage, total)} of {total} results
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (page) => (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className="h-8 w-8 p-0"
+                        >
+                          {page}
+                        </Button>
+                      )
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
               </div>
-            </div>
+            </> : "Chưa có data"}
           </TabsContent>
         </Tabs>
       </div>

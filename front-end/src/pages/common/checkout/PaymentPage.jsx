@@ -408,8 +408,6 @@ const PaymentPage = () => {
 
     // 🔹 Lấy dữ liệu khóa học từ state
     const { courseId, courseTitle, coursePrice } = location.state || {};
-
-    console.log("courseId, courseTitle, coursePrice", courseId, courseTitle, coursePrice);
     const onSubmit = async () => {
         try {
             if (!user?._id) {
@@ -567,7 +565,7 @@ const PaymentPage = () => {
                                     <Button
                                         onClick={onSubmit}
                                         size="lg"
-                                        className="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium h-11"
+                                        className="w-full bg-indigo-600 hover:bg-indigo-800 text-white font-medium h-11"
                                     >
                                         Thanh toán
                                     </Button>

@@ -42,7 +42,7 @@ const seedData = async () => {
         await Review.deleteMany({});
         await Payment.deleteMany({});
 
-        const hashedPassword = await bcrypt.hash("123456", 10);
+        const hashedPassword = await bcrypt.hash("12345678", 10);
 
         console.log("Creating Users...");
         const users = [];

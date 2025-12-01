@@ -10,6 +10,7 @@ const SideBar = () => {
         { name: "Learner", path: "learners", key: "view_course_students" },
         { name: "Announcements", path: "announcements", key: "announcements" },
         { name: "Reviews", path: "reviews", key: "manage_reviews" },
+        { name: "Reports", path: "reports", key: "manage_reports" },
         { name: "Permissions", path: "permissions", key: "permissions" },
     ];
     const visibleNavItems = isMainInstructor
@@ -23,10 +24,9 @@ const SideBar = () => {
                         key={item.path}
                         to={item.path}
                         className={({ isActive }) =>
-                            `block w-full px-3 py-2 text-sm font-medium ${
-                                isActive
-                                    ? "bg-white text-indigo-600 border border-white border-l-2 border-l-indigo-600"
-                                    : "text-foreground hover:bg-muted"
+                            `block w-full px-3 py-2 text-sm font-medium ${isActive
+                                ? "bg-white text-indigo-600 border border-white border-l-2 border-l-indigo-600"
+                                : "text-foreground hover:bg-muted"
                             }`
                         }
                     >

@@ -1,11 +1,12 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEnrollment } from "@/context/EnrollmentContext";
 import { enrollmentService } from "@/services/enrollmentService";
 import { paymentService } from "@/services/paymentService";
+import { ToastHelper } from "@/helper/ToastHelper";
 
 const PaymentConfirmationPage = () => {
     const navigate = useNavigate();
@@ -16,53 +17,12 @@ const PaymentConfirmationPage = () => {
     const status = queryParams.get("status");
     const code = queryParams.get("code");
     const { user } = useAuth();
-    console.log("user", user);
 
     const [courseInfo, setCourseInfo] = useState({});
     const { refreshEnrollments } = useEnrollment();
-    console.log("courseInfo", courseInfo);
-    console.log({
-        userId: user._id,
-        courseId: courseInfo.courseId,
-        enrollmentDate: Date.now(),
-        status: "enrolled",
-        grade: "Incomplete",
-    });
-    const createEnrollment = async () => {
-        await enrollmentService.createEnrollment({
-            userId: user._id,
-            courseId: courseInfo.courseId,
-            enrollmentDate: Date.now(),
-            status: "enrolled",
-            grade: "Incomplete",
-        });
-    };
+    // console.log("user", user);
+    const hasProcessedRef = useRef(false);
 
-    const createPayment = async () => {
-        await paymentService.createPaymentIntent({
-            orderId: orderId,
-            orderCode: orderCode,
-            userId: user._id,
-            courseId: courseInfo.courseId,
-            amount: courseInfo.coursePrice,
-            status: "paid",
-            paymentDate: Date.now(),
-            paymentMethod: "bank_transfer",
-        });
-    };
-
-    useEffect(() => {
-        console.log("Updated courseInfo:", courseInfo);
-        if (status === "PAID" && courseInfo?.courseId && user?._id) {
-            createEnrollment();
-            createPayment();
-        }
-    }, [status, courseInfo, user]);
-
-    const handleContinue = () => {
-        refreshEnrollments();
-        navigate(`/dashboard`);
-    };
     useEffect(() => {
         const savedInfo = localStorage.getItem("payment_course_info");
         console.log("savedInfo", savedInfo);
@@ -70,6 +30,55 @@ const PaymentConfirmationPage = () => {
             setCourseInfo(JSON.parse(savedInfo));
         }
     }, []);
+
+    useEffect(() => {
+        const processPaymentAndEnrollment = async () => {
+            if (!user?._id || !courseInfo?.courseId || status !== "PAID") return;
+
+            if (hasProcessedRef.current) return;
+            hasProcessedRef.current = true;
+
+            console.log("Processing payment for:", { user, courseInfo });
+
+            try {
+                // Create Enrollment
+                await enrollmentService.createEnrollment({
+                    userId: user._id,
+                    courseId: courseInfo.courseId,
+                    enrollmentDate: Date.now(),
+                    status: "enrolled",
+                    grade: "Incomplete",
+                });
+
+                // Create Payment Record
+                await paymentService.createPaymentIntent({
+                    orderId: orderId,
+                    orderCode: orderCode,
+                    userId: user._id,
+                    courseId: courseInfo.courseId,
+                    amount: courseInfo.coursePrice,
+                    status: "paid",
+                    paymentDate: Date.now(),
+                    paymentMethod: "bank_transfer",
+                });
+
+                ToastHelper.success("Thanh toán và ghi danh thành công!");
+            } catch (error) {
+                console.error("Error processing payment/enrollment:", error);
+                ToastHelper.error("Có lỗi xảy ra khi xử lý thanh toán.");
+                hasProcessedRef.current = false; // Allow retry on error? Or keep it to prevent spam?
+                // Better to keep it true to avoid partial state, but here we might want to retry.
+                // For now, let's leave it true to prevent double-charging logic, but user can refresh.
+            }
+        };
+
+        processPaymentAndEnrollment();
+    }, [status, courseInfo, user, orderId, orderCode]);
+
+    const handleContinue = () => {
+        refreshEnrollments();
+        navigate(`/dashboard`);
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">

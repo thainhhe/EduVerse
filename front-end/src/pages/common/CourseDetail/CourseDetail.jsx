@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
-import { FaCheckCircle, FaPlayCircle, FaFileAlt, FaStar } from "react-icons/fa";
+import { FaBug, FaStar } from "react-icons/fa";
 import { getCourseById } from "@/services/courseService";
 import { useEffect, useState } from "react";
 import CommentThread from "@/pages/CommentThread/CommentThread";
-import { ChevronDown, ChevronRight, MoreVertical } from "lucide-react";
+import { MoreVertical } from "lucide-react";
 import { getForumByCourseId } from "@/services/forumService";
 import { useAuth } from "@/hooks/useAuth";
 import { useEnrollment } from "@/context/EnrollmentContext";
@@ -20,6 +20,9 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { reportService } from "@/services/reportService";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const CourseDetail = () => {
     const navigate = useNavigate();
@@ -43,6 +46,9 @@ const CourseDetail = () => {
     const [isEnrolled, setIsEnrolled] = useState(false);
     const [editingReviewId, setEditingReviewId] = useState(null);
 
+    const [openReport, setOpenReport] = useState(false);
+    const [issueTypeSelect, setIssueTypeSelect] = useState("bug");
+    const [issueDescription, setIssueDescription] = useState("");
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -158,6 +164,35 @@ const CourseDetail = () => {
         }
     };
 
+    const handleSubmitReport = async () => {
+        if (!issueDescription.trim()) {
+            ToastHelper.error("Vui lòng nhập mô tả lỗi!");
+            return;
+        }
+
+        const data = {
+            userId: user?._id,
+            scope: "course",
+            courseId: course._id,
+            issueType: issueTypeSelect,
+            description: issueDescription,
+        };
+        console.log("data", data)
+
+        try {
+            const res = await reportService.createReport(data);
+            console.log("res", res)
+            if (res?.success) {
+                ToastHelper.success("Đã gửi báo cáo thành công!");
+                setOpenReport(false);
+                setIssueDescription("");
+                setIssueTypeSelect("bug");
+            }
+        } catch (err) {
+            ToastHelper.error("Gửi báo cáo thất bại!");
+            console.error(err);
+        }
+    };
 
     if (loading) return <div>Đang tải dữ liệu...</div>;
     if (error) return <div className="text-red-500">{error}</div>;
@@ -170,25 +205,76 @@ const CourseDetail = () => {
                     <div className="lg:col-span-2 space-y-8">
                         <section>
                             <h1 className="text-3xl font-bold text-gray-900 mb-2">{course.title}</h1>
-                            <p className="text-lg text-gray-600 mb-4">{course.description}</p>
-                            <div className="flex items-center gap-4 text-sm">
+                            <p className="text-lg text-gray-600 mb-4">{course.description || "Chưa có mô tả cho khóa học này"}</p>
+
+                            <div className="flex items-center gap-6 text-sm">
                                 <div className="flex items-center gap-1 text-yellow-500">
                                     <FaStar />
                                     <span className="font-bold text-gray-800">{avgRating.toFixed(1)} / 5</span>
                                 </div>
+
                                 <p className="text-gray-600">
                                     Giảng viên:{" "}
-                                    <Link to="#" className="font-semibold text-indigo-600 hover:underline">
+                                    <Link to={`/instructors/${course?.main_instructor?._id}`} className="font-semibold text-indigo-600 hover:underline">
                                         {course.main_instructor.username}
                                     </Link>
                                 </p>
                             </div>
                         </section>
 
+
                         {/* --- Student Reviews --- */}
                         <section>
-                            <h2 className="text-2xl font-bold mb-4">Student Reviews ({reviews.length})</h2>
+                            <div className="flex justify-between mb-4">
+                                <h2 className="text-2xl font-bold mb-4">Student Reviews ({reviews.length})</h2>
 
+                                {isEnrolled && <Dialog open={openReport} onOpenChange={setOpenReport}>
+                                    <DialogTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            className="group hover:bg-red-600 hover:text-white flex items-center gap-2 cursor-pointer"
+                                            onClick={() => setOpenReport(true)}
+                                        >
+                                            <FaBug className="text-red-600 group-hover:text-white" />
+                                            Báo lỗi khóa học
+                                        </Button>
+                                    </DialogTrigger>
+
+                                    <DialogContent className="max-w-lg">
+                                        <DialogHeader>
+                                            <DialogTitle>Report Course Issue</DialogTitle>
+                                        </DialogHeader>
+
+                                        <div className="space-y-4 mt-3">
+                                            <label>Issue Type</label>
+                                            <Select value={issueTypeSelect} onValueChange={setIssueTypeSelect}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select issue type" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="bug">Bug</SelectItem>
+                                                    <SelectItem value="feature">Feature Request</SelectItem>
+                                                    <SelectItem value="other">Other</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+
+                                            <Textarea
+                                                placeholder="Describe the issue you encountered..."
+                                                value={issueDescription}
+                                                onChange={(e) => setIssueDescription(e.target.value)}
+                                                rows={4}
+                                            />
+
+                                            <Button className="bg-indigo-600 text-white" onClick={handleSubmitReport}>
+                                                Submit Report
+                                            </Button>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>}
+
+
+
+                            </div>
                             {/* 👉 Form chỉ hiển thị nếu user enrolled và KHÔNG đang edit */}
                             {isEnrolled && !editingReviewId && (
                                 <div className="mb-6 p-4 border rounded-lg bg-white shadow-sm">
@@ -330,6 +416,8 @@ const CourseDetail = () => {
                                 </div>
                             )}
                         </section>
+
+
 
                         {/* Forum Section */}
                         <section>

@@ -30,6 +30,7 @@ const Header = () => {
         { to: "/courses", text: "Courses" },
         { to: "/instructors", text: "Instructors" },
         { to: "/course/rooms", text: "Live" },
+        { to: "/reports/my-reports", text: "Reports" },
         { to: "/contacts", text: "Contact" },
     ];
 
@@ -162,7 +163,13 @@ const Header = () => {
                                         >
                                             Settings
                                         </Link>
-
+                                        <Link
+                                            to="/reports/my-reports"
+                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            onClick={() => setShowAvatarMenu(false)}
+                                        >
+                                            My Reports
+                                        </Link>
                                         <Link
                                             to="/dashboard"
                                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
