@@ -1,25 +1,20 @@
 import axios from "axios";
 import { API_BASE_URL } from "@config/constants";
 import { loadingManager } from "@/helper/loadingManager";
+import Swal from "sweetalert2";
 
 const api = axios.create({
     baseURL: API_BASE_URL,
-    timeout: 10000,
+    timeout: 30000,
 });
 
-// List of endpoints that should not trigger the loading overlay
-const SILENT_ENDPOINTS = [
-    "/notifications", // Polling notifications
-    "/chat", // Real-time chat
-    "/messages",
-    "/complete",
-    "/uncomplete",
-    "/quiz",
-];
-
 const shouldSkipLoading = (config) => {
-    if (config.skipLoading) return true;
-    return SILENT_ENDPOINTS.some((endpoint) => config.url?.includes(endpoint));
+    // If skipLoading is explicitly false, we show the loading overlay (return false to NOT skip)
+    if (config.skipLoading === false) {
+        return false;
+    }
+    // Otherwise (true or undefined), we skip the loading overlay
+    return true;
 };
 
 api.interceptors.request.use(
@@ -86,7 +81,12 @@ api.interceptors.response.use(
             } catch (refreshError) {
                 localStorage.removeItem("accessToken");
                 localStorage.removeItem("refreshToken");
-                window.location.href = "/login";
+                Swal.fire({
+                    icon: "error",
+                    title: "Error...",
+                    text: "Session expired. Please login again.",
+                });
+                window.location.href = "/";
                 return Promise.reject(refreshError);
             }
         }

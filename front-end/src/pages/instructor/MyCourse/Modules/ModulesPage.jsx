@@ -18,7 +18,7 @@ import {
     ScrollText,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { AddModuleModal } from "./AddModule";
 import { AddLessonModal } from "./AddLesson";
@@ -68,6 +68,7 @@ const ModulesPage = () => {
 
     const location = useLocation();
     const params = useParams();
+    const navigator = useNavigate();
 
     const getCourseIdFromQuery = () => {
         try {
@@ -252,6 +253,12 @@ const ModulesPage = () => {
             toast.error("Lỗi khi xóa!");
         }
     };
+
+    useEffect(() => {
+        if (isQuizManagerOpen) {
+            navigator("/create-course/quiz", { state: currentQuizContext });
+        }
+    }, [isQuizManagerOpen]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50/30">
@@ -726,18 +733,19 @@ const ModulesPage = () => {
             </div>
 
             {/* Quiz Manager Modal */}
-            {isQuizManagerOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[1400px] mx-auto p-6 relative overflow-y-auto max-h-[92vh] animate-in zoom-in-95 duration-200">
-                        <QuizManager
-                            courseId={currentQuizContext.courseId}
-                            moduleId={currentQuizContext.moduleId}
-                            lessonId={currentQuizContext.lessonId}
-                            onClose={() => setIsQuizManagerOpen(false)}
-                        />
-                    </div>
-                </div>
-            )}
+            {/* {isQuizManagerOpen && (
+                // <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                //     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[1400px] mx-auto p-6 relative overflow-y-auto max-h-[92vh] animate-in zoom-in-95 duration-200">
+                //         <QuizManager
+                //             courseId={currentQuizContext.courseId}
+                //             moduleId={currentQuizContext.moduleId}
+                //             lessonId={currentQuizContext.lessonId}
+                //             onClose={() => setIsQuizManagerOpen(false)}
+                //         />
+                //     </div>
+                // </div>
+                <Outlet />
+            )} */}
 
             {/* Modals */}
             <AddModuleModal

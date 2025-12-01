@@ -10,6 +10,7 @@ import notificationService from "@/services/notificationService";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import { Bell, Send, Trash2, CheckCircle, AlertTriangle, Info, AlertCircle } from "lucide-react";
+import Swal from "sweetalert2";
 
 const NotificationManagementPage = () => {
     const [notifications, setNotifications] = useState([]);
@@ -57,12 +58,20 @@ const NotificationManagementPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.title || !formData.message) {
-            toast.error("Please fill in all required fields");
+            Swal.fire({
+                icon: "error",
+                title: "Error!",
+                text: "Please fill in all required fields!",
+            });
             return;
         }
 
         if (formData.recipientType === "specific" && !formData.receiverId) {
-            toast.error("Please provide a Receiver ID");
+            Swal.fire({
+                icon: "error",
+                title: "Error!",
+                text: "Please provide a Receiver ID!",
+            });
             return;
         }
 
@@ -78,7 +87,11 @@ const NotificationManagementPage = () => {
 
             const res = await notificationService.create(payload);
             if (res.success || res.status === 200) {
-                toast.success("Notification sent successfully");
+                Swal.fire({
+                    icon: "success",
+                    title: "Success!",
+                    text: "Notification sent successfully!",
+                });
                 setFormData({
                     title: "",
                     message: "",
@@ -89,11 +102,19 @@ const NotificationManagementPage = () => {
                 });
                 fetchNotifications();
             } else {
-                toast.error("Failed to send notification");
+                Swal.fire({
+                    icon: "error",
+                    title: "Error!",
+                    text: "Failed to send notification!",
+                });
             }
         } catch (error) {
             console.error("Error sending notification:", error);
-            toast.error("An error occurred");
+            Swal.fire({
+                icon: "error",
+                title: "Error!",
+                text: "An error occurred!",
+            });
         }
     };
 
@@ -102,12 +123,20 @@ const NotificationManagementPage = () => {
         try {
             const res = await notificationService.delete(id);
             if (res.success || res.status === 200) {
-                toast.success("Notification deleted");
+                Swal.fire({
+                    icon: "success",
+                    title: "Success!",
+                    text: "Notification deleted!",
+                });
                 fetchNotifications();
             }
         } catch (error) {
             console.error("Error deleting notification:", error);
-            toast.error("Failed to delete notification");
+            Swal.fire({
+                icon: "error",
+                title: "Error!",
+                text: "Failed to delete notification!",
+            });
         }
     };
 
@@ -125,7 +154,7 @@ const NotificationManagementPage = () => {
     };
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold tracking-tight">Notification Management</h1>
             </div>

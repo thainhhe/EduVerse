@@ -409,7 +409,7 @@ const PaymentPage = () => {
     // 🔹 Lấy dữ liệu khóa học từ state
     const { courseId, courseTitle, coursePrice } = location.state || {};
 
-    console.log("courseId, courseTitle, coursePrice", courseId, courseTitle, coursePrice)
+    console.log("courseId, courseTitle, coursePrice", courseId, courseTitle, coursePrice);
     const onSubmit = async () => {
         try {
             if (!user?._id) {
@@ -421,21 +421,25 @@ const PaymentPage = () => {
                 userId: user._id,
                 courseId,
                 total_amount: coursePrice,
-                description: `${courseTitle.length > 24 ? courseTitle.substring(0, 21) + "..." : courseTitle}`,
+                description: `${
+                    courseTitle.length > 24 ? courseTitle.substring(0, 21) + "..." : courseTitle
+                }`,
             };
 
             // console.log("✅ Payment data:", data_payment);
-            const res = await paymentService.createPaymentIntent(data_payment);
+            const res = await paymentService.createPayment(data_payment);
             console.log("res:", res);
             const paymentLinkIntent = res.data?.checkoutUrl;
-            console.log("paymentLinkIntent", paymentLinkIntent)
+            console.log("paymentLinkIntent", paymentLinkIntent);
             if (paymentLinkIntent) {
-
-                localStorage.setItem("payment_course_info", JSON.stringify({
-                    courseId,
-                    courseTitle,
-                    coursePrice,
-                }))
+                localStorage.setItem(
+                    "payment_course_info",
+                    JSON.stringify({
+                        courseId,
+                        courseTitle,
+                        coursePrice,
+                    })
+                );
                 window.open(paymentLinkIntent, "_blank");
             } else {
                 ToastHelper.error("Không tìm thấy link thanh toán.");
@@ -470,7 +474,9 @@ const PaymentPage = () => {
                                     <div className="flex items-start gap-3">
                                         <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
                                         <div>
-                                            <p className="text-sm font-medium text-slate-900">{courseTitle}</p>
+                                            <p className="text-sm font-medium text-slate-900">
+                                                {courseTitle}
+                                            </p>
                                             <p className="text-xs text-slate-500 mt-1">
                                                 Full access to course materials
                                             </p>
@@ -531,7 +537,10 @@ const PaymentPage = () => {
                                                 />
                                             </div>
                                             <div>
-                                                <Label htmlFor="email" className="text-sm font-medium text-slate-700">
+                                                <Label
+                                                    htmlFor="email"
+                                                    className="text-sm font-medium text-slate-700"
+                                                >
                                                     Email Address
                                                 </Label>
                                                 <Input
@@ -547,7 +556,9 @@ const PaymentPage = () => {
 
                                     {/* Course Selection */}
                                     <div>
-                                        <h3 className="text-base font-semibold text-slate-900 mb-4">Course Details</h3>
+                                        <h3 className="text-base font-semibold text-slate-900 mb-4">
+                                            Course Details
+                                        </h3>
                                         <div className="mt-2 flex h-10 w-full items-center rounded-md border border-slate-300 bg-gray-50 px-3 text-sm text-slate-900">
                                             {courseTitle}
                                         </div>
