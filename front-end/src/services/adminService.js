@@ -185,6 +185,35 @@ export const adminService = {
         });
         return res.data?.data ?? res.data;
     },
+    getTopPopularCourses: async (filters = {}) => {
+        const res = await api.get("/admin/dashboard/top-popular-courses", {
+            params: filters,
+        });
+        return res.data?.data ?? res.data;
+    },
+
+    // Chat history admin APIs
+    getChatHistories: async ({ limit = 20, skip = 0, search = "" } = {}) => {
+        const res = await api.get("/chat/history", {
+            params: { limit, skip, search },
+        });
+        return res.data?.data ?? res.data;
+    },
+
+    getChatHistory: async (userId) => {
+        const res = await api.get(`/chat/history/${userId}`);
+        return res.data?.data ?? res.data;
+    },
+
+    clearChatHistory: async (userId) => {
+        const res = await api.post(`/chat/history/${userId}/clear`);
+        return res.data?.data ?? res.data;
+    },
+
+    deleteChatHistory: async (userId) => {
+        const res = await api.delete(`/chat/history/${userId}`);
+        return res.data?.data ?? res.data;
+    },
 };
 
 export default adminService;
