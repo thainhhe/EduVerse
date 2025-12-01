@@ -47,6 +47,7 @@ const navigation = [
     },
     { name: "Payment Management", href: "/admin/payment", icon: CreditCard },
     { name: "Notifications", href: "/admin/notifications", icon: Bell },
+    { name: "Reports", href: "/admin/reports", icon: Bell },
     { name: "Chatbot Management", href: "/admin/chatbot", icon: Bot },
     { name: "System Management", href: "/admin/system", icon: Settings },
     { name: "Admin Profile", href: "/admin/profile", icon: UserCircle },

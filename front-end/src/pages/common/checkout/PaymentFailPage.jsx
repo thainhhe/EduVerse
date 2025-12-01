@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useEnrollment } from "@/context/EnrollmentContext";
 import { useAuth } from "@/hooks/useAuth";
 import { paymentService } from "@/services/paymentService";
@@ -16,23 +16,12 @@ const PaymentFailPage = () => {
     const code = queryParams.get("code");
     const { refreshEnrollments } = useEnrollment();
     const { user } = useAuth();
-    const [courseInfo, setCourseInfo] = useState();
+    const [courseInfo, setCourseInfo] = useState(null);
+    const hasProcessedRef = useRef(false);
+
     const handleContinue = () => {
         refreshEnrollments();
         navigate(`/dashboard`);
-    };
-
-    const createPayment = async () => {
-        await paymentService.createPaymentIntent({
-            orderId: orderId,
-            orderCode: orderCode,
-            userId: user._id,
-            courseId: courseInfo.courseId,
-            amount: courseInfo.coursePrice,
-            status: status === "CANCELLED" ? "cancelled" : "failed",
-            paymentDate: Date.now(),
-            paymentMethod: "bank_transfer",
-        });
     };
 
     useEffect(() => {
@@ -41,8 +30,35 @@ const PaymentFailPage = () => {
         if (savedInfo) {
             setCourseInfo(JSON.parse(savedInfo));
         }
+    }, []);
+
+    useEffect(() => {
+        const createPayment = async () => {
+            if (!user?._id || !courseInfo?.courseId) return;
+
+            if (hasProcessedRef.current) return;
+            hasProcessedRef.current = true;
+
+            console.log("user", user);
+            console.log("courseInfo", courseInfo);
+            try {
+                await paymentService.createPaymentIntent({
+                    orderId: orderId,
+                    orderCode: orderCode,
+                    userId: user._id,
+                    courseId: courseInfo.courseId,
+                    amount: courseInfo.coursePrice,
+                    status: status === "CANCELLED" ? "cancelled" : "failed",
+                    paymentDate: Date.now(),
+                    paymentMethod: "bank_transfer",
+                });
+            } catch (error) {
+                console.error("Failed to create payment record:", error);
+            }
+        };
+
         createPayment();
-    }, [orderId]);
+    }, [user, courseInfo, orderId, orderCode, status]);
 
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">

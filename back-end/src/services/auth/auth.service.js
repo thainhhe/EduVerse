@@ -73,19 +73,33 @@ const authService = {
       throw new Error(error);
     }
   },
-  async changePassword(id, newPassword) {
+  async changePassword(id, currentPassword, newPassword) {
+    console.log("currentPassword, newPassword", currentPassword, newPassword);
     try {
       if (!id)
         return {
           status: system_enum.STATUS_CODE.CONFLICT,
           message: auth_enum.AUTH_MESSAGE.MISSING_INFORMATION,
         };
-      const user = await userRepository.findById(id);
+      const user = await userRepository.findByIdV2(id);
       if (!user)
         return {
           status: system_enum.STATUS_CODE.NOT_FOUND,
           message: auth_enum.AUTH_MESSAGE.USER_NOT_FOUND,
         };
+      console.log("user", user);
+
+      // kiểm tra mật khẩu cũ có đúng không
+      const isMatch = await authHelper.comparePasswords(
+        currentPassword,
+        user.password
+      );
+      if (!isMatch) {
+        return {
+          status: system_enum.STATUS_CODE.BAD_REQUEST,
+          message: "Current password is incorrect",
+        };
+      }
 
       const new_password = await authHelper.hashPassword(newPassword);
       user.password = new_password;

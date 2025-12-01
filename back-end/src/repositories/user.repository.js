@@ -118,6 +118,11 @@ const userRepository = {
       .select("-password")
       .exec();
   },
+  findByIdV2: async (id) => {
+    return await User.findOne({ _id: id, status: "active" })
+      .populate("permissions", "name")
+      .exec();
+  },
 
   findAll: async () => {
     return await User.find()

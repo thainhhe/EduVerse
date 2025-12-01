@@ -25,11 +25,11 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById("root")).render(
     <React.StrictMode>
         <BrowserRouter>
-            <ScrollToTop />
-            <QueryClientProvider client={queryClient}>
-                <AuthProvider>
-                    <LoadingProvider>
-                        <SystemProvider>
+            <SystemProvider>
+                <ScrollToTop />
+                <QueryClientProvider client={queryClient}>
+                    <AuthProvider>
+                        <LoadingProvider>
                             <EnrollmentProvider>
                                 <App />
                                 <ToastContainer
@@ -44,10 +44,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                                     pauseOnHover
                                 />
                             </EnrollmentProvider>
-                        </SystemProvider>
-                    </LoadingProvider>
-                </AuthProvider>
-            </QueryClientProvider>
+                        </LoadingProvider>
+                    </AuthProvider>
+                </QueryClientProvider>
+            </SystemProvider>
         </BrowserRouter>
     </React.StrictMode>
 );
