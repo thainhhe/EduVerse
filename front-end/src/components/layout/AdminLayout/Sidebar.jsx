@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -41,19 +41,21 @@ export function Sidebar({ className }) {
           </div>
           <div className="space-y-1">
             {navigation.map((item) => (
-              <Link
+              <NavLink
                 key={item.name}
                 to={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-                  location.pathname === item.href
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                )}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                    isActive || location.pathname.startsWith(item.href)
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  )
+                }
               >
                 <item.icon className="h-4 w-4" />
                 {item.name}
-              </Link>
+              </NavLink>
             ))}
           </div>
         </div>
