@@ -30,7 +30,12 @@ const Learner = ({ learner, index }) => {
                         {new Date(learner.enrollmentDate).toLocaleDateString()}
                     </span>
                 </div>
-                <Progress value={learner.progress} className="h-3 rounded-full bg-gray-200" />
+                <div className="flex items-center gap-3">
+                    <Progress value={learner.progress} className="h-3 rounded-full bg-gray-200 flex-1" />
+                    <span className="text-sm font-medium text-gray-600 min-w-[2.5rem] text-right">
+                        {Math.round(learner.progress)}%
+                    </span>
+                </div>
             </div>
 
             {/*Status */}
@@ -38,7 +43,13 @@ const Learner = ({ learner, index }) => {
                 <Badge
                     variant="outline"
                     className={`capitalize px-3 py-1 text-sm rounded-full 
-            ${learner.status === "active" ? "border-green-500 text-green-600" : "border-red-500 text-red-600"}`}
+            ${
+                learner.status === "active"
+                    ? "border-green-500 text-green-600"
+                    : learner.status === "completed"
+                    ? "border-green-500 text-green-600"
+                    : "border-red-500 text-red-600"
+            }`}
                 >
                     {learner.status}
                 </Badge>

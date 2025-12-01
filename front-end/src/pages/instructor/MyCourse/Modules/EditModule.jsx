@@ -70,7 +70,8 @@ export function EditModuleModal({ open, onOpenChange, module_, onUpdate }) {
                 <DialogHeader>
                     <DialogTitle className="text-xl font-semibold">Add New Module</DialogTitle>
                     <DialogDescription className="text-sm text-muted-foreground">
-                        Define a new module for your module_, including its title, description, and visibility settings.
+                        Define a new module for your module_, including its title, description, and visibility
+                        settings.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -92,6 +93,7 @@ export function EditModuleModal({ open, onOpenChange, module_, onUpdate }) {
                         />
 
                         {/* Module Description */}
+                        {/* Module Description */}
                         <FormField
                             control={form.control}
                             name="moduleDescription"
@@ -99,10 +101,11 @@ export function EditModuleModal({ open, onOpenChange, module_, onUpdate }) {
                                 <FormItem>
                                     <FormLabel>Module Description</FormLabel>
                                     <FormControl>
-                                        <Textarea
+                                        <textarea
                                             placeholder="Provide a detailed overview of the module content and learning objectives."
-                                            className="min-h-[170px] resize-y"
-                                            {...field}
+                                            className="min-h-[170px] resize-y !w-full !block whitespace-pre-wrap break-all p-3 rounded-md border border-input bg-transparent text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                            value={field.value}
+                                            onChange={(e) => field.onChange(e.target.value)}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -120,7 +123,9 @@ export function EditModuleModal({ open, onOpenChange, module_, onUpdate }) {
                                         <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                                     </FormControl>
                                     <div className="space-y-1 leading-none">
-                                        <FormLabel>Make module visible to students immediately upon saving.</FormLabel>
+                                        <FormLabel>
+                                            Make module visible to students immediately upon saving.
+                                        </FormLabel>
                                     </div>
                                 </FormItem>
                             )}

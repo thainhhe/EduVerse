@@ -311,6 +311,14 @@ const courseRepository = {
       .exec();
   },
 
+  updateStatusPending: async (id) => {
+    return await Course.findByIdAndUpdate(
+      id,
+      { status: "pending" },
+      { new: true }
+    ).exec();
+  },
+
   create: async (data) => {
     const course = new Course(data);
     return await course.save();
@@ -323,10 +331,10 @@ const courseRepository = {
   delete: async (id) => {
     const course = await Course.findById(id);
     if (!course) throw new Error("Course not found");
-    if (course.status === "pending") {
+    if (course.status === "draft") {
       return await Course.findByIdAndDelete(id);
     }
-    if (course.status === "approve") {
+    if (course.status !== "draft") {
       course.isDeleted = true;
       return await course.save();
     }

@@ -23,7 +23,8 @@ const Header = () => {
     { to: "/courses", text: "Courses" },
     { to: "/instructors", text: "Instructors" },
     { to: "/course/rooms", text: "Live" },
-    { to: "/contacts", text: "Contact" },
+    // { to: "/contacts", text: "Contact" },
+    { to: "/reports/my-reports", text: "Reports" },
   ];
 
   // close menus when clicking outside
@@ -163,6 +164,15 @@ const Header = () => {
                         Purchased Courses
                       </Link>
                     )}
+
+                    <Link
+                      to="/reports/my-reports"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setShowAvatarMenu(false)}
+                    >
+                      My Reports
+                    </Link>
+
 
                     {user?.role === "instructor" && (
                       <>

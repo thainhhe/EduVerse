@@ -56,6 +56,11 @@ import ReportManagementPage from "./pages/admin/ReportManagementPage/ReportManag
 
 import LearnerList from "./pages/instructor/MyCourse/Learner/LearnerList";
 import { ChatbotWidget } from "./components/chatbot/ChatbotWidget";
+import NotificationManagementPage from "./pages/admin/NotificationManagement/NotificationManagementPage";
+import ReviewPage from "./pages/instructor/MyCourse/Reviews/ReviewPage";
+import ReportFromLearner from "./pages/instructor/ReportFromLearner/ReportFromLearner";
+
+
 function App() {
   const { loading } = useAuth();
 
@@ -123,6 +128,7 @@ function App() {
           <Route path="create-course" element={<CourseBuilderLayout />}>
             <Route path="modules" element={<ModulesPage />} />
             <Route path="announcements" element={<AnnouncementsPage />} />
+            <Route path="reports" element={<ReportFromLearner />} />
             <Route path="grades" element={<GradesPage />} />
             <Route path="room-meeting" element={<RoomMeeting />} />
             <Route path="forums" element={<ForumManagement />} />
@@ -161,6 +167,7 @@ function App() {
           <Route path="chatbot" element={<ChatbotManagementPage />} />
           <Route path="comments" element={<CommentManagementPage />} />
           <Route path="reports" element={<ReportManagementPage />} />
+          <Route path="notifications" element={<NotificationManagementPage />} />
 
         </Route>
 

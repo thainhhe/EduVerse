@@ -6,80 +6,19 @@ import { Upload } from "lucide-react";
 import React, { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { videoService } from "@/services/videoService";
-import api from "@/services/api";
-import { ToastHelper } from "@/helper/ToastHelper";
+import UploadZone from "@/components/minio/UploadZone";
 
 const UploadVideoModal = ({ open, onOpenChange, lessonId, onUploaded }) => {
     const { user } = useAuth();
-    const [selectedFile, setSelectedFile] = useState(null);
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [accessLevel, setAccessLevel] = useState("public");
-    const [isUploading, setIsUploading] = useState(false);
-    const [message, setMessage] = useState("");
 
-    console.log(" lessonId: ", lessonId)
-    const handleFileChange = (e) => {
-        setSelectedFile(e.target.files[0]);
-        setMessage("");
-    };
-
-    const handleUpload = async () => {
-        if (!selectedFile || !title.trim()) {
-            setMessage("⚠️ Please select a file and enter title.");
-            return;
-        }
-
-        try {
-            setIsUploading(true);
-            setMessage("Uploading...");
-
-            const formData = new FormData();
-            formData.append("file", selectedFile);
-            formData.append("type", "video");
-            formData.append("title", title);
-            formData.append("description", description || "No description");
-            formData.append("uploadedBy", user?._id);
-            formData.append("accessLevel", accessLevel);
-            if (lessonId) formData.append("lessonId", lessonId);
-
-            const res = await api.post("/material", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-                timeout: 0,
-                onUploadProgress: (e) => {
-                    if (e.total) {
-                        const percent = Math.round((e.loaded * 100) / e.total);
-                        setMessage(`📤 Uploading: ${percent}%`);
-                        console.log(`Đang tải lên: ${percent}%`);
-                    }
-                },
-            });
-            console.log("res", res)
-
-            // ✅ Kiểm tra phản hồi
-            if (res.success) {
-                setMessage("Upload successful!");
-                ToastHelper.success("Upload video successful!")
-                if (onUploaded) onUploaded(res.data);
-                setTimeout(() => onOpenChange(false), 1000);
-            } else {
-                ToastHelper.error(res.message || " Upload failed. Please try again.")
-
-            }
-
-        } catch (error) {
-            console.error("❌ Upload error:", error);
-            ToastHelper.error(error || " Upload failed. Please try again.")
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
+    console.log(" lessonId: ", lessonId);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-lg p-6">
+            <DialogContent className="max-w-full p-6">
                 <div className="space-y-4">
                     <h2 className="text-xl font-semibold flex items-center gap-2">
                         <Upload className="w-5 h-5 text-indigo-500" />
@@ -124,51 +63,11 @@ const UploadVideoModal = ({ open, onOpenChange, lessonId, onUploaded }) => {
 
                     {/* Upload area */}
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
-                        <Upload className="mx-auto h-10 w-10 text-gray-400" />
-                        <p className="font-medium mt-2">Choose a video file</p>
-                        <p className="text-sm text-gray-500 mb-2">MP4, MOV, AVI...</p>
-                        <label className="text-indigo-600 cursor-pointer hover:underline">
-                            Browse files
-                            <input
-                                type="file"
-                                accept="video/*"
-                                className="hidden"
-                                onChange={handleFileChange}
-                            />
-                        </label>
-                        {selectedFile && (
-                            <p className="mt-3 text-sm text-green-600">
-                                Selected: {selectedFile.name}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Status message */}
-                    {message && (
-                        <p
-                            className={`text-sm ${message.includes("✅")
-                                ? "text-green-600"
-                                : message.includes("❌")
-                                    ? "text-red-600"
-                                    : "text-gray-600"
-                                }`}
-                        >
-                            {message}
-                        </p>
-                    )}
-
-                    {/* Buttons */}
-                    <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => onOpenChange(false)}>
-                            Cancel
-                        </Button>
-                        <Button
-                            onClick={handleUpload}
-                            disabled={!selectedFile || isUploading}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                        >
-                            {isUploading ? "Uploading..." : "Upload"}
-                        </Button>
+                        <UploadZone
+                            data={{ title, description, accessLevel, lessonId, uploadedBy: user._id }}
+                            type="video"
+                            onUploadSuccess={onUploaded}
+                        />
                     </div>
                 </div>
             </DialogContent>

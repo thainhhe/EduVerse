@@ -83,12 +83,12 @@ export function EditForum({ open, onOpenChange, forum, onUpdate }) {
                     {/* Description */}
                     <div className="space-y-2">
                         <Label htmlFor="description">Description</Label>
-                        <Textarea
+                        <textarea
                             id="description"
                             placeholder="Enter forum description"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            className="min-h-[170px]"
+                            className="min-h-[170px] resize-y !w-full !block whitespace-pre-wrap break-all p-3 rounded-md border border-input bg-transparent text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                         />
                     </div>
                 </div>

@@ -64,6 +64,13 @@ const courseController = {
     createCourse: async (req, res) => {
         try {
             const data = req.body;
+            if (data.duration && typeof data.duration === "string") {
+                try {
+                    data.duration = JSON.parse(data.duration);
+                } catch (e) {
+                    console.error("Error parsing duration:", e);
+                }
+            }
             const file = req.file || null;
             console.log("Data in controller createCourse:", data, { file });
             const result = await courseService.createCourse(data, file);
@@ -77,8 +84,25 @@ const courseController = {
         try {
             const id = req.params.id;
             const data = req.body;
+            if (data.duration && typeof data.duration === "string") {
+                try {
+                    data.duration = JSON.parse(data.duration);
+                } catch (e) {
+                    console.error("Error parsing duration:", e);
+                }
+            }
             const file = req.file || null;
             const result = await courseService.updateCourse(id, data, file);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
+
+    updateStatusPending: async (req, res) => {
+        try {
+            const id = req.params.id;
+            const result = await courseService.updateStatusPending(id);
             return response(res, result);
         } catch (error) {
             return error_response(res, error);

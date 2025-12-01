@@ -93,12 +93,12 @@ export function EditLesson({ open, onOpenChange, lesson, onUpdate }) {
                         <Label htmlFor="content-group" className="text-sm font-medium">
                             Content
                         </Label>
-                        <Textarea
+                        <textarea
                             id="content-group"
                             placeholder="Enter content group"
                             value={contentGroup}
                             onChange={(e) => setContentGroup(e.target.value)}
-                            className="w-full min-h-[170px] resize-y"
+                            className="min-h-[170px] resize-y !w-full !block whitespace-pre-wrap break-all p-3 rounded-md border border-input bg-transparent text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                         />
                     </div>
 
@@ -108,7 +108,7 @@ export function EditLesson({ open, onOpenChange, lesson, onUpdate }) {
                             onClick={() => setIsPublic(!isPublic)}
                         >
                             <Checkbox checked={isPublic} onCheckedChange={() => setIsPublic(!isPublic)} />
-                            <span className="text-sm text-gray-700">Công khai khóa học này</span>
+                            <span className="text-sm text-gray-700">Public lesson</span>
                         </div>
                     </div>
                 </div>

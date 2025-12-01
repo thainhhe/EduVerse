@@ -25,7 +25,7 @@ const courseSchema = new mongoose.Schema(
         },
         isPublished: { type: Boolean, default: false },
         totalEnrollments: { type: Number, default: 0, min: 0 },
-        status: { type: String, enum: ["pending", "approve", "reject"], default: "pending" },
+        status: { type: String, enum: ["draft", "pending", "approve", "reject"], default: "draft" },
         reasonReject: { type: String, default: "" },
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date, default: Date.now },

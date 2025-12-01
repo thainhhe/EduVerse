@@ -66,9 +66,6 @@ const UserManagementPage = () => {
       <div className="flex items-center justify-between mb-8 gap-4 flex-wrap">
         <h1 className="text-3xl font-bold">User Management</h1>
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline">
-            <File className="mr-2 h-4 w-4" /> Export Data
-          </Button>
           <Button className="bg-primary">
             <PlusCircle className="mr-2 h-4 w-4" /> Add New User
           </Button>

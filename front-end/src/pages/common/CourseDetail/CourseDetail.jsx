@@ -228,7 +228,7 @@ const CourseDetail = () => {
                             <div className="flex justify-between mb-4">
                                 <h2 className="text-2xl font-bold mb-4">Student Reviews ({reviews.length})</h2>
 
-                                <Dialog open={openReport} onOpenChange={setOpenReport}>
+                                {isEnrolled && <Dialog open={openReport} onOpenChange={setOpenReport}>
                                     <DialogTrigger asChild>
                                         <Button
                                             variant="outline"
@@ -270,7 +270,8 @@ const CourseDetail = () => {
                                             </Button>
                                         </div>
                                     </DialogContent>
-                                </Dialog>
+                                </Dialog>}
+
 
 
                             </div>

@@ -1,28 +1,49 @@
 import React, { useMemo, useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { getInstructorDashboard } from "@/services/courseService";
+import {
+  FaChartBar,
+  FaUserGraduate,
+  FaMoneyBillWave,
+  FaStar,
+  FaBook,
+} from "react-icons/fa";
+// Import Select components
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-const StatCard = ({ title, value, delta, caption }) => (
+const StatCard = ({ title, value, delta, caption, icon: Icon }) => (
   <Card className="shadow-sm">
     <CardContent className="p-4">
       <div className="flex items-start justify-between">
         <div>
-          <div className="text-xs text-muted-foreground">{title}</div>
+          <div className="text-xs text-muted-foreground flex items-center gap-1">
+            {Icon && <Icon className="w-3 h-3 text-indigo-500" />}
+            {title}
+          </div>
           <div className="mt-1 text-2xl font-semibold">{value}</div>
           <div className="text-sm text-muted-foreground mt-1">{caption}</div>
         </div>
-        <div
-          className={cn(
-            "text-sm font-medium",
-            delta >= 0 ? "text-emerald-600" : "text-rose-600"
-          )}
-        >
-          {delta >= 0 ? `+${delta}%` : `${delta}%`}
-          <div className="text-xs text-muted-foreground">from last month</div>
-        </div>
+        {delta !== undefined && (
+          <div
+            className={cn(
+              "text-sm font-medium",
+              delta >= 0 ? "text-emerald-600" : "text-rose-600"
+            )}
+          >
+            {delta >= 0 ? `+${delta}%` : `${delta}%`}
+            <div className="text-xs text-muted-foreground">from last month</div>
+          </div>
+        )}
       </div>
     </CardContent>
   </Card>
@@ -30,252 +51,229 @@ const StatCard = ({ title, value, delta, caption }) => (
 
 // very small, dependency-free bar chart (visual only)
 const MiniBarChart = ({ series = [] }) => {
-  const max = Math.max(...series.map((s) => s.value), 1);
+  const max = Math.max(...series.map((s) => s.total), 1);
   return (
-    <div className="flex gap-2 items-end h-40 p-4">
+    <div className="flex space-x-0.5 h-12 items-end">
       {series.map((s, i) => (
-        <div key={i} className="flex-1 flex flex-col items-center">
-          <div
-            title={`${s.label}: ${s.value}`}
-            className="w-full rounded-md bg-indigo-500 transition-all"
-            style={{ height: `${(s.value / max) * 100}%` }}
-          />
-          <div className="text-xs text-muted-foreground mt-2">{s.label}</div>
-        </div>
+        <div
+          key={i}
+          className="w-1/6 bg-indigo-400 rounded-t"
+          style={{ height: `${(s.total / max) * 100}%` }}
+          title={`${s._id}: ${s.total} enrollments`}
+        />
       ))}
     </div>
   );
 };
 
-// simple pie using SVG arcs (approximate)
-const MiniPie = ({ slices = [] }) => {
-  const total = Math.max(
-    slices.reduce((a, b) => a + b.value, 0),
-    1
-  );
-  let acc = 0;
-  const radius = 60;
-  const cx = 70;
-  const cy = 70;
+const DashBoardInstructor = () => {
+  const { user } = useAuth();
+  const [dashboardData, setDashboardData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [filter, setFilter] = useState("month"); // Thêm state cho bộ lọc
 
-  const makePath = (startAngle, endAngle) => {
-    const large = endAngle - startAngle > Math.PI ? 1 : 0;
-    const x1 = cx + radius * Math.cos(startAngle);
-    const y1 = cy + radius * Math.sin(startAngle);
-    const x2 = cx + radius * Math.cos(endAngle);
-    const y2 = cy + radius * Math.sin(endAngle);
-    return `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${large} 1 ${x2} ${y2} z`;
-  };
-
-  return (
-    <svg width="140" height="140" viewBox="0 0 140 140" className="mx-auto">
-      {slices.map((s, i) => {
-        const start = (acc / total) * Math.PI * 2 - Math.PI / 2;
-        acc += s.value;
-        const end = (acc / total) * Math.PI * 2 - Math.PI / 2;
-        const path = makePath(start, end);
-        return (
-          <path key={i} d={path} fill={s.color} stroke="#fff" strokeWidth="1" />
-        );
-      })}
-    </svg>
-  );
-};
-
-const DashboardInstructor = () => {
-  const { user } = useAuth() || {};
-  const instructorId = user?._id || user?.id || null;
-
-  const [loading, setLoading] = useState(false);
-  const [overview, setOverview] = useState(null);
-  const [barSeries, setBarSeries] = useState([]);
-  const [pieSlices, setPieSlices] = useState([]);
-  const [activities, setActivities] = useState([]);
+  const instructorId = user?._id ?? user?.id;
 
   useEffect(() => {
     if (!instructorId) return;
-    const fetch = async () => {
-      setLoading(true);
+
+    const fetchData = async () => {
+      setIsLoading(true);
       try {
-        const res = await getInstructorDashboard(instructorId);
-        console.log("res", res)
-        const payload = res?.data;
-        if (!payload) {
-          setLoading(false);
-          return;
+        // !!! CẬP NHẬT: Thêm tham số filter vào API call
+        const res = await getInstructorDashboard(instructorId, { filter });
+        const data = res?.data?.data || res?.data;
+
+        if (data?.overview) {
+          setDashboardData(data);
+        } else {
+          console.error("Dashboard data is empty or malformed:", data);
         }
-
-        // Overview
-        setOverview(payload.overview || null);
-
-        // enrollmentTrends -> barSeries (map month number to short label)
-        const monthNames = [
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec",
-        ];
-        const trends = (payload.enrollmentTrends || []).map((t) => ({
-          label: monthNames[(t._id || 0) - 1] || `${t._id}`,
-          value: t.total || 0,
-        }));
-        setBarSeries(
-          trends.length
-            ? trends
-            : [
-              { label: "Jan", value: 0 },
-              { label: "Feb", value: 0 },
-              { label: "Mar", value: 0 },
-              { label: "Apr", value: 0 },
-              { label: "May", value: 0 },
-              { label: "Jun", value: 0 },
-            ]
-        );
-
-        // revenueDistribution -> pieSlices
-        const colors = [
-          "#6366F1",
-          "#FB7185",
-          "#34D399",
-          "#F59E0B",
-          "#A78BFA",
-          "#60A5FA",
-        ];
-        const dist = (payload.revenueDistribution || []).map((d, i) => ({
-          label: d.category || "Unknown",
-          value: d.revenue || 0,
-          color: colors[i % colors.length],
-        }));
-        setPieSlices(
-          dist.length
-            ? dist
-            : [{ label: "No data", value: 1, color: "#E5E7EB" }]
-        );
-
-        // activities: the backend doesn't return recent activities here; build a simple list from top courses/enrollments if available
-        setActivities([
-          // fallback placeholder; keep original mock for UX while server data not provided
-          {
-            student: "Alice Smith",
-            course: "Advanced React",
-            activity: "Completed Lesson: Hooks",
-            time: "5 minutes ago",
-          },
-          {
-            student: "Bob Johnson",
-            course: "Python for Data Science",
-            activity: "Submitted Assignment: Week 3",
-            time: "1 hour ago",
-          },
-        ]);
       } catch (err) {
-        console.error("Failed to fetch instructor dashboard:", err);
+        console.error("Failed to load dashboard data", err);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
-    fetch();
-  }, [instructorId]);
 
-  const stats = [
+    fetchData();
+  }, [instructorId, filter]); // Dependency array bao gồm filter
+
+  const overview = dashboardData?.overview || {};
+  const enrollmentTrends = dashboardData?.enrollmentTrends || [];
+  const revenueDistribution = dashboardData?.revenueDistribution || [];
+  const recentActivities = dashboardData?.recentActivities || [];
+
+  if (isLoading) {
+    return (
+      <div className="p-8 text-center text-gray-500">
+        Loading dashboard data...
+      </div>
+    );
+  }
+
+  const pieChartData = revenueDistribution.map((item) => ({
+    name: item.category,
+    value: item.revenue,
+  }));
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(value);
+  };
+
+  const formatDateTime = (isoDate) => {
+    if (!isoDate) return "-";
+    const date = new Date(isoDate);
+    const time = date.toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const day = date.toLocaleDateString("vi-VN");
+    return `${time} ${day}`;
+  };
+
+  // loại bỏ Total Videos Uploaded khỏi overviewStats
+  const overviewStats = [
     {
-      title: "Total Videos Uploaded",
-      value: overview ? overview.totalVideos : "—",
-      delta: overview ? Number(overview.videoGrowth) || 0 : 0,
-      caption: "Across all your courses",
+      title: "Total Courses",
+      value: overview.totalCourse || 0,
+      caption: "Total courses created",
+      icon: FaBook,
     },
     {
-      title: "Students Enrolled",
-      value: overview ? overview.totalEnrollments : "—",
-      delta: overview ? Number(overview.enrollmentGrowth) || 0 : 0,
-      caption: "Across all active courses",
-    },
-    {
-      title: "Total Revenue",
-      value: overview
-        ? `${overview.totalRevenue.toLocaleString("vi-VN")} ₫`
-        : "—",
-      delta: overview ? Number(overview.revenueGrowth) || 0 : 0,
-      caption: "Total earnings to date",
+      title: "Total Enrollments",
+      value: overview.totalEnrollments || 0,
+      delta: overview.enrollmentGrowth,
+      caption: "Total students across all courses",
+      icon: FaUserGraduate,
     },
     {
       title: "Average Course Rating",
-      value: overview ? overview.avgRating : "—",
-      delta: 0,
-      caption: "Based on student feedback",
+      value: overview.avgRating || 0,
+      caption: "Overall rating of your courses",
+      icon: FaStar,
     },
   ];
 
-  const pieLegend = useMemo(
-    () =>
-      pieSlices.map((s) => ({
-        ...s,
-        label: s.label + ` ${Math.round(s.value)} `,
-      })),
-    [pieSlices]
+  // sắp xếp revenue distribution theo doanh thu giảm dần
+  const revenueDistributionSorted = [...revenueDistribution].sort(
+    (a, b) => (b.revenue || 0) - (a.revenue || 0)
   );
 
   return (
-    <div className="space-y-6 p-6">
-      {/* top stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s, i) => (
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">
+          Instructor Dashboard
+        </h1>
+
+        {/* !!! ĐÃ THÊM: Bộ chọn lọc thời gian */}
+        <Select value={filter} onValueChange={setFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="month">Tháng Hiện Tại</SelectItem>
+            <SelectItem value="week">Tuần Hiện Tại</SelectItem>
+            <SelectItem value="quarter">Quý Hiện Tại</SelectItem>
+            <SelectItem value="year">Năm Hiện Tại</SelectItem>
+            <SelectItem value="all">Toàn Bộ Thời Gian</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid md:grid-cols-4 gap-6">
+        {overviewStats.map((s, i) => (
           <StatCard key={i} {...s} />
         ))}
+
+        {/* Total Revenue card vẫn giữ để hiển thị tổng doanh thu */}
+        <div className="col-span-full md:col-span-1">
+          <StatCard
+            title="Total Revenue"
+            value={formatCurrency(overview.totalRevenue || 0)}
+            delta={overview.revenueGrowth}
+            caption="Total earnings from course sales"
+            icon={FaMoneyBillWave}
+          />
+        </div>
       </div>
 
-      {/* charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="px-4 pt-4">
-            <CardTitle>Enrollment Trends</CardTitle>
-            <div className="text-sm text-muted-foreground">
-              Monthly student sign-ups.
-            </div>
+      <div className="grid md:grid-cols-3 gap-6">
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Enrollment Trends (Last 6 Months)</CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
-            <MiniBarChart series={barSeries} />
+          <CardContent>
+            {enrollmentTrends.length > 0 ? (
+              <MiniBarChart series={enrollmentTrends} />
+            ) : (
+              <div className="text-center text-gray-500 h-24 flex items-center justify-center">
+                No enrollment data available.
+              </div>
+            )}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="px-4 pt-4">
-            <CardTitle>Revenue Distribution</CardTitle>
-            <div className="text-sm text-muted-foreground">
-              Breakdown by course categories.
-            </div>
+          <CardHeader>
+            <CardTitle>Revenue Distribution by Category</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col items-center gap-4">
-            <MiniPie slices={pieSlices} />
-            <div className="w-full flex flex-wrap gap-3 justify-center">
-              {pieLegend.map((l, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-sm">
-                  <span
-                    style={{ width: 10, height: 10, background: l.color }}
-                    className="rounded-sm block"
-                  />
-                  <span className="text-sm">{l.label}</span>
-                </div>
-              ))}
-            </div>
+          <CardContent>
+            {revenueDistributionSorted.length > 0 ? (
+              <div className="space-y-2">
+                {revenueDistributionSorted.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex justify-between items-center text-sm"
+                  >
+                    <div className="flex-1 pr-4">
+                      <div className="font-medium truncate">
+                        {item.category || "Uncategorized"}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {item.revenue ? formatCurrency(item.revenue) : "0 VND"}
+                      </div>
+                    </div>
+                    <div className="w-1/3">
+                      <div className="h-2 bg-gray-200 rounded overflow-hidden">
+                        <div
+                          className="h-full bg-indigo-500"
+                          style={{
+                            width: `${Math.round(
+                              ((item.revenue || 0) /
+                                (overview.totalRevenue || 1)) *
+                                100
+                            )}%`,
+                          }}
+                          title={`${Math.round(
+                            ((item.revenue || 0) /
+                              (overview.totalRevenue || 1)) *
+                              100
+                          )}%`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 h-24 flex items-center justify-center">
+                No revenue data available.
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* recent activities table */}
       <Card>
         <CardHeader className="px-4 pt-4">
           <CardTitle>Recent Activities</CardTitle>
           <div className="text-sm text-muted-foreground">
-            Overview of latest student interactions.
+            Overview of latest student interactions (Enrollments & Reviews).
           </div>
         </CardHeader>
         <CardContent className="p-0 overflow-auto">
@@ -289,16 +287,63 @@ const DashboardInstructor = () => {
               </tr>
             </thead>
             <tbody>
-              {activities.map((a, i) => (
-                <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-muted/5"}>
-                  <td className="px-4 py-3 text-sm">{a.student}</td>
-                  <td className="px-4 py-3 text-sm">{a.course}</td>
-                  <td className="px-4 py-3 text-sm">{a.activity}</td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">
-                    {a.time}
+              {recentActivities.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan="4"
+                    className="px-4 py-8 text-center text-gray-500"
+                  >
+                    No recent activities found.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                recentActivities.map((a, i) => (
+                  <tr
+                    key={a._id}
+                    className={i % 2 === 0 ? "bg-white" : "bg-muted/50"}
+                  >
+                    <td className="px-4 py-3 text-sm flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={a.user?.avatar} />
+                        <AvatarFallback>
+                          {a.user?.username ? a.user.username[0] : "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      {a.user?.username || "N/A"}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {a.courseTitle || "N/A"}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <Badge
+                        variant={
+                          a.type === "Enrollment" ? "default" : "secondary"
+                        }
+                        className={
+                          a.type === "Review"
+                            ? "bg-amber-100 text-amber-800 hover:bg-amber-200"
+                            : ""
+                        }
+                      >
+                        {a.type === "Review"
+                          ? `Review (${a.rating}⭐)`
+                          : a.type}
+                      </Badge>
+                      {a.type === "Review" && a.comment && (
+                        <div
+                          className="text-xs text-gray-500 mt-1 truncate max-w-[200px]"
+                          title={a.comment}
+                        >
+                          "{a.comment}"
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
+                      {formatDateTime(a.date)}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </CardContent>
@@ -307,4 +352,4 @@ const DashboardInstructor = () => {
   );
 };
 
-export default DashboardInstructor;
+export default DashBoardInstructor;

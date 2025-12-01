@@ -24,7 +24,9 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
     { name: "Announcements", path: "announcements", key: "announcements" },
     { name: "Permissions", path: "permissions", key: "permissions" },
   ];
-  const visibleNavItems = isMainInstructor ? navItems : navItems.filter((item) => permissions.includes(item.key));
+  const visibleNavItems = isMainInstructor
+    ? navItems
+    : navItems.filter((item) => permissions.includes(item.key));
 
   const isNew = !courseId;
   const isEditable = isNew || !!isMainInstructor;
@@ -201,14 +203,22 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
         main_instructor: user?._id,
         category: categoryId,
         price: price !== "" ? Number(price) : undefined,
-        ...(durationValue !== "" ? { duration: { value: Number(durationValue), unit: durationUnit } } : {}),
+        ...(durationValue !== ""
+          ? { duration: { value: Number(durationValue), unit: durationUnit } }
+          : {}),
         ...(removeThumbnail ? { thumbnail: "" } : {}),
       };
 
       let res;
       if (file) {
         const formData = new FormData();
-        Object.entries(payload).forEach(([k, v]) => formData.append(k, v));
+        Object.entries(payload).forEach(([k, v]) => {
+          if (k === "duration" && typeof v === "object") {
+            formData.append(k, JSON.stringify(v));
+          } else {
+            formData.append(k, v);
+          }
+        });
         formData.append("thumbnail", file);
         res = isUpdate
           ? await api.put(`/courses/update/${courseId}`, formData)

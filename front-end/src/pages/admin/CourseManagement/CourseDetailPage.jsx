@@ -1,531 +1,672 @@
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import {
+    ChevronDown,
+    Circle,
+    CheckCircle2,
+    PlayCircle,
+    FileText,
+    HelpCircle,
+    Clock,
+    User,
+    ArrowLeft,
+    Check,
+    X,
+    AlertCircle,
+    ChevronLeft,
+    ChevronRight,
+    Eye,
+} from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, Circle, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { approveCourse, getAllCourseById, rejectCourse } from "@/services/courseService";
 import { ToastHelper } from "@/helper/ToastHelper";
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
-import api from "@/services/api";
+import { getFilesByLessonId } from "@/services/minio";
+import VideoPlayer from "@/components/minio/VideoPlayer";
+import DocumentViewer from "@/components/minio/DocumentViewer";
 
 const CourseDetailPage = () => {
-  const [course, setCourse] = useState([]);
-  const { id } = useParams();
-  const [loading, setLoading] = useState(true);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [expandedSections, setExpandedSections] = useState({});
-  const [answers, setAnswers] = useState([]);
-  const [showRejectModal, setShowRejectModal] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
-  const [lessonMaterials, setLessonMaterials] = useState([]);
+    const { id } = useParams();
+    const [course, setCourse] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [selectedItem, setSelectedItem] = useState(null);
+    const [files, setFiles] = useState([]);
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [rejectReason, setRejectReason] = useState("");
+    const [videoIndex, setVideoIndex] = useState(0);
+    const [selectedDocument, setSelectedDocument] = useState(null);
 
-  useEffect(() => {
-    const fetchCourses = async () => {
-      setLoading(true);
-      const res = await getAllCourseById(id);
-      if (res?.success) {
-        const data = res.data || [];
-        setCourse(data);
-        setSelectedItem(data);
-        setLoading(false);
-      }
+    useEffect(() => {
+        const fetchCourses = async () => {
+            setLoading(true);
+            const res = await getAllCourseById(id);
+            if (res?.success) {
+                const data = res.data || {};
+                setCourse(data);
+                // Select the first module's first lesson by default if available, or the course info
+                if (data.modules?.[0]?.lessons?.[0]) {
+                    handleSelectItem(data.modules[0].lessons[0], "lesson");
+                } else {
+                    setSelectedItem({ ...data, type: "course_info" });
+                }
+            }
+            setLoading(false);
+        };
+        fetchCourses();
+    }, [id]);
+
+    const loadFilesByLessonId = async (lessonId) => {
+        try {
+            const data = await getFilesByLessonId(lessonId);
+            setFiles(data);
+        } catch (error) {
+            console.error("Error loading files:", error);
+            setFiles([]);
+        }
     };
-    fetchCourses();
-  }, [id]);
-  const fetchMaterials = async (lessonId) => {
-    try {
-      const res = await api.get(`/material/${lessonId}`);
-      if (res.success) setLessonMaterials(res.data);
-      else setLessonMaterials([]);
-    } catch (error) {
-      console.error("Lỗi lấy materials:", error);
-      setLessonMaterials([]);
+
+    const handleSelectItem = (item, type) => {
+        if (type === "lesson") {
+            loadFilesByLessonId(item._id);
+            setVideoIndex(0);
+            setSelectedDocument(null);
+        } else {
+            setFiles([]);
+        }
+        setSelectedItem({ ...item, type });
+    };
+
+    const handleApprove = async () => {
+        const res = await approveCourse(id);
+        if (res?.success) {
+            ToastHelper.success("✅ Khóa học đã được duyệt!");
+            setCourse((prev) => ({ ...prev, status: "approve" }));
+        } else {
+            ToastHelper.error("❌ Duyệt thất bại!");
+        }
+    };
+
+    const handleReject = async () => {
+        if (!rejectReason.trim()) {
+            ToastHelper.warning("Vui lòng nhập lý do từ chối!");
+            return;
+        }
+        const res = await rejectCourse(id, rejectReason);
+        if (res?.success) {
+            ToastHelper.success("⚠ Khóa học đã bị từ chối!");
+            setCourse((prev) => ({ ...prev, status: "reject" }));
+            setShowRejectModal(false);
+            setRejectReason("");
+        } else {
+            ToastHelper.error("❌ Từ chối thất bại!");
+        }
+    };
+
+    const getStatusBadge = (status) => {
+        switch (status) {
+            case "approve":
+                return (
+                    <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-green-200">
+                        Approved
+                    </Badge>
+                );
+            case "pending":
+                return (
+                    <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-yellow-200">
+                        Pending
+                    </Badge>
+                );
+            case "reject":
+                return (
+                    <Badge className="bg-red-100 text-red-700 hover:bg-red-200 border-red-200">
+                        Rejected
+                    </Badge>
+                );
+            default:
+                return <Badge variant="outline">{status}</Badge>;
+        }
+    };
+
+    const lessonVideos = files.filter((m) => m.fileType === "video" && m.lessonId === selectedItem?._id);
+    const lessonDocuments = files.filter(
+        (m) => m.fileType === "document" && m.lessonId === selectedItem?._id
+    );
+
+    const handleNextVideo = () => {
+        setVideoIndex((prev) => (prev < lessonVideos.length - 1 ? prev + 1 : 0));
+    };
+
+    const handlePrevVideo = () => {
+        setVideoIndex((prev) => (prev > 0 ? prev - 1 : lessonVideos.length - 1));
+    };
+
+    const handleFileClick = (file) => {
+        if (file.fileType === "document") {
+            setSelectedDocument(file);
+        }
+    };
+
+    if (loading) {
+        return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
     }
-  };
 
-  console.log('lessonMaterials', lessonMaterials);
-  const toggleSection = (moduleId) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [moduleId]: !prev[moduleId],
-    }));
-  };
-
-  const handleSelectItem = (item, type) => {
-    let quizzes = [];
-
-    if (type === "lesson") {
-      quizzes = item.quiz ? [item.quiz] : [];
-      fetchMaterials(item._id);
-    } else if (type === "module") {
-      quizzes = item.moduleQuizzes || [];
-    } else if (type === "course") {
-      quizzes = item.courseQuizzes || [];
-    } else if (type === "quiz") {
-      quizzes = [item]; // khi click trực tiếp quiz
+    if (!course) {
+        return <div className="flex items-center justify-center min-h-screen">Course not found</div>;
     }
 
-    setSelectedItem({ ...item, type, quizzes });
-  };
-  console.log("selectedItem", selectedItem)
-
-  const handleChange = (questionIndex, option, isCheckbox) => {
-    setAnswers((prevAnswers) => {
-      const updated = [...prevAnswers];
-      if (isCheckbox) {
-        const current = updated[questionIndex] || [];
-        updated[questionIndex] = current.includes(option)
-          ? current.filter((o) => o !== option)
-          : [...current, option];
-      } else {
-        updated[questionIndex] = option;
-      }
-      return updated;
-    });
-  };
-  const handleApprove = async () => {
-    const res = await approveCourse(id);
-    if (res?.success) {
-      ToastHelper.success("✅ Khóa học đã được duyệt!");
-      setCourse((prev) => ({ ...prev, status: "approve" }));
-    } else {
-      ToastHelper.error("❌ Duyệt thất bại!");
-    }
-  };
-
-  const handleReject = async () => {
-    const res = await rejectCourse(id, rejectReason);
-    if (res?.success) {
-      ToastHelper.success("⚠ Khóa học đã bị từ chối!");
-      setCourse((prev) => ({ ...prev, status: "reject" }));
-      setShowRejectModal(false);
-    } else {
-      ToastHelper.error("❌ Từ chối thất bại!");
-    }
-  };
-  return (
-    <div className="py-10 px-5 bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen">
-      {/* Header */}
-      <div className="mb-8 flex justify-between items-center flex-wrap gap-4">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Course Details:{" "}
-          <span className="text-indigo-600">{course?.title || "Loading..."}</span>
-        </h1>
-
-
-      </div>
-      <div className="flex gap-2">
-        <Button variant="outline" asChild>
-          <Link to="/admin/courses">← Back</Link>
-        </Button>
-        {course.status === "pending" && (
-          <>
-            <ConfirmationHelper
-              trigger={
-                <Button
-                  variant="success"
-                  size="sm"
-                  className="border border-gray-300 px-3"
-                >
-                  ✓ Approve
-                </Button>
-              }
-              title="Duyệt khóa học"
-              description="Bạn có chắc chắn muốn duyệt khóa học này không?"
-              confirmText="Duyệt"
-              onConfirm={() => handleApprove(course._id)}
-            />
-            <ConfirmationHelper
-              trigger={
-                <Button variant="destructive" size="sm" className="px-3">
-                  ✗ Reject
-                </Button>
-              }
-              title="Từ chối khóa học"
-              description="Bạn có chắc chắn muốn từ chối khóa học này không?"
-              confirmText="Từ chối"
-              onConfirm={() => {
-                handleReject(course._id);
-                setShowRejectModal(true);
-              }}
-            />
-          </>
-        )}
-        {course.status === "approve" && (
-          <>
-            <ConfirmationHelper
-              trigger={
-                <Button variant="destructive" size="sm" className="px-3">
-                  ✗ Reject
-                </Button>
-              }
-              title="Từ chối khóa học"
-              description="Bạn có chắc chắn muốn từ chối khóa học này không?"
-              confirmText="Từ chối"
-              onConfirm={() => {
-                handleReject(course._id);
-                setShowRejectModal(true);
-              }}
-            />
-          </>
-        )}
-        {course.status === "reject" && (
-          <>
-            {/* Chỉ hiện nút Approve */}
-            <ConfirmationHelper
-              trigger={
-                <Button
-                  variant="success"
-                  size="sm"
-                  className="border border-gray-300 px-3"
-                >
-                  ✓ Approve
-                </Button>
-              }
-              title="Duyệt khóa học"
-              description="Bạn có chắc chắn muốn duyệt khóa học này không?"
-              confirmText="Duyệt"
-              onConfirm={() => handleApprove(course._id)}
-            />
-          </>
-        )}
-
-
-      </div>
-
-
-
-
-      {/* Layout */}
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* LEFT - Course Preview */}
-        <div className="flex-1 flex flex-col gap-8">
-          {/* Preview Section */}
-          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
-            <div className="font-semibold mb-4 text-lg border-b pb-2 text-gray-800">
-              Course Preview
-            </div>
-
-            {selectedItem ? (
-              <div>
-                <h2 className="text-2xl font-bold text-indigo-700 mb-2">
-                  Title: {selectedItem.title}
-                </h2>
-
-                {/* Hiển thị mô tả nếu có */}
-                {selectedItem.description && (
-                  <p className="text-gray-700 mb-3 leading-relaxed">
-                    <span className="font-semibold text-gray-800">Description: </span>
-                    {selectedItem.description}
-                  </p>
-                )}
-
-                {/* Nếu là bài học */}
-                {selectedItem.type === "lesson" && (
-                  <div className="text-gray-800 bg-white rounded-xl shadow-md p-6 border border-gray-100 space-y-4">
-
-                    {/* Lesson content */}
-                    {selectedItem.content && (
-                      <p className="leading-relaxed text-gray-700 whitespace-pre-line">
-                        {selectedItem.content}
-                      </p>
-                    )}
-
-                    {/* Video material */}
-                    {lessonMaterials.filter(m => m.type === "video").length > 0 && (
-                      <div className="space-y-4">
-                        <h4 className="font-semibold text-gray-800">Video Materials:</h4>
-                        {lessonMaterials.filter(m => m.type === "video").map((m, i) => (
-                          <div key={i} className="border rounded-md overflow-hidden shadow-sm">
-                            <p className="px-3 py-2 font-medium text-gray-700">{m.title}</p>
-                            <div className="aspect-video bg-black rounded-lg overflow-hidden mb-6">
-                              <iframe
-                                src={m.url}
-                                width="100%"
-                                height="100%"
-                                allow="autoplay; encrypted-media"
-                                allowFullScreen
-                                title="Video bài học"
-                                style={{ border: "0" }}
-                              />
-                            </div>
-                          </div>
-
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Document material */}
-                    {lessonMaterials.filter(m => m.type === "document").length > 0 && (
-                      <div className="space-y-2">
-                        <h4 className="font-semibold text-gray-800">Documents:</h4>
-                        <ul className="list-disc list-inside text-gray-700">
-                          {lessonMaterials.filter(m => m.type === "document").map((m, i) => (
-                            <li key={i}>
-                              <a
-                                href={m.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-indigo-600 hover:underline"
-                              >
-                                {m.title}
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {lessonMaterials.length === 0 && (
-                      <p className="italic text-gray-400 mt-2">No materials available.</p>
-                    )}
-                  </div>
-                )}
-
-
-
-                {selectedItem.type === "quiz" ? (
-                  selectedItem.questions?.length > 0 ? (
-                    <div className="space-y-6 max-h-[800px] overflow-y-auto pr-2 custom-scroll">
-                      {selectedItem.questions.map((q, index) => (
-                        <div
-                          key={index}
-                          className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 hover:shadow-md transition"
-                        >
-                          {/* Question */}
-                          <p className="text-lg font-semibold text-gray-900 mb-4">
-                            {index + 1}. {q.questionText}
-                          </p>
-
-                          {/* Options */}
-                          <div className="space-y-2">
-                            {q.options?.map((option, i) => (
-                              <div
-                                key={i}
-                                className="flex items-center gap-3 bg-gray-50 p-3 rounded-md border border-gray-100 shadow-sm"
-                              >
-                                <span className="w-5 h-5 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-700 font-semibold">
-                                  {String.fromCharCode(65 + i)}
+    return (
+        <div className="min-h-screen bg-gray-50/50 p-6">
+            {/* Header */}
+            <div className="max-w-[1600px] mx-auto mb-6">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-4">
+                        <Button variant="ghost" size="icon" asChild>
+                            <Link to="/admin/courses">
+                                <ArrowLeft className="w-5 h-5" />
+                            </Link>
+                        </Button>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">{course.title}</h1>
+                            <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                                <span className="flex items-center gap-1">
+                                    <User className="w-4 h-4" /> {course.main_instructor?.username}
                                 </span>
-                                <span className="text-gray-800">{option}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 italic text-center py-6">No questions available.</p>
-                  )
-                ) : null}
-
-
-              </div>
-            ) : (
-              <div className="text-gray-400 text-center py-16">
-                Click a lesson or quiz to preview
-              </div>
-            )}
-
-
-          </div>
-
-          {/* Course Information */}
-          <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-6">
-            <div className="font-semibold mb-4 text-lg border-b pb-2 text-gray-800">
-              Course Information
-            </div>
-            <div className="space-y-2 text-gray-700">
-              <div>
-                <span className="font-medium">Lecturer:</span>{" "}
-                {course?.main_instructor?.username || "N/A"}
-              </div>
-              <div>
-                <span className="font-medium">Status:</span>{" "}
-                <Button
-                  size="sm"
-                  className={
-                    course.status === "approve"
-                      ? "bg-green-500 hover:bg-green-600 text-white"
-                      : course.status === "pending"
-                        ? "bg-yellow-400 hover:bg-yellow-500 text-white"
-                        : "bg-red-500 hover:bg-red-600 text-white"
-                  }
-                >
-                  {course.status}
-                </Button>
-              </div>
-              <div>
-                <span className="font-medium">Description:</span>{" "}
-                {course?.description || "No description available."}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT - Sidebar */}
-        <div className="w-full md:w-80 flex flex-col gap-6">
-          {course?.quizzes?.length > 0 && (
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
-              <h3 className="px-4 py-3 font-semibold text-gray-800 border-b bg-gray-50">
-                Course Quizzes
-              </h3>
-              {course.quizzes.map((quiz) => (
-                <button
-                  key={quiz._id}
-                  onClick={() => handleSelectItem(quiz, "quiz")}
-                  className="w-full text-left px-5 py-2 hover:bg-indigo-50 flex items-center justify-between transition"
-                >
-                  <span className="text-sm text-gray-700">{quiz.title}</span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div className="divide-y divide-gray-200">
-            {/* Course-level quizzes */}
-            {course.courseQuizzes?.length > 0 && (
-              <div className="bg-white border-y border-gray-200">
-                <h3 className="px-4 py-2 font-semibold text-gray-800 border-b">
-                  Course Quizzes
-                </h3>
-                {course.courseQuizzes.map((quiz) => (
-                  <button
-                    key={quiz._id}
-                    onClick={() => handleSelectItem(quiz, "quiz")}
-                    className={`w-full text-left px-6 py-2 hover:bg-gray-100 flex items-center justify-between ${selectedItem?.data?._id === quiz._id ? "bg-gray-100" : ""
-                      }`}
-                  >
-                    <span className="text-sm text-gray-700">{quiz.title}</span>
-                    <Circle className="w-4 h-4 text-gray-400" />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {course?.modules?.map((module) => (
-              <div key={module._id} className="bg-white">
-                {/* Module Header */}
-                <button
-                  onClick={() => toggleSection(module._id)}
-                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-100 transition-colors"
-                >
-                  <span className="text-left">
-                    <p className="text-sm font-medium text-gray-900">
-                      {module.title}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {module.lessons?.filter((l) => l.user_completed?.length > 0).length || 0}/
-                      {module.lessons?.length || 0}
-                    </p>
-                  </span>
-                  <ChevronDown
-                    className={`w-4 h-4 text-gray-500 transition-transform ${expandedSections[module._id] ? "rotate-180" : ""
-                      }`}
-                  />
-                </button>
-
-                {expandedSections[module._id] && (
-                  <div className="bg-gray-50 border-t border-gray-200">
-                    {module.lessons?.map((lesson) => (
-                      <div key={lesson._id} className="border-b border-gray-100 last:border-0">
-                        {/* 🎓 Lesson */}
-                        <button
-                          onClick={() => handleSelectItem(lesson, "lesson")}
-                          className={`w-full flex items-start gap-3 px-4 py-2 hover:bg-gray-100 transition ${selectedItem?.data?._id === lesson._id ? "bg-gray-100" : ""
-                            }`}
-                        >
-                          {lesson.user_completed?.length > 0 ? (
-                            <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5" />
-                          ) : (
-                            <Circle className="w-4 h-4 text-gray-400 mt-0.5" />
-                          )}
-                          <div className="flex-1 min-w-0 text-left">
-                            <p className="text-sm font-medium text-gray-800 truncate">
-                              {lesson.title}
-                            </p>
-                            <p className="text-xs text-gray-500 capitalize">{lesson.type}</p>
-                          </div>
-                        </button>
-
-                        {/* 🧩 Lesson-level Quizzes */}
-                        {lesson.quizzes?.length > 0 && (
-                          <div className="pl-8 pr-4 py-2 bg-gray-50 border-t border-gray-100">
-                            <p className="text-xs text-gray-600 font-semibold mb-1">
-                              Lesson Quizzes
-                            </p>
-                            <div className="space-y-1">
-                              {lesson.quizzes.map((quiz) => (
-                                <button
-                                  key={quiz._id}
-                                  onClick={() => handleSelectItem(quiz, "quiz")}
-                                  className={`w-full text-left text-sm text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-md flex items-center gap-2 transition ${selectedItem?.data?._id === quiz._id ? "bg-gray-100" : ""
-                                    }`}
-                                >
-                                  <Circle className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                                  <span className="truncate">{quiz.title}</span>
-                                </button>
-                              ))}
+                                <span>•</span>
+                                <span className="flex items-center gap-1">
+                                    <Clock className="w-4 h-4" />{" "}
+                                    {new Date(course.createdAt).toLocaleDateString("vi-VN")}
+                                </span>
+                                <span>•</span>
+                                {getStatusBadge(course.status)}
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                        </div>
+                    </div>
 
-                    {module.moduleQuizzes?.length > 0 && (
-                      <div className="px-6 py-3 border-t border-gray-200 bg-gray-50">
-                        <p className="text-xs text-gray-600 font-semibold mb-1">
-                          Module Quizzes
-                        </p>
-                        <div className="space-y-1">
-                          {module.moduleQuizzes.map((quiz) => (
+                    <div className="flex items-center gap-2">
+                        {course.status === "pending" && (
+                            <>
+                                <ConfirmationHelper
+                                    trigger={
+                                        <Button className="bg-green-600 hover:bg-green-700 text-white gap-2">
+                                            <Check className="w-4 h-4" /> Approve
+                                        </Button>
+                                    }
+                                    title="Approve Course"
+                                    description="Are you sure you want to approve this course?"
+                                    confirmText="Approve"
+                                    onConfirm={handleApprove}
+                                />
+                                <Button
+                                    variant="destructive"
+                                    className="gap-2"
+                                    onClick={() => setShowRejectModal(true)}
+                                >
+                                    <X className="w-4 h-4" /> Reject
+                                </Button>
+                            </>
+                        )}
+                        {course.status === "reject" && (
+                            <ConfirmationHelper
+                                trigger={
+                                    <Button className="bg-green-600 hover:bg-green-700 text-white gap-2">
+                                        <Check className="w-4 h-4" /> Approve
+                                    </Button>
+                                }
+                                title="Approve Course"
+                                description="Are you sure you want to approve this course?"
+                                confirmText="Approve"
+                                onConfirm={handleApprove}
+                            />
+                        )}
+                        {course.status === "approve" && (
+                            <Button
+                                variant="destructive"
+                                className="gap-2"
+                                onClick={() => setShowRejectModal(true)}
+                            >
+                                <X className="w-4 h-4" /> Reject
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-140px)]">
+                {/* LEFT - Content Preview */}
+                <Card className="lg:col-span-2 flex flex-col h-full border-none shadow-sm overflow-hidden">
+                    <CardHeader className="border-b bg-white px-6 py-4">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                            {selectedItem?.type === "lesson" && (
+                                <PlayCircle className="w-5 h-5 text-blue-500" />
+                            )}
+                            {selectedItem?.type === "quiz" && (
+                                <HelpCircle className="w-5 h-5 text-orange-500" />
+                            )}
+                            {selectedItem?.type === "course_info" && (
+                                <FileText className="w-5 h-5 text-gray-500" />
+                            )}
+                            {selectedItem?.title || "Course Information"}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex-1 overflow-y-auto p-6 bg-white">
+                        {selectedItem?.type === "course_info" && (
+                            <div className="space-y-6">
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-2">Description</h3>
+                                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap break-all">
+                                        {course.description || "No description available."}
+                                    </p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="p-4 bg-gray-50 rounded-lg">
+                                        <p className="text-sm text-gray-500">Price</p>
+                                        <p className="text-lg font-semibold text-gray-900">
+                                            {course.price?.toLocaleString("vi-VN", {
+                                                style: "currency",
+                                                currency: "VND",
+                                            })}
+                                        </p>
+                                    </div>
+                                    <div className="p-4 bg-gray-50 rounded-lg">
+                                        <p className="text-sm text-gray-500">Category</p>
+                                        <p className="text-lg font-semibold text-gray-900">
+                                            {course.category?.name || "Uncategorized"}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {selectedItem?.type === "lesson" && (
+                            <div className="space-y-6">
+                                {/* Video Player Section */}
+                                {lessonVideos.length > 0 ? (
+                                    <div className="mb-8 rounded-lg bg-gray-100 overflow-hidden">
+                                        <div className="aspect-video w-full relative group">
+                                            <div className="absolute inset-0">
+                                                <VideoPlayer
+                                                    key={lessonVideos[videoIndex]._id}
+                                                    file={lessonVideos[videoIndex]}
+                                                    onClose={() => {}}
+                                                    canClose={false}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {lessonVideos.length > 1 && (
+                                            <div className="p-4 flex items-center justify-between border-t border-gray-800">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={handlePrevVideo}
+                                                    className="text-gray-400 hover:text-white hover:bg-gray-800"
+                                                    disabled={lessonVideos.length <= 1}
+                                                >
+                                                    <ChevronLeft className="mr-2 h-4 w-4" /> Previous Video
+                                                </Button>
+
+                                                <span className="text-sm font-medium text-gray-400 bg-gray-800 px-3 py-1 rounded-full">
+                                                    Video {videoIndex + 1} of {lessonVideos.length}
+                                                </span>
+
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={handleNextVideo}
+                                                    className="text-gray-400 hover:text-white hover:bg-gray-800"
+                                                    disabled={lessonVideos.length <= 1}
+                                                >
+                                                    Next Video <ChevronRight className="ml-2 h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="mb-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 p-12 text-center">
+                                        <div className="mx-auto h-12 w-12 text-gray-400 mb-4">
+                                            <FileText className="h-full w-full" />
+                                        </div>
+                                        <h3 className="text-lg font-medium text-gray-900">
+                                            No video content
+                                        </h3>
+                                        <p className="mt-1 text-gray-500">
+                                            This lesson focuses on reading materials and exercises.
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Content Tabs */}
+                                <Tabs defaultValue="summary" className="w-full">
+                                    <TabsList className="w-full justify-start border-b border-gray-200 bg-transparent p-0 h-auto rounded-none mb-6">
+                                        <TabsTrigger
+                                            value="summary"
+                                            className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 data-[state=active]:bg-transparent font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                                        >
+                                            Overview
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="resources"
+                                            className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 data-[state=active]:bg-transparent font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                                        >
+                                            Resources ({lessonDocuments.length})
+                                        </TabsTrigger>
+                                    </TabsList>
+
+                                    <TabsContent
+                                        value="summary"
+                                        className="mt-0 animate-in fade-in-50 duration-300"
+                                    >
+                                        <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                                                About this lesson
+                                            </h3>
+                                            <div className="prose prose-indigo max-w-none text-gray-600 leading-relaxed">
+                                                {selectedItem.content ? (
+                                                    <div className="whitespace-pre-wrap break-all">
+                                                        {selectedItem.content}
+                                                    </div>
+                                                ) : (
+                                                    <p className="italic text-gray-400">
+                                                        No description available for this lesson.
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </TabsContent>
+
+                                    <TabsContent
+                                        value="resources"
+                                        className="mt-0 animate-in fade-in-50 duration-300"
+                                    >
+                                        <div className="bg-white rounded-lg border border-gray-100 shadow-sm">
+                                            {selectedDocument ? (
+                                                <div className="flex flex-col h-[600px]">
+                                                    <div className="bg-gray-50 px-4 py-3 border-b flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <FileText className="h-5 w-5 text-indigo-600" />
+                                                            <span className="font-medium text-gray-700">
+                                                                {selectedDocument.originalName}
+                                                            </span>
+                                                        </div>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => setSelectedDocument(null)}
+                                                            className="text-gray-500 hover:text-gray-700"
+                                                        >
+                                                            Close Viewer
+                                                        </Button>
+                                                    </div>
+                                                    <div className="flex-1 bg-gray-100">
+                                                        <DocumentViewer
+                                                            file={selectedDocument}
+                                                            onClose={() => setSelectedDocument(null)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="p-6">
+                                                    {lessonDocuments.length > 0 ? (
+                                                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                                            {lessonDocuments.map((doc) => (
+                                                                <div
+                                                                    key={doc._id}
+                                                                    onClick={() => handleFileClick(doc)}
+                                                                    className="group relative flex items-start gap-4 p-4 rounded-xl border border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all cursor-pointer"
+                                                                >
+                                                                    <div className="flex-shrink-0 p-3 bg-indigo-50 text-indigo-600 rounded-lg group-hover:bg-indigo-100 transition-colors">
+                                                                        <FileText className="h-6 w-6" />
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="font-medium text-gray-900 truncate group-hover:text-indigo-700 transition-colors">
+                                                                            {doc.originalName}
+                                                                        </p>
+                                                                        <p className="text-xs text-gray-500 mt-1">
+                                                                            {(doc.size / 1024 / 1024).toFixed(
+                                                                                2
+                                                                            )}{" "}
+                                                                            MB &bull;{" "}
+                                                                            {new Date(
+                                                                                doc.createdAt
+                                                                            ).toLocaleDateString()}
+                                                                        </p>
+                                                                        <div className="flex items-center gap-3 mt-3">
+                                                                            <span className="text-xs font-medium text-indigo-600 flex items-center gap-1 group-hover:underline">
+                                                                                <Eye className="h-3 w-3" />{" "}
+                                                                                Preview
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-center py-12">
+                                                            <div className="mx-auto h-12 w-12 text-gray-300 mb-3">
+                                                                <FileText className="h-full w-full" />
+                                                            </div>
+                                                            <p className="text-gray-500">
+                                                                No resources attached to this lesson.
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </TabsContent>
+                                </Tabs>
+                            </div>
+                        )}
+
+                        {selectedItem?.type === "quiz" && (
+                            <div className="space-y-6">
+                                {selectedItem.questions?.length > 0 ? (
+                                    selectedItem.questions.map((q, index) => (
+                                        <Card key={index} className="border border-gray-200 shadow-none">
+                                            <CardHeader className="pb-2">
+                                                <CardTitle className="text-base font-medium">
+                                                    Question {index + 1}: {q.questionText}
+                                                </CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="space-y-2">
+                                                {q.options?.map((option, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className="flex items-center gap-3 p-3 rounded-md bg-gray-50 border border-gray-100"
+                                                    >
+                                                        <span className="w-6 h-6 flex items-center justify-center rounded-full bg-white border text-sm font-medium text-gray-600 shadow-sm">
+                                                            {String.fromCharCode(65 + i)}
+                                                        </span>
+                                                        <span className="text-gray-700">{option}</span>
+                                                    </div>
+                                                ))}
+                                            </CardContent>
+                                        </Card>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-8 text-gray-500">
+                                        No questions available in this quiz.
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* RIGHT - Course Structure */}
+                <Card className="h-full border-none shadow-sm flex flex-col overflow-hidden">
+                    <CardHeader className="border-b bg-white px-4 py-4">
+                        <CardTitle className="text-lg">Course Structure</CardTitle>
+                        <CardDescription>Modules, lessons, and quizzes</CardDescription>
+                    </CardHeader>
+                    <ScrollArea className="flex-1 bg-white">
+                        <div className="p-4 space-y-4">
+                            {/* Course Info Button */}
                             <button
-                              key={quiz._id}
-                              onClick={() => handleSelectItem(quiz, "quiz")}
-                              className={`w-full text-left text-sm text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-md flex items-center gap-2 transition ${selectedItem?.data?._id === quiz._id ? "bg-gray-100" : ""
+                                onClick={() => setSelectedItem({ ...course, type: "course_info" })}
+                                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
+                                    selectedItem?.type === "course_info"
+                                        ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
+                                        : "hover:bg-gray-50 border border-transparent"
                                 }`}
                             >
-                              <Circle className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                              <span className="truncate">{quiz.title}</span>
+                                <div className="p-2 bg-white rounded-md shadow-sm">
+                                    <FileText className="w-4 h-4 text-indigo-600" />
+                                </div>
+                                <span className="font-medium text-sm">General Information</span>
                             </button>
-                          ))}
+
+                            {/* Course Quizzes */}
+                            {course.courseQuizzes?.length > 0 && (
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2">
+                                        Course Quizzes
+                                    </h4>
+                                    {course.courseQuizzes.map((quiz) => (
+                                        <button
+                                            key={quiz._id}
+                                            onClick={() => handleSelectItem(quiz, "quiz")}
+                                            className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-left ${
+                                                selectedItem?._id === quiz._id
+                                                    ? "bg-orange-50 text-orange-700"
+                                                    : "hover:bg-gray-50 text-gray-700"
+                                            }`}
+                                        >
+                                            <HelpCircle className="w-4 h-4" />
+                                            <span className="text-sm truncate">{quiz.title}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Modules Accordion */}
+                            <Accordion
+                                type="multiple"
+                                defaultValue={course.modules?.map((m) => m._id)}
+                                className="space-y-2"
+                            >
+                                {course.modules?.map((module, index) => (
+                                    <AccordionItem
+                                        key={module._id}
+                                        value={module._id}
+                                        className="border rounded-lg px-2"
+                                    >
+                                        <AccordionTrigger className="hover:no-underline py-3">
+                                            <div className="flex items-center gap-2 text-left">
+                                                <span className="font-medium text-sm text-gray-900">
+                                                    Module {index + 1}: {module.title}
+                                                </span>
+                                            </div>
+                                        </AccordionTrigger>
+                                        <AccordionContent className="pb-3 pt-1 space-y-1">
+                                            {/* Module Description */}
+                                            {module.description && (
+                                                <div className="px-4 py-2 mb-2 text-sm text-gray-600 bg-gray-50/50 rounded-md border border-gray-100 whitespace-pre-wrap break-all">
+                                                    {module.description}
+                                                </div>
+                                            )}
+
+                                            {/* Lessons */}
+                                            {module.lessons?.map((lesson) => (
+                                                <button
+                                                    key={lesson._id}
+                                                    onClick={() => handleSelectItem(lesson, "lesson")}
+                                                    className={`w-full flex items-center gap-3 p-2 rounded-md transition-colors text-left pl-4 ${
+                                                        selectedItem?._id === lesson._id
+                                                            ? "bg-blue-50 text-blue-700"
+                                                            : "hover:bg-gray-100 text-gray-600"
+                                                    }`}
+                                                >
+                                                    {lesson.type === "video" ? (
+                                                        <PlayCircle className="w-3.5 h-3.5" />
+                                                    ) : (
+                                                        <FileText className="w-3.5 h-3.5" />
+                                                    )}
+                                                    <span className="text-sm truncate">{lesson.title}</span>
+                                                </button>
+                                            ))}
+
+                                            {/* Module Quizzes */}
+                                            {module.moduleQuizzes?.length > 0 && (
+                                                <div className="mt-2 pt-2 border-t border-gray-100">
+                                                    <p className="text-xs text-gray-400 font-medium px-4 mb-1">
+                                                        Quizzes
+                                                    </p>
+                                                    {module.moduleQuizzes.map((quiz) => (
+                                                        <button
+                                                            key={quiz._id}
+                                                            onClick={() => handleSelectItem(quiz, "quiz")}
+                                                            className={`w-full flex items-center gap-3 p-2 rounded-md transition-colors text-left pl-4 ${
+                                                                selectedItem?._id === quiz._id
+                                                                    ? "bg-orange-50 text-orange-700"
+                                                                    : "hover:bg-gray-100 text-gray-600"
+                                                            }`}
+                                                        >
+                                                            <HelpCircle className="w-3.5 h-3.5" />
+                                                            <span className="text-sm truncate">
+                                                                {quiz.title}
+                                                            </span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                ))}
+                            </Accordion>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-              </div>
-            ))}
-          </div>
-
-        </div>
-        {/* Modal Reject */}
-        {showRejectModal && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-6 w-[400px] shadow-lg">
-              <h3 className="font-semibold text-lg mb-3 text-gray-800">Nhập lý do từ chối</h3>
-              <textarea
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                rows={4}
-                className="w-full border rounded-md p-2 focus:ring-2 focus:ring-red-400"
-                placeholder="Nhập lý do..."
-              />
-              <div className="flex justify-end gap-2 mt-4">
-                <Button variant="outline" onClick={() => setShowRejectModal(false)}>
-                  Hủy
-                </Button>
-                <Button onClick={handleReject} className="bg-red-500 hover:bg-red-600 text-white">
-                  Xác nhận
-                </Button>
-              </div>
+                    </ScrollArea>
+                </Card>
             </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+
+            {/* Reject Modal */}
+            <Dialog open={showRejectModal} onOpenChange={setShowRejectModal}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-red-600">
+                            <AlertCircle className="h-5 w-5" />
+                            Reject Course
+                        </DialogTitle>
+                        <DialogDescription>
+                            Please provide a reason for rejecting this course.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <Textarea
+                            placeholder="Enter rejection reason..."
+                            value={rejectReason}
+                            onChange={(e) => setRejectReason(e.target.value)}
+                            className="min-h-[100px]"
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowRejectModal(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={handleReject}>
+                            Confirm Reject
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </div>
+    );
 };
 
 export default CourseDetailPage;
