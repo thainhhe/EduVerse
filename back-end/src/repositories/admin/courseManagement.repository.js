@@ -31,8 +31,8 @@ const courseManagementRepository = {
 
         const courses = await Course.find()
             .populate("category")
-            .populate("main_instructor")
-            .populate("instructors.user")
+            .populate("main_instructor", "username email")
+            .populate("instructors.user", "username email")
             .populate("instructors.permission")
             .populate("category")
             .exec();
@@ -49,8 +49,8 @@ const courseManagementRepository = {
             // 1️⃣ Lấy course với các thông tin cơ bản
             const course = await Course.findById(courseId)
                 .populate("category")
-                .populate("main_instructor", "name email")
-                .populate("instructors.user", "name email")
+                .populate("main_instructor", "username email")
+                .populate("instructors.user", "username email")
                 .lean();
 
             if (!course) return null;
@@ -69,7 +69,7 @@ const courseManagementRepository = {
 
             // 4️⃣ Lấy materials cho lessons
             const materials = await Material.find({ lessonId: { $in: lessonIds } })
-                .populate({ path: "uploadedBy", select: "name email role" })
+                .populate({ path: "uploadedBy", select: "username email role" })
                 .lean();
 
             // Gom materials theo lessonId
@@ -144,7 +144,7 @@ const courseManagementRepository = {
 
             // 11️⃣ Lấy reviews
             const reviews = await Review.find({ courseId: courseIdStr })
-                .populate("userId", "name email")
+                .populate("userId", "username email")
                 .sort({ createdAt: -1 })
                 .lean();
             const totalReviews = reviews.length;

@@ -1,210 +1,437 @@
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  PlusCircle,
-  File,
-  MoreHorizontal,
-  ChevronLeft,
-  ChevronRight,
+    PlusCircle,
+    Search,
+    ChevronLeft,
+    ChevronRight,
+    Eye,
+    Lock,
+    Unlock,
+    Download,
+    Plus,
 } from "lucide-react";
-
-// Thêm ID vào dữ liệu mẫu
-const users = [
-  {
-    id: "user-1", // Thêm ID
-    name: "Alice Wonderland",
-    email: "alice@example.com",
-    role: "Student",
-    status: "Active",
-    creationDate: "2023-01-15",
-    lastLogin: "2024-03-20",
-    avatar: "/student-woman.png",
-  },
-  {
-    id: "user-2", // Thêm ID
-    name: "Bob The Builder",
-    email: "bob@example.com",
-    role: "Instructor", // Giả sử Lecturer tương ứng với Instructor route
-    status: "Active",
-    creationDate: "2022-11-01",
-    lastLogin: "2024-03-19",
-    avatar: "/professional-man.jpg",
-  },
-  {
-    id: "user-3", // Thêm ID
-    name: "Charlie Chaplin",
-    email: "charlie@example.com",
-    role: "Student",
-    status: "Locked",
-    creationDate: "2023-03-10",
-    lastLogin: "2023-12-01",
-    avatar: "/student-man.jpg",
-  },
-  {
-    id: "user-4", // Thêm ID
-    name: "Diana Prince",
-    email: "diana@example.com",
-    role: "Instructor", // Giả sử Lecturer tương ứng với Instructor route
-    status: "Pending",
-    creationDate: "2024-01-05",
-    lastLogin: "N/A",
-    avatar: "/professional-woman-diverse.png",
-  },
-];
-
-const statusVariant = {
-  Active: "default",
-  Locked: "destructive",
-  Pending: "secondary",
-};
+import { ToastHelper } from "@/helper/ToastHelper";
+import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
+import { getAllUsers, lockUser, unlockUser } from "@/services/userService";
+import Swal from "sweetalert2";
 
 const UserManagementPage = () => {
-  const navigate = useNavigate(); // Khởi tạo navigate
+    const navigate = useNavigate();
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedUsers, setSelectedUsers] = useState([]);
 
-  // Hàm xử lý khi click vào một dòng hoặc nút Edit
-  const handleViewDetails = (user) => {
-    if (user.role === "Student") {
-      navigate(`/admin/users/learner/${user.id}`);
-    } else if (user.role === "Instructor") {
-      // Hoặc "Instructor" nếu role khác
-      navigate(`/admin/users/instructor/${user.id}`);
-    } else {
-      // Xử lý cho các role khác nếu cần, hoặc mặc định đến một trang nào đó
-      console.warn("Unhandled user role for details view:", user.role);
-      // navigate(`/admin/users/detail/${user.id}`); // Ví dụ trang detail chung
+    // Filters
+    const [searchTerm, setSearchTerm] = useState("");
+    const [roleFilter, setRoleFilter] = useState("all");
+    const [statusFilter, setStatusFilter] = useState("all");
+
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(5);
+
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    const fetchUsers = async () => {
+        setLoading(true);
+        try {
+            const res = await getAllUsers();
+            if (res?.success) {
+                setUsers(res.data || []);
+            } else {
+                ToastHelper.error("Failed to fetch users");
+            }
+        } catch (error) {
+            console.error("Error fetching users:", error);
+            ToastHelper.error("Error loading users");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Filter users
+    const filteredUsers = users.filter((user) => {
+        const matchesSearch =
+            user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesRole = roleFilter === "all" || user.role === roleFilter;
+        const matchesStatus = statusFilter === "all" || user.status === statusFilter;
+        return matchesSearch && matchesRole && matchesStatus;
+    });
+
+    // Pagination
+    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const currentUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+
+    // Selection handlers
+    const handleSelectAll = (checked) => {
+        if (checked) {
+            setSelectedUsers(currentUsers.map((user) => user._id));
+        } else {
+            setSelectedUsers([]);
+        }
+    };
+
+    const handleSelectOne = (id, checked) => {
+        if (checked) {
+            setSelectedUsers([...selectedUsers, id]);
+        } else {
+            setSelectedUsers(selectedUsers.filter((userId) => userId !== id));
+        }
+    };
+
+    // Action handlers
+    const handleLockUser = async (userId) => {
+        try {
+            const res = await lockUser(userId);
+            if (res?.success) {
+                Swal.fire({
+                    icon: "success",
+                    title: "Locked!",
+                    text: "User locked successfully!",
+                });
+                setUsers(users.map((u) => (u._id === userId ? { ...u, status: "locked" } : u)));
+                setSelectedUsers(selectedUsers.filter((id) => id !== userId));
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error!",
+                    text: "Failed to lock user!",
+                });
+            }
+        } catch (error) {
+            console.error("Error locking user:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Error!",
+                text: "Error locking user!",
+            });
+        }
+    };
+
+    const handleUnlockUser = async (userId) => {
+        try {
+            const res = await unlockUser(userId);
+            if (res?.success) {
+                Swal.fire({
+                    icon: "success",
+                    title: "Unlocked!",
+                    text: "User unlocked successfully!",
+                });
+                setUsers(users.map((u) => (u._id === userId ? { ...u, status: "active" } : u)));
+                setSelectedUsers(selectedUsers.filter((id) => id !== userId));
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error!",
+                    text: "Failed to unlock user!",
+                });
+            }
+        } catch (error) {
+            console.error("Error unlocking user:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Error!",
+                text: "Error unlocking user!",
+            });
+        }
+    };
+
+    const getStatusBadge = (status) => {
+        switch (status) {
+            case "active":
+                return (
+                    <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-green-200">
+                        Active
+                    </Badge>
+                );
+            case "locked":
+                return (
+                    <Badge className="bg-red-100 text-red-700 hover:bg-red-200 border-red-200">Locked</Badge>
+                );
+            case "pending":
+                return (
+                    <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-yellow-200">
+                        Pending
+                    </Badge>
+                );
+            default:
+                return <Badge variant="outline">{status}</Badge>;
+        }
+    };
+
+    const formatDateTime = (dateString) => {
+        if (!dateString) return "N/A";
+        return new Date(dateString).toLocaleDateString("vi-VN");
+    };
+
+    if (loading) {
+        return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
     }
-  };
 
-  return (
-    <div className="py-8">
-      <div className="flex items-center justify-between mb-8 gap-4 flex-wrap">
-        <h1 className="text-3xl font-bold">User Management</h1>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button className="bg-primary">
-            <PlusCircle className="mr-2 h-4 w-4" /> Add New User
-          </Button>
-        </div>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Users</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead className="hidden md:table-cell">Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="hidden lg:table-cell">
-                  Creation Date
-                </TableHead>
-                <TableHead className="hidden sm:table-cell">
-                  Last Login
-                </TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map(
-                (
-                  user // Đổi index thành user.id làm key
-                ) => (
-                  <TableRow
-                    key={user.id}
-                    onClick={() => handleViewDetails(user)} // Thêm onClick vào TableRow
-                    className="cursor-pointer hover:bg-muted/50" // Thêm style khi hover
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarImage src={user.avatar} />
-                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">{user.name}</div>
-                          <div className="text-xs text-muted-foreground hidden sm:block">
-                            {user.email}
-                          </div>
+    return (
+        <div className="min-h-screen bg-white">
+            {/* Filters & Table */}
+            <div className="max-w-full mx-auto shadow-sm border-none">
+                <div className="pb-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-2  bg-gray-500 text-black">
+                        <div className="flex flex-col items-center sm:flex-row gap-2">
+                            <div className="text-md flex items-center p-1.5 bg-white rounded-sm">
+                                Users List {selectedUsers.length} selected
+                            </div>
+                            <Select value={roleFilter} onValueChange={setRoleFilter}>
+                                <SelectTrigger className="w-full sm:w-[150px] max-w-[100px] bg-white">
+                                    <SelectValue placeholder="Role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Roles</SelectItem>
+                                    <SelectItem value="student">Student</SelectItem>
+                                    <SelectItem value="instructor">Instructor</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                <SelectTrigger className="w-full sm:w-[150px] max-w-[100px] bg-white">
+                                    <SelectValue placeholder="Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Status</SelectItem>
+                                    <SelectItem value="active">Active</SelectItem>
+                                    <SelectItem value="locked">Locked</SelectItem>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Button
+                                variant="outline"
+                                className="bg-white text-black hover:bg-gray-100"
+                                // onClick={handleReset}
+                            >
+                                <Download /> Export
+                            </Button>
+                            <Button className="bg-white text-black flex items-center">
+                                <Plus className="h-4 w-4" />
+                                New User
+                            </Button>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {user.role}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={statusVariant[user.status]}>
-                        {user.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      {user.creationDate}
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      {user.lastLogin}
-                    </TableCell>
-                    <TableCell
-                      onClick={(e) =>
-                        e.stopPropagation()
-                      } /* Ngăn click vào dropdown trigger click cả row */
-                    >
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          {/* Cập nhật DropdownMenuItem Edit */}
-                          <DropdownMenuItem
-                            onClick={() => handleViewDetails(user)}
-                          >
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>Delete</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                )
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-3 h-4 w-4 text-gray-500" />
+                            <Input
+                                placeholder="Search users..."
+                                className="pl-8 w-full sm:w-[250px]"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-white">
+                    <div className="overflow-y-auto">
+                        <Table>
+                            <TableHeader className="bg-gray-300">
+                                <TableRow>
+                                    <TableHead className="w-[50px]">
+                                        <Checkbox
+                                            checked={
+                                                selectedUsers.length === currentUsers.length &&
+                                                currentUsers.length > 0
+                                            }
+                                            onCheckedChange={handleSelectAll}
+                                            aria-label="Select all"
+                                            className="!rounded"
+                                        />
+                                    </TableHead>
+                                    <TableHead>User</TableHead>
+                                    <TableHead>Role</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Created At</TableHead>
+                                    <TableHead>Last Login</TableHead>
+                                    {selectedUsers.length > 0 && (
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    )}
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {currentUsers.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                                            No users found
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    currentUsers.map((user) => (
+                                        <TableRow
+                                            key={user._id}
+                                            className={`hover:bg-gray-200 transition-colors cursor-pointer ${
+                                                selectedUsers.includes(user._id) ? "bg-gray-200" : ""
+                                            }`}
+                                            onClick={() =>
+                                                handleSelectOne(user._id, !selectedUsers.includes(user._id))
+                                            }
+                                        >
+                                            <TableCell onClick={(e) => e.stopPropagation()}>
+                                                <Checkbox
+                                                    checked={selectedUsers.includes(user._id)}
+                                                    onCheckedChange={(checked) =>
+                                                        handleSelectOne(user._id, checked)
+                                                    }
+                                                    aria-label={`Select ${user.username}`}
+                                                    className="!rounded data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-3">
+                                                    <Avatar className="h-8 w-8">
+                                                        <AvatarImage src={user.avatar} />
+                                                        <AvatarFallback>
+                                                            {user.username?.charAt(0)?.toUpperCase() || "U"}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <div>
+                                                        <div className="font-medium text-gray-900">
+                                                            {user.username}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500">
+                                                            {user.email}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="capitalize">{user.role}</TableCell>
+                                            <TableCell>{getStatusBadge(user.status)}</TableCell>
+                                            <TableCell className="text-gray-500 text-sm">
+                                                {formatDateTime(user.createdAt)}
+                                            </TableCell>
+                                            <TableCell className="text-gray-500 text-sm">
+                                                {formatDateTime(user.lastLogin)}
+                                            </TableCell>
+                                            {selectedUsers.length > 0 && (
+                                                <TableCell
+                                                    className="text-right"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    {selectedUsers.includes(user._id) && (
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            {user.status === "active" && (
+                                                                <ConfirmationHelper
+                                                                    trigger={
+                                                                        <Button
+                                                                            size="icon"
+                                                                            variant="ghost"
+                                                                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                                        >
+                                                                            <Lock className="h-4 w-4" />
+                                                                        </Button>
+                                                                    }
+                                                                    title="Lock User"
+                                                                    description="Are you sure you want to lock this user?"
+                                                                    confirmText="Lock"
+                                                                    onConfirm={() => handleLockUser(user._id)}
+                                                                />
+                                                            )}
+                                                            {user.status === "locked" && (
+                                                                <ConfirmationHelper
+                                                                    trigger={
+                                                                        <Button
+                                                                            size="icon"
+                                                                            variant="ghost"
+                                                                            className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                                        >
+                                                                            <Unlock className="h-4 w-4" />
+                                                                        </Button>
+                                                                    }
+                                                                    title="Unlock User"
+                                                                    description="Are you sure you want to unlock this user?"
+                                                                    confirmText="Unlock"
+                                                                    onConfirm={() =>
+                                                                        handleUnlockUser(user._id)
+                                                                    }
+                                                                />
+                                                            )}
+                                                            <Button
+                                                                asChild
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="h-8 w-8 text-gray-500 hover:text-gray-700"
+                                                            >
+                                                                <Link
+                                                                    to={`/admin/users/${user.role}/${user._id}`}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                >
+                                                                    <Eye className="h-4 w-4" />
+                                                                </Link>
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                </TableCell>
+                                            )}
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
 
-      {/* Phần Pagination giữ nguyên */}
-      <div className="flex justify-center items-center gap-4 mt-6">
-        <Button variant="outline">
-          <ChevronLeft className="h-4 w-4 mr-2" /> Previous
-        </Button>
-        <span>1 / 3</span> {/* Logic phân trang cần cập nhật sau */}
-        <Button variant="outline">
-          Next <ChevronRight className="h-4 w-4 ml-2" />
-        </Button>
-      </div>
-    </div>
-  );
+                    {/* Pagination */}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 px-2 pb-2">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-500">Rows per page:</span>
+                            <select
+                                value={itemsPerPage.toString()}
+                                onChange={(e) => {
+                                    setItemsPerPage(Number(e.target.value));
+                                    setCurrentPage(1);
+                                }}
+                                className="w-[70px] border-none text-sm"
+                            >
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-500">
+                                Page {currentPage} of {totalPages || 1}
+                            </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                                disabled={currentPage === 1}
+                                className="text-sm flex items-center gap-2"
+                            >
+                                <ChevronLeft className="h-4 w-4 mr-2" /> Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                                disabled={currentPage === totalPages}
+                                className="text-sm flex items-center gap-2"
+                            >
+                                Next <ChevronRight className="h-4 w-4 ml-2" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 };
 
 export default UserManagementPage;

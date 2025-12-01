@@ -1,5 +1,4 @@
 import { useCourse } from "@/context/CourseProvider";
-import { usePermission } from "@/context/PermissionCourseContext";
 import { NavLink } from "react-router-dom";
 
 const SideBar = () => {

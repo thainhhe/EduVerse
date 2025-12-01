@@ -25,6 +25,7 @@ const notificationRouter = require("./notification.routes.js");
 
 const courseManagementRouter = require("./admin/courseManagement.routes");
 const dashboardRoutes = require("./admin/dashboard.routes");
+const systemRouter = require("./admin/system.routes");
 const ragRoutes = require("./rag.routes");
 
 //===============================GENERAL ROUTES=========================================================
@@ -65,6 +66,7 @@ router.use("/chatbot", chatbotRouter);
 //===============================ADMIN ROUTES=========================================================
 router.use("/admin/courses", courseManagementRouter);
 router.use("/admin/dashboard", dashboardRoutes);
+router.use("/admin/system", systemRouter);
 
 router.use("/logs", logRouter);
 

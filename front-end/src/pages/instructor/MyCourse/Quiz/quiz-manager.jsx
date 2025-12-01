@@ -13,6 +13,9 @@ import {
     getQuizById,
 } from "@/services/courseService";
 import { Trash2, Plus, CloverIcon, X } from "lucide-react";
+import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
+import api from "@/services/api";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const QuizManager = ({
     mode: initialMode = "list", // default show list
@@ -190,7 +193,7 @@ const QuizManager = ({
             });
 
             return {
-                id: `Q-${idx + 1}`,
+                id: `Question ${idx + 1}`,
                 text: q.questionText,
                 type: (q.questionType || "multiple_choice").toString().replace(/_/g, "-"),
                 options,
@@ -351,26 +354,22 @@ const QuizManager = ({
                 setMode("list");
             } else {
                 console.error("Failed saving quiz:", res);
-                alert("Failed to save quiz. See console.");
+                notifyError("Failed to save quiz. See console.");
             }
         } catch (err) {
             console.error("Save quiz error:", err);
             const msg = err?.message || err?.response?.data?.message || "server error";
-            setErrors((prev) => ({
-                ...prev,
-                general: "Failed to save quiz: " + msg,
-            }));
+            notifyError("Failed to save quiz: " + msg);
         }
     };
 
     const handleDelete = async (quizId) => {
-        if (!confirm("Delete this quiz?")) return;
         try {
-            await fetch(`/quiz/${quizId}`, { method: "DELETE" }); // fallback if courseService.deleteQuiz not present
+            await api.delete(`/quiz/${quizId}`);
             await loadQuizzes();
         } catch (err) {
             console.error("Delete failed", err);
-            alert("Delete failed");
+            notifyError("Delete failed");
         }
     };
 
@@ -392,7 +391,7 @@ const QuizManager = ({
                     </Button>
                     <Button
                         onClick={onClose}
-                        className="bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors duration-200"
+                        className="bg-white text-red-600 hover:bg-red-600 hover:text-white transition-colors duration-200"
                     >
                         <X className="w-5 h-5" /> Close
                     </Button>
@@ -404,6 +403,16 @@ const QuizManager = ({
                     <div className="col-span-1 border rounded-md p-2 max-h-[60vh] overflow-auto">
                         <div className="flex items-center justify-between mb-2">
                             <div className="text-sm text-muted-foreground">Quizzes</div>
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-md font-semibold">Scope</h3>
+                                <div className="text-sm text-muted-foreground">
+                                    {lessonId
+                                        ? `Lesson Quizzes`
+                                        : moduleId
+                                        ? `Module Quizzes`
+                                        : `Course Quizzes`}
+                                </div>
+                            </div>
                             <div className="text-xs text-muted-foreground">
                                 {loadingList ? "Loading..." : `${quizzes.length}`}
                             </div>
@@ -422,13 +431,19 @@ const QuizManager = ({
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <button
-                                            className="bg-white border p-1 rounded border-indigo-600 hover:bg-red-600 hover:text-white transition-colors duration-200 text-sm text-red-600"
-                                            onClick={() => handleDelete(q.id)}
-                                            title="Delete"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
+                                        <ConfirmationHelper
+                                            trigger={
+                                                <button
+                                                    className="bg-white border p-1 rounded border-indigo-600 hover:bg-red-600 hover:text-white transition-colors duration-200 text-sm text-red-600"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            }
+                                            onConfirm={() => handleDelete(q.id)}
+                                            title="Delete Quiz"
+                                            message="Are you sure you want to delete this quiz?"
+                                        />
                                     </div>
                                 </div>
                             ))}
@@ -442,38 +457,6 @@ const QuizManager = ({
                 )}
 
                 <div className={mode === "list" ? "col-span-1 lg:col-span-2" : "col-span-1 lg:col-span-3"}>
-                    {mode === "list" && (
-                        <div className="p-4 border rounded-md">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <h3 className="text-md font-semibold">Scope</h3>
-                                    <div className="text-sm text-muted-foreground">
-                                        {lessonId
-                                            ? `Lesson Quizzes`
-                                            : moduleId
-                                            ? `Module Quizzes`
-                                            : `Course Quizzes`}
-                                    </div>
-                                </div>
-                                <div>
-                                    <Button
-                                        onClick={startAdd}
-                                        className="bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors duration-200"
-                                    >
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        New Quiz
-                                    </Button>
-                                </div>
-                            </div>
-
-                            <div className="mt-4">
-                                <p className="text-sm text-muted-foreground">
-                                    Select a quiz from the left to edit, or create a new one.
-                                </p>
-                            </div>
-                        </div>
-                    )}
-
                     {(mode === "add" || mode === "edit") && (
                         <div className="space-y-4">
                             {/* metadata */}
@@ -484,7 +467,7 @@ const QuizManager = ({
                                         type="text"
                                         className={`w-full border rounded-lg p-2 mt-1 ${
                                             errors.title ? "border-red-500" : ""
-                                        }`}
+                                        } bg-gray-200`}
                                         placeholder="Enter quiz title..."
                                         value={quizInfo.title}
                                         onChange={(e) => {
@@ -501,7 +484,7 @@ const QuizManager = ({
                                     <label className="text-sm font-medium">Time Limit (minutes)</label>
                                     <input
                                         type="number"
-                                        className="w-full border rounded-lg p-2 mt-1"
+                                        className="w-full border rounded-lg p-2 mt-1 bg-gray-200"
                                         value={quizInfo.timeLimit}
                                         onChange={(e) =>
                                             setQuizInfo({
@@ -515,7 +498,7 @@ const QuizManager = ({
                                     <label className="text-sm font-medium">Passing Score (%)</label>
                                     <input
                                         type="number"
-                                        className="w-full border rounded-lg p-2 mt-1"
+                                        className="w-full border rounded-lg p-2 mt-1 bg-gray-200"
                                         value={quizInfo.passingScore}
                                         onChange={(e) =>
                                             setQuizInfo({
@@ -529,7 +512,7 @@ const QuizManager = ({
                                     <label className="text-sm font-medium">Attempts Allowed</label>
                                     <input
                                         type="number"
-                                        className="w-full border rounded-lg p-2 mt-1"
+                                        className="w-full border rounded-lg p-2 mt-1 bg-gray-200"
                                         value={quizInfo.attemptsAllowed}
                                         onChange={(e) =>
                                             setQuizInfo({
@@ -542,7 +525,7 @@ const QuizManager = ({
                                 <div className="md:col-span-2">
                                     <label className="text-sm font-medium">Description</label>
                                     <textarea
-                                        className="w-full border rounded-lg p-2 mt-1"
+                                        className="w-full border rounded-lg p-2 mt-1 bg-gray-200"
                                         rows={2}
                                         placeholder="Short description..."
                                         value={quizInfo.description}
@@ -551,10 +534,25 @@ const QuizManager = ({
                                         }
                                     />
                                 </div>
+                                <div
+                                    className="md:col-span-2 border border-gray-200 flex items-center justify-start gap-2 p-2 rounded-lg cursor-pointer bg-gray-200"
+                                    onClick={() =>
+                                        setQuizInfo({ ...quizInfo, isPublished: !quizInfo.isPublished })
+                                    }
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={quizInfo.isPublished}
+                                        onChange={(e) =>
+                                            setQuizInfo({ ...quizInfo, isPublished: e.target.checked })
+                                        }
+                                    />
+                                    <label className="text-sm font-medium">Published</label>
+                                </div>
                             </div>
 
                             {/* Questions stacked vertically, full width, trong vùng cuộn */}
-                            <div className="max-h-[60vh] overflow-auto pb-28 space-y-6">
+                            <ScrollArea className="max-h-[60vh] overflow-auto pb-28 space-y-6">
                                 {/* Add form - full width */}
                                 <div className="w-full">
                                     <QuestionForm
@@ -588,7 +586,7 @@ const QuizManager = ({
                                 {errors.questions && (
                                     <div className="text-sm text-red-600 mt-2">{errors.questions}</div>
                                 )}
-                            </div>
+                            </ScrollArea>
 
                             {/* Footer buttons below scrollable area */}
                             <div className="flex justify-end gap-2 mt-4">

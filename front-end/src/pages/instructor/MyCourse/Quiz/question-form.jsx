@@ -1,24 +1,24 @@
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { Plus, X } from "lucide-react"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Plus, X } from "lucide-react";
 
 export function QuestionForm({ onAddQuestion }) {
-    const [text, setText] = useState("")
-    const [type, setType] = useState("multiple-choice")
-    const [difficulty, setDifficulty] = useState("Easy")
+    const [text, setText] = useState("");
+    const [type, setType] = useState("multiple-choice");
+    const [difficulty, setDifficulty] = useState("Easy");
     const [options, setOptions] = useState([
         { id: "1", text: "Option 1", isCorrect: false },
         { id: "2", text: "Option 2", isCorrect: false },
         { id: "3", text: "Option 3", isCorrect: false },
         { id: "4", text: "Option 4", isCorrect: false },
-    ])
-    const [explanation, setExplanation] = useState("")
+    ]);
+    const [explanation, setExplanation] = useState("");
 
     // ======================
     // TỰ ĐỘNG RESET OPTIONS
@@ -28,55 +28,59 @@ export function QuestionForm({ onAddQuestion }) {
             setOptions([
                 { id: "1", text: "True", isCorrect: false },
                 { id: "2", text: "False", isCorrect: false },
-            ])
+            ]);
         } else if (type === "multiple-choice") {
             setOptions([
                 { id: "1", text: "Option 1", isCorrect: false },
                 { id: "2", text: "Option 2", isCorrect: false },
                 { id: "3", text: "Option 3", isCorrect: false },
                 { id: "4", text: "Option 4", isCorrect: false },
-            ])
+            ]);
         } else if (type === "checkbox") {
             setOptions([
                 { id: "1", text: "Option 1", isCorrect: false },
                 { id: "2", text: "Option 2", isCorrect: false },
                 { id: "3", text: "Option 3", isCorrect: false },
                 { id: "4", text: "Option 4", isCorrect: false },
-            ])
+            ]);
         }
-    }, [type])
+    }, [type]);
 
     // ======================
     // HANDLERS
     // ======================
 
     const handleAddOption = () => {
-        const newId = String(Math.max(...options.map((o) => parseInt(o.id)), 0) + 1)
-        setOptions([...options, { id: newId, text: `Option ${options.length + 1}`, isCorrect: false }])
-    }
+        const newId = String(Math.max(...options.map((o) => parseInt(o.id)), 0) + 1);
+        setOptions([...options, { id: newId, text: `Option ${options.length + 1}`, isCorrect: false }]);
+    };
 
     const handleRemoveOption = (id) => {
         if (options.length > 2 && type !== "true-false") {
-            setOptions(options.filter((o) => o.id !== id))
+            setOptions(options.filter((o) => o.id !== id));
         }
-    }
+    };
 
     const handleOptionChange = (id, field, value) => {
         // Nếu là multiple-choice hoặc true/false → chỉ chọn được 1 đúng
-        if ((type === "multiple-choice" || type === "true-false") && field === "isCorrect" && value === true) {
-            setOptions(options.map((o) => ({ ...o, isCorrect: o.id === id })))
+        if (
+            (type === "multiple-choice" || type === "true-false") &&
+            field === "isCorrect" &&
+            value === true
+        ) {
+            setOptions(options.map((o) => ({ ...o, isCorrect: o.id === id })));
         }
         // Nếu là checkbox → có thể chọn nhiều đúng
         else {
-            setOptions(options.map((o) => (o.id === id ? { ...o, [field]: value } : o)))
+            setOptions(options.map((o) => (o.id === id ? { ...o, [field]: value } : o)));
         }
-    }
+    };
 
     const handleSubmit = (e) => {
-        e.preventDefault()
+        e.preventDefault();
         if (!text.trim() || !options.some((o) => o.isCorrect)) {
-            alert("Please fill in all required fields and select at least one correct answer.")
-            return
+            alert("Please fill in all required fields and select at least one correct answer.");
+            return;
         }
 
         const newQuestion = {
@@ -86,22 +90,22 @@ export function QuestionForm({ onAddQuestion }) {
             difficulty,
             options,
             explanation,
-        }
+        };
 
-        onAddQuestion(newQuestion)
+        onAddQuestion(newQuestion);
 
         // Reset form
-        setText("")
-        setType("multiple-choice")
-        setDifficulty("Easy")
+        setText("");
+        setType("multiple-choice");
+        setDifficulty("Easy");
         setOptions([
             { id: "1", text: "Option 1", isCorrect: false },
             { id: "2", text: "Option 2", isCorrect: false },
             { id: "3", text: "Option 3", isCorrect: false },
             { id: "4", text: "Option 4", isCorrect: false },
-        ])
-        setExplanation("")
-    }
+        ]);
+        setExplanation("");
+    };
 
     // ======================
     // UI
@@ -121,7 +125,7 @@ export function QuestionForm({ onAddQuestion }) {
                             placeholder="Enter your question here..."
                             value={text}
                             onChange={(e) => setText(e.target.value)}
-                            className="min-h-20 resize-none"
+                            className="min-h-14 resize-y bg-gray-200 whitespace-pre-wrap break-all"
                         />
                     </div>
 
@@ -156,14 +160,14 @@ export function QuestionForm({ onAddQuestion }) {
                                         }
                                         className="h-4 w-4 accent-indigo-600 cursor-pointer"
                                     />
-
-
                                 ) : (
                                     <input
                                         type="radio"
                                         name="correct-option"
                                         checked={option.isCorrect}
-                                        onChange={(e) => handleOptionChange(option.id, "isCorrect", e.target.checked)}
+                                        onChange={(e) =>
+                                            handleOptionChange(option.id, "isCorrect", e.target.checked)
+                                        }
                                         className="h-4 w-4 accent-indigo-600"
                                     />
                                 )}
@@ -173,7 +177,9 @@ export function QuestionForm({ onAddQuestion }) {
                                     placeholder="Option text"
                                     value={option.text}
                                     onChange={(e) => handleOptionChange(option.id, "text", e.target.value)}
-                                    className="flex-1"
+                                    className={`flex-1 border border-gray-300 ${
+                                        option.isCorrect ? "bg-green-200" : "bg-gray-200"
+                                    }`}
                                     disabled={type === "true-false"} // true/false thì không chỉnh sửa text
                                 />
 
@@ -240,16 +246,16 @@ export function QuestionForm({ onAddQuestion }) {
                             type="button"
                             variant="outline"
                             onClick={() => {
-                                setText("")
-                                setType("multiple-choice")
-                                setDifficulty("Easy")
+                                setText("");
+                                setType("multiple-choice");
+                                setDifficulty("Easy");
                                 setOptions([
                                     { id: "1", text: "Option 1", isCorrect: false },
                                     { id: "2", text: "Option 2", isCorrect: false },
                                     { id: "3", text: "Option 3", isCorrect: false },
                                     { id: "4", text: "Option 4", isCorrect: false },
-                                ])
-                                setExplanation("")
+                                ]);
+                                setExplanation("");
                             }}
                         >
                             Clear Form
@@ -258,5 +264,5 @@ export function QuestionForm({ onAddQuestion }) {
                 </form>
             </CardContent>
         </Card>
-    )
+    );
 }

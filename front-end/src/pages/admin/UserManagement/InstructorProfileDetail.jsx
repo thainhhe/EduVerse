@@ -1,307 +1,244 @@
-import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  ArrowLeft,
-  Edit,
-  Mail,
-  Phone,
-  Calendar,
-  CheckCircle,
-} from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ArrowLeft, Mail, Phone, Calendar, Loader2 } from "lucide-react";
+import { getUserById } from "@/services/userService";
+import { ToastHelper } from "@/helper/ToastHelper";
 
-// Placeholder Data - Replace with actual props or state
-const instructor = {
-  name: "Alice Wonderland",
-  role: "Student", // Note: Image says student, but context implies instructor? Using Student as per image.
-  email: "alice.w@example.com",
-  phone: "+1 (555) 123-4567",
-  joined: "2023-01-15",
-  status: "Active",
-  avatar: "/female-instructor-professional.jpg", // Using a relevant placeholder
-};
-
-const createdCourses = [
-  {
-    name: "Introduction to React",
-    category: "Web Development",
-    status: "Approved",
-    createdDate: "2023-02-01",
-  },
-  {
-    name: "Advanced CSS Techniques",
-    category: "Web Design",
-    status: "Pending Approval",
-    createdDate: "2023-03-10",
-  },
-  {
-    name: "Data Structures in Python",
-    category: "Programming",
-    status: "Approved",
-    createdDate: "2023-04-22",
-  },
-  {
-    name: "Effective Communication",
-    category: "Soft Skills",
-    status: "Rejected",
-    createdDate: "2023-05-05",
-  },
-  {
-    name: "Full-Stack with Node.js",
-    category: "Web Development",
-    status: "Approved",
-    createdDate: "2023-06-18",
-  },
-];
-
-const attendedCourses = [
-  {
-    name: "Machine Learning Basics",
-    lecturer: "Dr. Smith",
-    enrollmentDate: "2023-01-20",
-    status: "Completed",
-  },
-  {
-    name: "Cloud Computing Fundamentals",
-    lecturer: "Prof. Johnson",
-    enrollmentDate: "2023-02-10",
-    status: "In Progress",
-  },
-  {
-    name: "Cybersecurity Essentials",
-    lecturer: "Ms. Davis",
-    enrollmentDate: "2023-03-15",
-    status: "Completed",
-  },
-  {
-    name: "Database Management",
-    lecturer: "Dr. White",
-    enrollmentDate: "2023-04-01",
-    status: "Not Started",
-  },
-  {
-    name: "Project Management with Agile",
-    lecturer: "Mr. Brown",
-    enrollmentDate: "2023-05-25",
-    status: "In Progress",
-  },
-];
-
-// Helper to map status strings to badge variants
-const getStatusVariant = (status) => {
-  switch (status?.toLowerCase()) {
-    case "approved":
-    case "completed":
-      return "default"; // Or define a specific 'success' variant if you have one
-    case "pending approval":
-    case "in progress":
-      return "secondary";
-    case "rejected":
-    case "not started":
-      return "destructive"; // Or 'outline'
-    default:
-      return "outline";
-  }
-};
-// Helper to map status strings to badge color classes (adjust colors as needed)
-const getStatusColor = (status) => {
-  switch (status?.toLowerCase()) {
-    case "approved":
-    case "completed":
-      return "bg-green-100 text-green-800";
-    case "pending approval":
-    case "in progress":
-      return "bg-yellow-100 text-yellow-800";
-    case "rejected":
-    case "not started":
-      return "bg-red-100 text-red-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
+const getStatusBadge = (status) => {
+    switch (status?.toLowerCase()) {
+        case "approve":
+        case "approved":
+            return <Badge className="bg-green-100 text-green-700">Approved</Badge>;
+        case "pending":
+            return <Badge className="bg-yellow-100 text-yellow-700">Pending</Badge>;
+        case "reject":
+        case "rejected":
+            return <Badge className="bg-red-100 text-red-700">Rejected</Badge>;
+        default:
+            return <Badge variant="outline">{status}</Badge>;
+    }
 };
 
 const InstructorProfileDetail = () => {
-  // Basic pagination state (example)
-  const [createdPage, setCreatedPage] = useState(1);
-  const [attendedPage, setAttendedPage] = useState(1);
-  // Add logic here to slice data based on page number if needed
+    const { userId } = useParams();
+    const navigate = useNavigate();
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-  return (
-    <div className="p-4 md:p-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
-      {/* Left Sidebar: User Information */}
-      <div className="lg:col-span-1 space-y-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          asChild
-          className="mb-4 text-muted-foreground hover:text-foreground"
-        >
-          <Link to="/admin/users">
-            {" "}
-            {/* Adjust link as needed */}
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to User List
-          </Link>
-        </Button>
-        <Card>
-          <CardHeader className="items-center">
-            <Avatar className="w-24 h-24 mb-4">
-              <AvatarImage src={instructor.avatar} alt={instructor.name} />
-              <AvatarFallback>{instructor.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <CardTitle>{instructor.name}</CardTitle>
-            <Badge
-              variant={instructor.status === "Active" ? "default" : "secondary"}
-              className={
-                instructor.status === "Active"
-                  ? "bg-green-100 text-green-800"
-                  : ""
-              }
-            >
-              {instructor.status}
-            </Badge>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              <span>{instructor.email}</span>
+    useEffect(() => {
+        fetchUserData();
+    }, [userId]);
+
+    const fetchUserData = async () => {
+        setLoading(true);
+        try {
+            const res = await getUserById(userId);
+            if (res?.success) {
+                setUser(res.data);
+            } else {
+                ToastHelper.error("Failed to fetch user data");
+            }
+        } catch (error) {
+            console.error("Error fetching user:", error);
+            ToastHelper.error("Error loading user data");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
-            <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4" />
-              <span>{instructor.phone}</span>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+                <p className="text-gray-500">User not found</p>
+                <Button asChild>
+                    <Link to="/admin/users">Back to User List</Link>
+                </Button>
             </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <span>Joined: {instructor.joined}</span>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" className="w-full">
-              <Edit className="mr-2 h-4 w-4" /> Edit User
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-gray-50/50">
+            <Button variant="ghost" size="sm" asChild className="mb-4">
+                <Link to="/admin/users" className="p-2 border">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to User List
+                </Link>
             </Button>
-          </CardFooter>
-        </Card>
-      </div>
+            <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
+                {/* Left Sidebar: User Information */}
+                <div className="lg:col-span-1 space-y-6">
+                    <Card>
+                        <CardHeader className="items-center text-center">
+                            <Avatar className="w-24 h-24 mb-4">
+                                <AvatarImage src={user.avatar} alt={user.username} />
+                                <AvatarFallback className="text-2xl">
+                                    {user.username?.charAt(0)?.toUpperCase()}
+                                </AvatarFallback>
+                            </Avatar>
+                            <CardTitle className="text-xl">{user.username}</CardTitle>
+                            <Badge
+                                className={
+                                    user.status === "active"
+                                        ? "bg-green-100 text-green-800"
+                                        : user.status === "locked"
+                                        ? "bg-red-100 text-red-800"
+                                        : "bg-yellow-100 text-yellow-800"
+                                }
+                            >
+                                {user.status}
+                            </Badge>
+                        </CardHeader>
+                        <CardContent className="space-y-3 text-sm">
+                            <div className="flex items-center gap-2 text-gray-600">
+                                <Mail className="h-4 w-4 flex-shrink-0" />
+                                <span className="truncate">{user.email}</span>
+                            </div>
+                            {user.phone && (
+                                <div className="flex items-center gap-2 text-gray-600">
+                                    <Phone className="h-4 w-4 flex-shrink-0" />
+                                    <span>{user.phone}</span>
+                                </div>
+                            )}
+                            <div className="flex items-center gap-2 text-gray-600">
+                                <Calendar className="h-4 w-4 flex-shrink-0" />
+                                <span>Joined: {new Date(user.createdAt).toLocaleDateString("vi-VN")}</span>
+                            </div>
+                        </CardContent>
+                        <CardFooter className="flex flex-col gap-2">
+                            <div className="w-full text-xs text-gray-500 space-y-1">
+                                <p>
+                                    <span className="font-medium">User ID:</span>
+                                    <br />
+                                    <span className="font-mono">{user._id}</span>
+                                </p>
+                                <p>
+                                    <span className="font-medium">Last Login:</span>
+                                    <br />
+                                    {user.lastLogin
+                                        ? new Date(user.lastLogin).toLocaleDateString("vi-VN")
+                                        : "Never"}
+                                </p>
+                            </div>
+                        </CardFooter>
+                    </Card>
+                </div>
 
-      {/* Right Content: Tables */}
-      <div className="lg:col-span-3 space-y-8">
-        {/* Created Courses Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Created Courses</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Course Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Created Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {createdCourses.map((course, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{course.name}</TableCell>
-                    <TableCell>{course.category}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={getStatusVariant(course.status)}
-                        className={getStatusColor(course.status)}
-                      >
-                        {course.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {course.createdDate}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {/* Simple Pagination Example */}
-            <div className="flex justify-end items-center space-x-2 pt-4">
-              <Button variant="outline" size="sm" disabled={createdPage === 1}>
-                Previous
-              </Button>
-              <span>{createdPage}</span>{" "}
-              {/* Replace with actual page numbers */}
-              <Button variant="outline" size="sm">
-                Next
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                {/* Right Content: Courses */}
+                <div className="lg:col-span-3 space-y-6">
+                    {/* Created Courses */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Created Courses</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {user.createdCourses && user.createdCourses.length > 0 ? (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Course Name</TableHead>
+                                            <TableHead>Category</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead className="text-right">Created Date</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {user.createdCourses.map((course) => (
+                                            <TableRow key={course._id}>
+                                                <TableCell className="font-medium">
+                                                    <Link
+                                                        to={`/admin/courses/${course._id}`}
+                                                        className="hover:text-primary hover:underline"
+                                                    >
+                                                        {course.title}
+                                                    </Link>
+                                                </TableCell>
+                                                <TableCell>{course.category?.name || "N/A"}</TableCell>
+                                                <TableCell>{getStatusBadge(course.status)}</TableCell>
+                                                <TableCell className="text-right">
+                                                    {new Date(course.createdAt).toLocaleDateString("vi-VN")}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            ) : (
+                                <div className="text-center py-8 text-gray-500">No courses created yet</div>
+                            )}
+                        </CardContent>
+                    </Card>
 
-        {/* Attended Courses Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Attended Courses</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Course Name</TableHead>
-                  <TableHead>Lecturer</TableHead>
-                  <TableHead>Enrollment Date</TableHead>
-                  <TableHead className="text-right">
-                    Completion Status
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {attendedCourses.map((course, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{course.name}</TableCell>
-                    <TableCell>{course.lecturer}</TableCell>
-                    <TableCell>{course.enrollmentDate}</TableCell>
-                    <TableCell className="text-right">
-                      <Badge
-                        variant={getStatusVariant(course.status)}
-                        className={getStatusColor(course.status)}
-                      >
-                        {course.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {/* Simple Pagination Example */}
-            <div className="flex justify-end items-center space-x-2 pt-4">
-              <Button variant="outline" size="sm" disabled={attendedPage === 1}>
-                Previous
-              </Button>
-              <span>{attendedPage}</span>{" "}
-              {/* Replace with actual page numbers */}
-              <Button variant="outline" size="sm">
-                Next
-              </Button>
+                    {/* Enrolled Courses */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Enrolled Courses</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {user.enrolledCourses && user.enrolledCourses.length > 0 ? (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Course Name</TableHead>
+                                            <TableHead>Instructor</TableHead>
+                                            <TableHead>Enrollment Date</TableHead>
+                                            <TableHead className="text-right">Progress</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {user.enrolledCourses.map((enrollment) => (
+                                            <TableRow key={enrollment._id}>
+                                                <TableCell className="font-medium">
+                                                    {enrollment.course?.title || "N/A"}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {enrollment.course?.main_instructor?.username || "N/A"}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {new Date(enrollment.enrolledAt).toLocaleDateString(
+                                                        "vi-VN"
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {enrollment.progress || 0}%
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            ) : (
+                                <div className="text-center py-8 text-gray-500">No enrolled courses</div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* User Bio/Description if available */}
+                    {user.bio && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>About</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-gray-700 whitespace-pre-wrap">{user.bio}</p>
+                            </CardContent>
+                        </Card>
+                    )}
+                </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
+        </div>
+    );
 };
 
 export default InstructorProfileDetail;

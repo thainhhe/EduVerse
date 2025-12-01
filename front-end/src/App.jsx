@@ -10,6 +10,7 @@ import Home from "@/pages/common/Home/Home";
 import Login from "@/pages/auth/Login/Login";
 import Register from "@/pages/auth/RegisterInstructor/RegisterInstructor";
 import Dashboard from "@/pages/learner/LearnerDashboard/LearnerDashboard";
+import PaymentHistory from "@/pages/learner/PaymentHistory/PaymentHistory";
 import Courses from "@/pages/common/Courses/Courses";
 import CourseDetail from "@/pages/common/CourseDetail/CourseDetail";
 import Learning from "@/pages/learner/Learning/Learning";
@@ -55,6 +56,17 @@ import LearnerList from "./pages/instructor/MyCourse/Learner/LearnerList";
 import { ChatbotWidget } from "./components/chatbot/ChatbotWidget";
 import NotificationManagementPage from "./pages/admin/NotificationManagement/NotificationManagementPage";
 import ReviewPage from "./pages/instructor/MyCourse/Reviews/ReviewPage";
+import QuizPage from "./pages/instructor/MyCourse/Quiz/QuizPage";
+import PaymentManagementPage from "./pages/admin/PaymentManagement/PaymentManagementPage";
+import PaymentDetailPage from "./pages/admin/PaymentManagement/PaymentDetailPage";
+import CategoryManagement from "./pages/admin/CategoryManagement/CategoryManagement";
+import EnrollmentPage from "./pages/admin/Enrollment/EnrollmentPage";
+import RevenuePage from "./pages/admin/Revenue/RevenuePage";
+import InstructorRevenuePage from "./pages/admin/Revenue/InstructorRevenuePage";
+import InstructorRevenueDetailPage from "./pages/admin/Revenue/InstructorRevenueDetailPage";
+import SystemManagementPage from "./pages/admin/System/SystemManagementPage";
+import SessionTimeout from "@/components/security/SessionTimeout";
+
 function App() {
     const { loading } = useAuth();
 
@@ -92,10 +104,11 @@ function App() {
         <>
             <Routes>
                 {/* Public routes */}
+                <Route path="login" element={<Login />} />
+                <Route path="register-instructor" element={<Register />} />
+                <Route path="register-learner" element={<RegisterLearner />} />
                 <Route path="/" element={<MainLayout />}>
                     <Route index element={<Home />} />
-                    <Route path="login" element={<Login />} />
-                    <Route path="register-instructor" element={<Register />} />
                     <Route path="courses" element={<Courses />} />
                     <Route path="/course/rooms" element={<RoomList />} />
 
@@ -103,7 +116,6 @@ function App() {
                     {/* Instructor public detail (management view for instructor) */}
                     <Route path="instructor/courses/:id" element={<InstructorCourseDetail />} />
                     <Route path="mycourses" element={<MyCourse />} />
-                    <Route path="register-learner" element={<RegisterLearner />} />
                     <Route path="instructors" element={<Instructors />} />
                     <Route path="instructors/:id" element={<InstructorProfile />} />
                     <Route path="settings" element={<Settings />} />
@@ -130,6 +142,7 @@ function App() {
                         <Route path="learners" element={<LearnerList />} />
                         <Route path="permissions" element={<PermissionsPage />} />
                         <Route path="reviews" element={<ReviewPage />} />
+                        <Route path="quiz" element={<QuizPage />} />
                     </Route>
                     {/* <Route path="permission" element={<PermissionsPage />} /> */}
                     <Route path="comment-thread" element={<CommentThread />} />
@@ -140,6 +153,7 @@ function App() {
                     {/* Private routes */}
                     <Route element={<PrivateRoute />}>
                         <Route path="dashboard" element={<Dashboard />} />
+                        <Route path="payment-history" element={<PaymentHistory />} />
                         <Route path="learning/:courseId" element={<Learning />} />
                         <Route path="classroom/:roomId" element={<Classroom />} />
                         <Route path="forum" element={<Forum />} />
@@ -164,16 +178,28 @@ function App() {
                     <Route path="users/learner/:userId" element={<LearnerProfileDetail />} />
                     <Route path="courses" element={<CourseManagementPage />} />
                     <Route path="courses/:id" element={<CourseDetailPage />} />
+                    <Route path="categories" element={<CategoryManagement />} />
 
                     {/* Admin management pages */}
                     <Route path="chatbot" element={<ChatbotManagementPage />} />
                     <Route path="comments" element={<CommentManagementPage />} />
                     <Route path="notifications" element={<NotificationManagementPage />} />
+                    <Route path="enrollment" element={<EnrollmentPage />} />
+                    <Route path="revenue" element={<RevenuePage />} />
+                    <Route path="revenue/instructors" element={<InstructorRevenuePage />} />
+                    <Route
+                        path="revenue/instructors/:instructorId"
+                        element={<InstructorRevenueDetailPage />}
+                    />
+                    <Route path="system" element={<SystemManagementPage />} />
+                    <Route path="payment" element={<PaymentManagementPage />} />
+                    <Route path="payment/:id" element={<PaymentDetailPage />} />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />
             </Routes>
             <ChatbotWidget />
+            <SessionTimeout />
         </>
     );
 }

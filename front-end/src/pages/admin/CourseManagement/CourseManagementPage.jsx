@@ -2,26 +2,26 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
     Search,
-    Filter,
     CheckCircle,
     XCircle,
     Eye,
     BookOpen,
-    Clock,
     AlertCircle,
-    MoreHorizontal,
-    ArrowUpDown,
     Check,
     X,
+    CircleCheck,
+    TextAlignJustify,
+    File,
+    FileText,
+    Download,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Dialog,
     DialogContent,
@@ -35,23 +35,27 @@ import { approveCourse, getAllCourse, rejectCourse } from "@/services/courseServ
 import { ToastHelper } from "@/helper/ToastHelper";
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 import categoryService from "@/services/categoryService";
+import Swal from "sweetalert2";
+import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
 const CourseManagementPage = () => {
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState("all");
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isFirstLoad, setIsFirstLoad] = useState(true);
     const [rejectReason, setRejectReason] = useState("");
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [selectedCourseId, setSelectedCourseId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [coursesPerPage, setCoursesPerPage] = useState(10);
+    const [coursesPerPage, setCoursesPerPage] = useState(5);
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState("all");
+    const [selectedCourses, setSelectedCourses] = useState([]);
 
-    const fetchCourses = async () => {
+    const fetchCourses = async ({ skipLoading = false }) => {
         setLoading(true);
-        const res = await getAllCourse();
+        const res = await getAllCourse({ skipLoading });
         if (res?.success) {
             const data = res.data.filter((course) => course.status !== "draft") || [];
             setCourses(data);
@@ -60,6 +64,7 @@ const CourseManagementPage = () => {
             ToastHelper.error(res?.message || "Đã xảy ra lỗi khi lấy danh sách khóa học!");
         }
         setLoading(false);
+        setIsFirstLoad(false);
     };
 
     useEffect(() => {
@@ -76,7 +81,7 @@ const CourseManagementPage = () => {
     }, []);
 
     useEffect(() => {
-        fetchCourses();
+        fetchCourses({ skipLoading: false });
     }, []);
 
     const formatCurrency = (amount) => {
@@ -95,39 +100,130 @@ const CourseManagementPage = () => {
         });
     };
 
+    // Selection Handlers
+    const handleSelectAll = (checked) => {
+        if (checked) {
+            const currentIds = currentCourses.map((c) => c._id);
+            setSelectedCourses((prev) => [...new Set([...prev, ...currentIds])]);
+        } else {
+            const currentIds = currentCourses.map((c) => c._id);
+            setSelectedCourses((prev) => prev.filter((id) => !currentIds.includes(id)));
+        }
+    };
+
+    const handleSelectOne = (id, checked) => {
+        if (checked) {
+            setSelectedCourses((prev) => [...prev, id]);
+        } else {
+            setSelectedCourses((prev) => prev.filter((itemId) => itemId !== id));
+        }
+    };
+
     // Actions
     const handleApprove = async (id) => {
         try {
-            const res = await approveCourse(id);
+            const res = await approveCourse(id, { skipLoading: true });
             if (res?.success) {
-                ToastHelper.success("Khóa học đã được duyệt thành công!");
-                fetchCourses();
+                Swal.fire({
+                    icon: "success",
+                    title: "Duyệt thành công!",
+                    text: "Khóa học đã được duyệt thành công!",
+                });
+                setSelectedCourses((prev) => prev.filter((itemId) => itemId !== id));
+                fetchCourses({ skipLoading: true });
             } else {
-                ToastHelper.error(res?.message || "Duyệt thất bại!");
+                Swal.fire({
+                    icon: "error",
+                    title: "Duyệt thất bại!",
+                    text: res?.message || "Duyệt thất bại!",
+                });
             }
         } catch (err) {
-            ToastHelper.error("Lỗi hệ thống khi duyệt!");
+            Swal.fire({
+                icon: "error",
+                title: "Lỗi hệ thống khi duyệt!",
+            });
+        }
+    };
+
+    const handleBulkApprove = async () => {
+        try {
+            let successCount = 0;
+            for (const id of selectedCourses) {
+                const res = await approveCourse(id);
+                if (res?.success) successCount++;
+            }
+            Swal.fire({
+                icon: "success",
+                title: "Duyệt thành công!",
+                text: `Đã duyệt thành công ${successCount} khóa học!`,
+            });
+            setSelectedCourses([]);
+            fetchCourses();
+        } catch (err) {
+            Swal.fire({
+                icon: "error",
+                title: "Lỗi hệ thống khi duyệt hàng loạt!",
+            });
         }
     };
 
     const handleReject = async () => {
         if (!rejectReason.trim()) {
-            ToastHelper.warning("Vui lòng nhập lý do từ chối!");
+            Swal.fire({
+                icon: "warning",
+                title: "Vui lòng nhập lý do từ chối!",
+            });
             return;
         }
+
         try {
-            const res = await rejectCourse(selectedCourseId, rejectReason);
-            if (res?.success) {
-                ToastHelper.success("Khóa học đã bị từ chối!");
+            if (selectedCourseId) {
+                const res = await rejectCourse(selectedCourseId, rejectReason, { skipLoading: true });
+                if (res?.success) {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Từ chối thành công!",
+                        text: "Khóa học đã bị từ chối!",
+                    });
+                    setShowRejectModal(false);
+                    setRejectReason("");
+                    setSelectedCourseId(null);
+                    fetchCourses({ skipLoading: true });
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Từ chối thất bại!",
+                        text: res?.message || "Từ chối thất bại!",
+                    });
+                }
+            } else if (selectedCourses.length > 0) {
+                let successCount = 0;
+                for (const id of selectedCourses) {
+                    const res = await rejectCourse(id, rejectReason);
+                    if (res?.success) successCount++;
+                }
+                Swal.fire({
+                    icon: "success",
+                    title: "Từ chối thành công!",
+                    text: `Đã từ chối ${successCount} khóa học!`,
+                });
                 setShowRejectModal(false);
                 setRejectReason("");
-                fetchCourses();
-            } else {
-                ToastHelper.error(res?.message || "Từ chối thất bại!");
+                setSelectedCourses([]);
+                fetchCourses({ skipLoading: true });
             }
         } catch (err) {
-            ToastHelper.error("Lỗi hệ thống khi từ chối!");
+            Swal.fire({
+                icon: "error",
+                title: "Lỗi hệ thống khi từ chối!",
+            });
         }
+    };
+
+    const openBulkRejectModal = () => {
+        setSelectedCourseId(null);
+        setShowRejectModal(true);
     };
 
     // Filtering
@@ -147,6 +243,9 @@ const CourseManagementPage = () => {
     const indexOfLastCourse = currentPage * coursesPerPage;
     const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
     const currentCourses = filteredCourses.slice(indexOfFirstCourse, indexOfLastCourse);
+
+    const isAllSelected =
+        currentCourses.length > 0 && currentCourses.every((c) => selectedCourses.includes(c._id));
 
     // Stats
     const stats = [
@@ -180,44 +279,29 @@ const CourseManagementPage = () => {
         },
     ];
 
-    const getStatusBadge = (status) => {
+    const getStatus = (status) => {
         switch (status) {
             case "approve":
-                return (
-                    <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-green-200">
-                        Approved
-                    </Badge>
-                );
+                return <span className=" text-green-700 border-green-200">Approved</span>;
             case "pending":
-                return (
-                    <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-yellow-200">
-                        Pending
-                    </Badge>
-                );
+                return <span className="text-yellow-700 border-yellow-200">Pending</span>;
             case "reject":
-                return (
-                    <Badge className="bg-red-100 text-red-700 hover:bg-red-200 border-red-200">
-                        Rejected
-                    </Badge>
-                );
+                return <span className="text-red-700 border-red-200">Rejected</span>;
             default:
-                return <Badge variant="outline">{status}</Badge>;
+                return <span>{status}</span>;
         }
     };
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-8 min-h-screen bg-gray-50/50">
-            {/* Header */}
-            <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight text-gray-900">Course Management</h1>
-                <p className="text-gray-500">Manage and monitor all courses in the system.</p>
-            </div>
-
-            {/* Stats Cards */}
+        <div className="max-w-full mx-auto space-y-4 min-h-screen bg-gray-50/50">
+            <LoadingOverlay isVisible={isFirstLoad && loading} progress={80} />
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {stats.map((stat, index) => (
-                    <Card key={index} className="border-none shadow-sm hover:shadow-md transition-shadow">
-                        <CardContent className="p-6 flex items-center justify-between">
+                    <div
+                        key={index}
+                        className="border-indigo-500 border-1 rounded-sm shadow-sm hover:shadow-md transition-shadow"
+                    >
+                        <div className="p-6 flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-500">{stat.title}</p>
                                 <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
@@ -225,28 +309,22 @@ const CourseManagementPage = () => {
                             <div className={`p-3 rounded-full ${stat.bg}`}>
                                 <stat.icon className={`w-6 h-6 ${stat.color}`} />
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 ))}
             </div>
 
             {/* Filters & Table */}
-            <Card className="border-none shadow-sm">
-                <CardHeader className="pb-4">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <CardTitle className="text-xl">Courses List</CardTitle>
-                        <div className="flex flex-col sm:flex-row gap-3">
-                            <div className="relative">
-                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                                <Input
-                                    placeholder="Search courses..."
-                                    className="pl-9 w-full sm:w-[250px] bg-gray-50/50"
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                />
-                            </div>
+            <div className="border-indigo-500 shadow-sm">
+                <div className="pb-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-600 text-black p-2">
+                        <div className="flex flex-col items-center sm:flex-row gap-2">
+                            <h1 className="flex items-center gap-2 ext-lg bg-white rounded-sm py-1.5 px-2">
+                                <TextAlignJustify className="w-4 h-4" /> Courses List {selectedCourses.length}{" "}
+                                selected
+                            </h1>
                             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                                <SelectTrigger className="w-full sm:w-[180px] bg-gray-50/50">
+                                <SelectTrigger className="w-full max-w-[135px] sm:w-[180px] bg-white">
                                     <SelectValue placeholder="Category" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -259,7 +337,7 @@ const CourseManagementPage = () => {
                                 </SelectContent>
                             </Select>
                             <Select value={status} onValueChange={setStatus}>
-                                <SelectTrigger className="w-full sm:w-[180px] bg-gray-50/50">
+                                <SelectTrigger className="w-full max-w-[125px] sm:w-[180px] bg-white">
                                     <SelectValue placeholder="Status" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -269,32 +347,61 @@ const CourseManagementPage = () => {
                                     <SelectItem value="reject">Rejected</SelectItem>
                                 </SelectContent>
                             </Select>
+                            <Button
+                                variant="outline"
+                                className="bg-white text-black hover:bg-gray-100"
+                                // onClick={handleReset}
+                            >
+                                <Download /> Export
+                            </Button>
+                        </div>
+                        <div className="relative border border-gray-200 rounded-md bg-white text-black">
+                            <Search className="absolute left-2.5 top-3 h-4 w-4" />
+                            <Input
+                                placeholder="Search courses..."
+                                className="pl-9 w-full sm:w-[250px] bg-white text-black"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                size="sm"
+                            />
                         </div>
                     </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="rounded-md border border-gray-100 overflow-hidden">
-                        <Table>
-                            <TableHeader className="bg-gray-50/50">
+                </div>
+                <div>
+                    <div className="overflow-y-auto">
+                        <Table className="bg-none border-none">
+                            <TableHeader className="bg-gray-300">
                                 <TableRow>
-                                    <TableHead className="w-[300px]">Course Info</TableHead>
+                                    <TableHead className="w-[50px]">
+                                        <Checkbox
+                                            checked={isAllSelected}
+                                            onCheckedChange={handleSelectAll}
+                                            aria-label="Select all"
+                                            className="!rounded"
+                                        />
+                                    </TableHead>
+                                    <TableHead>Course Info</TableHead>
+                                    <TableHead>Category</TableHead>
                                     <TableHead>Instructor</TableHead>
                                     <TableHead>Price</TableHead>
+                                    <TableHead>Created At</TableHead>
+                                    <TableHead>Last update</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
+                                    {selectedCourses.length > 0 && (
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    )}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {loading ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="h-24 text-center">
+                                        <TableCell colSpan={7} className="h-24 text-center">
                                             Loading courses...
                                         </TableCell>
                                     </TableRow>
                                 ) : currentCourses.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="h-24 text-center text-gray-500">
+                                        <TableCell colSpan={7} className="h-24 text-center text-gray-500">
                                             No courses found.
                                         </TableCell>
                                     </TableRow>
@@ -302,18 +409,30 @@ const CourseManagementPage = () => {
                                     currentCourses.map((course) => (
                                         <TableRow
                                             key={course._id}
-                                            className="hover:bg-gray-50/50 transition-colors"
+                                            className={`hover:bg-gray-200 transition-colors cursor-pointer ${
+                                                selectedCourses.includes(course._id) ? "bg-gray-200" : ""
+                                            }`}
+                                            onClick={() =>
+                                                handleSelectOne(
+                                                    course._id,
+                                                    !selectedCourses.includes(course._id)
+                                                )
+                                            }
                                         >
                                             <TableCell>
-                                                <div className="flex flex-col gap-1">
-                                                    <span className="font-semibold text-gray-900 line-clamp-1">
-                                                        {course.title}
-                                                    </span>
-                                                    <span className="text-xs text-gray-500 bg-gray-100 w-fit px-2 py-0.5 rounded-full">
-                                                        {course.category?.name || "Uncategorized"}
-                                                    </span>
-                                                </div>
+                                                <Checkbox
+                                                    checked={selectedCourses.includes(course._id)}
+                                                    onCheckedChange={(checked) =>
+                                                        handleSelectOne(course._id, checked)
+                                                    }
+                                                    aria-label={`Select ${course.title}`}
+                                                    className="!rounded data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
+                                                />
                                             </TableCell>
+                                            <TableCell className="font-medium text-gray-900 max-w-[300px] overflow-hidden">
+                                                {course.title}
+                                            </TableCell>
+                                            <TableCell>{course.category.name}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Avatar className="h-8 w-8">
@@ -332,84 +451,103 @@ const CourseManagementPage = () => {
                                             <TableCell className="font-medium text-gray-900">
                                                 {formatCurrency(course.price)}
                                             </TableCell>
-                                            <TableCell>{getStatusBadge(course.status)}</TableCell>
                                             <TableCell className="text-gray-500 text-sm">
                                                 {formatDateTime(course.createdAt)}
                                             </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    {course.status === "pending" && (
-                                                        <>
-                                                            <ConfirmationHelper
-                                                                trigger={
+                                            <TableCell className="text-gray-500 text-sm">
+                                                {formatDateTime(course.updatedAt)}
+                                            </TableCell>
+                                            <TableCell>{getStatus(course.status)}</TableCell>
+                                            {selectedCourses.length > 0 && (
+                                                <TableCell
+                                                    className="text-right"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    {selectedCourses.includes(course._id) && (
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            {course.status === "pending" && (
+                                                                <>
+                                                                    <ConfirmationHelper
+                                                                        trigger={
+                                                                            <Button
+                                                                                size="icon"
+                                                                                variant="ghost"
+                                                                                className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                                            >
+                                                                                <Check className="h-4 w-4" />
+                                                                            </Button>
+                                                                        }
+                                                                        title="Approve Course"
+                                                                        description="Are you sure you want to approve this course?"
+                                                                        confirmText="Approve"
+                                                                        onConfirm={() =>
+                                                                            handleApprove(course._id)
+                                                                        }
+                                                                    />
                                                                     <Button
                                                                         size="icon"
                                                                         variant="ghost"
-                                                                        className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                                        className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setSelectedCourseId(course._id);
+                                                                            setShowRejectModal(true);
+                                                                        }}
                                                                     >
-                                                                        <Check className="h-4 w-4" />
+                                                                        <X className="h-4 w-4" />
                                                                     </Button>
-                                                                }
-                                                                title="Approve Course"
-                                                                description="Are you sure you want to approve this course?"
-                                                                confirmText="Approve"
-                                                                onConfirm={() => handleApprove(course._id)}
-                                                            />
-                                                            <Button
-                                                                size="icon"
-                                                                variant="ghost"
-                                                                className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                                onClick={() => {
-                                                                    setSelectedCourseId(course._id);
-                                                                    setShowRejectModal(true);
-                                                                }}
-                                                            >
-                                                                <X className="h-4 w-4" />
-                                                            </Button>
-                                                        </>
-                                                    )}
-                                                    {course.status === "reject" && (
-                                                        <ConfirmationHelper
-                                                            trigger={
+                                                                </>
+                                                            )}
+                                                            {course.status === "reject" && (
+                                                                <ConfirmationHelper
+                                                                    trigger={
+                                                                        <Button
+                                                                            size="icon"
+                                                                            variant="ghost"
+                                                                            className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                                        >
+                                                                            <Check className="h-4 w-4" />
+                                                                        </Button>
+                                                                    }
+                                                                    title="Approve Course"
+                                                                    description="Are you sure you want to approve this course?"
+                                                                    confirmText="Approve"
+                                                                    onConfirm={() =>
+                                                                        handleApprove(course._id)
+                                                                    }
+                                                                />
+                                                            )}
+                                                            {course.status === "approve" && (
                                                                 <Button
                                                                     size="icon"
                                                                     variant="ghost"
-                                                                    className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                                    className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setSelectedCourseId(course._id);
+                                                                        setShowRejectModal(true);
+                                                                    }}
                                                                 >
-                                                                    <Check className="h-4 w-4" />
+                                                                    <X className="h-4 w-4" />
                                                                 </Button>
-                                                            }
-                                                            title="Approve Course"
-                                                            description="Are you sure you want to approve this course?"
-                                                            confirmText="Approve"
-                                                            onConfirm={() => handleApprove(course._id)}
-                                                        />
+                                                            )}
+                                                            <Button
+                                                                asChild
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="h-8 w-8 text-gray-500 hover:text-gray-700"
+                                                            >
+                                                                <Link
+                                                                    to={`/admin/courses/${course._id}`}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                >
+                                                                    <Eye className="h-4 w-4" />
+                                                                </Link>
+                                                            </Button>
+                                                        </div>
                                                     )}
-                                                    {course.status === "approve" && (
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                            onClick={() => {
-                                                                setSelectedCourseId(course._id);
-                                                                setShowRejectModal(true);
-                                                            }}
-                                                        >
-                                                            <X className="h-4 w-4" />
-                                                        </Button>
-                                                    )}
-                                                    <Button
-                                                        asChild
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        className="h-8 w-8 text-gray-500 hover:text-gray-700"
-                                                    >
-                                                        <Link to={`/admin/courses/${course._id}`}>
-                                                            <Eye className="h-4 w-4" />
-                                                        </Link>
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
+                                                </TableCell>
+                                            )}
                                         </TableRow>
                                     ))
                                 )}
@@ -441,8 +579,8 @@ const CourseManagementPage = () => {
                             </Button>
                         </div>
                     )}
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {/* Reject Modal */}
             <Dialog open={showRejectModal} onOpenChange={setShowRejectModal}>
@@ -453,7 +591,8 @@ const CourseManagementPage = () => {
                             Reject Course
                         </DialogTitle>
                         <DialogDescription>
-                            Please provide a reason for rejecting this course. This will be sent to the
+                            Please provide a reason for rejecting{" "}
+                            {selectedCourseId ? "this course" : "selected courses"}. This will be sent to the
                             instructor.
                         </DialogDescription>
                     </DialogHeader>

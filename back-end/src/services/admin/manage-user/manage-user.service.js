@@ -1,6 +1,7 @@
 const { auth_enum } = require("../../../config/enum/auth.constants");
 const { system_enum } = require("../../../config/enum/system.constant");
 const { userRepository } = require("../../../repositories/user.repository");
+const { adminUserRepository } = require("../../../repositories/admin-user.repository");
 const { upLoadImage } = require("../../../utils/response.util");
 const { authHelper } = require("../../auth/auth.helper");
 
@@ -23,11 +24,32 @@ const manage_user_service = {
         }
     },
 
+    getUserById: async (id) => {
+        try {
+            const data = await adminUserRepository.findByIdWithDetails(id);
+            if (!data)
+                return {
+                    status: system_enum.STATUS_CODE.NOT_FOUND,
+                    message: system_enum.SYSTEM_MESSAGE.FAIL_GET_DATA,
+                };
+            return {
+                status: system_enum.STATUS_CODE.OK,
+                message: system_enum.SYSTEM_MESSAGE.SUCCESS,
+                data: data,
+            };
+        } catch (error) {
+            throw new Error(error);
+        }
+    },
+
     createUser: async (data, file = null) => {
         try {
             const existedEmail = await userRepository.findByEmail_Duplicate(data.email);
             if (existedEmail) {
-                return { status: system_enum.STATUS_CODE.CONFLICT, message: auth_enum.AUTH_MESSAGE.EXISTING_EMAIL };
+                return {
+                    status: system_enum.STATUS_CODE.CONFLICT,
+                    message: auth_enum.AUTH_MESSAGE.EXISTING_EMAIL,
+                };
             }
             if (file) {
                 const img = await upLoadImage(file);
@@ -74,6 +96,32 @@ const manage_user_service = {
     banUser: async (id) => {
         try {
             const result = await userRepository.banned(id);
+            return {
+                status: system_enum.STATUS_CODE.OK,
+                message: system_enum.SYSTEM_MESSAGE.SUCCESS,
+                data: result,
+            };
+        } catch (error) {
+            throw new Error(error);
+        }
+    },
+
+    lockUser: async (id) => {
+        try {
+            const result = await userRepository.update(id, { status: "banned" });
+            return {
+                status: system_enum.STATUS_CODE.OK,
+                message: system_enum.SYSTEM_MESSAGE.SUCCESS,
+                data: result,
+            };
+        } catch (error) {
+            throw new Error(error);
+        }
+    },
+
+    unlockUser: async (id) => {
+        try {
+            const result = await userRepository.update(id, { status: "active" });
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: system_enum.SYSTEM_MESSAGE.SUCCESS,
