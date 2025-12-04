@@ -3,29 +3,42 @@ import { z } from "zod";
 export const loginSchema = z.object({
   email: z
     .string()
+    .trim()
     .min(1, "Email is required.")
     .email({ message: "Please enter a valid email address." }),
-  // align with backend minimum (6)
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .refine((s) => s.trim().length > 0, {
+      message: "Password cannot be only whitespace",
+    }),
 });
 
 export const registerLearnerSchema = z
   .object({
     fullName: z
       .string()
-      .min(2, "Full name must be at least 2 characters.") // align with backend username min
+      .trim()
+      .min(2, "Full name must be at least 2 characters.")
       .max(50, "Full name must not exceed 50 characters."),
     email: z
       .string()
+      .trim()
       .min(1, "Email is required.")
       .email({ message: "Please enter a valid email address." }),
-    // align with backend minimum (6)
     password: z
       .string()
       .min(6, "Password must be at least 6 characters.")
-      .max(100, "Password must not exceed 100 characters."),
-    confirmPassword: z.string().min(1, "Please confirm your password."),
-    // optionally require agreeTerms
+      .max(100, "Password must not exceed 100 characters.")
+      .refine((s) => s.trim().length > 0, {
+        message: "Password cannot be only whitespace",
+      }),
+    confirmPassword: z
+      .string()
+      .min(1, "Please confirm your password.")
+      .refine((s) => s.trim().length > 0, {
+        message: "Confirm password cannot be only whitespace",
+      }),
     agreeTerms: z.boolean().refine((v) => v === true, {
       message: "You must agree to the terms and conditions",
     }),
@@ -39,22 +52,31 @@ export const registerInstructorSchema = z
   .object({
     fullName: z
       .string()
+      .trim()
       .min(2, "Full name must be at least 2 characters.")
       .max(50, "Full name must not exceed 50 characters."),
     email: z
       .string()
+      .trim()
       .min(1, "Email is required.")
       .email({ message: "Please enter a valid email address." }),
     password: z
       .string()
       .min(6, "Password must be at least 6 characters.")
-      .max(100, "Password must not exceed 100 characters."),
-    confirmPassword: z.string().min(1, "Please confirm your password."),
-    subjects: z.preprocess((val) => {
-      if (typeof val === "string") return [val];
-      return val;
-    }, z.array(z.string()).min(1, "Please select at least 1 subject")),
-    jobTitle: z.string().optional(),
+      .max(100, "Password must not exceed 100 characters.")
+      .refine((s) => s.trim().length > 0, {
+        message: "Password cannot be only whitespace",
+      }),
+    confirmPassword: z
+      .string()
+      .min(1, "Please confirm your password.")
+      .refine((s) => s.trim().length > 0, {
+        message: "Confirm password cannot be only whitespace",
+      }),
+    subjects: z
+      .array(z.string().trim().min(1, "Subject cannot be empty"))
+      .min(1, "Please select at least 1 subject"),
+    jobTitle: z.string().trim().optional(),
     agreeTerms: z.boolean().refine((v) => v === true, {
       message: "You must agree to the terms and conditions",
     }),
