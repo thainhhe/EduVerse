@@ -1,0 +1,26 @@
+[
+  {
+    "_id": "faq_register",
+    "type": "faq",
+    "title": "Quy trình Đăng ký Tài khoản mới",
+    "content": "Để đăng ký tài khoản mới, truy cập trang chủ và chọn **Sign up**. Bạn có thể chọn 2 vai trò: Học viên (Learner) hoặc Giảng viên (Instructor). Bạn cần cung cấp Email và Mật khẩu cùng các thông tin được yêu cầu khác. Sau khi hoàn tất, nhấn **Sign up** để tạo tài khoản."
+  },
+  {
+    "_id": "faq_forgot_password",
+    "type": "faq",
+    "title": "Hướng dẫn Lấy lại Mật khẩu",
+    "content": "Nếu quên mật khẩu, tại trang Đăng nhập, click vào **Forgot password**. Nhập địa chỉ Email đã đăng ký. Hệ thống sẽ gửi một mã OTP đến email của bạn. Nhập OTP rồi kiểm tra lại email sẽ thấy mật khẩu mới. Dùng mật khẩu mưới đó để đăng nhập. Hãy kiểm tra hộp thư rác nếu không thấy email."
+  },
+  {
+    "_id": "faq_login_location",
+    "type": "faq",
+    "title": "Vị trí Đăng nhập vào Hệ thống",
+    "content": "Bạn có thể đăng nhập trực tiếp tại trang chủ (góc trên bên phải)."
+  },
+  {
+    "_id": "faq_google_login",
+    "type": "faq",
+    "title": "Hỗ trợ Đăng nhập bằng Google",
+    "content": "Có. Hệ thống hỗ trợ đăng nhập nhanh chóng bằng tài khoản Google (Single Sign-On). Tại trang Đăng nhập, chọn tùy chọn **'Continue with Google'**."
+  }
+]
