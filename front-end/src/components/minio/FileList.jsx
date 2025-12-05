@@ -3,7 +3,7 @@ import { FileText, Video, Download, Trash2, Calendar, HardDrive } from "lucide-r
 import "./FileList.css";
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 
-const FileList = ({ files, onFileClick, onFileDeleted, canDelete = true }) => {
+const FileList = ({ files, onFileClick, onFileDeleted, canDelete = true, canUpdate = true }) => {
     const handleDelete = async (e, fileId) => {
         e.stopPropagation();
 
@@ -88,7 +88,7 @@ const FileList = ({ files, onFileClick, onFileDeleted, canDelete = true }) => {
                         >
                             <Download size={18} />
                         </button>
-                        {canDelete && (
+                        {canDelete && canUpdate && (
                             <ConfirmationHelper
                                 trigger={
                                     <button

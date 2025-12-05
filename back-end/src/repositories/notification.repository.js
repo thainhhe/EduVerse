@@ -16,16 +16,35 @@ const notificationRepository = {
             .exec();
     },
 
-    getByReceiverId: async (id) => {
-        // Get personal notifications AND global notifications
-        // Note: Global notifications won't have a receiverId usually, or we treat them separately.
-        // For now, let's just get personal ones.
-        return await Notification.find({
+    getByReceiverId: async (id, { search, page = 1, limit = 10 }) => {
+        const skip = (page - 1) * limit;
+        const query = {
             $or: [{ receiverId: id }, { isGlobal: true }],
-        })
-            .populate("senderId", "name email avatar")
-            .sort({ createdAt: -1 })
-            .exec();
+        };
+
+        if (search) {
+            query.$and = [
+                {
+                    $or: [
+                        { title: { $regex: search, $options: "i" } },
+                        { message: { $regex: search, $options: "i" } },
+                    ],
+                },
+            ];
+        }
+
+        const [notifications, total] = await Promise.all([
+            Notification.find(query)
+                .populate("senderId", "name email avatar")
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean()
+                .exec(),
+            Notification.countDocuments(query),
+        ]);
+
+        return { notifications, total, page, limit, totalPages: Math.ceil(total / limit) };
     },
 
     getBySenderId: async (id) => {
@@ -51,20 +70,25 @@ const notificationRepository = {
         return await Notification.findByIdAndDelete(id);
     },
 
-    markAsRead: async (id) => {
-        return await Notification.findByIdAndUpdate(id, { isRead: true }, { new: true });
+    markAsRead: async (id, userId) => {
+        return await Notification.findByIdAndUpdate(id, { $addToSet: { readBy: userId } }, { new: true });
     },
 
     markAllAsRead: async (userId) => {
-        return await Notification.updateMany({ receiverId: userId, isRead: false }, { isRead: true });
+        // Mark all personal notifications as read
+        // AND mark all global notifications as read by this user
+        return await Notification.updateMany(
+            {
+                $or: [{ receiverId: userId }, { isGlobal: true }],
+            },
+            { $addToSet: { readBy: userId } }
+        );
     },
 
     countUnread: async (userId) => {
         return await Notification.countDocuments({
-            $or: [
-                { receiverId: userId, isRead: false },
-                { isGlobal: true, isRead: false },
-            ],
+            $or: [{ receiverId: userId }, { isGlobal: true }],
+            readBy: { $ne: userId },
         });
     },
 };

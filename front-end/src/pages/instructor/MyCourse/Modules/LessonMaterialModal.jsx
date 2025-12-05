@@ -6,7 +6,7 @@ import { getFilesByLessonId } from "@/services/minio";
 import FileList from "@/components/minio/FileList";
 import { X } from "lucide-react";
 
-const LessonMaterialModal = ({ open, onOpenChange, lessonId }) => {
+const LessonMaterialModal = ({ open, onOpenChange, lessonId, canUpdate = true }) => {
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedVideo, setSelectedVideo] = useState(null);
@@ -65,6 +65,7 @@ const LessonMaterialModal = ({ open, onOpenChange, lessonId }) => {
                                     files={files}
                                     onFileClick={handleFileClick}
                                     onFileDeleted={handleFileDeleted}
+                                    canUpdate={canUpdate}
                                 />
                             )}
                         </section>

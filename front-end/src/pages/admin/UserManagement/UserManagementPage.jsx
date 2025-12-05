@@ -37,7 +37,7 @@ const UserManagementPage = () => {
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(5);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     useEffect(() => {
         fetchUsers();
@@ -157,15 +157,9 @@ const UserManagementPage = () => {
                         Active
                     </Badge>
                 );
-            case "locked":
+            case "banned":
                 return (
-                    <Badge className="bg-red-100 text-red-700 hover:bg-red-200 border-red-200">Locked</Badge>
-                );
-            case "pending":
-                return (
-                    <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-yellow-200">
-                        Pending
-                    </Badge>
+                    <Badge className="bg-red-100 text-red-700 hover:bg-red-200 border-red-200">Banned</Badge>
                 );
             default:
                 return <Badge variant="outline">{status}</Badge>;
@@ -188,9 +182,6 @@ const UserManagementPage = () => {
                 <div className="pb-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-2  bg-gray-500 text-black">
                         <div className="flex flex-col items-center sm:flex-row gap-2">
-                            <div className="text-md flex items-center p-1.5 bg-white rounded-sm">
-                                Users List {selectedUsers.length} selected
-                            </div>
                             <Select value={roleFilter} onValueChange={setRoleFilter}>
                                 <SelectTrigger className="w-full sm:w-[150px] max-w-[100px] bg-white">
                                     <SelectValue placeholder="Role" />

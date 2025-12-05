@@ -28,8 +28,16 @@ const CourseCardUnPublish = ({ course }) => {
                 <div className="flex-1 w-full space-y-2 sm:space-y-3">
                     <h3 className="text-lg font-semibold">{course.title}</h3>
                     <div className="flex items-center gap-2 text-sm">
-                        <span className="font-semibold uppercase">{course.status}</span>
-                        <span className="text-muted-foreground">{course.isPublished ? "Public" : "Private"}</span>
+                        <span className="font-semibold uppercase">
+                            {course.status === "draft"
+                                ? "Draft"
+                                : course.status === "pending"
+                                ? "Your course is pending review"
+                                : "Published"}
+                        </span>
+                        <span className="text-muted-foreground">
+                            {course.isPublished ? "Public" : "Private"}
+                        </span>
                     </div>
                     <div>
                         <p className="text-sm text-muted-foreground mb-1">Progress: {course.progress}%</p>

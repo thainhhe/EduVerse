@@ -163,7 +163,7 @@ export const adminService = {
         const res = await api.get("/admin/dashboard/instructor-revenue-list", {
             params: filters,
         });
-        return res.data?.data ?? res.data;
+        return res?.data;
     },
 
     getInstructorCourseRevenue: async (instructorId, filters = {}) => {

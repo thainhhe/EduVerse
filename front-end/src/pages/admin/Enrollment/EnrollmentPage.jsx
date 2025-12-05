@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Users, TrendingUp, BookOpen, Award } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const EnrollmentPage = () => {
     const [totalEnrollments, setTotalEnrollments] = useState(0);
@@ -46,8 +47,6 @@ const EnrollmentPage = () => {
 
         fetchData();
     }, [selectedYear]);
-
-    const maxCount = Math.max(...monthlyStats.map((s) => s.count), 1);
 
     return (
         <div className="space-y-6 bg-slate-50 min-h-screen">
@@ -98,27 +97,56 @@ const EnrollmentPage = () => {
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-[400px] w-full flex items-end justify-between gap-2 pt-10 pb-2 px-4">
-                        {monthlyStats.map((stat) => (
-                            <div key={stat.month} className="flex flex-col items-center gap-2 flex-1 group">
-                                <div className="relative w-full flex items-end justify-center h-full">
-                                    {/* Tooltip */}
-                                    <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
-                                        {stat.count} enrollments
-                                    </div>
-                                    {/* Bar */}
-                                    <div
-                                        className="w-full max-w-[40px] bg-indigo-100 group-hover:bg-indigo-200 transition-all duration-500 rounded-t-sm relative overflow-hidden"
-                                        style={{ height: `${(stat.count / maxCount) * 100}%` }}
-                                    >
-                                        <div className="absolute bottom-0 left-0 right-0 h-full bg-indigo-500 opacity-80 group-hover:opacity-100 transition-opacity" />
-                                    </div>
-                                </div>
-                                <span className="text-xs font-medium text-slate-500 uppercase">
-                                    {stat.label}
-                                </span>
-                            </div>
-                        ))}
+                    <div className="h-[400px] w-full pt-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart
+                                data={monthlyStats}
+                                margin={{
+                                    top: 10,
+                                    right: 30,
+                                    left: 0,
+                                    bottom: 0,
+                                }}
+                            >
+                                <defs>
+                                    <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8} />
+                                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <XAxis
+                                    dataKey="label"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: "#64748b", fontSize: 12 }}
+                                    dy={10}
+                                />
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: "#64748b", fontSize: 12 }}
+                                />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: "#1e293b",
+                                        border: "none",
+                                        borderRadius: "8px",
+                                        color: "#fff",
+                                    }}
+                                    itemStyle={{ color: "#fff" }}
+                                    formatter={(value) => [value, "Enrollments"]}
+                                />
+                                <Area
+                                    type="monotone"
+                                    dataKey="count"
+                                    stroke="#6366f1"
+                                    fillOpacity={1}
+                                    fill="url(#colorCount)"
+                                    strokeWidth={2}
+                                />
+                            </AreaChart>
+                        </ResponsiveContainer>
                     </div>
                 </CardContent>
             </Card>

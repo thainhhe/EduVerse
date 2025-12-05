@@ -24,9 +24,10 @@ const SideBar = () => {
                         key={item.path}
                         to={item.path}
                         className={({ isActive }) =>
-                            `block w-full px-3 py-2 text-sm font-medium ${isActive
-                                ? "bg-white text-indigo-600 border border-white border-l-2 border-l-indigo-600"
-                                : "text-foreground hover:bg-muted"
+                            `block w-full px-3 py-2 text-sm font-medium ${
+                                isActive
+                                    ? "bg-white text-indigo-600 border border-white border-l-2 border-l-indigo-600"
+                                    : "text-foreground hover:bg-muted"
                             }`
                         }
                     >

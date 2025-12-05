@@ -1,23 +1,17 @@
-
 "use client";
 import React from "react";
 
-
-const Pagination = ({
-    currentPage,
-    totalPages,
-    onPageChange,
-    pageWindow = 7,
-}) => {
-
-
+const Pagination = ({ currentPage, totalPages, onPageChange, pageWindow = 7 }) => {
     let windowStart = Math.max(1, currentPage - 1);
 
     const windowEnd = Math.min(totalPages, windowStart + pageWindow - 1);
 
     if (windowEnd - windowStart + 1 < pageWindow) {
         windowStart = Math.max(1, windowEnd - pageWindow + 1);
-        console.log("  windowStart = Math.max(1, windowEnd - pageWindow + 1);", windowStart = Math.max(1, windowEnd - pageWindow + 1))
+        console.log(
+            "  windowStart = Math.max(1, windowEnd - pageWindow + 1);",
+            (windowStart = Math.max(1, windowEnd - pageWindow + 1))
+        );
     }
 
     const pageNumbers = [];
@@ -27,20 +21,22 @@ const Pagination = ({
             <button
                 disabled={currentPage === 1}
                 onClick={() => onPageChange(currentPage - 1)}
-                className={`px-3 py-1 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition ${currentPage !== 1 ? "cursor-pointer" : "cursor-not-allowed"
-                    }`}
+                className={`px-3 py-1 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition ${
+                    currentPage !== 1 ? "cursor-pointer" : "cursor-not-allowed"
+                }`}
             >
-                Trước
+                Previous
             </button>
 
             {pageNumbers.map((num) => (
                 <button
                     key={num}
                     onClick={() => onPageChange(num)}
-                    className={`px-3 py-1 rounded-lg border border-gray-300 transition ${num === currentPage
-                        ? "bg-blue-600 text-white"
-                        : "bg-white text-gray-700 hover:bg-gray-100 cursor-pointer"
-                        }`}
+                    className={`px-3 py-1 rounded-lg border border-gray-300 transition ${
+                        num === currentPage
+                            ? "bg-blue-600 text-white"
+                            : "bg-white text-gray-700 hover:bg-gray-100 cursor-pointer"
+                    }`}
                 >
                     {num}
                 </button>
@@ -49,10 +45,11 @@ const Pagination = ({
             <button
                 disabled={currentPage === totalPages}
                 onClick={() => onPageChange(currentPage + 1)}
-                className={`px-3 py-1 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition ${currentPage !== totalPages ? "cursor-pointer" : "cursor-not-allowed"
-                    }`}
+                className={`px-3 py-1 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition ${
+                    currentPage !== totalPages ? "cursor-pointer" : "cursor-not-allowed"
+                }`}
             >
-                Sau
+                Next
             </button>
         </div>
     );

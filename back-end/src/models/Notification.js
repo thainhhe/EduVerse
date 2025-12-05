@@ -15,6 +15,7 @@ const notificationSchema = new mongoose.Schema(
         link: { type: String },
         isRead: { type: Boolean, default: false },
         isGlobal: { type: Boolean, default: false },
+        readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     },
     {
         timestamps: true,

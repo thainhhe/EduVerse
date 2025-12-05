@@ -44,7 +44,10 @@ const Login = () => {
         const result = await login(data.email, data.password);
         if (result.success) {
             const role = result.user?.role || user?.role || "learner"; // fallback
-            if (role === "instructor") {
+
+            if (role === "admin") {
+                navigate("/admin/dashboard");
+            } else if (role === "instructor") {
                 navigate("/mycourses");
             } else {
                 navigate("/dashboard");

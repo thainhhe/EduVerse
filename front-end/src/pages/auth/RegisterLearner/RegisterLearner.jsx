@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // added
+import { ToastHelper } from "@/helper/ToastHelper";
 
 const RegisterLearner = () => {
     const { register: registerUser } = useAuth();
@@ -35,8 +36,11 @@ const RegisterLearner = () => {
                 role: "learner",
             });
 
+            console.log(result);
             if (result.success) {
-                navigate("/login");
+                setTimeout(() => {
+                    navigate("/login");
+                }, 1000);
             } else {
                 // if service returns validation-like payload
                 if (result?.errors) {
@@ -46,7 +50,7 @@ const RegisterLearner = () => {
                         setError(field, { type: "server", message: msg });
                     });
                 } else if (result?.message) {
-                    toast.error(result.message);
+                    ToastHelper.error(result.message);
                 }
             }
         } catch (err) {
@@ -60,9 +64,9 @@ const RegisterLearner = () => {
                     setError(field, { type: "server", message });
                 }
             } else if (res?.message) {
-                toast.error(res.message);
+                ToastHelper.error(res.message);
             } else {
-                toast.error(err.message || "Registration failed");
+                ToastHelper.error(err.message || "Registration failed");
             }
             // keep console for debugging
             // eslint-disable-next-line no-console
@@ -77,7 +81,7 @@ const RegisterLearner = () => {
             </div>
 
             <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8">
-                <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-xl shadow-lg">
+                <div className="w-full max-w-lg bg-white p-6 sm:p-8 rounded-xl shadow-lg">
                     <div className="text-center mb-8">
                         <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-2">
                             Create Your Learner Account
@@ -129,66 +133,62 @@ const RegisterLearner = () => {
                         </div>
 
                         {/* Responsive grid for passwords */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="password">
-                                    Password<span className="text-red-500 -ml-1">*</span>
-                                </Label>
-                                <div className="relative">
-                                    <Input
-                                        id="password"
-                                        type={showPassword ? "text" : "password"}
-                                        placeholder="Password"
-                                        className="pr-10"
-                                        {...register("password")}
-                                        required
-                                        minLength={6}
-                                        maxLength={50}
-                                        aria-invalid={!!errors.password}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                    >
-                                        {showPassword ? <FaEyeSlash /> : <FaEye />}
-                                    </button>
-                                </div>
-                                {errors.password && (
-                                    <p className="text-sm text-red-600 mt-1">{errors.password.message}</p>
-                                )}
+                        <div className="space-y-2">
+                            <Label htmlFor="password">
+                                Password<span className="text-red-500 -ml-1">*</span>
+                            </Label>
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Password"
+                                    className="pr-10"
+                                    {...register("password")}
+                                    required
+                                    minLength={6}
+                                    maxLength={50}
+                                    aria-invalid={!!errors.password}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                </button>
                             </div>
+                            {errors.password && (
+                                <p className="text-sm text-red-600 mt-1">{errors.password.message}</p>
+                            )}
+                        </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">
-                                    Confirm Password<span className="text-red-500 -ml-1">*</span>
-                                </Label>
-                                <div className="relative">
-                                    <Input
-                                        id="confirmPassword"
-                                        type={showConfirm ? "text" : "password"}
-                                        placeholder="Password"
-                                        className="pr-10"
-                                        {...register("confirmPassword")}
-                                        required
-                                        minLength={6}
-                                        maxLength={50}
-                                        aria-invalid={!!errors.confirmPassword}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowConfirm(!showConfirm)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                    >
-                                        {showConfirm ? <FaEyeSlash /> : <FaEye />}
-                                    </button>
-                                </div>
-                                {errors.confirmPassword && (
-                                    <p className="text-sm text-red-600 mt-1">
-                                        {errors.confirmPassword.message}
-                                    </p>
-                                )}
+                        <div className="space-y-2">
+                            <Label htmlFor="confirmPassword">
+                                Confirm Password<span className="text-red-500 -ml-1">*</span>
+                            </Label>
+                            <div className="relative">
+                                <Input
+                                    id="confirmPassword"
+                                    type={showConfirm ? "text" : "password"}
+                                    placeholder="Password"
+                                    className="pr-10"
+                                    {...register("confirmPassword")}
+                                    required
+                                    minLength={6}
+                                    maxLength={50}
+                                    aria-invalid={!!errors.confirmPassword}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirm(!showConfirm)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    {showConfirm ? <FaEyeSlash /> : <FaEye />}
+                                </button>
                             </div>
+                            {errors.confirmPassword && (
+                                <p className="text-sm text-red-600 mt-1">{errors.confirmPassword.message}</p>
+                            )}
                         </div>
 
                         <div className="flex items-start space-x-3 pt-2">

@@ -10,6 +10,7 @@ import {
     CreditCard,
     ChevronDown,
     Settings,
+    Bug,
 } from "lucide-react";
 import { MdAutoAwesome } from "react-icons/md";
 import { useState } from "react";
@@ -23,6 +24,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/useAuth";
 
 const navigation = [
     {
@@ -30,7 +32,7 @@ const navigation = [
         href: "/admin/dashboard",
         icon: LayoutDashboard,
         children: [
-            { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+            { name: "Analytics", href: "/admin/dashboard", icon: LayoutDashboard },
             { name: "Enrollment", href: "/admin/enrollment", icon: LayoutDashboard },
             { name: "Revenue", href: "/admin/revenue", icon: LayoutDashboard },
             { name: "Instructor Revenue", href: "/admin/revenue/instructors", icon: LayoutDashboard },
@@ -47,15 +49,16 @@ const navigation = [
     },
     { name: "Payment Management", href: "/admin/payment", icon: CreditCard },
     { name: "Notifications", href: "/admin/notifications", icon: Bell },
-    { name: "Reports", href: "/admin/reports", icon: Bell },
+    { name: "Reports", href: "/admin/reports", icon: Bug },
     { name: "Chatbot Management", href: "/admin/chatbot", icon: Bot },
     { name: "System Management", href: "/admin/system", icon: Settings },
-    { name: "Admin Profile", href: "/admin/profile", icon: UserCircle },
+    { name: "My Profile", href: "/admin/profile", icon: UserCircle },
 ];
 
 export function Sidebar({ className, isCollapsed }) {
     const location = useLocation();
     const [openMenus, setOpenMenus] = useState({});
+    const { user } = useAuth();
 
     const toggleMenu = (name) => {
         setOpenMenus((prev) => ({ ...prev, [name]: !prev[name] }));
@@ -268,17 +271,14 @@ export function Sidebar({ className, isCollapsed }) {
                     )}
                 >
                     <Avatar className="h-9 w-9 border-2 border-slate-700 group-hover:border-indigo-500 transition-colors">
-                        <AvatarImage src="https://github.com/shadcn.png" />
+                        <AvatarImage src={user?.avatar || "https://github.com/shadcn.png"} />
                         <AvatarFallback className="bg-indigo-600 text-white">AD</AvatarFallback>
                     </Avatar>
                     {!isCollapsed && (
                         <div className="flex-1 overflow-hidden">
-                            <p className="text-sm font-medium text-white truncate">Admin User</p>
-                            <p className="text-xs text-slate-500 truncate">admin@eduverse.com</p>
+                            <p className="text-sm font-medium text-white truncate">{user?.username}</p>
+                            <p className="text-xs text-slate-500 truncate">{user?.email}</p>
                         </div>
-                    )}
-                    {!isCollapsed && (
-                        <Settings className="h-4 w-4 text-slate-500 group-hover:text-white transition-colors" />
                     )}
                 </div>
             </div>

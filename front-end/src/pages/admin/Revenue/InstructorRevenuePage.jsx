@@ -38,8 +38,10 @@ const InstructorRevenuePage = () => {
                 endDate: endDate.toISOString(),
             });
 
-            setInstructors(response || []);
-            setTotalPages(Math.ceil((response.metadata?.total || 0) / limit));
+            console.log("response", response);
+            // Fix: Extract data and metadata correctly from the response object
+            setInstructors(response.data || []);
+            setTotalPages(Math.ceil((response?.metadata?.total || 0) / limit));
         } catch (error) {
             console.error("Failed to fetch instructor revenue list:", error);
         } finally {
@@ -275,8 +277,8 @@ const InstructorRevenuePage = () => {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                                disabled={page === totalPages || loading}
+                                onClick={() => setPage((p) => Math.max(1, Math.min(totalPages, p + 1)))}
+                                disabled={page >= totalPages || loading}
                                 className="text-sm flex items-center gap-2"
                             >
                                 Next <ChevronRight className="h-4 w-4 ml-2" />

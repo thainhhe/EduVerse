@@ -221,28 +221,6 @@ const CourseDetailPage = () => {
                                 </Button>
                             </>
                         )}
-                        {course.status === "reject" && (
-                            <ConfirmationHelper
-                                trigger={
-                                    <Button className="bg-green-600 hover:bg-green-700 text-white gap-2">
-                                        <Check className="w-4 h-4" /> Approve
-                                    </Button>
-                                }
-                                title="Approve Course"
-                                description="Are you sure you want to approve this course?"
-                                confirmText="Approve"
-                                onConfirm={handleApprove}
-                            />
-                        )}
-                        {course.status === "approve" && (
-                            <Button
-                                variant="destructive"
-                                className="gap-2"
-                                onClick={() => setShowRejectModal(true)}
-                            >
-                                <X className="w-4 h-4" /> Reject
-                            </Button>
-                        )}
                     </div>
                 </div>
             </div>

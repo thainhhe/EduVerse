@@ -512,7 +512,7 @@ const SystemManagementPage = () => {
                     </Card>
                 </TabsContent>
 
-                {/* Security Settings */}
+                {/* Security Settings
                 <TabsContent value="security" className="mt-6">
                     <Card>
                         <CardHeader>
@@ -550,7 +550,7 @@ const SystemManagementPage = () => {
                 </TabsContent>
 
                 {/* Notification Settings */}
-                <TabsContent value="notifications" className="mt-6">
+                {/* <TabsContent value="notifications" className="mt-6">
                     <Card>
                         <CardHeader>
                             <CardTitle>Notification Settings</CardTitle>
@@ -585,7 +585,7 @@ const SystemManagementPage = () => {
                 </TabsContent>
 
                 {/* Payment Settings */}
-                <TabsContent value="payment" className="mt-6">
+                {/* <TabsContent value="payment" className="mt-6">
                     <Card>
                         <CardHeader>
                             <CardTitle>Payment Settings</CardTitle>
@@ -619,7 +619,7 @@ const SystemManagementPage = () => {
                             </div>
                         </CardContent>
                     </Card>
-                </TabsContent>
+                </TabsContent> */}
             </Tabs>
         </div>
     );

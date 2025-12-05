@@ -2,15 +2,30 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { FaSignInAlt, FaUserPlus, FaSearch } from "react-icons/fa";
+import { FaSignInAlt, FaUserPlus, FaSearch, FaUserGraduate, FaChalkboardTeacher } from "react-icons/fa";
 import { MdAutoAwesome } from "react-icons/md";
-import { Menu, X } from "lucide-react";
+import {
+    Menu,
+    X,
+    ChevronDown,
+    Settings,
+    CreditCard,
+    BookOpen,
+    LayoutDashboard,
+    LogOut,
+    User,
+    GraduationCap,
+    FileText,
+} from "lucide-react";
 
 import NotificationDropdown from "./NotificationDropdown";
 
 import { useSystem } from "@/context/SystemContext";
+import { getAllCoursePublished } from "@/services/courseService";
+import { getAllInstructor } from "@/services/userService";
 
 const Header = () => {
+    // Force update
     const { systemConfig } = useSystem();
     const { isAuthenticated, user, logout } = useAuth();
     const location = useLocation();
@@ -18,8 +33,89 @@ const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [showSignupMenu, setShowSignupMenu] = useState(false);
     const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [suggestions, setSuggestions] = useState({ courses: [], instructors: [] });
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+    const searchRef = useRef(null);
     const signupRef = useRef(null);
     const avatarRef = useRef(null);
+
+    // Fetch suggestions with debounce
+    useEffect(() => {
+        const fetchSuggestions = async () => {
+            if (searchTerm.trim().length < 2) {
+                setSuggestions({ courses: [], instructors: [] });
+                return;
+            }
+
+            setIsLoadingSuggestions(true);
+            try {
+                const [coursesRes, instructorsRes] = await Promise.all([
+                    getAllCoursePublished(),
+                    getAllInstructor(),
+                ]);
+
+                console.log("coursesRes", coursesRes);
+                console.log("instructorsRes", instructorsRes);
+
+                const courses = (coursesRes?.data || [])
+                    .filter((c) => c.title.toLowerCase().includes(searchTerm.toLowerCase()))
+                    .slice(0, 5);
+
+                const instructors = (instructorsRes?.data || [])
+                    .filter((i) => i.username.toLowerCase().includes(searchTerm.toLowerCase()))
+                    .slice(0, 3);
+
+                setSuggestions({ courses, instructors });
+            } catch (error) {
+                console.error("Error fetching suggestions:", error);
+            } finally {
+                setIsLoadingSuggestions(false);
+            }
+        };
+
+        const timeoutId = setTimeout(() => {
+            if (searchTerm.trim().length >= 2) {
+                fetchSuggestions();
+            } else {
+                setSuggestions({ courses: [], instructors: [] });
+            }
+        }, 300);
+
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm]);
+
+    // Handle click outside to close suggestions
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (searchRef.current && !searchRef.current.contains(event.target)) {
+                setShowSuggestions(false);
+            }
+            if (signupRef.current && !signupRef.current.contains(event.target)) {
+                setShowSignupMenu(false);
+            }
+            if (avatarRef.current && !avatarRef.current.contains(event.target)) {
+                setShowAvatarMenu(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const handleSearchSubmit = () => {
+        setShowSuggestions(false);
+        if (searchTerm.trim()) {
+            navigate(`/courses?search=${encodeURIComponent(searchTerm.trim())}`);
+        }
+    };
+
+    const handleSuggestionClick = (path) => {
+        setShowSuggestions(false);
+        setSearchTerm("");
+        navigate(path);
+    };
 
     const headerBg = systemConfig?.appearance?.headerBgColor || "#ffffff";
     const headerText = systemConfig?.appearance?.headerTextColor || "#000000";
@@ -30,23 +126,8 @@ const Header = () => {
         { to: "/courses", text: "Courses" },
         { to: "/instructors", text: "Instructors" },
         { to: "/course/rooms", text: "Live" },
-        { to: "/reports/my-reports", text: "Reports" },
         { to: "/contacts", text: "Contact" },
     ];
-
-    // close menus when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (signupRef.current && !signupRef.current.contains(e.target)) {
-                setShowSignupMenu(false);
-            }
-            if (avatarRef.current && !avatarRef.current.contains(e.target)) {
-                setShowAvatarMenu(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
 
     const onLogout = async () => {
         await logout();
@@ -79,27 +160,134 @@ const Header = () => {
 
                     {/* Desktop Menu & Search */}
                     <div className="hidden lg:flex items-center gap-8">
-                        <nav className="flex gap-8">
-                            {navLinks.map((link) => (
-                                <Link
-                                    key={link.to}
-                                    to={link.to}
-                                    className={`font-medium transition-colors hover:opacity-80`}
-                                    style={{
-                                        color: location.pathname === link.to ? "#6366f1" : headerText,
-                                    }}
-                                >
-                                    {link.text}
-                                </Link>
-                            ))}
+                        <nav className="flex items-center gap-1">
+                            {navLinks.map((link) => {
+                                const isActive = location.pathname === link.to;
+                                return (
+                                    <Link
+                                        key={link.to}
+                                        to={link.to}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                                            isActive ? "bg-indigo-50 shadow-sm" : "hover:bg-gray-50/80"
+                                        }`}
+                                        style={{
+                                            color: isActive ? "#4f46e5" : headerText,
+                                            fontWeight: isActive ? 600 : 500,
+                                        }}
+                                    >
+                                        {link.text}
+                                    </Link>
+                                );
+                            })}
                         </nav>
-                        <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-4 py-2 bg-white w-72">
-                            <FaSearch className="text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Search for courses..."
-                                className="bg-transparent border-none outline-none w-full text-sm"
-                            />
+                        <div className="relative w-72" ref={searchRef}>
+                            <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-4 py-2 bg-white w-full focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all">
+                                <FaSearch
+                                    className="text-gray-400 cursor-pointer hover:text-indigo-600 transition-colors"
+                                    onClick={handleSearchSubmit}
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Search for courses, instructors..."
+                                    className="bg-transparent border-none outline-none w-full text-sm"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
+                                    onFocus={() => {
+                                        if (searchTerm.trim().length >= 2) setShowSuggestions(true);
+                                    }}
+                                />
+                            </div>
+
+                            {/* Search Suggestions Dropdown */}
+                            {showSuggestions && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 max-h-[80vh] overflow-y-auto">
+                                    {isLoadingSuggestions ? (
+                                        <div className="p-4 text-center text-gray-500 text-sm">
+                                            Loading...
+                                        </div>
+                                    ) : suggestions.courses.length === 0 &&
+                                      suggestions.instructors.length === 0 ? (
+                                        <div className="p-4 text-center text-gray-500 text-sm">
+                                            No results found
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {/* Courses Section */}
+                                            {suggestions.courses.length > 0 && (
+                                                <div className="py-2">
+                                                    <div className="px-4 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                                                        <BookOpen className="w-3 h-3" /> Courses
+                                                    </div>
+                                                    {suggestions.courses.map((course) => (
+                                                        <div
+                                                            key={course._id}
+                                                            onClick={() =>
+                                                                handleSuggestionClick(
+                                                                    `/courses/${course._id}`
+                                                                )
+                                                            }
+                                                            className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-3 group transition-colors"
+                                                        >
+                                                            <div className="w-8 h-8 rounded bg-gray-100 overflow-hidden flex-shrink-0">
+                                                                <img
+                                                                    src={
+                                                                        course.thumbnail || "/placeholder.svg"
+                                                                    }
+                                                                    alt=""
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-medium text-gray-700 group-hover:text-indigo-600 truncate">
+                                                                    {course.title}
+                                                                </p>
+                                                                <p className="text-xs text-gray-500 truncate">
+                                                                    {course.main_instructor?.username ||
+                                                                        "Unknown Instructor"}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {/* Instructors Section */}
+                                            {suggestions.instructors.length > 0 && (
+                                                <div className="py-2 border-t border-gray-50">
+                                                    <div className="px-4 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                                                        <FaChalkboardTeacher className="w-3 h-3" />{" "}
+                                                        Instructors
+                                                    </div>
+                                                    {suggestions.instructors.map((instructor) => (
+                                                        <div
+                                                            key={instructor._id}
+                                                            onClick={() =>
+                                                                handleSuggestionClick(
+                                                                    `/instructors/${instructor._id}`
+                                                                )
+                                                            }
+                                                            className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-3 group transition-colors"
+                                                        >
+                                                            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                                                                {initials(instructor.username)}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-medium text-gray-700 group-hover:text-indigo-600 truncate">
+                                                                    {instructor.username}
+                                                                </p>
+                                                                <p className="text-xs text-gray-500 truncate">
+                                                                    {instructor.email}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -118,29 +306,70 @@ const Header = () => {
                                 <div className="relative" ref={signupRef}>
                                     <Button
                                         onClick={() => setShowSignupMenu((s) => !s)}
-                                        className="bg-indigo-500 hover:bg-indigo-600 text-white flex items-center gap-2"
+                                        className={`flex items-center gap-2 transition-all duration-200 ${
+                                            showSignupMenu
+                                                ? "bg-indigo-600 ring-2 ring-indigo-200 ring-offset-1"
+                                                : "bg-indigo-500 hover:bg-indigo-600"
+                                        } text-white shadow-md hover:shadow-lg`}
                                     >
-                                        <FaUserPlus className="mr-2" /> Signup
+                                        <FaUserPlus className="text-lg" />
+                                        <span>Signup</span>
+                                        <ChevronDown
+                                            className={`w-4 h-4 transition-transform duration-200 ${
+                                                showSignupMenu ? "rotate-180" : ""
+                                            }`}
+                                        />
                                     </Button>
 
-                                    {showSignupMenu && (
-                                        <div className="absolute right-0 mt-2 w-44 bg-white border rounded-md shadow-lg z-50">
-                                            <Link
-                                                to="/register-learner"
-                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                onClick={() => setShowSignupMenu(false)}
-                                            >
-                                                Sign up as Learner
-                                            </Link>
-                                            <Link
-                                                to="/register-instructor"
-                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                onClick={() => setShowSignupMenu(false)}
-                                            >
-                                                Sign up as Instructor
-                                            </Link>
+                                    <div
+                                        className={`absolute right-0 mt-3 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 p-2 z-50 transform transition-all duration-200 origin-top-right ${
+                                            showSignupMenu
+                                                ? "opacity-100 scale-100 translate-y-0 visible"
+                                                : "opacity-0 scale-95 -translate-y-2 invisible"
+                                        }`}
+                                    >
+                                        <div className="px-3 py-2 border-b border-gray-50 mb-2">
+                                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                                Join EduVerse as
+                                            </p>
                                         </div>
-                                    )}
+
+                                        <Link
+                                            to="/register-learner"
+                                            className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-indigo-50 transition-colors group"
+                                            onClick={() => setShowSignupMenu(false)}
+                                        >
+                                            <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors shadow-sm">
+                                                <FaUserGraduate className="text-lg" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-gray-700 group-hover:text-indigo-700">
+                                                    Learner
+                                                </p>
+                                                <p className="text-xs text-gray-500 leading-tight">
+                                                    Start your learning journey
+                                                </p>
+                                            </div>
+                                        </Link>
+
+                                        <Link
+                                            to="/register-instructor"
+                                            className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-indigo-50 transition-colors group mt-1"
+                                            onClick={() => setShowSignupMenu(false)}
+                                        >
+                                            <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors shadow-sm">
+                                                <FaChalkboardTeacher className="text-lg" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-gray-700 group-hover:text-purple-700">
+                                                    Instructor
+                                                </p>
+                                                <p className="text-xs text-gray-500 leading-tight">
+                                                    Share your knowledge
+                                                </p>
+                                            </div>
+                                        </Link>
+                                    </div>
                                 </div>
                             </>
                         ) : (
@@ -148,90 +377,99 @@ const Header = () => {
                             <div className="relative" ref={avatarRef}>
                                 <button
                                     onClick={() => setShowAvatarMenu((s) => !s)}
-                                    className="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-semibold focus:outline-none"
+                                    className={`w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold shadow-md transition-all duration-200 focus:outline-none ${
+                                        showAvatarMenu
+                                            ? "ring-2 ring-indigo-200 ring-offset-2"
+                                            : "hover:shadow-lg"
+                                    }`}
                                     title={user?.username || user?.name || "User"}
                                 >
                                     {initials(user?.username || user?.name)}
                                 </button>
 
-                                {showAvatarMenu && (
-                                    <div className="absolute right-0 mt-2 w-48 bg-white border rounded-md shadow-lg z-50">
+                                <div
+                                    className={`absolute left-1/2 mt-3 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50 transform transition-all duration-200 origin-top ${
+                                        showAvatarMenu
+                                            ? "opacity-100 scale-100 -translate-x-1/2 translate-y-0 visible"
+                                            : "opacity-0 scale-95 -translate-x-1/2 -translate-y-2 invisible"
+                                    }`}
+                                >
+                                    {/* User Profile Summary */}
+                                    <div className="px-4 py-3 border-b border-gray-50 mb-2">
+                                        <p className="text-sm font-bold text-gray-900 truncate">
+                                            {user?.username || user?.name}
+                                        </p>
+                                        <p className="text-xs text-gray-500 truncate capitalize">
+                                            {user?.role}
+                                        </p>
+                                    </div>
+
+                                    <div className="px-2 space-y-1">
                                         <Link
-                                            to="/settings"
-                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            to="/dashboard"
+                                            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
                                             onClick={() => setShowAvatarMenu(false)}
                                         >
-                                            Settings
+                                            <GraduationCap className="w-4 h-4" />
+                                            Learning
                                         </Link>
                                         <Link
                                             to="/reports/my-reports"
-                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
                                             onClick={() => setShowAvatarMenu(false)}
                                         >
+                                            <FileText className="w-4 h-4" />
                                             My Reports
                                         </Link>
                                         <Link
-                                            to="/dashboard"
-                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            to="/settings"
+                                            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
                                             onClick={() => setShowAvatarMenu(false)}
                                         >
-                                            Learning
+                                            <Settings className="w-4 h-4" />
+                                            Settings
                                         </Link>
+                                        <Link
+                                            to="/payment-history"
+                                            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                                            onClick={() => setShowAvatarMenu(false)}
+                                        >
+                                            <CreditCard className="w-4 h-4" />
+                                            Payment History
+                                        </Link>
+
                                         {user?.role === "instructor" && (
                                             <>
                                                 <Link
                                                     to="/mycourses"
-                                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
                                                     onClick={() => setShowAvatarMenu(false)}
                                                 >
-                                                    Instructor
+                                                    <BookOpen className="w-4 h-4" />
+                                                    My Courses
                                                 </Link>
-
                                                 <Link
                                                     to="/dashboard-instructor"
-                                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
                                                     onClick={() => setShowAvatarMenu(false)}
                                                 >
-                                                    Analytics
+                                                    <LayoutDashboard className="w-4 h-4" />
+                                                    Dashboard
                                                 </Link>
                                             </>
                                         )}
-                                        <Link
-                                            to="/payment-history"
-                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                            onClick={() => setShowAvatarMenu(false)}
-                                        >
-                                            Payment History
-                                        </Link>
 
-                                        {/* show different menu item based on role */}
-                                        {/* {user?.role === "learner" && (
-                                            <>
-                                                <Link
-                                                    to="/dashboard"
-                                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                    onClick={() => setShowAvatarMenu(false)}
-                                                >
-                                                    Dashboard
-                                                </Link>
-                                                <Link
-                                                    to="/payment-history"
-                                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                    onClick={() => setShowAvatarMenu(false)}
-                                                >
-                                                    Payment History
-                                                </Link>
-                                            </>
-                                        )} */}
-
-                                        <button
-                                            onClick={onLogout}
-                                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
-                                        >
-                                            Logout
-                                        </button>
+                                        <div className="border-t border-gray-50 my-1 pt-1">
+                                            <button
+                                                onClick={onLogout}
+                                                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors text-left"
+                                            >
+                                                <LogOut className="w-4 h-4" />
+                                                Logout
+                                            </button>
+                                        </div>
                                     </div>
-                                )}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -291,61 +529,92 @@ const Header = () => {
                                 </>
                             ) : (
                                 <>
-                                    <Link
-                                        to="/settings"
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className="w-full text-center px-4 py-2 rounded-md bg-white text-gray-700 hover:bg-gray-50"
-                                    >
-                                        Settings
-                                    </Link>
+                                    {/* User Profile Summary */}
+                                    <div className="flex items-center gap-3 px-4 py-3 bg-indigo-50/50 rounded-xl mb-2 border border-indigo-100">
+                                        <div className="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold shadow-sm">
+                                            {initials(user?.username || user?.name)}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-gray-900 truncate">
+                                                {user?.username || user?.name}
+                                            </p>
+                                            <p className="text-xs text-gray-500 truncate capitalize">
+                                                {user?.role}
+                                            </p>
+                                        </div>
+                                    </div>
 
-                                    <Link
-                                        to="/payment-history"
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className="w-full text-center px-4 py-2 rounded-md bg-white text-gray-700 hover:bg-gray-50"
-                                    >
-                                        Payment History
-                                    </Link>
-
-                                    {user?.role === "learner" && (
+                                    <div className="space-y-1">
                                         <Link
-                                            to="/courses/purchased"
+                                            to="/dashboard"
                                             onClick={() => setIsMenuOpen(false)}
-                                            className="w-full text-center px-4 py-2 rounded-md bg-white text-gray-700 hover:bg-gray-50"
+                                            className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-all duration-200"
                                         >
-                                            Purchased Courses
+                                            <GraduationCap className="w-5 h-5" />
+                                            <span className="font-medium">Learning</span>
                                         </Link>
-                                    )}
 
-                                    {user?.role === "instructor" && (
                                         <Link
-                                            to="/mycourses"
+                                            to="/reports/my-reports"
                                             onClick={() => setIsMenuOpen(false)}
-                                            className="w-full text-center px-4 py-2 rounded-md bg-white text-gray-700 hover:bg-gray-50"
+                                            className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-all duration-200"
                                         >
-                                            My Courses
+                                            <FileText className="w-5 h-5" />
+                                            <span className="font-medium">My Reports</span>
                                         </Link>
-                                    )}
-                                    {user?.role === "instructor" && (
-                                        <Link
-                                            to="/dashboard-instructor"
-                                            onClick={() => setIsMenuOpen(false)}
-                                            className="w-full text-center px-4 py-2 rounded-md bg-white text-gray-700 hover:bg-gray-50"
-                                        >
-                                            Dashboard
-                                        </Link>
-                                    )}
 
-                                    <button
-                                        onClick={async () => {
-                                            await logout();
-                                            setIsMenuOpen(false);
-                                            navigate("/login");
-                                        }}
-                                        className="w-full text-center px-4 py-2 rounded-md bg-red-50 text-red-600 hover:bg-red-100"
-                                    >
-                                        Logout
-                                    </button>
+                                        <Link
+                                            to="/settings"
+                                            onClick={() => setIsMenuOpen(false)}
+                                            className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-all duration-200"
+                                        >
+                                            <Settings className="w-5 h-5" />
+                                            <span className="font-medium">Settings</span>
+                                        </Link>
+
+                                        <Link
+                                            to="/payment-history"
+                                            onClick={() => setIsMenuOpen(false)}
+                                            className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-all duration-200"
+                                        >
+                                            <CreditCard className="w-5 h-5" />
+                                            <span className="font-medium">Payment History</span>
+                                        </Link>
+                                        {user?.role === "instructor" && (
+                                            <>
+                                                <Link
+                                                    to="/mycourses"
+                                                    onClick={() => setIsMenuOpen(false)}
+                                                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-all duration-200"
+                                                >
+                                                    <BookOpen className="w-5 h-5" />
+                                                    <span className="font-medium">My Courses</span>
+                                                </Link>
+                                                <Link
+                                                    to="/dashboard-instructor"
+                                                    onClick={() => setIsMenuOpen(false)}
+                                                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-all duration-200"
+                                                >
+                                                    <LayoutDashboard className="w-5 h-5" />
+                                                    <span className="font-medium">Dashboard</span>
+                                                </Link>
+                                            </>
+                                        )}
+
+                                        <div className="pt-2 mt-2 border-t border-gray-100">
+                                            <button
+                                                onClick={async () => {
+                                                    await logout();
+                                                    setIsMenuOpen(false);
+                                                    navigate("/login");
+                                                }}
+                                                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all duration-200"
+                                            >
+                                                <LogOut className="w-5 h-5" />
+                                                <span className="font-medium">Logout</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </>
                             )}
                         </div>

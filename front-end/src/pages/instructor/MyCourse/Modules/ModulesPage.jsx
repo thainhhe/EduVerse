@@ -82,6 +82,7 @@ const ModulesPage = () => {
     const storageCourseId = typeof window !== "undefined" ? sessionStorage.getItem("currentCourseId") : null;
     const sessionCourse =
         typeof window !== "undefined" ? JSON.parse(sessionStorage.getItem("currentCourseData")) : null;
+    const canUpdateCourse = sessionCourse?.status === "draft";
 
     const courseIdFromState =
         location?.state?.id ?? params?.id ?? getCourseIdFromQuery() ?? storageCourseId ?? null;
@@ -282,28 +283,39 @@ const ModulesPage = () => {
                             </p>
                         </div>
                         <div className="flex items-center gap-3">
-                            <Button
-                                variant="outline"
-                                className="border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 transition-all shadow-sm"
-                                onClick={() => {
-                                    if (!courseIdFromState) return;
-                                    setCurrentQuizContext({
-                                        courseId: courseIdFromState,
-                                        moduleId: null,
-                                        lessonId: null,
-                                    });
-                                    setIsQuizManagerOpen(true);
-                                }}
-                            >
-                                <FileQuestion className="w-4 h-4 mr-2" />
-                                Manage Quizzes
-                                <Badge
-                                    variant="secondary"
-                                    className="ml-2 bg-indigo-100 text-indigo-700 border-none"
+                            {canUpdateCourse && (
+                                <Button
+                                    variant="outline"
+                                    className="border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 transition-all shadow-sm"
+                                    onClick={() => {
+                                        if (!courseIdFromState) return;
+                                        setCurrentQuizContext({
+                                            courseId: courseIdFromState,
+                                            moduleId: null,
+                                            lessonId: null,
+                                        });
+                                        setIsQuizManagerOpen(true);
+                                    }}
                                 >
-                                    {courseQuizCount}
-                                </Badge>
-                            </Button>
+                                    <FileQuestion className="w-4 h-4 mr-2" />
+                                    Manage Quizzes
+                                    <Badge
+                                        variant="secondary"
+                                        className="ml-2 bg-indigo-100 text-indigo-700 border-none"
+                                    >
+                                        {courseQuizCount}
+                                    </Badge>
+                                </Button>
+                            )}
+                            {canUpdateCourse && (
+                                <Button
+                                    className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
+                                    onClick={() => setIsAddModuleOpen(true)}
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Create Module
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -324,13 +336,15 @@ const ModulesPage = () => {
                                     </p>
                                 </div>
                             </div>
-                            <Button
-                                className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
-                                onClick={() => setIsAddModuleOpen(true)}
-                            >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Create Module
-                            </Button>
+                            {canUpdateCourse && (
+                                <Button
+                                    className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
+                                    onClick={() => setIsAddModuleOpen(true)}
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Create Module
+                                </Button>
+                            )}
                         </div>
                     </CardHeader>
 
@@ -344,13 +358,15 @@ const ModulesPage = () => {
                                 <p className="text-gray-500 mb-6 max-w-md mx-auto">
                                     Get started by creating your first module to organize your course content.
                                 </p>
-                                <Button
-                                    className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white"
-                                    onClick={() => setIsAddModuleOpen(true)}
-                                >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Create First Module
-                                </Button>
+                                {canUpdateCourse && (
+                                    <Button
+                                        className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white"
+                                        onClick={() => setIsAddModuleOpen(true)}
+                                    >
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        Create First Module
+                                    </Button>
+                                )}
                             </div>
                         ) : (
                             modules.map((module, moduleIndex) => {
@@ -424,15 +440,17 @@ const ModulesPage = () => {
                                             <div className="flex items-center gap-2 ml-4">
                                                 {/* Module Actions Menu */}
                                                 <div className="relative">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            toggleModuleMenu(module.id);
-                                                        }}
-                                                        className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-all duration-200 hover:scale-110"
-                                                    >
-                                                        <Ellipsis className="w-5 h-5" />
-                                                    </button>
+                                                    {canUpdateCourse && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                toggleModuleMenu(module.id);
+                                                            }}
+                                                            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-all duration-200 hover:scale-110"
+                                                        >
+                                                            <Ellipsis className="w-5 h-5" />
+                                                        </button>
+                                                    )}
 
                                                     {openModuleMenuId === module.id && (
                                                         <div
@@ -603,17 +621,19 @@ const ModulesPage = () => {
                                                                         </Button>
 
                                                                         <div className="relative">
-                                                                            <button
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    toggleLessonMenu(
-                                                                                        lesson.id
-                                                                                    );
-                                                                                }}
-                                                                                className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-all duration-200 hover:scale-110"
-                                                                            >
-                                                                                <Ellipsis className="w-4 h-4" />
-                                                                            </button>
+                                                                            {canUpdateCourse && (
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        toggleLessonMenu(
+                                                                                            lesson.id
+                                                                                        );
+                                                                                    }}
+                                                                                    className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-all duration-200 hover:scale-110"
+                                                                                >
+                                                                                    <Ellipsis className="w-4 h-4" />
+                                                                                </button>
+                                                                            )}
 
                                                                             {openLessonMenuId ===
                                                                                 lesson.id && (
@@ -784,6 +804,7 @@ const ModulesPage = () => {
                 open={openMaterialModal}
                 onOpenChange={setOpenMaterialModal}
                 lessonId={selectedLessonId}
+                canUpdate={canUpdateCourse}
             />
         </div>
     );
