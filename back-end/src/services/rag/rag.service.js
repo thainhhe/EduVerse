@@ -67,7 +67,17 @@ const getSyncData = async () => {
     stats.averageRating = (stats.totalScore / stats.totalRatings).toFixed(2);
   });
 
-  // --- Enrich courses with instructor name + rating stats ---
+  // NEW: Tính toán số lượng học viên theo courseId
+  const enrollmentStatsByCourse = new Map();
+  enrollments.forEach((en) => {
+    // Chỉ đếm các enrollment hợp lệ (ví dụ: đã thanh toán/đang học) nếu cần
+    // Ở đây ta đếm hết
+    const courseId = String(en.courseId);
+    const currentCount = enrollmentStatsByCourse.get(courseId) || 0;
+    enrollmentStatsByCourse.set(courseId, currentCount + 1);
+  });
+
+  // --- Enrich courses with instructor name + rating stats + enrollment stats ---
   const processedCourses = courses.map((c) => {
     const populatedInstructor =
       c.main_instructor &&
@@ -119,6 +129,9 @@ const getSyncData = async () => {
       ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
     };
 
+    // NEW: Lấy số lượng học viên
+    const totalEnrolled = enrollmentStatsByCourse.get(courseId) || 0;
+
     return {
       ...c,
       main_instructor_name: instructorName,
@@ -127,10 +140,12 @@ const getSyncData = async () => {
       duration: c.duration || null,
       category_name: categoryName,
       category_id: categoryId,
-      // NEW: Rating stats
+      // Rating stats
       total_ratings: ratingStats.totalRatings,
       average_rating: parseFloat(ratingStats.averageRating),
       rating_distribution: ratingStats.ratingDistribution,
+      // Enrollment stats
+      total_enrolled: totalEnrolled,
     };
   });
 
@@ -155,9 +170,11 @@ const getSyncData = async () => {
       course_main_instructor_job_title:
         course?.main_instructor_job_title || null,
       course_duration: course?.duration,
-      // NEW: Rating stats
+      // Rating stats
       course_average_rating: course?.average_rating || 0,
       course_total_ratings: course?.total_ratings || 0,
+      // Enrollment stats
+      course_total_enrolled: course?.total_enrolled || 0,
     };
   });
 
@@ -178,11 +195,10 @@ const getSyncData = async () => {
       module_title: module?.title,
       course_title: course?.title,
       course_price: course?.price,
-      courseId: l.courseId || resolvedCourseId, // <-- THÊM DÒNG NÀY
+      courseId: l.courseId || resolvedCourseId,
       course_category_name: course?.category_name || null,
       course_category_id: course?.category_id || null,
       course_main_instructor_name: course?.main_instructor_name,
-      // NEW:
       course_main_instructor_subject: course?.main_instructor_subject || null,
       course_main_instructor_job_title:
         course?.main_instructor_job_title || null,
@@ -201,7 +217,6 @@ const getSyncData = async () => {
       course_category_name: course?.category_name || null,
       course_category_id: course?.category_id || null,
       course_main_instructor_name: course?.main_instructor_name,
-      // NEW:
       course_main_instructor_subject: course?.main_instructor_subject || null,
       course_main_instructor_job_title:
         course?.main_instructor_job_title || null,
@@ -224,7 +239,6 @@ const getSyncData = async () => {
           doc.course_category_name = course?.category_name || null;
           doc.course_category_id = course?.category_id || null;
           doc.course_main_instructor_name = course?.main_instructor_name;
-          // NEW:
           doc.course_main_instructor_subject =
             course?.main_instructor_subject || null;
           doc.course_main_instructor_job_title =
@@ -242,7 +256,6 @@ const getSyncData = async () => {
         doc.course_category_name = course?.category_name || null;
         doc.course_category_id = course?.category_id || null;
         doc.course_main_instructor_name = course?.main_instructor_name;
-        // NEW:
         doc.course_main_instructor_subject =
           course?.main_instructor_subject || null;
         doc.course_main_instructor_job_title =
@@ -256,7 +269,6 @@ const getSyncData = async () => {
       doc.course_category_name = course?.category_name || null;
       doc.course_category_id = course?.category_id || null;
       doc.course_main_instructor_name = course?.main_instructor_name;
-      // NEW:
       doc.course_main_instructor_subject =
         course?.main_instructor_subject || null;
       doc.course_main_instructor_job_title =
@@ -283,7 +295,6 @@ const getSyncData = async () => {
       course_main_instructor_job_title:
         course?.main_instructor_job_title || null,
       course_duration: course?.duration,
-      // NEW: Include review data explicitly
       rating: r.rating,
       comment: r.comment || "",
       review_created_at: r.createdAt,
@@ -304,7 +315,6 @@ const getSyncData = async () => {
       course_category_name: course?.category_name || null,
       course_category_id: course?.category_id || null,
       course_main_instructor_name: course?.main_instructor_name,
-      // NEW:
       course_main_instructor_subject: course?.main_instructor_subject || null,
       course_main_instructor_job_title:
         course?.main_instructor_job_title || null,

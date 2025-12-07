@@ -1,8 +1,8 @@
 {
-  "pageContent": "Đây là danh sách tóm tắt tất cả các khóa học hiện có: thái (Giá: 2000; GV: Nguyễn Hữu Thái; Thời lượng: 0 day), Node JS update (Giá: 5000; GV: Alice Johnson; Thời lượng: 20 day), khóa học C/C++ (Giá: 350000; GV: Nguyễn Hữu Thái; Thời lượng: 15 day), C/C++ nâng cao (Giá: 2000; GV: Alice Johnson; Thời lượng: 30 day), Course tests (Giá: 2000; GV: Alice Johnson; Thời lượng: 15 day), Khóa học test 19/11 (Giá: 2000; GV: Alice Johnson; Thời lượng: N/A). Tổng cộng có 6 khóa học.",
+  "pageContent": "Đây là danh sách tóm tắt tất cả các khóa học hiện có: thái (Giá: 2000; GV: Nguyễn Hữu Thái; Thời lượng: 0 day; Chưa có đánh giá; Số học viên: 0), Node JS update (Giá: 5000; GV: Alice Johnson; Thời lượng: 20 day; Chưa có đánh giá; Số học viên: 0), khóa học C/C++ (Giá: 350000; GV: Nguyễn Hữu Thái; Thời lượng: 15 day; Chưa có đánh giá; Số học viên: 0), C/C++ nâng cao (Giá: 2000; GV: Alice Johnson; Thời lượng: 30 day; Rating: 4/5 (1 đánh giá); Số học viên: 1), Course tests (Giá: 2000; GV: Alice Johnson; Thời lượng: 15 day; Chưa có đánh giá; Số học viên: 0), Khóa học test 19/11 (Giá: 2000; GV: Alice Johnson; Thời lượng: N/A; Rating: 5/5 (1 đánh giá); Số học viên: 1). Tổng cộng có 6 khóa học.",
   "metadata": {
     "id": "all_courses_summary_list",
     "type": "course_summary_list",
-    "updatedAt": "2025-12-07T17:00:01.209Z"
+    "updatedAt": "2025-12-07T18:01:54.585Z"
   }
 }
