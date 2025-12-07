@@ -136,7 +136,7 @@ const MyCourse = () => {
             console.log("dfdhsff:", res.data);
             if (res.success) setAllCollaborativeCourse(res?.data || []);
         } catch (error) {
-            console.log("err_:", err);
+            console.log("err_:", error);
         }
     };
 

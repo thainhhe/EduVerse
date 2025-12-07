@@ -41,6 +41,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { enrollmentService } from "@/services/enrollmentService";
 import { paymentService } from "@/services/paymentService";
 import { format } from "date-fns";
+import roomService from "@/services/roomService";
 
 const CourseDetail = () => {
     const navigate = useNavigate();
@@ -66,6 +67,7 @@ const CourseDetail = () => {
     const [openReport, setOpenReport] = useState(false);
     const [issueTypeSelect, setIssueTypeSelect] = useState("bug");
     const [issueDescription, setIssueDescription] = useState("");
+    const [rooms, setRooms] = useState([]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -107,6 +109,21 @@ const CourseDetail = () => {
             }
         };
         fetchReviews();
+    }, [id]);
+
+    useEffect(() => {
+        const fetchRooms = async () => {
+            if (!id) return;
+            try {
+                const res = await roomService.getRoomsByCourse(id);
+                if (res?.success) {
+                    setRooms(res.data || []);
+                }
+            } catch (error) {
+                console.error("❌ Failed to fetch rooms:", error);
+            }
+        };
+        fetchRooms();
     }, [id]);
 
     const handleSubmitReview = async () => {
@@ -324,6 +341,12 @@ const CourseDetail = () => {
                                     className="rounded-none border-b-2 border-transparent px-6 py-3 font-medium text-gray-500 hover:text-gray-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all text-base"
                                 >
                                     Discussion
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="meeting"
+                                    className="rounded-none border-b-2 border-transparent px-6 py-3 font-medium text-gray-500 hover:text-gray-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none transition-all text-base"
+                                >
+                                    Meeting
                                 </TabsTrigger>
                             </TabsList>
 
@@ -695,6 +718,105 @@ const CourseDetail = () => {
                                             courseId={course?._id}
                                             canComment={isEnrolled}
                                         />
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+
+                            {/* Meeting Tab */}
+                            <TabsContent value="meeting">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Meeting</CardTitle>
+                                        <CardDescription>
+                                            Join the meeting with other learners and instructors.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {rooms.length > 0 ? (
+                                            <div className="space-y-4">
+                                                {rooms.map((room) => (
+                                                    <div
+                                                        key={room._id}
+                                                        className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex-1">
+                                                                <h4 className="font-semibold text-lg text-gray-900 mb-2">
+                                                                    {room.name}
+                                                                </h4>
+
+                                                                {room.description && (
+                                                                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                                                                        {room.description}
+                                                                    </p>
+                                                                )}
+
+                                                                <div className="flex flex-wrap gap-3 text-sm text-gray-500">
+                                                                    <div className="flex items-center gap-1">
+                                                                        <Clock className="w-4 h-4" />
+                                                                        <span>
+                                                                            {room.scheduledTime
+                                                                                ? format(
+                                                                                      new Date(
+                                                                                          room.scheduledTime
+                                                                                      ),
+                                                                                      "MMM dd, yyyy HH:mm"
+                                                                                  )
+                                                                                : "No schedule"}
+                                                                        </span>
+                                                                    </div>
+                                                                    <Badge
+                                                                        variant={
+                                                                            room.meetingStatus === "ongoing"
+                                                                                ? "default"
+                                                                                : room.meetingStatus ===
+                                                                                  "ended"
+                                                                                ? "secondary"
+                                                                                : "outline"
+                                                                        }
+                                                                        className={
+                                                                            room.meetingStatus === "ongoing"
+                                                                                ? "bg-green-500"
+                                                                                : ""
+                                                                        }
+                                                                    >
+                                                                        {room.meetingStatus}
+                                                                    </Badge>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="ml-4">
+                                                                {room.meetingStatus === "ended" ||
+                                                                room.meetingStatus === "cancelled" ? (
+                                                                    <Button disabled variant="secondary">
+                                                                        {room.meetingStatus === "ended"
+                                                                            ? "Ended"
+                                                                            : "Cancelled"}
+                                                                    </Button>
+                                                                ) : (
+                                                                    <Button
+                                                                        onClick={() =>
+                                                                            navigate(`/classroom/${room._id}`)
+                                                                        }
+                                                                        className="bg-indigo-600 hover:bg-indigo-700"
+                                                                    >
+                                                                        Join Now
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-12 text-gray-500">
+                                                <MonitorPlay className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                                                <p className="text-lg font-medium">No meetings available</p>
+                                                <p className="text-sm mt-2">
+                                                    The instructor hasn't created any meeting rooms yet.
+                                                </p>
+                                            </div>
+                                        )}
                                     </CardContent>
                                 </Card>
                             </TabsContent>
