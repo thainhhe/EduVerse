@@ -16,6 +16,7 @@ import { Trash2, Plus, CloverIcon, X } from "lucide-react";
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 import api from "@/services/api";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ToastHelper } from "@/helper/ToastHelper";
 
 const QuizPage = () => {
     const location = useLocation();
@@ -81,10 +82,10 @@ const QuizPage = () => {
             const arr = Array.isArray(res)
                 ? res
                 : Array.isArray(res?.data)
-                ? res.data
-                : Array.isArray(res?.data?.data)
-                ? res.data.data
-                : res?.data?.items ?? [];
+                    ? res.data
+                    : Array.isArray(res?.data?.data)
+                        ? res.data.data
+                        : res?.data?.items ?? [];
             // map to minimal preview info
             const mapped = (arr || []).map((q) => ({
                 id: q._id ?? q.id ?? q.quizId ?? null,
@@ -205,14 +206,51 @@ const QuizPage = () => {
     };
 
     const handleSaveQuiz = async () => {
+        console.log("Vô luôn")
+        // const title = (quizInfo.title ?? "").trim();
+        // if (!title) {
+        //     setErrors({ title: "Please enter quiz title!" });
+        //     // focus title input if available
+        //     document.querySelector('input[placeholder="Enter quiz title..."]')?.focus();
+        //     return;
+        // }
+        // setErrors({});
+        const newErrors = {};
+
+        // --- Quiz info validation ---
         const title = (quizInfo.title ?? "").trim();
-        if (!title) {
-            setErrors({ title: "Please enter quiz title!" });
-            // focus title input if available
-            document.querySelector('input[placeholder="Enter quiz title..."]')?.focus();
+        if (!title) newErrors.title = "Please enter quiz title!";
+        else if (title.length < 3) newErrors.title = "Title must be at least 3 characters";
+        else if (title.length > 200) newErrors.title = "Title must be at most 200 characters";
+
+        const description = (quizInfo.description ?? "").trim();
+        if (!description) newErrors.description = "Description is required";
+        else if (description.length < 10) newErrors.description = "description must be at least 10 characters";
+        else if (description.length > 500) newErrors.description = "Description cannot exceed 500 characters";
+
+        if (quizInfo.timeLimit < 5) newErrors.timeLimit = "Time limit must be at least 5 minutes";
+        if (quizInfo.timeLimit > 720) newErrors.timeLimit = "Time limit cannot exceed 720 minutes";
+
+        if (quizInfo.passingScore < 1) newErrors.passingScore = "Passing score must be at least 1%";
+        if (quizInfo.passingScore > 100) newErrors.passingScore = "Passing score cannot exceed 100%";
+
+        if (quizInfo.attemptsAllowed < 1) newErrors.attemptsAllowed = "Attempts must be at least 1";
+
+
+
+        // Nếu có lỗi, update state và stop
+        if (Object.keys(newErrors).length > 0) {
+            console.log("%c--- VALIDATION ERRORS ---", "color: red; font-weight: bold");
+
+            Object.entries(newErrors).forEach(([key, value]) => {
+                console.log(`${key}:`, value);
+            });
+
+            setErrors(newErrors);
             return;
         }
-        setErrors({});
+
+        console.log("đến đấy");
 
         const normalizeType = (t) => (t ?? "").toString().replace(/[-\s]/g, "_").toLowerCase();
 
@@ -226,7 +264,7 @@ const QuizPage = () => {
                     const optionTexts = rawOptions
                         .map((opt) => (typeof opt === "string" ? opt : (opt?.text ?? "").toString().trim()))
                         .filter(Boolean);
-
+                    console.log("optionTexts", optionTexts)
                     // Build correct answers:
                     // 1) prefer explicit isCorrect flags on option objects
                     // 2) else fallback to stored _originalCorrectAnswer (could be indices / texts / ids)
@@ -234,6 +272,7 @@ const QuizPage = () => {
                     const optsWithFlags = rawOptions.filter(
                         (opt) => opt && typeof opt === "object" && "isCorrect" in opt
                     );
+                    console.log("optsWithFlags", optsWithFlags)
 
                     if (optsWithFlags.length) {
                         correct = rawOptions
@@ -242,12 +281,16 @@ const QuizPage = () => {
                                 typeof opt === "string" ? opt : (opt?.text ?? "").toString().trim()
                             )
                             .filter(Boolean);
+                        console.log("correct 1 ", correct)
                     } else if (Array.isArray(q._originalCorrectAnswer) && q._originalCorrectAnswer.length) {
                         const orig = q._originalCorrectAnswer;
                         const hasNumeric = orig.some((c) => typeof c === "number" || /^\d+$/.test(String(c)));
                         const hasIdLike = orig.some(
                             (c) => typeof c === "string" && /^[0-9a-fA-F]{24}$/.test(c)
                         );
+                        console.log("orig", orig)
+                        console.log("hasNumeric", hasNumeric)
+                        console.log("hasIdLike", hasIdLike)
 
                         if (hasNumeric) {
                             correct = orig
@@ -256,6 +299,8 @@ const QuizPage = () => {
                                     return optionTexts[idxOpt] ?? null;
                                 })
                                 .filter(Boolean);
+                            console.log("correct 2 ", correct)
+
                         } else if (hasIdLike) {
                             // try to match option.id -> optionTexts
                             correct = rawOptions
@@ -271,15 +316,21 @@ const QuizPage = () => {
                                     return null;
                                 })
                                 .filter(Boolean);
+                            console.log("correct 3 ", correct)
+
                         } else {
                             // assume orig are texts
                             correct = orig.map((c) => String(c)).filter((c) => optionTexts.includes(c));
+                            console.log("correct 4 ", correct)
+
                         }
                     } else if (Array.isArray(q.correctAnswer) && q.correctAnswer.length) {
                         correct = q.correctAnswer
                             .map((c) => (typeof c === "number" ? optionTexts[c] : c))
                             .map((c) => (c ?? "").toString().trim())
                             .filter((c) => optionTexts.includes(c));
+                        console.log("correct 5 ", correct)
+
                     } else {
                         // no flags and no original correct info -> try infer (none)
                         correct = [];
@@ -311,7 +362,7 @@ const QuizPage = () => {
             }));
             return;
         }
-
+        console.log("normalizedQuestions", normalizedQuestions)
         if (normalizedQuestions.length === 0) {
             setErrors((prev) => ({
                 ...prev,
@@ -364,7 +415,11 @@ const QuizPage = () => {
 
     const handleDelete = async (quizId) => {
         try {
-            await api.delete(`/quiz/${quizId}`);
+            const res = await api.delete(`/quiz/${quizId}`);
+            console.log("res", res)
+            if (res.success) {
+                ToastHelper.success("Delete quiz successfully")
+            }
             await loadQuizzes();
         } catch (err) {
             console.error("Delete failed", err);
@@ -377,7 +432,8 @@ const QuizPage = () => {
         setMode("list");
         navigator(-1);
     };
-
+    console.log("quesstions", questions)
+    console.log('quizess', quizzes)
     return (
         // Mở rộng chiều ngang modal bằng max-w; nếu parent là modal, nội dung sẽ rộng hơn
         <div className="p-2 bg-white rounded-md w-full">
@@ -414,8 +470,8 @@ const QuizPage = () => {
                                     {lessonId
                                         ? `Lesson Quizzes`
                                         : moduleId
-                                        ? `Module Quizzes`
-                                        : `Course Quizzes`}
+                                            ? `Module Quizzes`
+                                            : `Course Quizzes`}
                                 </div>
                             </div>
                             <div className="text-xs text-muted-foreground">
@@ -430,10 +486,16 @@ const QuizPage = () => {
                                     onClick={() => startEdit(q.raw)}
                                 >
                                     <div className="truncate">
-                                        <div className="font-medium">{q.title}</div>
-                                        <div className="text-xs text-muted-foreground">
-                                            {q.isPublished ? "Published" : "Draft"}
+                                        <div className="font-medium">Title: {q.title}</div>
+                                        {q?.raw?.description && (
+                                            <div className="text-gray-700 text-sm line-clamp-2">
+                                                Desciption: {q.raw.description}
+                                            </div>
+                                        )}
+                                        <div className="text-gray-600 text-sm">
+                                            Number of questions:  <span className="font-bold">{q?.raw?.questions?.length ?? 0}</span> -  Status: <span className="font-bold">{q.isPublished ? "Published" : "Draft"}</span>
                                         </div>
+
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <ConfirmationHelper
@@ -470,9 +532,8 @@ const QuizPage = () => {
                                     <label className="text-sm font-medium">Quiz Title</label>
                                     <input
                                         type="text"
-                                        className={`w-full border rounded-lg p-2 mt-1 ${
-                                            errors.title ? "border-red-500" : ""
-                                        } bg-gray-200`}
+                                        className={`w-full border rounded-lg p-2 mt-1 ${errors.title ? "border-red-500" : ""
+                                            } bg-gray-200`}
                                         placeholder="Enter quiz title..."
                                         value={quizInfo.title}
                                         onChange={(e) => {
@@ -498,6 +559,9 @@ const QuizPage = () => {
                                             })
                                         }
                                     />
+                                    {errors.timeLimit && (
+                                        <p className="text-sm text-red-600 mt-1">{errors.timeLimit}</p>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium">Passing Score (%)</label>
@@ -512,6 +576,9 @@ const QuizPage = () => {
                                             })
                                         }
                                     />
+                                    {errors.passingScore && (
+                                        <p className="text-sm text-red-600 mt-1">{errors.passingScore}</p>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium">Attempts Allowed</label>
@@ -526,6 +593,9 @@ const QuizPage = () => {
                                             })
                                         }
                                     />
+                                    {errors.attemptsAllowed && (
+                                        <p className="text-sm text-red-600 mt-1">{errors.attemptsAllowed}</p>
+                                    )}
                                 </div>
                                 <div className="md:col-span-2">
                                     <label className="text-sm font-medium">Description</label>
@@ -538,6 +608,9 @@ const QuizPage = () => {
                                             setQuizInfo({ ...quizInfo, description: e.target.value })
                                         }
                                     />
+                                    {errors.description && (
+                                        <p className="text-sm text-red-600 mt-1">{errors.description}</p>
+                                    )}
                                 </div>
                                 <div
                                     className="md:col-span-2 border border-gray-200 flex items-center justify-start gap-2 p-2 rounded-lg cursor-pointer bg-gray-200"
@@ -558,6 +631,9 @@ const QuizPage = () => {
 
                             {/* Questions stacked vertically, full width, trong vùng cuộn */}
                             <ScrollArea className="max-h-[60vh] overflow-auto pb-28 space-y-6">
+                                {errors.questions && (
+                                    <div className="text-sm text-red-600 mt-2 text-center ">{errors.questions}</div>
+                                )}
                                 {/* Add form - full width */}
                                 <div className="w-full">
                                     <QuestionForm
@@ -588,9 +664,7 @@ const QuizPage = () => {
                                         }
                                     />
                                 </div>
-                                {errors.questions && (
-                                    <div className="text-sm text-red-600 mt-2">{errors.questions}</div>
-                                )}
+
                             </ScrollArea>
 
                             {/* Footer buttons below scrollable area */}

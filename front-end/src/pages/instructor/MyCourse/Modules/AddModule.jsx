@@ -28,14 +28,27 @@ import {
 } from "@/components/ui/form";
 
 const formSchema = z.object({
-  moduleTitle: z.string().min(1, "Title is required"),
-  moduleDescription: z.string().min(1, "Description is required"),
-  // estimatedTime: z
-  //   .string()
-  //   .min(1, "Time is required")
-  //   .refine((val) => Number(val) > 0, "Time must be greater than 0"),
+  moduleTitle: z
+    .string()
+    .trim() // loại bỏ space đầu cuối nhưng vẫn giữ được z.string()
+    .min(3, { message: "Title must be at least 3 characters" })
+    .max(100, { message: "Title must not exceed 100 characters" })
+    .refine((val) => val.trim().length > 0, {
+      message: "Title cannot be empty or spaces only",
+    }),
+
+  moduleDescription: z
+    .string()
+    .trim()
+    .min(10, { message: "Description must be at least 10 characters" })
+    .max(500, { message: "Description must not exceed 500 characters" })
+    .refine((val) => val.trim().length > 0, {
+      message: "Description cannot be empty or spaces only",
+    }),
+
   makeVisible: z.boolean().optional(),
 });
+
 
 export function AddModuleModal({
   open,
@@ -68,6 +81,29 @@ export function AddModuleModal({
       form.reset();
       if (typeof onCreated === "function") onCreated();
     } catch (err) {
+      const backendErrors = err.response?.data?.errors;
+
+      if (Array.isArray(backendErrors)) {
+        backendErrors.forEach((msg) => {
+          const lowerMsg = msg.toLowerCase();
+
+          if (lowerMsg.includes("title")) {
+            form.setError("moduleTitle", {
+              type: "server",
+              message: msg,
+            });
+          }
+
+          if (lowerMsg.includes("description")) {
+            form.setError("moduleDescription", {
+              type: "server",
+              message: msg,
+            });
+          }
+        });
+      } else {
+        console.error("Create module failed:", err);
+      }
       // log backend validation message if available
       console.error("Create module failed:", err.response?.data ?? err);
       // keep UI unchanged; optionally show toast
