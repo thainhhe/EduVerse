@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FaEye, FaEyeSlash } from "react-icons/fa"; // added
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { ToastHelper } from "@/helper/ToastHelper";
 
 const RegisterLearner = () => {
@@ -25,11 +25,22 @@ const RegisterLearner = () => {
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(registerLearnerSchema),
-    mode: "onBlur", // validate when user leaves field
+    mode: "onBlur",
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  // Helper to trim and validate field
+  const handleTrimAndValidate = (fieldName) => {
+    const val = getValues(fieldName) || "";
+    const trimmed = val.trim();
+    if (trimmed !== val) {
+      setValue(fieldName, trimmed, { shouldValidate: true, shouldDirty: true });
+    } else {
+      trigger(fieldName);
+    }
+  };
 
   const onSubmit = async (data) => {
     try {
@@ -92,7 +103,7 @@ const RegisterLearner = () => {
         <div className="w-full max-w-lg bg-white p-6 sm:p-8 rounded-xl shadow-lg">
           <div className="text-center mb-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-2">
-              Create Your Learner Account
+              Learner Registration
             </h2>
             <p className="text-gray-600 text-sm sm:text-base">
               Start your learning journey with us today!
@@ -145,7 +156,6 @@ const RegisterLearner = () => {
               )}
             </div>
 
-            {/* Responsive grid for passwords */}
             <div className="space-y-2">
               <Label htmlFor="password">
                 Password<span className="text-red-500 -ml-1">*</span>
@@ -161,6 +171,7 @@ const RegisterLearner = () => {
                   minLength={6}
                   maxLength={50}
                   aria-invalid={!!errors.password}
+                  onBlur={() => trigger("password")}
                 />
                 <button
                   type="button"
@@ -171,7 +182,9 @@ const RegisterLearner = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-sm text-red-600 mt-1">{errors.password.message}</p>
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
@@ -183,13 +196,14 @@ const RegisterLearner = () => {
                 <Input
                   id="confirmPassword"
                   type={showConfirm ? "text" : "password"}
-                  placeholder="Password"
+                  placeholder="Confirm Password"
                   className="pr-10"
                   {...register("confirmPassword")}
                   required
                   minLength={6}
                   maxLength={50}
                   aria-invalid={!!errors.confirmPassword}
+                  onBlur={() => trigger("confirmPassword")}
                 />
                 <button
                   type="button"
@@ -200,34 +214,11 @@ const RegisterLearner = () => {
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-sm text-red-600 mt-1">{errors.confirmPassword.message}</p>
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.confirmPassword.message}
+                </p>
               )}
             </div>
-
-            {/* <div className="flex items-start space-x-3 pt-2">
-              <Checkbox
-                id="agreeTerms"
-                {...register("agreeTerms", {
-                  setValueAs: (v) => v === "on" || v === "true" || v === true,
-                })}
-                className="mt-1"
-              />
-              <label htmlFor="agreeTerms" className="text-sm text-gray-700">
-                By signing up, I agree with the{" "}
-                <Link to="/terms" className="text-indigo-600 hover:underline">
-                  Terms of Use
-                </Link>{" "}
-                &{" "}
-                <Link to="/privacy" className="text-indigo-600 hover:underline">
-                  Privacy Policy
-                </Link>
-              </label>
-            </div>
-            {errors.agreeTerms && (
-              <p className="text-sm text-red-600">
-                {errors.agreeTerms.message}
-              </p>
-            )} */}
 
             <Button
               type="submit"

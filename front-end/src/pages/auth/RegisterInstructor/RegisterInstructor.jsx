@@ -9,10 +9,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ChevronDown, X } from "lucide-react";
 
-const SUBJECT_OPTIONS = ["Marketing", "Programming", "Design", "Business", "Math", "Physics"];
+const SUBJECT_OPTIONS = [
+  "Marketing",
+  "Programming",
+  "Design",
+  "Business",
+  "Math",
+  "Physics",
+];
 
 const MultiSelectDropdown = ({ value = [], onChange, options = [] }) => {
   const [open, setOpen] = useState(false);
@@ -28,7 +41,9 @@ const MultiSelectDropdown = ({ value = [], onChange, options = [] }) => {
 
   const toggle = (opt) => {
     const exists = Array.isArray(value) && value.includes(opt);
-    const next = exists ? value.filter((v) => v !== opt) : [...(value || []), opt];
+    const next = exists
+      ? value.filter((v) => v !== opt)
+      : [...(value || []), opt];
     onChange(next);
   };
 
@@ -90,14 +105,18 @@ const MultiSelectDropdown = ({ value = [], onChange, options = [] }) => {
                 <div
                   key={opt}
                   onClick={() => toggle(opt)}
-                  className={`flex items-center gap-2 p-2 rounded-sm cursor-pointer text-sm transition-colors ${checked ? "bg-indigo-50 text-indigo-900" : "hover:bg-gray-100"
-                    }`}
+                  className={`flex items-center gap-2 p-2 rounded-sm cursor-pointer text-sm transition-colors ${
+                    checked
+                      ? "bg-indigo-50 text-indigo-900"
+                      : "hover:bg-gray-100"
+                  }`}
                 >
                   <div
-                    className={`w-4 h-4 rounded border flex items-center justify-center ${checked
+                    className={`w-4 h-4 rounded border flex items-center justify-center ${
+                      checked
                         ? "bg-indigo-600 border-indigo-600 text-white"
                         : "border-gray-300"
-                      }`}
+                    }`}
                   >
                     {checked && <X className="w-3 h-3 rotate-45" />}
                   </div>
@@ -122,23 +141,46 @@ const RegisterInstructor = () => {
     register,
     handleSubmit,
     control,
+    setValue,
+    getValues,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(registerInstructorSchema),
     mode: "onBlur",
     defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
       subjects: [],
       jobTitle: "",
       agreeTerms: false,
     },
   });
 
+  // Helper to trim and validate field
+  const handleTrimAndValidate = (fieldName) => {
+    const val = getValues(fieldName) || "";
+    const trimmed = val.trim();
+    if (trimmed !== val) {
+      setValue(fieldName, trimmed, { shouldValidate: true, shouldDirty: true });
+    } else {
+      trigger(fieldName);
+    }
+  };
+
   const onSubmit = async (data) => {
     const subjectsArray = Array.isArray(data.subjects) ? data.subjects : [];
     const subjectString = subjectsArray.join(",");
 
-    let normalizedJobTitle = data.jobTitle ? String(data.jobTitle).trim().toLowerCase() : null;
-    if (normalizedJobTitle && !["manager", "professor", "instructor"].includes(normalizedJobTitle)) {
+    let normalizedJobTitle = data.jobTitle
+      ? String(data.jobTitle).trim().toLowerCase()
+      : null;
+    if (
+      normalizedJobTitle &&
+      !["manager", "professor", "instructor"].includes(normalizedJobTitle)
+    ) {
       normalizedJobTitle = null;
     }
 
@@ -167,10 +209,12 @@ const RegisterInstructor = () => {
             className="w-full max-w-lg object-contain drop-shadow-xl"
           />
           <div className="text-center space-y-2 max-w-md">
-            <h3 className="text-2xl font-bold text-gray-800">Join Our Community</h3>
+            <h3 className="text-2xl font-bold text-gray-800">
+              Join Our Community
+            </h3>
             <p className="text-gray-600">
-              Connect with millions of students and transform your knowledge into a thriving
-              business.
+              Connect with millions of students and transform your knowledge
+              into a thriving business.
             </p>
           </div>
         </div>
@@ -200,10 +244,14 @@ const RegisterInstructor = () => {
                 {...register("fullName")}
                 placeholder="e.g. John Doe"
                 className="bg-gray-50"
+                maxLength={50}
                 aria-invalid={!!errors.fullName}
+                onBlur={() => handleTrimAndValidate("fullName")}
               />
               {errors.fullName && (
-                <p className="text-sm text-red-600 mt-1">{errors.fullName.message}</p>
+                <p className="text-sm text-red-600 mt-1">
+                  {errors.fullName.message}
+                </p>
               )}
             </div>
 
@@ -215,12 +263,17 @@ const RegisterInstructor = () => {
                 id="email"
                 type="email"
                 placeholder="name@example.com"
-                className={`bg-gray-50 ${errors.email ? "border-red-500 ring-1 ring-red-500" : ""
-                  }`}
+                className={`bg-gray-50 ${
+                  errors.email ? "border-red-500 ring-1 ring-red-500" : ""
+                }`}
                 {...register("email")}
+                aria-invalid={!!errors.email}
+                onBlur={() => handleTrimAndValidate("email")}
               />
               {errors.email && (
-                <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
@@ -234,7 +287,10 @@ const RegisterInstructor = () => {
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   className="bg-gray-50 pr-10"
+                  maxLength={50}
                   {...register("password")}
+                  aria-invalid={!!errors.password}
+                  onBlur={() => trigger("password")}
                 />
                 <button
                   type="button"
@@ -245,7 +301,9 @@ const RegisterInstructor = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
@@ -259,7 +317,10 @@ const RegisterInstructor = () => {
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••••"
                   className="bg-gray-50 pr-10"
+                  maxLength={50}
                   {...register("confirmPassword")}
+                  aria-invalid={!!errors.confirmPassword}
+                  onBlur={() => trigger("confirmPassword")}
                 />
                 <button
                   type="button"
@@ -270,7 +331,9 @@ const RegisterInstructor = () => {
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-sm text-red-500 mt-1">{errors.confirmPassword.message}</p>
+                <p className="text-sm text-red-500 mt-1">
+                  {errors.confirmPassword.message}
+                </p>
               )}
             </div>
 
@@ -283,8 +346,17 @@ const RegisterInstructor = () => {
                   control={control}
                   name="jobTitle"
                   render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger className="bg-gray-50">
+                    <Select
+                      onValueChange={(val) => {
+                        field.onChange(val);
+                        trigger("jobTitle");
+                      }}
+                      value={field.value}
+                    >
+                      <SelectTrigger
+                        className="bg-gray-50"
+                        aria-invalid={!!errors.jobTitle}
+                      >
                         <SelectValue placeholder="Select job title" />
                       </SelectTrigger>
                       <SelectContent>
@@ -296,62 +368,36 @@ const RegisterInstructor = () => {
                   )}
                 />
                 {errors.jobTitle && (
-                  <p className="text-sm text-red-500 mt-1">{errors.jobTitle.message}</p>
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors.jobTitle.message}
+                  </p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label>Subjects</Label>
+                <Label>
+                  Subjects <span className="text-red-500">*</span>
+                </Label>
                 <Controller
                   control={control}
                   name="subjects"
                   render={({ field }) => (
                     <MultiSelectDropdown
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(val) => {
+                        field.onChange(val);
+                        trigger("subjects");
+                      }}
                       options={SUBJECT_OPTIONS}
                     />
                   )}
                 />
                 {errors.subjects && (
-                  <p className="text-sm text-red-600 mt-1">{errors.subjects.message}</p>
+                  <p className="text-sm text-red-600 mt-1">
+                    {errors.subjects.message}
+                  </p>
                 )}
               </div>
-            </div>
-
-            <div className="space-y-2 pt-2">
-              <div className="flex items-start space-x-3">
-                <Controller
-                  control={control}
-                  name="agreeTerms"
-                  render={({ field }) => (
-                    <Checkbox
-                      id="agreeTerms"
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  )}
-                />
-                <label
-                  htmlFor="agreeTerms"
-                  className="text-sm text-gray-600 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  I agree to the{" "}
-                  <Link to="/terms" className="text-indigo-600 hover:underline font-medium">
-                    Terms of Service
-                  </Link>{" "}
-                  and{" "}
-                  <Link
-                    to="/privacy"
-                    className="text-indigo-600 hover:underline font-medium"
-                  >
-                    Privacy Policy
-                  </Link>
-                </label>
-              </div>
-              {errors.agreeTerms && (
-                <p className="text-sm text-red-600 mt-1">{errors.agreeTerms.message}</p>
-              )}
             </div>
 
             <Button
@@ -365,7 +411,10 @@ const RegisterInstructor = () => {
 
             <p className="text-center text-sm text-gray-600 pt-2">
               Already have an account?{" "}
-              <Link to="/login" className="text-indigo-600 font-semibold hover:underline">
+              <Link
+                to="/login"
+                className="text-indigo-600 font-semibold hover:underline"
+              >
                 Sign in
               </Link>
             </p>
