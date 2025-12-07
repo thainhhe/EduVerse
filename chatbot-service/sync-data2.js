@@ -20,15 +20,12 @@ const BATCH_SIZE = Number(process.env.SYNC_BATCH_SIZE) || 128;
 
 const buildText = (type, doc) => {
   switch (type) {
-    // === THÊM MỚI TẠI ĐÂY ===
     case "faq":
     case "policy":
     case "course_policy":
-      // Định dạng cho các tài liệu chính sách/FAQ
       return `[${(doc.type || type).toString().toUpperCase()}] ${
         doc.title || "Untitled"
       }: ${doc.content || doc.description || ""}.`;
-    // ========================
 
     case "course": {
       const durationStr =
@@ -40,6 +37,15 @@ const buildText = (type, doc) => {
         Array.isArray(doc.main_instructor_subject)
           ? doc.main_instructor_subject.join(", ")
           : doc.main_instructor_subject || "N/A";
+
+      // THÊM MỚI: Rating stats
+      const avgRating = doc.average_rating ?? 0;
+      const totalRatings = doc.total_ratings ?? 0;
+      const ratingText =
+        totalRatings > 0
+          ? `⭐ ${avgRating}/5 (${totalRatings} reviews)`
+          : "Chưa có đánh giá";
+
       return `Course: ${doc.title || "Untitled"}. Description: ${
         doc.description || ""
       }. Price: ${doc.price ?? "N/A"}. Status: ${
@@ -48,8 +54,9 @@ const buildText = (type, doc) => {
         doc.main_instructor_name || doc.main_instructor || "N/A"
       } (${
         doc.main_instructor_job_title || "N/A"
-      }). Subjects: ${instrSubjects}. Duration: ${durationStr}.`;
+      }). Subjects: ${instrSubjects}. Duration: ${durationStr}. Rating: ${ratingText}.`;
     }
+
     case "category":
       return `Category: ${doc.name || "Untitled"}. Description: ${
         doc.description || ""
@@ -107,13 +114,17 @@ const buildText = (type, doc) => {
         doc.course_title || doc.courseId || "N/A"
       } by ${doc.user_name || doc.userId || "N/A"}. Rating: ${
         doc.rating ?? "N/A"
-      }. Comment: ${doc.comment || doc.content || ""}.`;
+      }/5. Comment: ${doc.comment || doc.content || "No comment"}. Posted: ${
+        doc.review_created_at || "N/A"
+      }.`;
+
     case "enrollment":
       return `Enrollment: User ${
         doc.user_name || doc.userId || "N/A"
       } enrolled in Course ${
         doc.course_title || doc.courseId || "N/A"
-      }. Status: ${doc.status || "N/A"}. Progress: ${doc.progress ?? "N/A"}.`;
+      }. Status: ${doc.status || "N/A"}. Progress: ${doc.progress ?? "N/A"}%.`;
+
     default:
       return JSON.stringify(doc);
   }
