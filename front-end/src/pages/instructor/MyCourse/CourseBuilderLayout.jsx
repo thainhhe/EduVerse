@@ -12,6 +12,8 @@ const BuilderInner = () => {
     const navigate = useNavigate();
     const sessionCourse =
         typeof window !== "undefined" ? JSON.parse(sessionStorage.getItem("currentCourseData")) : {};
+    const isDraft = sessionCourse?.status === "draft";
+    const isReject = sessionCourse?.status === "reject";
 
     const { isMainInstructor } = useCourse();
     const isEditable = !!isMainInstructor;
@@ -59,7 +61,7 @@ const BuilderInner = () => {
                         </Button>
                     </div>
                     <div className="flex items-center gap-3">
-                        {isEditable && (
+                        {isEditable && (isDraft || isReject) && (
                             <>
                                 <ConfirmationHelper
                                     trigger={
@@ -72,8 +74,7 @@ const BuilderInner = () => {
                                     }
                                     onConfirm={handleDeleteDraft}
                                 />
-                                {(sessionCourse?.status === "draft" ||
-                                    sessionCourse?.status === "reject") && (
+                                {isDraft && (
                                     <ConfirmationHelper
                                         trigger={
                                             <Button
@@ -83,8 +84,8 @@ const BuilderInner = () => {
                                                 <Send className="h-4 w-4 mr-2" /> Submit Course
                                             </Button>
                                         }
-                                        title="Submit Course"
-                                        description="Are you sure you want to submit this course?"
+                                        title="Submit Course? You can't update content after submitting!"
+                                        description="This action cannot be undone. After submitting ,the course will be reviewed by our team."
                                         confirmText="Submit"
                                         cancelText="Cancel"
                                         confirmBgColor="bg-indigo-500 hover:bg-indigo-600 text-white"

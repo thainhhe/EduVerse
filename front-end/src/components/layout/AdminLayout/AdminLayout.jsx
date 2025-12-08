@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Outlet, useLocation, Link } from "react-router-dom";
+import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,12 +10,20 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, Menu, ChevronRight } from "lucide-react";
+import { Bell, Menu, ChevronRight, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const AdminLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const location = useLocation();
+    const navigate = useNavigate();
+    const { user, logout, isAuthenticated } = useAuth();
+
+    const handleLogout = async () => {
+        await logout();
+        navigate("/");
+    };
 
     // Generate breadcrumbs
     const pathnames = location.pathname.split("/").filter((x) => x);
@@ -48,12 +56,12 @@ const AdminLayout = () => {
                     isCollapsed ? "lg:ml-[80px]" : "lg:ml-[280px]"
                 )}
             >
-                <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:h-16 sm:px-6">
+                <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-black bg-background px-2 sm:h-16 sm:px-2">
                     <Menu className="h-5 w-5 lg:hidden" onClick={() => setSidebarOpen(!sidebarOpen)} />
                     {/* Desktop Sidebar Toggle */}
                     <Menu className="h-5 w-5" onClick={() => setIsCollapsed(!isCollapsed)} />
                     {/* Breadcrumbs */}
-                    <nav className="hidden md:flex items-center text-sm text-muted-foreground ml-2">
+                    <nav className="hidden md:flex items-center text-sm text-muted-foreground">
                         {pathnames.map((value, index) => {
                             if (value === "admin") {
                                 return (
@@ -80,29 +88,19 @@ const AdminLayout = () => {
                             );
                         })}
                     </nav>
-
-                    <div className="relative ml-auto flex-1 md:grow-0"></div>
-                    <Button variant="outline" size="icon" className="relative">
-                        <Bell className="h-4 w-4" />
-                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                        </span>
-                    </Button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="icon" className="overflow-hidden rounded-full">
-                                <img src="/professional-man.jpg" width={36} height={36} alt="Avatar" />
+                    <div className="flex-1 flex items-center justify-end gap-2">
+                        {isAuthenticated && (
+                            <Button
+                                variant="outline"
+                                className="flex items-center gap-2 text-green-500 hover:text-green-500"
+                                onClick={handleLogout}
+                            >
+                                <LogOut className="h-5 w-5" /> Logout
                             </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                            <DropdownMenuItem>Settings</DropdownMenuItem>
-                            <DropdownMenuItem>Logout</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                        )}
+                    </div>
                 </header>
-                <main className="flex-1 p-4 md:p-6 gap-4 overflow-auto">
+                <main className="flex-1 px-2 md:p-2 gap-2 overflow-auto">
                     <Outlet />
                 </main>
             </div>

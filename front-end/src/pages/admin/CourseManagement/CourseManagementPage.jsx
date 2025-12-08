@@ -48,7 +48,7 @@ const CourseManagementPage = () => {
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [selectedCourseId, setSelectedCourseId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [coursesPerPage, setCoursesPerPage] = useState(5);
+    const [coursesPerPage, setCoursesPerPage] = useState(10);
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState("all");
     const [selectedCourses, setSelectedCourses] = useState([]);
@@ -319,10 +319,6 @@ const CourseManagementPage = () => {
                 <div className="pb-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-600 text-black p-2">
                         <div className="flex flex-col items-center sm:flex-row gap-2">
-                            <h1 className="flex items-center gap-2 ext-lg bg-white rounded-sm py-1.5 px-2">
-                                <TextAlignJustify className="w-4 h-4" /> Courses List {selectedCourses.length}{" "}
-                                selected
-                            </h1>
                             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                                 <SelectTrigger className="w-full max-w-[135px] sm:w-[180px] bg-white">
                                     <SelectValue placeholder="Category" />
@@ -341,7 +337,7 @@ const CourseManagementPage = () => {
                                     <SelectValue placeholder="Status" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All Statuses</SelectItem>
+                                    <SelectItem value="all">All Revisions</SelectItem>
                                     <SelectItem value="approve">Approved</SelectItem>
                                     <SelectItem value="pending">Pending</SelectItem>
                                     <SelectItem value="reject">Rejected</SelectItem>
@@ -372,7 +368,7 @@ const CourseManagementPage = () => {
                         <Table className="bg-none border-none">
                             <TableHeader className="bg-gray-300">
                                 <TableRow>
-                                    <TableHead className="w-[50px]">
+                                    <TableHead className="w-[30px] flex items-center">
                                         <Checkbox
                                             checked={isAllSelected}
                                             onCheckedChange={handleSelectAll}
@@ -387,6 +383,7 @@ const CourseManagementPage = () => {
                                     <TableHead>Created At</TableHead>
                                     <TableHead>Last update</TableHead>
                                     <TableHead>Status</TableHead>
+                                    <TableHead>Review</TableHead>
                                     {selectedCourses.length > 0 && (
                                         <TableHead className="text-right">Actions</TableHead>
                                     )}
@@ -429,7 +426,7 @@ const CourseManagementPage = () => {
                                                     className="!rounded data-[state=checked]:bg-indigo-500 data-[state=checked]:border-indigo-500"
                                                 />
                                             </TableCell>
-                                            <TableCell className="font-medium text-gray-900 max-w-[300px] overflow-hidden">
+                                            <TableCell className="font-medium text-gray-900 max-w-[200px] overflow-hidden">
                                                 {course.title}
                                             </TableCell>
                                             <TableCell>{course.category.name}</TableCell>
@@ -457,10 +454,17 @@ const CourseManagementPage = () => {
                                             <TableCell className="text-gray-500 text-sm">
                                                 {formatDateTime(course.updatedAt)}
                                             </TableCell>
+                                            <TableCell className="text-gray-500 text-sm">
+                                                {course.isDeleted ? (
+                                                    <span className="text-red-500">Deleted</span>
+                                                ) : (
+                                                    <span className="text-green-500">Active</span>
+                                                )}
+                                            </TableCell>
                                             <TableCell>{getStatus(course.status)}</TableCell>
                                             {selectedCourses.length > 0 && (
                                                 <TableCell
-                                                    className="text-right"
+                                                    className="text-right w-[50px]"
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
                                                     {selectedCourses.includes(course._id) && (
@@ -497,39 +501,6 @@ const CourseManagementPage = () => {
                                                                         <X className="h-4 w-4" />
                                                                     </Button>
                                                                 </>
-                                                            )}
-                                                            {course.status === "reject" && (
-                                                                <ConfirmationHelper
-                                                                    trigger={
-                                                                        <Button
-                                                                            size="icon"
-                                                                            variant="ghost"
-                                                                            className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-                                                                        >
-                                                                            <Check className="h-4 w-4" />
-                                                                        </Button>
-                                                                    }
-                                                                    title="Approve Course"
-                                                                    description="Are you sure you want to approve this course?"
-                                                                    confirmText="Approve"
-                                                                    onConfirm={() =>
-                                                                        handleApprove(course._id)
-                                                                    }
-                                                                />
-                                                            )}
-                                                            {course.status === "approve" && (
-                                                                <Button
-                                                                    size="icon"
-                                                                    variant="ghost"
-                                                                    className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setSelectedCourseId(course._id);
-                                                                        setShowRejectModal(true);
-                                                                    }}
-                                                                >
-                                                                    <X className="h-4 w-4" />
-                                                                </Button>
                                                             )}
                                                             <Button
                                                                 asChild

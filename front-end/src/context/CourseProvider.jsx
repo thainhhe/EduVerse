@@ -85,6 +85,7 @@ export const CourseProvider = ({ children, courseId = "new" }) => {
     const [coursePermissions, setCoursePermissions] = useState([]);
     const [isMainInstructor, setIsMainInstructor] = useState(false);
     const [loadingPermission, setLoadingPermission] = useState(true);
+    const [canUpdate, setCanUpdate] = useState(false);
 
     const loadPermissions = useCallback(async () => {
         try {
@@ -128,12 +129,15 @@ export const CourseProvider = ({ children, courseId = "new" }) => {
         [coursePermissions]
     );
 
+    const canUpdateCourse = draft?.status === "draft";
+
     const refreshPermissions = () => loadPermissions();
 
     const value = useMemo(
         () => ({
             courseId,
             draft,
+            canUpdateCourse,
             updateDraft,
             clearDraft,
             loadingDraft: false,

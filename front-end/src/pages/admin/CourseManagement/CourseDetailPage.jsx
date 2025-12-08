@@ -194,6 +194,15 @@ const CourseDetailPage = () => {
                                 </span>
                                 <span>•</span>
                                 {getStatusBadge(course.status)}
+                                {course.status === "reject" && (
+                                    <span className="text-red-500">({course.reasonReject})</span>
+                                )}
+                                <span>•</span>
+                                {course.isDeleted ? (
+                                    <span className="text-red-500">Deleted</span>
+                                ) : (
+                                    <span className="text-green-500">Active</span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -220,28 +229,6 @@ const CourseDetailPage = () => {
                                     <X className="w-4 h-4" /> Reject
                                 </Button>
                             </>
-                        )}
-                        {course.status === "reject" && (
-                            <ConfirmationHelper
-                                trigger={
-                                    <Button className="bg-green-600 hover:bg-green-700 text-white gap-2">
-                                        <Check className="w-4 h-4" /> Approve
-                                    </Button>
-                                }
-                                title="Approve Course"
-                                description="Are you sure you want to approve this course?"
-                                confirmText="Approve"
-                                onConfirm={handleApprove}
-                            />
-                        )}
-                        {course.status === "approve" && (
-                            <Button
-                                variant="destructive"
-                                className="gap-2"
-                                onClick={() => setShowRejectModal(true)}
-                            >
-                                <X className="w-4 h-4" /> Reject
-                            </Button>
                         )}
                     </div>
                 </div>

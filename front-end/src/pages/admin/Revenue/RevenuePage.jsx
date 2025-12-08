@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DollarSign, TrendingUp, BookOpen, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 const RevenuePage = () => {
     const [totalRevenue, setTotalRevenue] = useState(0);
@@ -46,8 +47,6 @@ const RevenuePage = () => {
 
         fetchData();
     }, [selectedYear]);
-
-    const maxTotal = Math.max(...monthlyStats.map((s) => s.total), 1);
 
     return (
         <div className="space-y-6 bg-slate-50 min-h-screen">
@@ -100,30 +99,61 @@ const RevenuePage = () => {
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-[400px] w-full flex items-end justify-between gap-2 pt-10 pb-2 px-4">
-                        {monthlyStats.map((stat) => (
-                            <div key={stat.month} className="flex flex-col items-center gap-2 flex-1 group">
-                                <div className="relative w-full flex items-end justify-center h-full">
-                                    {/* Tooltip */}
-                                    <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
-                                        {new Intl.NumberFormat("vi-VN", {
+                    <div className="h-[400px] w-full pt-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                                data={monthlyStats}
+                                margin={{
+                                    top: 5,
+                                    right: 30,
+                                    left: 20,
+                                    bottom: 5,
+                                }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                <XAxis
+                                    dataKey="label"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: "#64748b", fontSize: 12 }}
+                                    dy={10}
+                                />
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: "#64748b", fontSize: 12 }}
+                                    tickFormatter={(value) =>
+                                        new Intl.NumberFormat("vi-VN", {
+                                            notation: "compact",
+                                            compactDisplay: "short",
+                                            currency: "VND",
+                                            style: "currency",
+                                        }).format(value)
+                                    }
+                                />
+                                <Tooltip
+                                    cursor={{ fill: "#f1f5f9" }}
+                                    contentStyle={{
+                                        backgroundColor: "#1e293b",
+                                        border: "none",
+                                        borderRadius: "8px",
+                                        color: "#fff",
+                                    }}
+                                    formatter={(value) => [
+                                        new Intl.NumberFormat("vi-VN", {
                                             style: "currency",
                                             currency: "VND",
-                                        }).format(stat.total)}
-                                    </div>
-                                    {/* Bar */}
-                                    <div
-                                        className="w-full max-w-[40px] bg-green-100 group-hover:bg-green-200 transition-all duration-500 rounded-t-sm relative overflow-hidden"
-                                        style={{ height: `${(stat.total / maxTotal) * 100}%` }}
-                                    >
-                                        <div className="absolute bottom-0 left-0 right-0 h-full bg-green-500 opacity-80 group-hover:opacity-100 transition-opacity" />
-                                    </div>
-                                </div>
-                                <span className="text-xs font-medium text-slate-500 uppercase">
-                                    {stat.label}
-                                </span>
-                            </div>
-                        ))}
+                                        }).format(value),
+                                        "Revenue",
+                                    ]}
+                                />
+                                <Bar dataKey="total" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={40}>
+                                    {monthlyStats.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill="#16a34a" />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
                     </div>
                 </CardContent>
             </Card>

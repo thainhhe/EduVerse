@@ -20,6 +20,16 @@ const BATCH_SIZE = Number(process.env.SYNC_BATCH_SIZE) || 128;
 
 const buildText = (type, doc) => {
   switch (type) {
+    // === THÊM MỚI TẠI ĐÂY ===
+    case "faq":
+    case "policy":
+    case "course_policy":
+      // Định dạng cho các tài liệu chính sách/FAQ
+      return `[${(doc.type || type).toString().toUpperCase()}] ${
+        doc.title || "Untitled"
+      }: ${doc.content || doc.description || ""}.`;
+    // ========================
+
     case "course": {
       const durationStr =
         doc.duration && typeof doc.duration === "object"
@@ -148,9 +158,49 @@ const initClients = async () => {
   };
 };
 
+// THÊM MỚI: Định nghĩa các tệp Knowledge Base tĩnh
+const STATIC_KB_FILES = [
+  "faq_authentication.json",
+  "faq_profile_policy.json",
+  "policy_admin_action.json",
+];
+
+// Hàm đọc và xử lý các file KB tĩnh
+const readStaticKBFiles = () => {
+  const kbData = [];
+  console.log("[Sync] Reading static Knowledge Base files...");
+  for (const filename of STATIC_KB_FILES) {
+    const filePath = path.join(__dirname, filename);
+    if (fs.existsSync(filePath)) {
+      try {
+        const rawData = fs.readFileSync(filePath, "utf8");
+        const jsonArray = JSON.parse(rawData);
+        if (Array.isArray(jsonArray)) {
+          // ensure each entry has at least a type/title/content
+          jsonArray.forEach((item) => {
+            if (!item.type) item.type = "faq";
+            kbData.push(item);
+          });
+          console.log(
+            `[Sync] Loaded ${jsonArray.length} docs from ${filename}`
+          );
+        } else {
+          console.warn(`[Sync] File ${filename} is not a valid JSON array.`);
+        }
+      } catch (e) {
+        console.error(`[Sync] Failed to read or parse ${filename}:`, e.message);
+      }
+    } else {
+      console.warn(`[Sync] Static KB file not found: ${filename}`);
+    }
+  }
+  return kbData;
+};
+
 const pushDocumentsToChroma = async (apiData) => {
-  // Backend returns an object with keys exactly:
-  // { courses, categories, modules, lessons, materials, quizzes, reviews, enrollments }
+  // LẤY THÊM DỮ LIỆU KB TĨNH
+  const staticKbDocs = readStaticKBFiles();
+
   const types = [
     { key: "courses", type: "course" },
     { key: "categories", type: "category" },
@@ -160,29 +210,47 @@ const pushDocumentsToChroma = async (apiData) => {
     { key: "quizzes", type: "quiz" },
     { key: "reviews", type: "review" },
     { key: "enrollments", type: "enrollment" },
+    // THÊM MỚI: key để chứa các docs tĩnh
+    { key: "staticKb", type: "static_kb" },
   ];
 
   const ids = [];
   const docs = [];
   const metas = [];
 
+  // Gom tất cả data lại thành một đối tượng để tiện xử lý
+  const allDocuments = { ...apiData, staticKb: staticKbDocs };
+
   for (const t of types) {
-    const arr = Array.isArray(apiData[t.key]) ? apiData[t.key] : [];
-    for (const d of arr) {
-      // backend uses Mongo _id; require it to create stable id
-      const origId = d._id ?? d.id;
+    const arr = Array.isArray(allDocuments[t.key]) ? allDocuments[t.key] : [];
+    for (let idx = 0; idx < arr.length; idx++) {
+      const d = arr[idx];
+
+      // Ưu tiên type trong doc (cho KB), nếu không thì dùng type mặc định
+      const effectiveDocType = (d.type || t.type).toString().toLowerCase();
+
+      // Lấy id từ nhiều nguồn có thể có
+      let origId = d._id ?? d.id ?? d.key ?? d.title ?? d.name;
       if (!origId) {
-        // skip malformed doc
-        console.warn(`[Sync] skipping ${t.type} without _id`);
-        continue;
+        if (t.key === "staticKb") {
+          // tạo id ổn định cho KB tĩnh nếu không có _id
+          origId = `statickb_${idx}`;
+        } else {
+          console.warn(`[Sync] skipping ${effectiveDocType} without id`);
+          continue;
+        }
       }
-      const id = `${t.type}_${String(origId)}`;
+
+      // Đảm bảo ID là duy nhất và có prefix đúng, thay khoảng trắng bằng _
+      const id = `${effectiveDocType}_${String(origId)}`.replace(/\s+/g, "_");
+
       ids.push(id);
-      docs.push(buildText(t.type, d));
+      docs.push(buildText(effectiveDocType, d));
       metas.push({
-        type: t.type,
+        type: effectiveDocType,
         originalId: String(origId),
-        title: d.title || d.name || "",
+        title: d.title || d.name || d.question || "",
+        source: t.key === "staticKb" ? "static_kb" : "backend",
       });
     }
   }

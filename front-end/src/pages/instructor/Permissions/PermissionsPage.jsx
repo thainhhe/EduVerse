@@ -22,7 +22,10 @@ export default function PermissionsPage() {
     const rawCourseData = typeof window !== "undefined" ? sessionStorage.getItem("currentCourseData") : null;
     const sessionCourseData = rawCourseData ? JSON.parse(rawCourseData) : null;
 
-    const isOwner = sessionCourseData?.main_instructor === user?._id;
+    const isOwner = sessionCourseData?.main_instructor?._id === user?._id;
+    console.log("isOwner", isOwner);
+    console.log("user", user);
+    console.log("sessionCourseData", sessionCourseData);
 
     // 1️⃣ Fetch permission list
     const fetchPermissions = async () => {
@@ -144,11 +147,18 @@ export default function PermissionsPage() {
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-lg font-semibold text-gray-900">Instructor Access Table</h2>
                         <div className="flex gap-2">
-                            <Button onClick={saveChanges} disabled={loading} className="bg-green-600 text-white">
+                            <Button
+                                onClick={saveChanges}
+                                disabled={loading}
+                                className="bg-green-600 text-white"
+                            >
                                 {loading ? "Saving..." : "Save Changes"}
                             </Button>
 
-                            <Button onClick={() => setIsModalOpen(true)} className="bg-blue-600 text-white gap-2">
+                            <Button
+                                onClick={() => setIsModalOpen(true)}
+                                className="bg-blue-600 text-white gap-2"
+                            >
                                 <Plus size={18} /> Add Instructor
                             </Button>
                         </div>

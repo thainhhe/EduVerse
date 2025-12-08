@@ -19,8 +19,24 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { useEffect } from "react";
 
 const formSchema = z.object({
-    moduleTitle: z.string().min(1, "Title is required"),
-    moduleDescription: z.string().min(1, "Description is required"),
+    moduleTitle: z
+        .string()
+        .trim() // loại bỏ space đầu cuối nhưng vẫn giữ được z.string()
+        .min(3, { message: "Title must be at least 3 characters" })
+        .max(100, { message: "Title must not exceed 100 characters" })
+        .refine((val) => val.trim().length > 0, {
+            message: "Title cannot be empty or spaces only",
+        }),
+
+    moduleDescription: z
+        .string()
+        .trim()
+        .min(10, { message: "Description must be at least 10 characters" })
+        .max(500, { message: "Description must not exceed 500 characters" })
+        .refine((val) => val.trim().length > 0, {
+            message: "Description cannot be empty or spaces only",
+        }),
+
     makeVisible: z.boolean().optional(),
 });
 

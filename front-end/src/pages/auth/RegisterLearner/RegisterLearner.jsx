@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // added
+import { ToastHelper } from "@/helper/ToastHelper";
 
 const RegisterLearner = () => {
     const { register: registerUser } = useAuth();
@@ -18,25 +19,44 @@ const RegisterLearner = () => {
         register,
         handleSubmit,
         setError,
+        setValue,
+        getValues,
+        trigger,
         formState: { errors, isSubmitting },
     } = useForm({
         resolver: zodResolver(registerLearnerSchema),
+        mode: "onBlur", // validate when user leaves field
     });
 
-    const [showPassword, setShowPassword] = useState(false); // added
-    const [showConfirm, setShowConfirm] = useState(false); // added
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
 
-    const onSubmit = async (data) => {
+    const handleTrimAndValidate = (fieldName) => {
+        const val = getValues(fieldName) || "";
+        const trimmed = val.trim();
+        if (trimmed !== val) {
+            setValue(fieldName, trimmed, { shouldValidate: true, shouldDirty: true });
+        } else {
+            trigger(fieldName);
+        }
+    };
+
+    const onSubmit = async (data, e) => {
+        e.preventDefault();
+        console.log("data", data);
         try {
             const result = await registerUser({
-                username: data.fullName, // send username to match backend validator
+                username: data.fullName,
                 email: data.email,
                 password: data.password,
                 role: "learner",
             });
 
+            console.log(result);
             if (result.success) {
-                navigate("/login");
+                setTimeout(() => {
+                    navigate("/login");
+                }, 1000);
             } else {
                 // if service returns validation-like payload
                 if (result?.errors) {
@@ -46,7 +66,7 @@ const RegisterLearner = () => {
                         setError(field, { type: "server", message: msg });
                     });
                 } else if (result?.message) {
-                    toast.error(result.message);
+                    ToastHelper.error(result.message);
                 }
             }
         } catch (err) {
@@ -60,9 +80,9 @@ const RegisterLearner = () => {
                     setError(field, { type: "server", message });
                 }
             } else if (res?.message) {
-                toast.error(res.message);
+                ToastHelper.error(res.message);
             } else {
-                toast.error(err.message || "Registration failed");
+                ToastHelper.error(err.message || "Registration failed");
             }
             // keep console for debugging
             // eslint-disable-next-line no-console
@@ -77,7 +97,7 @@ const RegisterLearner = () => {
             </div>
 
             <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8">
-                <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-xl shadow-lg">
+                <div className="w-full max-w-lg bg-white p-6 sm:p-8 rounded-xl shadow-lg">
                     <div className="text-center mb-8">
                         <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-2">
                             Create Your Learner Account
@@ -104,6 +124,7 @@ const RegisterLearner = () => {
                                 required
                                 maxLength={50}
                                 aria-invalid={!!errors.fullName}
+                                onBlur={() => handleTrimAndValidate("fullName")}
                             />
                             {errors.fullName && (
                                 <p className="text-sm text-red-600 mt-1">{errors.fullName.message}</p>
@@ -112,16 +133,16 @@ const RegisterLearner = () => {
 
                         <div className="space-y-2">
                             <Label htmlFor="email">
-                                Email Address<span className="text-red-500 -ml-1">*</span>
+                                Email<span className="text-red-500 -ml-1">*</span>
                             </Label>
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="Email Address"
+                                placeholder="Email"
                                 {...register("email")}
                                 required
-                                autoComplete="email"
                                 aria-invalid={!!errors.email}
+                                onBlur={() => handleTrimAndValidate("email")}
                             />
                             {errors.email && (
                                 <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>
@@ -129,96 +150,94 @@ const RegisterLearner = () => {
                         </div>
 
                         {/* Responsive grid for passwords */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="password">
-                                    Password<span className="text-red-500 -ml-1">*</span>
-                                </Label>
-                                <div className="relative">
-                                    <Input
-                                        id="password"
-                                        type={showPassword ? "text" : "password"}
-                                        placeholder="Password"
-                                        className="pr-10"
-                                        {...register("password")}
-                                        required
-                                        minLength={6}
-                                        maxLength={50}
-                                        aria-invalid={!!errors.password}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                    >
-                                        {showPassword ? <FaEyeSlash /> : <FaEye />}
-                                    </button>
-                                </div>
-                                {errors.password && (
-                                    <p className="text-sm text-red-600 mt-1">{errors.password.message}</p>
-                                )}
+                        <div className="space-y-2">
+                            <Label htmlFor="password">
+                                Password<span className="text-red-500 -ml-1">*</span>
+                            </Label>
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Password"
+                                    className="pr-10"
+                                    {...register("password")}
+                                    required
+                                    minLength={6}
+                                    maxLength={50}
+                                    aria-invalid={!!errors.password}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                </button>
                             </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">
-                                    Confirm Password<span className="text-red-500 -ml-1">*</span>
-                                </Label>
-                                <div className="relative">
-                                    <Input
-                                        id="confirmPassword"
-                                        type={showConfirm ? "text" : "password"}
-                                        placeholder="Password"
-                                        className="pr-10"
-                                        {...register("confirmPassword")}
-                                        required
-                                        minLength={6}
-                                        maxLength={50}
-                                        aria-invalid={!!errors.confirmPassword}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowConfirm(!showConfirm)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                    >
-                                        {showConfirm ? <FaEyeSlash /> : <FaEye />}
-                                    </button>
-                                </div>
-                                {errors.confirmPassword && (
-                                    <p className="text-sm text-red-600 mt-1">
-                                        {errors.confirmPassword.message}
-                                    </p>
-                                )}
-                            </div>
+                            {errors.password && (
+                                <p className="text-sm text-red-600 mt-1">{errors.password.message}</p>
+                            )}
                         </div>
 
-                        <div className="flex items-start space-x-3 pt-2">
-                            <Checkbox
-                                id="agreeTerms"
-                                {...register("agreeTerms", {
-                                    // normalize checkbox value to boolean (handles "on" / "true" / true)
-                                    setValueAs: (v) => v === "on" || v === "true" || v === true,
-                                })}
-                                className="mt-1"
-                            />
-                            <label htmlFor="agreeTerms" className="text-sm text-gray-700">
-                                By signing up, I agree with the{" "}
-                                <Link to="/terms" className="text-indigo-600 hover:underline">
-                                    Terms of Use
-                                </Link>{" "}
-                                &{" "}
-                                <Link to="/privacy" className="text-indigo-600 hover:underline">
-                                    Privacy Policy
-                                </Link>
-                            </label>
+                        <div className="space-y-2">
+                            <Label htmlFor="confirmPassword">
+                                Confirm Password<span className="text-red-500 -ml-1">*</span>
+                            </Label>
+                            <div className="relative">
+                                <Input
+                                    id="confirmPassword"
+                                    type={showConfirm ? "text" : "password"}
+                                    placeholder="Password"
+                                    className="pr-10"
+                                    {...register("confirmPassword")}
+                                    required
+                                    minLength={6}
+                                    maxLength={50}
+                                    aria-invalid={!!errors.confirmPassword}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirm(!showConfirm)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    {showConfirm ? <FaEyeSlash /> : <FaEye />}
+                                </button>
+                            </div>
+                            {errors.confirmPassword && (
+                                <p className="text-sm text-red-600 mt-1">{errors.confirmPassword.message}</p>
+                            )}
                         </div>
-                        {errors.agreeTerms && (
-                            <p className="text-sm text-red-600">{errors.agreeTerms.message}</p>
-                        )}
+
+                        {/* <div className="flex items-start space-x-3 pt-2">
+              <Checkbox
+                id="agreeTerms"
+                {...register("agreeTerms", {
+                  setValueAs: (v) => v === "on" || v === "true" || v === true,
+                })}
+                className="mt-1"
+              />
+              <label htmlFor="agreeTerms" className="text-sm text-gray-700">
+                By signing up, I agree with the{" "}
+                <Link to="/terms" className="text-indigo-600 hover:underline">
+                  Terms of Use
+                </Link>{" "}
+                &{" "}
+                <Link to="/privacy" className="text-indigo-600 hover:underline">
+                  Privacy Policy
+                </Link>
+              </label>
+            </div>
+            {errors.agreeTerms && (
+              <p className="text-sm text-red-600">
+                {errors.agreeTerms.message}
+              </p>
+            )} */}
 
                         <Button
                             type="submit"
                             className="w-full bg-[#4F39F6] text-white hover:bg-[#3e2adf] focus:ring-0"
                             disabled={isSubmitting}
+                            onClick={() => console.log("submit")}
                         >
                             {isSubmitting ? "Signing up..." : "Sign up"}
                         </Button>

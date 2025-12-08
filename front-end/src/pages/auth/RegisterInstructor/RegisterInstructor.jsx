@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@hooks/useAuth";
 import { registerInstructorSchema } from "@/lib/validations/auth";
@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChevronDown, X } from "lucide-react";
 
 const SUBJECT_OPTIONS = ["Marketing", "Programming", "Design", "Business", "Math", "Physics"];
 
@@ -40,45 +42,69 @@ const MultiSelectDropdown = ({ value = [], onChange, options = [] }) => {
             <button
                 type="button"
                 onClick={() => setOpen((s) => !s)}
-                className="w-full text-left h-10 rounded-md border border-input bg-gray-50 px-3 py-2 text-sm flex items-center justify-between"
+                className="w-full text-left min-h-[40px] rounded-md border border-input bg-gray-50 px-3 py-2 text-sm flex items-center justify-between hover:bg-gray-100/50 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             >
-                <span className="truncate">
-                    {Array.isArray(value) && value.length > 0 ? value.join(", ") : "Select subject(s)"}
-                </span>
+                <div className="flex flex-wrap gap-1">
+                    {Array.isArray(value) && value.length > 0 ? (
+                        value.map((v) => (
+                            <span
+                                key={v}
+                                className="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full flex items-center gap-1"
+                            >
+                                {v}
+                                <span
+                                    className="cursor-pointer hover:text-indigo-900"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggle(v);
+                                    }}
+                                >
+                                    <X className="w-3 h-3" />
+                                </span>
+                            </span>
+                        ))
+                    ) : (
+                        <span className="text-muted-foreground">Select subject(s)</span>
+                    )}
+                </div>
                 <div className="flex items-center gap-2">
                     {Array.isArray(value) && value.length > 0 && (
-                        <button type="button" onClick={clearAll} className="text-xs text-gray-500 mr-2">
+                        <button
+                            type="button"
+                            onClick={clearAll}
+                            className="text-xs text-gray-500 hover:text-gray-700 mr-1"
+                        >
                             Clear
                         </button>
                     )}
-                    <svg className="w-4 h-4 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
-                        <path
-                            fillRule="evenodd"
-                            d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
-                            clipRule="evenodd"
-                        />
-                    </svg>
+                    <ChevronDown className="w-4 h-4 opacity-50" />
                 </div>
             </button>
 
             {open && (
-                <div className="absolute z-50 mt-1 w-full rounded-md border bg-white shadow-lg max-h-56 overflow-auto">
-                    <div className="p-2">
+                <div className="absolute z-50 mt-1 w-full rounded-md border bg-white shadow-lg max-h-60 overflow-auto animate-in fade-in zoom-in-95 duration-200">
+                    <div className="p-1">
                         {options.map((opt) => {
                             const checked = Array.isArray(value) && value.includes(opt);
                             return (
-                                <label
+                                <div
                                     key={opt}
-                                    className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-50 cursor-pointer"
+                                    onClick={() => toggle(opt)}
+                                    className={`flex items-center gap-2 p-2 rounded-sm cursor-pointer text-sm transition-colors ${
+                                        checked ? "bg-indigo-50 text-indigo-900" : "hover:bg-gray-100"
+                                    }`}
                                 >
-                                    <input
-                                        type="checkbox"
-                                        checked={checked}
-                                        onChange={() => toggle(opt)}
-                                        className="w-4 h-4"
-                                    />
-                                    <span className="text-sm">{opt}</span>
-                                </label>
+                                    <div
+                                        className={`w-4 h-4 rounded border flex items-center justify-center ${
+                                            checked
+                                                ? "bg-indigo-600 border-indigo-600 text-white"
+                                                : "border-gray-300"
+                                        }`}
+                                    >
+                                        {checked && <X className="w-3 h-3 rotate-45" />}
+                                    </div>
+                                    <span>{opt}</span>
+                                </div>
                             );
                         })}
                     </div>
@@ -97,37 +123,22 @@ const RegisterInstructor = () => {
     const {
         register,
         handleSubmit,
-        setValue,
-        watch,
+        control,
         formState: { errors, isSubmitting },
     } = useForm({
         resolver: zodResolver(registerInstructorSchema),
-        mode: "onBlur", // validate on blur and submit
+        mode: "onBlur",
         defaultValues: {
-            subjects: [], // keep internal value as array
+            subjects: [],
+            jobTitle: "",
+            agreeTerms: true,
         },
     });
 
-    // sync watched subjects for MultiSelectDropdown
-    const watchedSubjects = watch("subjects") || [];
-
-    // ensure form field exists
-    useEffect(() => {
-        setValue("subjects", Array.isArray(watchedSubjects) ? watchedSubjects : []);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
     const onSubmit = async (data) => {
-        // normalize subjects -> string for backend model
-        const subjectsArray = Array.isArray(data.subjects)
-            ? data.subjects
-            : data.subjects
-            ? [data.subjects]
-            : [];
+        const subjectsArray = Array.isArray(data.subjects) ? data.subjects : [];
+        const subjectString = subjectsArray.join(",");
 
-        const subjectString = subjectsArray.length ? subjectsArray.join(",") : "";
-
-        // normalize job title to backend enum (lowercase) or null
         let normalizedJobTitle = data.jobTitle ? String(data.jobTitle).trim().toLowerCase() : null;
         if (normalizedJobTitle && !["manager", "professor", "instructor"].includes(normalizedJobTitle)) {
             normalizedJobTitle = null;
@@ -138,10 +149,8 @@ const RegisterInstructor = () => {
             email: data.email,
             password: data.password,
             role: "instructor",
-
-            // fields matching backend model
-            job_title: normalizedJobTitle, // string or null
-            subject_instructor: subjectString, // comma-separated string (matches current model type)
+            job_title: normalizedJobTitle,
+            subject_instructor: subjectString,
         };
 
         const result = await registerUser(payload);
@@ -151,35 +160,48 @@ const RegisterInstructor = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-            <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                <div className="hidden lg:flex items-center justify-center">
-                    <img src="/Selection.png" alt="Instructors collaborating" className="w-full max-w-lg" />
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
+            <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div className="hidden lg:flex flex-col items-center justify-center space-y-6">
+                    <img
+                        src="/Selection.png"
+                        alt="Instructors collaborating"
+                        className="w-full max-w-lg object-contain drop-shadow-xl"
+                    />
+                    <div className="text-center space-y-2 max-w-md">
+                        <h3 className="text-2xl font-bold text-gray-800">Join Our Community</h3>
+                        <p className="text-gray-600">
+                            Connect with millions of students and transform your knowledge into a thriving
+                            business.
+                        </p>
+                    </div>
                 </div>
 
-                <div className="bg-white p-6 sm:p-8 lg:p-12 rounded-2xl shadow-xl">
-                    <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 text-center mb-2">
-                        Create Your Instructor Account
-                    </h2>
-                    <p className="text-gray-600 text-center mb-8 text-sm">
-                        Start building and sharing your courses with students across the globe.
-                    </p>
+                <div className="bg-white p-6 sm:p-8 lg:p-10 rounded-2xl shadow-xl border border-gray-100">
+                    <div className="text-center mb-8">
+                        <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-2">
+                            Instructor Registration
+                        </h2>
+                        <p className="text-gray-500 text-sm">
+                            Create your account to start teaching on EduVerse
+                        </p>
+                    </div>
 
                     <form
                         onSubmit={handleSubmit(onSubmit)}
-                        className="space-y-4"
+                        className="space-y-5"
                         noValidate
                         autoComplete="off"
                     >
                         <div className="space-y-2">
                             <Label htmlFor="fullName">
-                                Full name<span className="text-red-500 -ml-1">*</span>
+                                Full Name <span className="text-red-500">*</span>
                             </Label>
                             <Input
                                 id="fullName"
                                 {...register("fullName")}
-                                required
-                                maxLength={50}
+                                placeholder="e.g. John Doe"
+                                className="bg-gray-50"
                                 aria-invalid={!!errors.fullName}
                             />
                             {errors.fullName && (
@@ -189,12 +211,12 @@ const RegisterInstructor = () => {
 
                         <div className="space-y-2">
                             <Label htmlFor="email">
-                                Email Address<span className="text-red-500 -ml-1">*</span>
+                                Email Address <span className="text-red-500">*</span>
                             </Label>
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="Email Address"
+                                placeholder="name@example.com"
                                 className={`bg-gray-50 ${
                                     errors.email ? "border-red-500 ring-1 ring-red-500" : ""
                                 }`}
@@ -205,122 +227,143 @@ const RegisterInstructor = () => {
                             )}
                         </div>
 
+                        <div className="space-y-2">
+                            <Label htmlFor="password">
+                                Password <span className="text-red-500">*</span>
+                            </Label>
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="••••••••"
+                                    className="bg-gray-50 pr-10"
+                                    {...register("password")}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                </button>
+                            </div>
+                            {errors.password && (
+                                <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="confirmPassword">
+                                Confirm Password <span className="text-red-500">*</span>
+                            </Label>
+                            <div className="relative">
+                                <Input
+                                    id="confirmPassword"
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    placeholder="••••••••"
+                                    className="bg-gray-50 pr-10"
+                                    {...register("confirmPassword")}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                                </button>
+                            </div>
+                            {errors.confirmPassword && (
+                                <p className="text-sm text-red-500 mt-1">{errors.confirmPassword.message}</p>
+                            )}
+                        </div>
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="password">
-                                    Password<span className="text-red-500 -ml-1">*</span>
+                                <Label>
+                                    Job Title <span className="text-red-500">*</span>
                                 </Label>
-                                <div className="relative">
-                                    <Input
-                                        id="password"
-                                        type={showPassword ? "text" : "password"}
-                                        placeholder="Password"
-                                        className="bg-gray-50 pr-10"
-                                        {...register("password")}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                                    >
-                                        {showPassword ? <FaEyeSlash /> : <FaEye />}
-                                    </button>
-                                </div>
-                                {errors.password && (
-                                    <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>
+                                <Controller
+                                    control={control}
+                                    name="jobTitle"
+                                    render={({ field }) => (
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <SelectTrigger className="bg-gray-50">
+                                                <SelectValue placeholder="Select job title" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Manager">Manager</SelectItem>
+                                                <SelectItem value="Professor">Professor</SelectItem>
+                                                <SelectItem value="Instructor">Instructor</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+                                />
+                                {errors.jobTitle && (
+                                    <p className="text-sm text-red-500 mt-1">{errors.jobTitle.message}</p>
                                 )}
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">
-                                    Confirm Password<span className="text-red-500 -ml-1">*</span>
-                                </Label>
-                                <div className="relative">
-                                    <Input
-                                        id="confirmPassword"
-                                        type={showConfirmPassword ? "text" : "password"}
-                                        placeholder="Password"
-                                        className="bg-gray-50 pr-10"
-                                        {...register("confirmPassword")}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                                    >
-                                        {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                                    </button>
-                                </div>
-                                {errors.confirmPassword && (
-                                    <p className="text-sm text-red-500 mt-1">
-                                        {errors.confirmPassword.message}
-                                    </p>
+                                <Label>Subjects</Label>
+                                <Controller
+                                    control={control}
+                                    name="subjects"
+                                    render={({ field }) => (
+                                        <MultiSelectDropdown
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            options={SUBJECT_OPTIONS}
+                                        />
+                                    )}
+                                />
+                                {errors.subjects && (
+                                    <p className="text-sm text-red-600 mt-1">{errors.subjects.message}</p>
                                 )}
                             </div>
                         </div>
 
-                        {/* subjects multi-select */}
-                        <div className="space-y-2">
-                            <Label htmlFor="subjects">Subjects</Label>
-                            <MultiSelectDropdown
-                                value={watchedSubjects}
-                                onChange={(v) => setValue("subjects", v)}
-                                options={SUBJECT_OPTIONS}
-                            />
-                            {errors.subjects && (
-                                <p className="text-sm text-red-600 mt-1">{errors.subjects.message}</p>
+                        <div className="space-y-2 pt-2">
+                            <div className="flex items-start space-x-3">
+                                <Controller
+                                    control={control}
+                                    name="agreeTerms"
+                                    render={({ field }) => (
+                                        <Checkbox
+                                            id="agreeTerms"
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                        />
+                                    )}
+                                />
+                                <label
+                                    htmlFor="agreeTerms"
+                                    className="text-sm text-gray-600 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                    I agree to the{" "}
+                                    <Link to="/terms" className="text-indigo-600 hover:underline font-medium">
+                                        Terms of Service
+                                    </Link>{" "}
+                                    and{" "}
+                                    <Link
+                                        to="/privacy"
+                                        className="text-indigo-600 hover:underline font-medium"
+                                    >
+                                        Privacy Policy
+                                    </Link>
+                                </label>
+                            </div>
+                            {errors.agreeTerms && (
+                                <p className="text-sm text-red-600 mt-1">{errors.agreeTerms.message}</p>
                             )}
                         </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="jobTitle">
-                                Job Title<span className="text-red-500 -ml-1">*</span>
-                            </Label>
-                            <select
-                                id="jobTitle"
-                                className="flex h-10 w-full rounded-md border border-input bg-gray-50 px-3 py-2 text-sm"
-                                {...register("jobTitle")}
-                            >
-                                <option value="">Select a job title</option>
-                                <option value="Manager">Manager</option>
-                                <option value="Professor">Professor</option>
-                                <option value="Instructor">Instructor</option>
-                            </select>
-                            {errors.jobTitle && (
-                                <p className="text-sm text-red-500 mt-1">{errors.jobTitle.message}</p>
-                            )}
-                        </div>
-
-                        <div className="flex items-start space-x-3 pt-2">
-                            <Checkbox
-                                id="agreeTerms"
-                                {...register("agreeTerms", {
-                                    setValueAs: (v) => v === "on" || v === "true" || v === true,
-                                })}
-                                className="mt-1"
-                            />
-                            <label htmlFor="agreeTerms" className="text-sm text-gray-700">
-                                By signing up, I agree with the{" "}
-                                <Link to="/terms" className="text-indigo-600 hover:underline">
-                                    Terms of Use
-                                </Link>{" "}
-                                &{" "}
-                                <Link to="/privacy" className="text-indigo-600 hover:underline">
-                                    Privacy Policy
-                                </Link>
-                            </label>
-                        </div>
-                        {errors.agreeTerms && (
-                            <p className="text-sm text-red-600 mt-1">{errors.agreeTerms.message}</p>
-                        )}
 
                         <Button
                             type="submit"
-                            className="w-full bg-[#4F39F6] text-white hover:bg-[#3e2adf] focus:ring-0"
+                            className="w-full bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all duration-200"
                             size="lg"
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? "Signing up..." : "Sign up"}
+                            {isSubmitting ? "Creating Account..." : "Create Account"}
                         </Button>
 
                         <p className="text-center text-sm text-gray-600 pt-2">

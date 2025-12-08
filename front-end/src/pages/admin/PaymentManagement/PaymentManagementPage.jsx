@@ -138,9 +138,6 @@ const PaymentManagementPage = () => {
                 <div className="pb-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-2 bg-gray-500 text-black">
                         <div className="flex flex-col items-center sm:flex-row gap-2">
-                            <div className="text-md flex items-center p-1.5 bg-white rounded-sm">
-                                Payments List {selectedPayments.length} selected
-                            </div>
                             <Button variant="outline" className="bg-white text-black hover:bg-gray-100">
                                 <Download className="mr-2 h-4 w-4" /> Export
                             </Button>

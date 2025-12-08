@@ -11,8 +11,8 @@ const notificationService = {
         return res;
     },
 
-    getByReceiverId: async (id) => {
-        const res = await api.get(`/notifications/receiver/${id}`);
+    getByReceiverId: async (id, params = {}) => {
+        const res = await api.get(`/notifications/receiver/${id}`, { params });
         return res;
     },
 

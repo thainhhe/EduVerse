@@ -93,7 +93,21 @@ const seedData = async () => {
 
         console.log("Creating Categories...");
         const categories = [];
-        const categoryNames = ["Programming", "Design", "Business", "Marketing", "Music", "Photography"];
+        const categoryNames = [
+            "Technology",
+            "Business",
+            "Design",
+            "Arts",
+            "Health & Wellness",
+            "Personal Development",
+            "Languages",
+            "Science",
+            "Mathematics",
+            "Social Sciences",
+            "Lifestyle",
+            "Vocational Skills",
+            "Kids Education",
+        ];
         for (const name of categoryNames) {
             const category = await Category.create({
                 name: name,
@@ -116,9 +130,9 @@ const seedData = async () => {
                     thumbnail: faker.image.urlLoremFlickr({ category: "education" }),
                     price: faker.number.int({ min: 10, max: 200 }),
                     rating: faker.number.float({ min: 3, max: 5, precision: 0.1 }),
-                    status: "approve",
-                    isPublished: true,
-                    totalEnrollments: 0, // Will update later
+                    status: "pending",
+                    isPublished: false,
+                    totalEnrollments: 0,
                 });
                 courses.push(course);
 

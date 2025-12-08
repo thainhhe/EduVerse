@@ -46,11 +46,9 @@ const ReportManagementPage = () => {
 
     return (
         <div className="">
-            <Card>
-                <CardHeader>
-                    <CardTitle>All Reports ({reports.length})</CardTitle>
-                </CardHeader>
-                <CardContent>
+            <div>
+                <h1 className="text-xl font-bold px-2">All Reports ({reports.length})</h1>
+                <div>
                     {loading ? (
                         <p>Loading ...</p>
                     ) : (
@@ -131,8 +129,8 @@ const ReportManagementPage = () => {
                             </TableBody>
                         </Table>
                     )}
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         </div>
     );
 };

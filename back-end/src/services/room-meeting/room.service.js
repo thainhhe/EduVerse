@@ -7,7 +7,10 @@ const roomService = {
         try {
             const result = await roomMeetingRepository.findAll();
             if (!result)
-                return { status: system_enum.STATUS_CODE.NOT_FOUND, message: system_enum.SYSTEM_MESSAGE.FAIL_GET_DATA };
+                return {
+                    status: system_enum.STATUS_CODE.NOT_FOUND,
+                    message: system_enum.SYSTEM_MESSAGE.FAIL_GET_DATA,
+                };
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: system_enum.SYSTEM_MESSAGE.SUCCESS,
@@ -20,10 +23,16 @@ const roomService = {
     getRoomByCourseId: async (id) => {
         try {
             if (!id)
-                return { status: system_enum.STATUS_CODE.CONFLICT, message: system_enum.SYSTEM_MESSAGE.INVALID_INPUT };
+                return {
+                    status: system_enum.STATUS_CODE.CONFLICT,
+                    message: system_enum.SYSTEM_MESSAGE.INVALID_INPUT,
+                };
             const result = await roomMeetingRepository.findByCourseId(id);
             if (!result)
-                return { status: system_enum.STATUS_CODE.NOT_FOUND, message: system_enum.SYSTEM_MESSAGE.NOT_FOUND };
+                return {
+                    status: system_enum.STATUS_CODE.NOT_FOUND,
+                    message: system_enum.SYSTEM_MESSAGE.NOT_FOUND,
+                };
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: system_enum.SYSTEM_MESSAGE.SUCCESS,
@@ -35,7 +44,18 @@ const roomService = {
     },
     createRoom: async (data) => {
         try {
-            const { courseId, createdBy, name, startTime, endTime } = data;
+            const {
+                courseId,
+                createdBy,
+                name,
+                description,
+                link,
+                isPublic,
+                password,
+                status,
+                startTime,
+                endTime,
+            } = data;
 
             if (!courseId || !createdBy || !name) {
                 return {
@@ -54,7 +74,11 @@ const roomService = {
                 name,
                 courseId,
                 createdBy,
-                link: meetingLink,
+                description,
+                isPublic,
+                password,
+                status,
+                link: meetingLink ?? link,
                 startTime: startTime ? new Date(startTime) : defaultStart,
                 endTime: endTime || null,
             };
@@ -71,7 +95,10 @@ const roomService = {
     updateRoom: async (id, data) => {
         try {
             if (!id)
-                return { status: system_enum.STATUS_CODE.CONFLICT, message: system_enum.SYSTEM_MESSAGE.INVALID_INPUT };
+                return {
+                    status: system_enum.STATUS_CODE.CONFLICT,
+                    message: system_enum.SYSTEM_MESSAGE.INVALID_INPUT,
+                };
             const result = await roomMeetingRepository.updateRoom(id, data);
             return {
                 status: system_enum.STATUS_CODE.OK,
@@ -82,10 +109,14 @@ const roomService = {
             throw new Error(error);
         }
     },
+
     deleteRoom: async (id) => {
         try {
             if (!id)
-                return { status: system_enum.STATUS_CODE.CONFLICT, message: system_enum.SYSTEM_MESSAGE.INVALID_INPUT };
+                return {
+                    status: system_enum.STATUS_CODE.CONFLICT,
+                    message: system_enum.SYSTEM_MESSAGE.INVALID_INPUT,
+                };
             const result = await roomMeetingRepository.deleteRoom(id);
             return {
                 status: system_enum.STATUS_CODE.OK,

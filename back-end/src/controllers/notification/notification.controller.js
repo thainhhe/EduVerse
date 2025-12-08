@@ -30,7 +30,12 @@ const notificationController = {
     get_by_receiveId: async (req, res) => {
         try {
             const id = req.params.id;
-            const result = await notificationService.getByReceiverId(id);
+            const { page, limit, search } = req.query;
+            const result = await notificationService.getByReceiverId(id, {
+                page: parseInt(page) || 1,
+                limit: parseInt(limit) || 10,
+                search,
+            });
             return response(res, result);
         } catch (error) {
             return error_response(res, error);
@@ -67,7 +72,8 @@ const notificationController = {
     mark_as_read: async (req, res) => {
         try {
             const id = req.params.id;
-            const result = await notificationService.markAsRead(id);
+            const userId = req.userId;
+            const result = await notificationService.markAsRead(id, userId);
             return response(res, result);
         } catch (error) {
             return error_response(res, error);

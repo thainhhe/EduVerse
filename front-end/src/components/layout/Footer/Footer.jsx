@@ -17,7 +17,7 @@ const Footer = () => {
 
     return (
         <footer className={`${footerClass} transition-colors duration-300`} style={footerStyle}>
-            <div className="container mx-auto px-4 py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-y-10 sm:gap-x-8">
                     {/* Column 1: Logo */}
                     <div className="sm:col-span-2 lg:col-span-1">
@@ -109,7 +109,7 @@ const Footer = () => {
             </div>
 
             <div className="border-t border-white/20">
-                <div className="container mx-auto px-4 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-sm opacity-90 text-center md:text-left">
                         &copy; {new Date().getFullYear()} EduVerse, Inc. · Privacy · Terms · Sitemap
                     </p>

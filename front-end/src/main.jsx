@@ -13,6 +13,8 @@ import { EnrollmentProvider } from "./context/EnrollmentContext";
 import { LoadingProvider } from "./context/LoadingContext";
 import ScrollToTop from "@components/layout/ScrollToTop";
 
+import { SocketProvider } from "./context/SocketContext";
+
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
@@ -30,20 +32,22 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 <QueryClientProvider client={queryClient}>
                     <AuthProvider>
                         <LoadingProvider>
-                            <EnrollmentProvider>
-                                <App />
-                                <ToastContainer
-                                    position="top-right"
-                                    autoClose={3000}
-                                    hideProgressBar={false}
-                                    newestOnTop={false}
-                                    closeOnClick
-                                    rtl={false}
-                                    pauseOnFocusLoss
-                                    draggable
-                                    pauseOnHover
-                                />
-                            </EnrollmentProvider>
+                            <SocketProvider>
+                                <EnrollmentProvider>
+                                    <App />
+                                    <ToastContainer
+                                        position="top-right"
+                                        autoClose={2000}
+                                        hideProgressBar={false}
+                                        newestOnTop={false}
+                                        closeOnClick
+                                        rtl={false}
+                                        pauseOnFocusLoss
+                                        draggable
+                                        pauseOnHover
+                                    />
+                                </EnrollmentProvider>
+                            </SocketProvider>
                         </LoadingProvider>
                     </AuthProvider>
                 </QueryClientProvider>

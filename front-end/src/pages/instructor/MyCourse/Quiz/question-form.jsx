@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Plus, X } from "lucide-react";
+import { ToastHelper } from "@/helper/ToastHelper";
 
 export function QuestionForm({ onAddQuestion }) {
     const [text, setText] = useState("");
@@ -52,6 +53,7 @@ export function QuestionForm({ onAddQuestion }) {
 
     const handleAddOption = () => {
         const newId = String(Math.max(...options.map((o) => parseInt(o.id)), 0) + 1);
+
         setOptions([...options, { id: newId, text: `Option ${options.length + 1}`, isCorrect: false }]);
     };
 
@@ -79,7 +81,7 @@ export function QuestionForm({ onAddQuestion }) {
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!text.trim() || !options.some((o) => o.isCorrect)) {
-            alert("Please fill in all required fields and select at least one correct answer.");
+            ToastHelper.error("Please fill in all required fields and select at least one correct answer.");
             return;
         }
 
@@ -177,9 +179,8 @@ export function QuestionForm({ onAddQuestion }) {
                                     placeholder="Option text"
                                     value={option.text}
                                     onChange={(e) => handleOptionChange(option.id, "text", e.target.value)}
-                                    className={`flex-1 border border-gray-300 ${
-                                        option.isCorrect ? "bg-green-200" : "bg-gray-200"
-                                    }`}
+                                    className={`flex-1 border border-gray-300 ${option.isCorrect ? "bg-green-200" : "bg-gray-200"
+                                        }`}
                                     disabled={type === "true-false"} // true/false thì không chỉnh sửa text
                                 />
 
