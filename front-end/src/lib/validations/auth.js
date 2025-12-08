@@ -29,7 +29,7 @@ export const registerLearnerSchema = z
         password: z
             .string()
             .min(6, "Password must be at least 6 characters.")
-            .max(100, "Password must not exceed 100 characters.")
+            .max(50, "Password must not exceed 50 characters.")
             .refine((s) => s.trim().length > 0, {
                 message: "Password cannot be only whitespace",
             }),
@@ -39,7 +39,9 @@ export const registerLearnerSchema = z
             .refine((s) => s.trim().length > 0, {
                 message: "Confirm password cannot be only whitespace",
             }),
-        agreeTerms: z.boolean().optional(),
+        agreeTerms: z.boolean().refine((v) => v === true, {
+            message: "You must agree to the terms and conditions",
+        }),
     })
     .refine((data) => data.password === data.confirmPassword, {
         message: "Passwords do not match",
@@ -61,7 +63,7 @@ export const registerInstructorSchema = z
         password: z
             .string()
             .min(6, "Password must be at least 6 characters.")
-            .max(100, "Password must not exceed 100 characters.")
+            .max(50, "Password must not exceed 50 characters.")
             .refine((s) => s.trim().length > 0, {
                 message: "Password cannot be only whitespace",
             }),
@@ -74,7 +76,7 @@ export const registerInstructorSchema = z
         subjects: z
             .array(z.string().trim().min(1, "Subject cannot be empty"))
             .min(1, "Please select at least 1 subject"),
-        jobTitle: z.string().trim().optional(),
+        jobTitle: z.string().trim().min(1, "Please select a job title"),
         agreeTerms: z.boolean().refine((v) => v === true, {
             message: "You must agree to the terms and conditions",
         }),

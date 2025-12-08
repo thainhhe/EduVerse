@@ -124,16 +124,34 @@ const RegisterInstructor = () => {
         register,
         handleSubmit,
         control,
+        setValue,
+        getValues,
+        trigger,
         formState: { errors, isSubmitting },
     } = useForm({
         resolver: zodResolver(registerInstructorSchema),
         mode: "onBlur",
         defaultValues: {
+            fullName: "",
+            email: "",
+            password: "",
+            confirmPassword: "",
             subjects: [],
             jobTitle: "",
-            agreeTerms: true,
+            agreeTerms: false,
         },
     });
+
+    // Helper to trim and validate field
+    const handleTrimAndValidate = (fieldName) => {
+        const val = getValues(fieldName) || "";
+        const trimmed = val.trim();
+        if (trimmed !== val) {
+            setValue(fieldName, trimmed, { shouldValidate: true, shouldDirty: true });
+        } else {
+            trigger(fieldName);
+        }
+    };
 
     const onSubmit = async (data) => {
         const subjectsArray = Array.isArray(data.subjects) ? data.subjects : [];
@@ -202,7 +220,9 @@ const RegisterInstructor = () => {
                                 {...register("fullName")}
                                 placeholder="e.g. John Doe"
                                 className="bg-gray-50"
+                                maxLength={50}
                                 aria-invalid={!!errors.fullName}
+                                onBlur={() => handleTrimAndValidate("fullName")}
                             />
                             {errors.fullName && (
                                 <p className="text-sm text-red-600 mt-1">{errors.fullName.message}</p>
@@ -221,6 +241,8 @@ const RegisterInstructor = () => {
                                     errors.email ? "border-red-500 ring-1 ring-red-500" : ""
                                 }`}
                                 {...register("email")}
+                                aria-invalid={!!errors.email}
+                                onBlur={() => handleTrimAndValidate("email")}
                             />
                             {errors.email && (
                                 <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
@@ -237,7 +259,10 @@ const RegisterInstructor = () => {
                                     type={showPassword ? "text" : "password"}
                                     placeholder="••••••••"
                                     className="bg-gray-50 pr-10"
+                                    maxLength={50}
                                     {...register("password")}
+                                    aria-invalid={!!errors.password}
+                                    onBlur={() => trigger("password")}
                                 />
                                 <button
                                     type="button"
@@ -262,7 +287,10 @@ const RegisterInstructor = () => {
                                     type={showConfirmPassword ? "text" : "password"}
                                     placeholder="••••••••"
                                     className="bg-gray-50 pr-10"
+                                    maxLength={50}
                                     {...register("confirmPassword")}
+                                    aria-invalid={!!errors.confirmPassword}
+                                    onBlur={() => trigger("confirmPassword")}
                                 />
                                 <button
                                     type="button"
@@ -286,8 +314,17 @@ const RegisterInstructor = () => {
                                     control={control}
                                     name="jobTitle"
                                     render={({ field }) => (
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <SelectTrigger className="bg-gray-50">
+                                        <Select
+                                            onValueChange={(val) => {
+                                                field.onChange(val);
+                                                trigger("jobTitle");
+                                            }}
+                                            value={field.value}
+                                        >
+                                            <SelectTrigger
+                                                className="bg-gray-50"
+                                                aria-invalid={!!errors.jobTitle}
+                                            >
                                                 <SelectValue placeholder="Select job title" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -304,14 +341,19 @@ const RegisterInstructor = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Subjects</Label>
+                                <Label>
+                                    Subjects <span className="text-red-500">*</span>
+                                </Label>
                                 <Controller
                                     control={control}
                                     name="subjects"
                                     render={({ field }) => (
                                         <MultiSelectDropdown
                                             value={field.value}
-                                            onChange={field.onChange}
+                                            onChange={(val) => {
+                                                field.onChange(val);
+                                                trigger("subjects");
+                                            }}
                                             options={SUBJECT_OPTIONS}
                                         />
                                     )}
@@ -320,41 +362,6 @@ const RegisterInstructor = () => {
                                     <p className="text-sm text-red-600 mt-1">{errors.subjects.message}</p>
                                 )}
                             </div>
-                        </div>
-
-                        <div className="space-y-2 pt-2">
-                            <div className="flex items-start space-x-3">
-                                <Controller
-                                    control={control}
-                                    name="agreeTerms"
-                                    render={({ field }) => (
-                                        <Checkbox
-                                            id="agreeTerms"
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                        />
-                                    )}
-                                />
-                                <label
-                                    htmlFor="agreeTerms"
-                                    className="text-sm text-gray-600 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                >
-                                    I agree to the{" "}
-                                    <Link to="/terms" className="text-indigo-600 hover:underline font-medium">
-                                        Terms of Service
-                                    </Link>{" "}
-                                    and{" "}
-                                    <Link
-                                        to="/privacy"
-                                        className="text-indigo-600 hover:underline font-medium"
-                                    >
-                                        Privacy Policy
-                                    </Link>
-                                </label>
-                            </div>
-                            {errors.agreeTerms && (
-                                <p className="text-sm text-red-600 mt-1">{errors.agreeTerms.message}</p>
-                            )}
                         </div>
 
                         <Button

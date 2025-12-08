@@ -326,7 +326,7 @@ function isCourseIntentText(text, knownCategories = []) {
   if (!text) return false;
   const t = text.toLowerCase();
 
-  // Nhóm từ khóa (20-40 items tổng)
+  // THÊM MỚI: Keywords về review/rating
   const direct = [
     "khóa học",
     "khóa",
@@ -378,15 +378,38 @@ function isCourseIntentText(text, knownCategories = []) {
     "danh sách",
   ];
 
-  const groups = { direct, verbs, askPhrases, domains, metaWords };
+  // THÊM MỚI: Keywords về đánh giá/review
+  const reviewKeywords = [
+    "review",
+    "đánh giá",
+    "rating",
+    "sao",
+    "⭐",
+    "kết quả",
+    "feedback",
+    "nhận xét",
+    "ý kiến",
+    "tốt không",
+    "như thế nào",
+    "chất lượng",
+  ];
 
-  // điểm: direct=1, verbs=0.8, askPhrases=0.6, domains=1.2, metaWords=0.6
+  const groups = {
+    direct,
+    verbs,
+    askPhrases,
+    domains,
+    metaWords,
+    reviewKeywords,
+  };
+
   const weights = {
     direct: 1,
     verbs: 0.8,
     askPhrases: 0.6,
     domains: 1.2,
     metaWords: 0.6,
+    reviewKeywords: 1.0, // THÊM MỚI
   };
 
   let score = 0;
@@ -396,13 +419,13 @@ function isCourseIntentText(text, knownCategories = []) {
     }
   }
 
-  // tăng điểm nếu chứa tên category đã biết (được sync vào metadata)
+  // tăng điểm nếu chứa tên category đã biết
   for (const cat of knownCategories) {
     const c = String(cat).toLowerCase();
     if (c && t.includes(c)) score += 1.5;
   }
 
-  // Nếu có nhiều token (độ dài) và chứa 2 từ khóa khác nhóm -> cộng thêm
+  // Nếu có nhiều token và chứa 2 từ khóa khác nhóm -> cộng thêm
   const tokens = t.split(/\s+/).filter(Boolean);
   if (
     tokens.length > 3 &&
@@ -411,7 +434,6 @@ function isCourseIntentText(text, knownCategories = []) {
     score += 0.5;
   }
 
-  // Threshold = 1.6 (tùy chỉnh). Trả true nếu đạt.
   return score >= 1.6;
 }
 

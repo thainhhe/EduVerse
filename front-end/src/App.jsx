@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { useAuth } from "@hooks/useAuth";
 import MainLayout from "@components/layout/MainLayout";
 import PrivateRoute from "@routes/PrivateRoute";
@@ -77,6 +77,19 @@ import AdminProfilePage from "./pages/admin/Profile/AdminProfilePage";
 
 function App() {
   const { loading, isAuthenticated } = useAuth();
+  const location = useLocation();
+
+  // Hide chatbot on auth pages
+  const hidePages = [
+    "/login",
+    "/register-instructor",
+    "/register-learner",
+    "/forgot-password",
+    "/google-auth/success",
+  ];
+  const shouldHideChatbot =
+    hidePages.some((path) => location.pathname.startsWith(path)) ||
+    location.pathname.includes("/reset-password");
 
   if (loading) {
     return (
@@ -132,7 +145,11 @@ function App() {
           <Route path="contacts" element={<ContactPage />} />
 
           {/* Learner Routes */}
-          <Route element={<ProtectedRouteByRole allowedRoles={["learner", "instructor"]} />}>
+          <Route
+            element={
+              <ProtectedRouteByRole allowedRoles={["learner", "instructor"]} />
+            }
+          >
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="payment-history" element={<PaymentHistory />} />
             <Route path="learning/:courseId" element={<Learning />} />
@@ -145,11 +162,19 @@ function App() {
           </Route>
 
           {/* Instructor Routes */}
-          <Route element={<ProtectedRouteByRole allowedRoles={["instructor"]} />}>
-            <Route path="dashboard-instructor" element={<DashboardInstructor />} />
+          <Route
+            element={<ProtectedRouteByRole allowedRoles={["instructor"]} />}
+          >
+            <Route
+              path="dashboard-instructor"
+              element={<DashboardInstructor />}
+            />
             <Route path="mycourses" element={<MyCourse />} />
             <Route path="create-course-basic" element={<CreateCourse />} />
-            <Route path="instructor/courses/:id" element={<InstructorCourseDetail />} />
+            <Route
+              path="instructor/courses/:id"
+              element={<InstructorCourseDetail />}
+            />
 
             {/* Course Builder Sub-routes */}
             <Route path="create-course" element={<CourseBuilderLayout />}>
@@ -167,11 +192,18 @@ function App() {
           </Route>
 
           {/* Shared Protected Routes (Learner & Instructor) */}
-          <Route element={<ProtectedRouteByRole allowedRoles={["learner", "instructor"]} />}>
+          <Route
+            element={
+              <ProtectedRouteByRole allowedRoles={["learner", "instructor"]} />
+            }
+          >
             <Route path="settings" element={<Settings />} />
             <Route path="notifications" element={<NotificationPage />} />
             <Route path="checkout" element={<PaymentPage />} />
-            <Route path="checkout/success" element={<PaymentConfirmationPage />} />
+            <Route
+              path="checkout/success"
+              element={<PaymentConfirmationPage />}
+            />
             <Route path="checkout/fail" element={<PaymentFailPage />} />
             <Route path="comment-thread" element={<CommentThread />} />
           </Route>
@@ -182,8 +214,14 @@ function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<AdminDashboardPage />} />
             <Route path="users" element={<UserManagementPage />} />
-            <Route path="users/instructor/:userId" element={<InstructorProfileDetail />} />
-            <Route path="users/learner/:userId" element={<LearnerProfileDetail />} />
+            <Route
+              path="users/instructor/:userId"
+              element={<InstructorProfileDetail />}
+            />
+            <Route
+              path="users/learner/:userId"
+              element={<LearnerProfileDetail />}
+            />
             <Route path="courses" element={<CourseManagementPage />} />
             <Route path="courses/:id" element={<CourseDetailPage />} />
             <Route path="categories" element={<CategoryManagement />} />
@@ -191,11 +229,17 @@ function App() {
             {/* Admin management pages */}
             <Route path="chatbot" element={<ChatbotManagementPage />} />
             <Route path="comments" element={<CommentManagementPage />} />
-            <Route path="notifications" element={<NotificationManagementPage />} />
+            <Route
+              path="notifications"
+              element={<NotificationManagementPage />}
+            />
             <Route path="reports" element={<ReportManagementPage />} />
             <Route path="enrollment" element={<EnrollmentPage />} />
             <Route path="revenue" element={<RevenuePage />} />
-            <Route path="revenue/instructors" element={<InstructorRevenuePage />} />
+            <Route
+              path="revenue/instructors"
+              element={<InstructorRevenuePage />}
+            />
             <Route
               path="revenue/instructors/:instructorId"
               element={<InstructorRevenueDetailPage />}
@@ -209,7 +253,7 @@ function App() {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
-      <ChatbotWidget />
+      {!shouldHideChatbot && <ChatbotWidget />}
       {/* <SessionTimeout /> */}
     </>
   );
