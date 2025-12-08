@@ -13,10 +13,10 @@ import React from "react";
 
 export const ConfirmationHelper = ({
     trigger,
-    title = "Xác nhận hành động",
-    description = "Bạn có chắc chắn muốn thực hiện hành động này không?",
-    confirmText = "Xác nhận",
-    cancelText = "Hủy",
+    title = "Confirm action",
+    description = "Are you sure you want to perform this action?",
+    confirmText = "Confirm",
+    cancelText = "Cancel",
     confirmBgColor = "bg-red-500 hover:bg-red-600 text-white",
     cancelBgColor = "bg-gray-500 hover:bg-gray-600 text-white",
     onConfirm,

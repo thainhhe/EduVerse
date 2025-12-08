@@ -131,7 +131,7 @@ const RegisterInstructor = () => {
         defaultValues: {
             subjects: [],
             jobTitle: "",
-            agreeTerms: false,
+            agreeTerms: true,
         },
     });
 

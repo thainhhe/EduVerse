@@ -9,8 +9,8 @@ const widgetBox = {
   height: 480,
   background: "#fff",
   border: "1px solid #ddd",
-  borderRadius: 10,
-  boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+  borderRadius: 16,
+  boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
   display: "flex",
   flexDirection: "column",
   overflow: "hidden",
@@ -21,14 +21,17 @@ const toggleBtnStyle = {
   position: "fixed",
   right: 20,
   bottom: 20,
-  width: 60,
-  height: 60,
+  width: 68,
+  height: 68,
   borderRadius: "50%",
-  background: "#0b74ff",
+  background: "transparent",
   color: "#fff",
   border: "none",
   cursor: "pointer",
   zIndex: 1300,
+  padding: 0,
+  boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+  overflow: "hidden",
 };
 
 const sourceBoxStyle = {
@@ -41,6 +44,12 @@ const sourceBoxStyle = {
   border: "1px solid #eee",
   maxHeight: 120,
   overflow: "auto",
+};
+
+const headerIconStyle = {
+  width: 28, // Thay đổi: Icon lớn hơn
+  height: 28,
+  marginRight: 8,
 };
 
 export const ChatbotWidget = () => {
@@ -191,13 +200,11 @@ export const ChatbotWidget = () => {
     setValue("");
     setLoading(true);
 
-    // Construct simple history (optional)
     const history = messages.map((m) => ({ sender: m.sender, text: m.text }));
 
     // Handlers for streaming
     const onChunk = (chunk) => {
       setMessages((prevMessages) => {
-        // find the last message with the matching id; fallback to last element
         const idx = prevMessages.map((m) => m.id).lastIndexOf(tempBotMsgId);
         if (idx !== -1) {
           const updated = [...prevMessages];
@@ -329,15 +336,61 @@ export const ChatbotWidget = () => {
     <>
       {open && (
         <div style={widgetBox}>
+          {/* Thay đổi: Header mới */}
           <div
             style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
               padding: 12,
               borderBottom: "1px solid #eee",
-              background: "#fafafa",
+              background: "#f0f4ff",
+              color: "#4F39F6",
             }}
           >
-            <strong>EduVerse Bot</strong>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <img
+                src="/w.png"
+                alt="Robot Icon"
+                style={{
+                  ...headerIconStyle,
+                  borderRadius: "50%",
+                  border: "1px solid #4F39F6",
+                }}
+              />
+              <strong style={{ fontSize: 16 }}>EduVerse Chatbot</strong>
+            </div>
+            <button
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "Bạn có chắc chắn muốn xóa tất cả lịch sử trò chuyện?"
+                  )
+                ) {
+                  setMessages([
+                    {
+                      sender: "bot",
+                      text: "Chào bạn! Tôi có thể giúp gì cho bạn?",
+                    },
+                  ]);
+                }
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                fontSize: 20,
+                cursor: "pointer",
+                color: "#4F39F6",
+                padding: 4,
+                lineHeight: 1,
+              }}
+              aria-label="Clear chat"
+              title="Xóa lịch sử trò chuyện"
+            >
+              &#9763; {/* Biểu tượng xương chéo (hoặc dùng 'x') */}
+            </button>
           </div>
+
           <div
             ref={listRef}
             style={{
@@ -441,7 +494,12 @@ export const ChatbotWidget = () => {
         onClick={() => setOpen((s) => !s)}
         aria-label="Toggle chat"
       >
-        {open ? "×" : "💬"}
+        {/* Thay đổi: Sử dụng hình ảnh robot */}
+        <img
+          src="/w.png"
+          alt="Chatbot Avatar"
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
       </button>
     </>
   );

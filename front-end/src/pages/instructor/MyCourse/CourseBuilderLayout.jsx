@@ -13,6 +13,7 @@ const BuilderInner = () => {
     const sessionCourse =
         typeof window !== "undefined" ? JSON.parse(sessionStorage.getItem("currentCourseData")) : {};
     const isDraft = sessionCourse?.status === "draft";
+    const isReject = sessionCourse?.status === "reject";
 
     const { isMainInstructor } = useCourse();
     const isEditable = !!isMainInstructor;
@@ -60,7 +61,7 @@ const BuilderInner = () => {
                         </Button>
                     </div>
                     <div className="flex items-center gap-3">
-                        {isEditable && isDraft && (
+                        {isEditable && (isDraft || isReject) && (
                             <>
                                 <ConfirmationHelper
                                     trigger={
@@ -73,23 +74,25 @@ const BuilderInner = () => {
                                     }
                                     onConfirm={handleDeleteDraft}
                                 />
-                                <ConfirmationHelper
-                                    trigger={
-                                        <Button
-                                            variant="ghost"
-                                            className="text-sm px-4 py-2 rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 transition-all"
-                                        >
-                                            <Send className="h-4 w-4 mr-2" /> Submit Course
-                                        </Button>
-                                    }
-                                    title="Submit Course? You can't update content after submitting!"
-                                    description="This action cannot be undone. After submitting ,the course will be reviewed by our team."
-                                    confirmText="Submit"
-                                    cancelText="Cancel"
-                                    confirmBgColor="bg-indigo-500 hover:bg-indigo-600 text-white"
-                                    cancelBgColor="bg-gray-500 hover:bg-gray-600 text-white"
-                                    onConfirm={handleSubmitCourse}
-                                />
+                                {isDraft && (
+                                    <ConfirmationHelper
+                                        trigger={
+                                            <Button
+                                                variant="ghost"
+                                                className="text-sm px-4 py-2 rounded-lg border border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 transition-all"
+                                            >
+                                                <Send className="h-4 w-4 mr-2" /> Submit Course
+                                            </Button>
+                                        }
+                                        title="Submit Course? You can't update content after submitting!"
+                                        description="This action cannot be undone. After submitting ,the course will be reviewed by our team."
+                                        confirmText="Submit"
+                                        cancelText="Cancel"
+                                        confirmBgColor="bg-indigo-500 hover:bg-indigo-600 text-white"
+                                        cancelBgColor="bg-gray-500 hover:bg-gray-600 text-white"
+                                        onConfirm={handleSubmitCourse}
+                                    />
+                                )}
                             </>
                         )}
                         <div className="flex items-center gap-2 text-sm text-muted-foreground bg-gray-100 px-3 py-1.5 rounded-full">

@@ -1,0 +1,14 @@
+[
+  {
+    "_id": "policy_change_role",
+    "type": "policy",
+    "title": "Cách thay đổi Vai trò (Sinh viên/Giảng viên)",
+    "content": "Việc thay đổi vai trò (Learner/Instructor) là thao tác nhạy cảm và cần có sự can thiệp của Admin. Bạn cần liên hệ Bộ phận Hỗ trợ qua email/hotline để gửi yêu cầu. Admin sẽ xem xét và xử lý thủ công yêu cầu thay đổi vai trò."
+  },
+  {
+    "_id": "policy_unban_account",
+    "type": "policy",
+    "title": "Mở lại Tài khoản bị khóa (Banned)",
+    "content": "Nếu tài khoản của bạn bị khóa, vui lòng liên hệ Bộ phận Hỗ trợ ngay lập tức. Admin sẽ kiểm tra lý do bị khóa (`isBanned: true` trong database) và xem xét dựa trên các chính sách cộng đồng để quyết định mở lại tài khoản cho bạn."
+  }
+]

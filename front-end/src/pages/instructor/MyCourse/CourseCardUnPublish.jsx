@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const CourseCardUnPublish = ({ course }) => {
@@ -33,7 +34,9 @@ const CourseCardUnPublish = ({ course }) => {
                                 ? "Draft"
                                 : course.status === "pending"
                                 ? "Your course is pending review"
-                                : "Published"}
+                                : course.status === "reject"
+                                ? "Your course is rejected"
+                                : "Unknown"}
                         </span>
                         <span className="text-muted-foreground">
                             {course.isPublished ? "Public" : "Private"}
@@ -52,7 +55,7 @@ const CourseCardUnPublish = ({ course }) => {
                     onClick={handleEdit}
                     className="text-sm mr-2.5 p-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
                 >
-                    Continue create
+                    Next step <ArrowRight />
                 </Button>
             </div>
         </div>

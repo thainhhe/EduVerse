@@ -4,24 +4,31 @@ import roomService from "@/services/roomService";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Edit, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Trash2, Edit, Plus, Lock } from "lucide-react";
 import { ToastHelper } from "@/helper/ToastHelper";
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import EditRoom from "./EditRoom";
+import AddRoom from "./AddRoom";
 
 const RoomMeeting = () => {
     const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [newRoomName, setNewRoomName] = useState("");
-    const [newRoomLink, setNewRoomLink] = useState("");
     const params = useParams();
     const location = useLocation();
     const { user } = useAuth();
     const [statusFilter, setStatusFilter] = useState("all");
     const [editingRoom, setEditingRoom] = useState(null);
     const [openEdit, setOpenEdit] = useState(false);
+
+    // Create room dialog state
+    const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
+    // Password dialog state
+    const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+    const [selectedRoom, setSelectedRoom] = useState(null);
+    const [enteredPassword, setEnteredPassword] = useState("");
 
     const getCourseIdFromQuery = () => {
         try {
@@ -63,59 +70,61 @@ const RoomMeeting = () => {
         fetchRooms();
     }, [courseId]);
 
-    const handleCreateRoom = async () => {
-        if (!newRoomName) {
-            ToastHelper.error("Vui lòng nhập tên phòng.");
-            return;
-        }
-        if (!courseId) {
-            ToastHelper.error(
-                "Không tìm thấy courseId. Mở trang này từ trang quản lý khóa học hoặc điều hướng kèm state: { id: <courseId> } hoặc ?courseId=<id>."
-            );
-            return;
-        }
-        if (!user) {
-            ToastHelper.info("Bạn cần đăng nhập để tạo phòng.");
-            return;
-        }
-
-        try {
-            const payload = {
-                name: newRoomName,
-                link: newRoomLink,
-                courseId: courseId,
-                createdBy: user._id ?? user.id ?? user.userId,
-            };
-            const res = await roomService.createRoom(payload);
-            if (res.success) {
-                const created = res?.data?.data ?? res?.data ?? res;
-                setRooms((prev) => (Array.isArray(prev) ? [created, ...prev] : [created]));
-                setNewRoomName("");
-                setNewRoomLink("");
-                const link = created?.link ?? created?.url ?? created?.meetingUrl ?? null;
-                if (link) {
-                    window.open(link, "_blank");
-                } else {
-                    ToastHelper.info("Phòng đã tạo. Bấm 'Join' ở bên phải để mở phòng (nếu có link).");
-                }
-            } else {
-                ToastHelper.error("Đã xảy ra lỗi, vui lòng thử lại.");
-            }
-        } catch (error) {
-            console.error("Failed to create room:", error);
-            ToastHelper.error("Tạo phòng thất bại. Kiểm tra console.");
-        }
-    };
-
     const handleDeleteRoom = async (roomId) => {
         try {
             await roomService.deleteRoom(roomId);
-            ToastHelper.success("Đã xóa phòng.");
+            ToastHelper.success("Room deleted successfully.");
             fetchRooms();
         } catch (error) {
             console.error("Failed to delete room:", error);
-            ToastHelper.error("Xóa thất bại. Kiểm tra console.");
+            ToastHelper.error("Failed to delete room. Please check console.");
         }
+    };
+
+    const handleJoinRoom = (room) => {
+        const link = room.link ?? room.url ?? room.meetingUrl ?? "";
+
+        if (!link) {
+            ToastHelper.error("No meeting link available for this room.");
+            return;
+        }
+
+        // Check if room has password
+        if (room.password && room.password.trim() !== "") {
+            // Show password dialog
+            setSelectedRoom(room);
+            setEnteredPassword("");
+            setPasswordDialogOpen(true);
+        } else {
+            // No password, join directly
+            window.open(link, "_blank");
+        }
+    };
+
+    const handlePasswordSubmit = () => {
+        if (!selectedRoom) return;
+
+        // Validate password
+        if (enteredPassword.trim() === "") {
+            ToastHelper.error("Please enter the password.");
+            return;
+        }
+
+        if (enteredPassword !== selectedRoom.password) {
+            ToastHelper.error("Incorrect password. Please try again.");
+            setEnteredPassword("");
+            return;
+        }
+
+        // Password correct, join the room
+        const link = selectedRoom.link ?? selectedRoom.url ?? selectedRoom.meetingUrl ?? "";
+        window.open(link, "_blank");
+
+        // Close dialog and reset
+        setPasswordDialogOpen(false);
+        setSelectedRoom(null);
+        setEnteredPassword("");
+        ToastHelper.success("Joining room...");
     };
 
     const filteredRooms = useMemo(() => {
@@ -128,41 +137,49 @@ const RoomMeeting = () => {
     return (
         <div className="w-full mx-auto">
             <div className="border-b-indigo-600 border-b-2 pb-4 mb-4 flex items-center justify-between">
-                <h2 className="text-2xl font-bold tracking-tight">Quản lý Phòng học</h2>
+                <h2 className="text-2xl font-bold tracking-tight">Room Management</h2>
             </div>
             {!courseId && (
                 <div className="mb-4 p-3 rounded bg-yellow-50 text-sm text-yellow-800 border border-yellow-300">
-                    Không tìm thấy <strong>courseId</strong>. Vui lòng mở từ trang khóa học hoặc truyền state/query.
+                    Please open this page from the course management page or navigate with state/query.
                 </div>
             )}
-            <div className="flex flex-col items-center md:flex-row gap-2 mb-4">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-40">
-                        <SelectValue placeholder="Trạng thái" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Tất cả ({filteredRooms.length})</SelectItem>
-                        <SelectItem value="public">Public</SelectItem>
-                        <SelectItem value="private">Private</SelectItem>
-                    </SelectContent>
-                </Select>
-                <Input
-                    placeholder="Tên phòng (VD: Buổi Zoom tuần 1)"
-                    value={newRoomName}
-                    onChange={(e) => setNewRoomName(e.target.value)}
-                    className="flex-1"
-                />
-                <Button onClick={handleCreateRoom} className="bg-indigo-600 text-white hover:bg-indigo-700">
+
+            {/* Filter and Create Button */}
+            <div className="flex items-center justify-between gap-3 mb-4">
+                {/* Status Filter */}
+                <div className="flex items-center gap-2">
+                    <label className="font-medium text-sm">Filter by Status:</label>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-40">
+                            <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All ({filteredRooms.length})</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="ongoing">Ongoing</SelectItem>
+                            <SelectItem value="ended">Ended</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/* Create Room Button */}
+                <Button
+                    onClick={() => setCreateDialogOpen(true)}
+                    className="bg-indigo-600 text-white hover:bg-indigo-700"
+                >
                     <Plus className="mr-2 h-4 w-4" />
-                    Tạo phòng
+                    Create Room
                 </Button>
             </div>
 
             {/* Rooms List */}
-            <div className="space-y-3 max-h-[350px] overflow-y-auto mt-2p-1space-y-2scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
-                {loading && <p>Đang tải danh sách phòng...</p>}
+            <div className="space-y-3 max-h-[350px] overflow-y-auto mt-2 p-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
+                {loading && <p>Loading room list...</p>}
 
-                {!loading && rooms.length === 0 && <div className="text-gray-500 italic">Chưa có phòng nào.</div>}
+                {!loading && rooms.length === 0 && (
+                    <div className="text-gray-500 italic">Chưa có phòng nào.</div>
+                )}
 
                 {!loading &&
                     filteredRooms.map((room) => {
@@ -172,17 +189,22 @@ const RoomMeeting = () => {
                         return (
                             <div
                                 key={id}
-                                className="
-                                flex justify-between items-center 
-                                p-4 rounded-lg border 
-                                bg-white shadow-sm hover:shadow-md 
-                                transition-all
-                            "
+                                className="flex justify-between items-center p-4 rounded-lg border bg-white shadow-sm hover:shadow-md transition-all"
                             >
                                 {/* Room Info */}
-                                <div>
-                                    <div className="font-semibold text-lg">{room.name}</div>
-
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <div className="font-semibold text-lg">{room.name}</div>
+                                        {room.password && room.password.trim() !== "" && (
+                                            <Lock
+                                                className="h-4 w-4 text-gray-500"
+                                                title="Password protected"
+                                            />
+                                        )}
+                                    </div>
+                                    {room.description && (
+                                        <p className="text-sm text-gray-600 mt-1">{room.description}</p>
+                                    )}
                                     {link ? (
                                         <a
                                             href={link}
@@ -193,8 +215,26 @@ const RoomMeeting = () => {
                                             {link}
                                         </a>
                                     ) : (
-                                        <p className="text-sm text-gray-500">Chưa có link</p>
+                                        <p className="text-sm text-gray-500">No link</p>
                                     )}
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span
+                                            className={`text-xs px-2 py-1 rounded-full ${
+                                                room.status === "ongoing"
+                                                    ? "bg-green-100 text-green-700"
+                                                    : room.status === "ended"
+                                                    ? "bg-gray-100 text-gray-700"
+                                                    : "bg-yellow-100 text-yellow-700"
+                                            }`}
+                                        >
+                                            {room.status}
+                                        </span>
+                                        {room.isPublic && (
+                                            <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                                                Public
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Actions */}
@@ -202,9 +242,17 @@ const RoomMeeting = () => {
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => link && window.open(link, "_blank")}
+                                        onClick={() => handleJoinRoom(room)}
+                                        disabled={!link}
                                     >
-                                        Join
+                                        {room.password && room.password.trim() !== "" ? (
+                                            <>
+                                                <Lock className="h-3 w-3 mr-1" />
+                                                Join
+                                            </>
+                                        ) : (
+                                            "Join"
+                                        )}
                                     </Button>
 
                                     <Button
@@ -231,9 +279,65 @@ const RoomMeeting = () => {
                         );
                     })}
             </div>
+
+            {/* Add Room Dialog */}
+            <AddRoom
+                open={createDialogOpen}
+                setOpen={setCreateDialogOpen}
+                courseId={courseId}
+                onCreated={fetchRooms}
+            />
+
+            {/* Edit Room Dialog */}
             {editingRoom && (
                 <EditRoom room={editingRoom} open={openEdit} setOpen={setOpenEdit} onUpdated={fetchRooms} />
             )}
+
+            {/* Password Dialog */}
+            <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Lock className="h-5 w-5" />
+                            Password Required
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 mt-2">
+                        <p className="text-sm text-gray-600">
+                            This room is password protected. Please enter the password to join.
+                        </p>
+                        <div>
+                            <label className="text-sm font-medium">Password</label>
+                            <Input
+                                type="password"
+                                placeholder="Enter room password"
+                                value={enteredPassword}
+                                onChange={(e) => setEnteredPassword(e.target.value)}
+                                onKeyPress={(e) => {
+                                    if (e.key === "Enter") {
+                                        handlePasswordSubmit();
+                                    }
+                                }}
+                                className="mt-1"
+                                autoFocus
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter className="gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setPasswordDialogOpen(false);
+                                setEnteredPassword("");
+                                setSelectedRoom(null);
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button onClick={handlePasswordSubmit}>Join Room</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

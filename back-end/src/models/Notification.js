@@ -4,6 +4,7 @@ const notificationSchema = new mongoose.Schema(
     {
         receiverId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false },
         senderId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        courseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: false, default: null },
         title: { type: String },
         type: {
             type: String,

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -19,6 +20,7 @@ import {
     Download,
     Infinity as InfinityIcon,
     Smartphone,
+    Lock,
 } from "lucide-react";
 import { getCourseById } from "@/services/courseService";
 import { useEffect, useState } from "react";
@@ -36,7 +38,14 @@ import {
     DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { reportService } from "@/services/reportService";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+    Dialog,
+    DialogTrigger,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { enrollmentService } from "@/services/enrollmentService";
 import { paymentService } from "@/services/paymentService";
@@ -68,6 +77,11 @@ const CourseDetail = () => {
     const [issueTypeSelect, setIssueTypeSelect] = useState("bug");
     const [issueDescription, setIssueDescription] = useState("");
     const [rooms, setRooms] = useState([]);
+
+    // Password dialog state for joining rooms
+    const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+    const [selectedRoom, setSelectedRoom] = useState(null);
+    const [enteredPassword, setEnteredPassword] = useState("");
 
     useEffect(() => {
         const fetchData = async () => {
@@ -225,6 +239,52 @@ const CourseDetail = () => {
             ToastHelper.error("Gửi báo cáo thất bại!");
             console.error(err);
         }
+    };
+
+    const handleJoinRoom = (room) => {
+        const link = room.link ?? room.url ?? room.meetingUrl ?? "";
+
+        if (!link) {
+            ToastHelper.error("No meeting link available for this room.");
+            return;
+        }
+
+        // Check if room has password
+        if (room.password && room.password.trim() !== "") {
+            // Show password dialog
+            setSelectedRoom(room);
+            setEnteredPassword("");
+            setPasswordDialogOpen(true);
+        } else {
+            // No password, join directly
+            window.open(link, "_blank");
+        }
+    };
+
+    const handlePasswordSubmit = () => {
+        if (!selectedRoom) return;
+
+        // Validate password
+        if (enteredPassword.trim() === "") {
+            ToastHelper.error("Please enter the password.");
+            return;
+        }
+
+        if (enteredPassword !== selectedRoom.password) {
+            ToastHelper.error("Incorrect password. Please try again.");
+            setEnteredPassword("");
+            return;
+        }
+
+        // Password correct, join the room
+        const link = selectedRoom.link ?? selectedRoom.url ?? selectedRoom.meetingUrl ?? "";
+        window.open(link, "_blank");
+
+        // Close dialog and reset
+        setPasswordDialogOpen(false);
+        setSelectedRoom(null);
+        setEnteredPassword("");
+        ToastHelper.success("Joining room...");
     };
 
     if (loading)
@@ -495,8 +555,8 @@ const CourseDetail = () => {
                                                                     <SelectItem value="bug">
                                                                         Technical Bug
                                                                     </SelectItem>
-                                                                    <SelectItem value="content">
-                                                                        Content Error
+                                                                    <SelectItem value="feature">
+                                                                        Feature Request
                                                                     </SelectItem>
                                                                     <SelectItem value="other">
                                                                         Other
@@ -755,10 +815,10 @@ const CourseDetail = () => {
                                                                     <div className="flex items-center gap-1">
                                                                         <Clock className="w-4 h-4" />
                                                                         <span>
-                                                                            {room.scheduledTime
+                                                                            {room.startTime
                                                                                 ? format(
                                                                                       new Date(
-                                                                                          room.scheduledTime
+                                                                                          room.startTime
                                                                                       ),
                                                                                       "MMM dd, yyyy HH:mm"
                                                                                   )
@@ -767,40 +827,59 @@ const CourseDetail = () => {
                                                                     </div>
                                                                     <Badge
                                                                         variant={
-                                                                            room.meetingStatus === "ongoing"
+                                                                            room.status === "ongoing"
                                                                                 ? "default"
-                                                                                : room.meetingStatus ===
-                                                                                  "ended"
+                                                                                : room.status === "ended"
                                                                                 ? "secondary"
                                                                                 : "outline"
                                                                         }
                                                                         className={
-                                                                            room.meetingStatus === "ongoing"
+                                                                            room.status === "ongoing"
                                                                                 ? "bg-green-500"
                                                                                 : ""
                                                                         }
                                                                     >
-                                                                        {room.meetingStatus}
+                                                                        {room.status}
                                                                     </Badge>
+                                                                    {room.isPublic && (
+                                                                        <Badge
+                                                                            variant="outline"
+                                                                            className="bg-blue-50 text-blue-700 border-blue-200"
+                                                                        >
+                                                                            Public
+                                                                        </Badge>
+                                                                    )}
+                                                                    {room.password &&
+                                                                        room.password.trim() !== "" && (
+                                                                            <Badge
+                                                                                variant="outline"
+                                                                                className="bg-amber-50 text-amber-700 border-amber-200"
+                                                                            >
+                                                                                🔒 Protected
+                                                                            </Badge>
+                                                                        )}
                                                                 </div>
                                                             </div>
 
                                                             <div className="ml-4">
-                                                                {room.meetingStatus === "ended" ||
-                                                                room.meetingStatus === "cancelled" ? (
+                                                                {room.status === "ended" ? (
                                                                     <Button disabled variant="secondary">
-                                                                        {room.meetingStatus === "ended"
-                                                                            ? "Ended"
-                                                                            : "Cancelled"}
+                                                                        Ended
                                                                     </Button>
                                                                 ) : (
                                                                     <Button
-                                                                        onClick={() =>
-                                                                            navigate(`/classroom/${room._id}`)
-                                                                        }
+                                                                        onClick={() => handleJoinRoom(room)}
                                                                         className="bg-indigo-600 hover:bg-indigo-700"
                                                                     >
-                                                                        Join Now
+                                                                        {room.password &&
+                                                                        room.password.trim() !== "" ? (
+                                                                            <>
+                                                                                <Lock className="h-4 w-4 mr-2" />
+                                                                                Join Now
+                                                                            </>
+                                                                        ) : (
+                                                                            "Join Now"
+                                                                        )}
                                                                     </Button>
                                                                 )}
                                                             </div>
@@ -859,6 +938,52 @@ const CourseDetail = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Password Dialog */}
+            <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Lock className="h-5 w-5" />
+                            Password Required
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 mt-2">
+                        <p className="text-sm text-gray-600">
+                            This room is password protected. Please enter the password to join.
+                        </p>
+                        <div>
+                            <label className="text-sm font-medium">Password</label>
+                            <Input
+                                type="password"
+                                placeholder="Enter room password"
+                                value={enteredPassword}
+                                onChange={(e) => setEnteredPassword(e.target.value)}
+                                onKeyPress={(e) => {
+                                    if (e.key === "Enter") {
+                                        handlePasswordSubmit();
+                                    }
+                                }}
+                                className="mt-1"
+                                autoFocus
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter className="gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setPasswordDialogOpen(false);
+                                setEnteredPassword("");
+                                setSelectedRoom(null);
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button onClick={handlePasswordSubmit}>Join Room</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

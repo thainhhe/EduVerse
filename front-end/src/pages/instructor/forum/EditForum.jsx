@@ -16,10 +16,11 @@ import { Textarea } from "@/components/ui/textarea";
 export function EditForum({ open, onOpenChange, forum, onUpdate }) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
-
+    const [errors, setErrors] = useState({ title: "", description: "" });
     const resetForm = () => {
         setTitle("");
         setDescription("");
+        setErrors({ title: "", description: "" });
     };
 
     // Load data khi mở dialog hoặc khi forum thay đổi
@@ -29,8 +30,32 @@ export function EditForum({ open, onOpenChange, forum, onUpdate }) {
             setDescription(forum.description || "");
         }
     }, [open, forum]);
+    const validate = () => {
+        const newErrors = { title: "", description: "" };
+        let isValid = true;
+
+        if (!title.trim()) {
+            newErrors.title = "Title is required.";
+            isValid = false;
+        } else if (title.trim().length < 3) {
+            newErrors.title = "Title must be at least 3 characters.";
+            isValid = false;
+        }
+
+        if (!description.trim()) {
+            newErrors.description = "Description is required.";
+            isValid = false;
+        } else if (description.trim().length < 10) {
+            newErrors.description = "Description must be at least 10 characters.";
+            isValid = false;
+        }
+
+        setErrors(newErrors);
+        return isValid;
+    };
 
     const handleSave = async () => {
+        if (!validate()) return;
         try {
             const payload = {
                 title: title.trim(),
@@ -71,25 +96,34 @@ export function EditForum({ open, onOpenChange, forum, onUpdate }) {
                 <div className="space-y-5 py-4">
                     {/* Title */}
                     <div className="space-y-2">
-                        <Label htmlFor="forum-title">Title</Label>
+                        <Label htmlFor="forum-title">Title <span className="text-red-500">*</span></Label>
                         <Input
                             id="forum-title"
                             placeholder="Enter forum title"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
+                            className={errors.title ? "border-red-500" : ""}
                         />
+                        {errors.title && (
+                            <p className="text-red-500 text-sm">{errors.title}</p>
+                        )}
                     </div>
 
                     {/* Description */}
                     <div className="space-y-2">
-                        <Label htmlFor="description">Description</Label>
+                        <Label htmlFor="description">Description <span className="text-red-500">*</span></Label>
                         <textarea
                             id="description"
                             placeholder="Enter forum description"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            className="min-h-[170px] resize-y !w-full !block whitespace-pre-wrap break-all p-3 rounded-md border border-input bg-transparent text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                            className={`min-h-[170px] resize-y !w-full !block whitespace-pre-wrap break-all p-3 rounded-md border 
+                               ${errors.description ? "border-red-500" : "border-input"
+                                } bg-transparent text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50`}
                         />
+                        {errors.description && (
+                            <p className="text-red-500 text-sm">{errors.description}</p>
+                        )}
                     </div>
                 </div>
 

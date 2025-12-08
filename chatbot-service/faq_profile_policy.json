@@ -1,0 +1,32 @@
+[
+  {
+    "_id": "faq_update_profile",
+    "type": "faq",
+    "title": "Cách đổi Ảnh đại diện (Avatar) và Tên hiển thị",
+    "content": "Để thay đổi ảnh đại diện hoặc tên hiển thị, bạn cần đăng nhập và truy cập vào **Cài đặt tài khoản (Settings)**. Trong mục Hồ sơ cá nhân (Profile), bạn có thể tải lên ảnh mới và chỉnh sửa tên hiển thị."
+  },
+  {
+    "_id": "policy_concurrent_login",
+    "type": "policy",
+    "title": "Chính sách Đăng nhập trên nhiều Thiết bị",
+    "content": "Vì lý do bảo mật và tối ưu trải nghiệm, một tài khoản được phép đăng nhập đồng thời trên tối đa **5 thiết bị khác nhau**."
+  },
+  {
+    "_id": "policy_2fa",
+    "type": "policy",
+    "title": "Bảo mật 2 lớp (2FA)",
+    "content": "Hiện tại, tính năng Bảo mật 2 lớp (2FA) **chưa được hỗ trợ** trên hệ thống EduVerse. Chúng tôi đang trong quá trình phát triển tính năng này."
+  },
+  {
+    "_id": "faq_login_history",
+    "type": "faq",
+    "title": "Kiểm tra Lịch sử Đăng nhập",
+    "content": "Bạn có thể kiểm tra lịch sử đăng nhập (Log) và các hoạt động quan trọng của tài khoản tại mục **Cài đặt (Settings)**, chọn tab **Lịch sử hoạt động/Bảo mật**."
+  },
+  {
+    "_id": "course_lecture_format",
+    "type": "course_policy",
+    "title": "Hình thức Bài giảng (Video quay sẵn hay Live)",
+    "content": "Phần lớn các bài giảng trong khóa học là **video quay sẵn** (pre-recorded), cho phép học viên chủ động học tập. Tuy nhiên, nhiều Giảng viên tổ chức thêm các buổi **Live Session** định kỳ thông qua tính năng **Phòng họp (Room Meeting)**. Thông tin chi tiết sẽ có trong mô tả từng khóa học."
+  }
+]

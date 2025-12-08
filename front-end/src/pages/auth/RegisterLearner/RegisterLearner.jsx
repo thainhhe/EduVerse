@@ -19,18 +19,34 @@ const RegisterLearner = () => {
         register,
         handleSubmit,
         setError,
+        setValue,
+        getValues,
+        trigger,
         formState: { errors, isSubmitting },
     } = useForm({
         resolver: zodResolver(registerLearnerSchema),
+        mode: "onBlur", // validate when user leaves field
     });
 
-    const [showPassword, setShowPassword] = useState(false); // added
-    const [showConfirm, setShowConfirm] = useState(false); // added
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
 
-    const onSubmit = async (data) => {
+    const handleTrimAndValidate = (fieldName) => {
+        const val = getValues(fieldName) || "";
+        const trimmed = val.trim();
+        if (trimmed !== val) {
+            setValue(fieldName, trimmed, { shouldValidate: true, shouldDirty: true });
+        } else {
+            trigger(fieldName);
+        }
+    };
+
+    const onSubmit = async (data, e) => {
+        e.preventDefault();
+        console.log("data", data);
         try {
             const result = await registerUser({
-                username: data.fullName, // send username to match backend validator
+                username: data.fullName,
                 email: data.email,
                 password: data.password,
                 role: "learner",
@@ -108,6 +124,7 @@ const RegisterLearner = () => {
                                 required
                                 maxLength={50}
                                 aria-invalid={!!errors.fullName}
+                                onBlur={() => handleTrimAndValidate("fullName")}
                             />
                             {errors.fullName && (
                                 <p className="text-sm text-red-600 mt-1">{errors.fullName.message}</p>
@@ -116,16 +133,16 @@ const RegisterLearner = () => {
 
                         <div className="space-y-2">
                             <Label htmlFor="email">
-                                Email Address<span className="text-red-500 -ml-1">*</span>
+                                Email<span className="text-red-500 -ml-1">*</span>
                             </Label>
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="Email Address"
+                                placeholder="Email"
                                 {...register("email")}
                                 required
-                                autoComplete="email"
                                 aria-invalid={!!errors.email}
+                                onBlur={() => handleTrimAndValidate("email")}
                             />
                             {errors.email && (
                                 <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>
@@ -191,34 +208,36 @@ const RegisterLearner = () => {
                             )}
                         </div>
 
-                        <div className="flex items-start space-x-3 pt-2">
-                            <Checkbox
-                                id="agreeTerms"
-                                {...register("agreeTerms", {
-                                    // normalize checkbox value to boolean (handles "on" / "true" / true)
-                                    setValueAs: (v) => v === "on" || v === "true" || v === true,
-                                })}
-                                className="mt-1"
-                            />
-                            <label htmlFor="agreeTerms" className="text-sm text-gray-700">
-                                By signing up, I agree with the{" "}
-                                <Link to="/terms" className="text-indigo-600 hover:underline">
-                                    Terms of Use
-                                </Link>{" "}
-                                &{" "}
-                                <Link to="/privacy" className="text-indigo-600 hover:underline">
-                                    Privacy Policy
-                                </Link>
-                            </label>
-                        </div>
-                        {errors.agreeTerms && (
-                            <p className="text-sm text-red-600">{errors.agreeTerms.message}</p>
-                        )}
+                        {/* <div className="flex items-start space-x-3 pt-2">
+              <Checkbox
+                id="agreeTerms"
+                {...register("agreeTerms", {
+                  setValueAs: (v) => v === "on" || v === "true" || v === true,
+                })}
+                className="mt-1"
+              />
+              <label htmlFor="agreeTerms" className="text-sm text-gray-700">
+                By signing up, I agree with the{" "}
+                <Link to="/terms" className="text-indigo-600 hover:underline">
+                  Terms of Use
+                </Link>{" "}
+                &{" "}
+                <Link to="/privacy" className="text-indigo-600 hover:underline">
+                  Privacy Policy
+                </Link>
+              </label>
+            </div>
+            {errors.agreeTerms && (
+              <p className="text-sm text-red-600">
+                {errors.agreeTerms.message}
+              </p>
+            )} */}
 
                         <Button
                             type="submit"
                             className="w-full bg-[#4F39F6] text-white hover:bg-[#3e2adf] focus:ring-0"
                             disabled={isSubmitting}
+                            onClick={() => console.log("submit")}
                         >
                             {isSubmitting ? "Signing up..." : "Sign up"}
                         </Button>
