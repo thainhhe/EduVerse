@@ -177,6 +177,7 @@ const STATIC_KB_FILES = [
   "faq_authentication.json",
   "faq_profile_policy.json",
   "policy_admin_action.json",
+  "faq_general_learning.json",
 ];
 
 // Hàm đọc và xử lý các file KB tĩnh
@@ -212,7 +213,6 @@ const readStaticKBFiles = () => {
 };
 
 const pushDocumentsToChroma = async (apiData) => {
-  // LẤY THÊM DỮ LIỆU KB TĨNH
   const staticKbDocs = readStaticKBFiles();
 
   const types = [
@@ -224,7 +224,6 @@ const pushDocumentsToChroma = async (apiData) => {
     { key: "quizzes", type: "quiz" },
     { key: "reviews", type: "review" },
     { key: "enrollments", type: "enrollment" },
-    // THÊM MỚI: key để chứa các docs tĩnh
     { key: "staticKb", type: "static_kb" },
   ];
 
