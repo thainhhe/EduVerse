@@ -1021,7 +1021,7 @@ const EnrollCard = ({ price, onEnroll, isEnrolled, course }) => {
                 paymentDate: Date.now(),
                 paymentMethod: "free",
             });
-            ToastHelper.success("Đăng ký khóa học thành công!");
+            ToastHelper.success("Enrolled successfully!");
             await refreshEnrollments();
             navigate(`/learning/${course._id}`);
         } catch (error) {
@@ -1029,7 +1029,7 @@ const EnrollCard = ({ price, onEnroll, isEnrolled, course }) => {
                 "Error enrolling course:",
                 error || error?.response?.data?.message || error?.message
             );
-            ToastHelper.error("Đăng ký khóa học thất bại!");
+            ToastHelper.error("Error enrolling course");
         }
     };
 
@@ -1108,15 +1108,11 @@ const EnrollCard = ({ price, onEnroll, isEnrolled, course }) => {
                             <Smartphone className="w-5 h-5 text-gray-400" />
                             <span>Access on mobile and TV</span>
                         </li>
-                        <li className="flex items-center gap-3">
-                            <Award className="w-5 h-5 text-gray-400" />
-                            <span>Certificate of completion</span>
-                        </li>
                     </ul>
                 </div>
             </CardContent>
             <CardFooter className="bg-gray-50 border-t border-gray-100 p-4">
-                <div className="w-full flex justify-between items-center text-sm font-medium text-gray-600">
+                <div className="w-full flex justify-around items-center text-sm font-medium text-gray-600">
                     <button className="hover:text-gray-900 transition-colors">Share</button>
                     <button className="hover:text-gray-900 transition-colors">Gift this course</button>
                     <button className="hover:text-gray-900 transition-colors">Apply Coupon</button>

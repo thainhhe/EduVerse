@@ -90,16 +90,6 @@ const AnnouncementsPage = () => {
                             <span className="w-1.5 h-6 rounded bg-indigo-500" />
                             Announcements & Notifications
                         </div>
-                        <Button onClick={handleAdd} className="bg-indigo-600">
-                            + Announcement
-                        </Button>
-                        <AnnouncementDialog
-                            open={openDialog}
-                            onOpenChange={setOpenDialog}
-                            mode={dialogMode}
-                            initialData={selectedAnnouncement}
-                            onSubmit={handleSubmit}
-                        />
                     </div>
                 </CardHeader>
                 <CardContent>

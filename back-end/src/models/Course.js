@@ -23,6 +23,7 @@ const courseSchema = new mongoose.Schema(
             value: { type: Number, default: 0 },
             unit: { type: String, enum: ["day", "month", "year"], default: "day" },
         },
+        flag: { type: String },
         isPublished: { type: Boolean, default: false },
         totalEnrollments: { type: Number, default: 0, min: 0 },
         status: { type: String, enum: ["draft", "pending", "approve", "reject"], default: "draft" },

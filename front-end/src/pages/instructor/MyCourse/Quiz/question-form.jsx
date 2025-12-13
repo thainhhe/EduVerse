@@ -12,7 +12,6 @@ import { ToastHelper } from "@/helper/ToastHelper";
 export function QuestionForm({ onAddQuestion }) {
     const [text, setText] = useState("");
     const [type, setType] = useState("multiple-choice");
-    const [difficulty, setDifficulty] = useState("Easy");
     const [options, setOptions] = useState([
         { id: "1", text: "Option 1", isCorrect: false },
         { id: "2", text: "Option 2", isCorrect: false },
@@ -70,11 +69,13 @@ export function QuestionForm({ onAddQuestion }) {
             field === "isCorrect" &&
             value === true
         ) {
-            setOptions(options.map((o) => ({ ...o, isCorrect: o.id === id })));
+            setOptions(options.map((o) => ({ ...o, isCorrect: o.id.toString() === id.toString() })));
         }
         // Nếu là checkbox → có thể chọn nhiều đúng
         else {
-            setOptions(options.map((o) => (o.id === id ? { ...o, [field]: value } : o)));
+            setOptions(
+                options.map((o) => (o.id.toString() === id.toString() ? { ...o, [field]: value } : o))
+            );
         }
     };
 
@@ -89,7 +90,6 @@ export function QuestionForm({ onAddQuestion }) {
             id: "",
             text,
             type,
-            difficulty,
             options,
             explanation,
         };
@@ -99,7 +99,6 @@ export function QuestionForm({ onAddQuestion }) {
         // Reset form
         setText("");
         setType("multiple-choice");
-        setDifficulty("Easy");
         setOptions([
             { id: "1", text: "Option 1", isCorrect: false },
             { id: "2", text: "Option 2", isCorrect: false },
@@ -113,16 +112,23 @@ export function QuestionForm({ onAddQuestion }) {
     // UI
     // ======================
     return (
-        <Card className="sticky top-6 h-fit">
-            <CardHeader>
-                <CardTitle>Add New Question</CardTitle>
-                <CardDescription>Fill in the details to create a new quiz question.</CardDescription>
-            </CardHeader>
-            <CardContent>
+        <div className="sticky top-6 h-fit">
+            <div>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Question Text */}
                     <div className="space-y-2">
-                        <Label>Question Text</Label>
+                        <div className="flex gap-2">
+                            <h2 className="font-semibold">New Question</h2>
+                            <select
+                                className="border border-gray-300"
+                                value={type}
+                                onChange={(e) => setType(e.target.value)}
+                            >
+                                <option value="multiple-choice">Multiple Choice</option>
+                                <option value="checkbox">Checkbox (Multiple Answers)</option>
+                                <option value="true-false">True / False</option>
+                            </select>
+                        </div>
                         <Textarea
                             placeholder="Enter your question here..."
                             value={text}
@@ -130,26 +136,9 @@ export function QuestionForm({ onAddQuestion }) {
                             className="min-h-14 resize-y bg-gray-200 whitespace-pre-wrap break-all"
                         />
                     </div>
-
-                    {/* Question Type */}
-                    <div className="space-y-2">
-                        <Label>Question Type</Label>
-                        <Select value={type} onValueChange={setType}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
-                                <SelectItem value="checkbox">Checkbox (Multiple Answers)</SelectItem>
-                                <SelectItem value="true-false">True / False</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
                     {/* Answer Options */}
                     <div className="space-y-3">
                         <Label>Answer Options</Label>
-
                         {options.map((option) => (
                             <div key={option.id} className="flex items-center gap-2">
                                 {/* Checkbox hoặc Radio tùy theo type */}
@@ -179,8 +168,9 @@ export function QuestionForm({ onAddQuestion }) {
                                     placeholder="Option text"
                                     value={option.text}
                                     onChange={(e) => handleOptionChange(option.id, "text", e.target.value)}
-                                    className={`flex-1 border border-gray-300 ${option.isCorrect ? "bg-green-200" : "bg-gray-200"
-                                        }`}
+                                    className={`flex-1 border border-gray-300 ${
+                                        option.isCorrect ? "bg-green-200" : "bg-gray-200"
+                                    }`}
                                     disabled={type === "true-false"} // true/false thì không chỉnh sửa text
                                 />
 
@@ -211,22 +201,6 @@ export function QuestionForm({ onAddQuestion }) {
                             </Button>
                         )}
                     </div>
-
-                    {/* Difficulty */}
-                    <div className="space-y-2">
-                        <Label>Difficulty</Label>
-                        <Select value={difficulty} onValueChange={setDifficulty}>
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="Easy">Easy</SelectItem>
-                                <SelectItem value="Medium">Medium</SelectItem>
-                                <SelectItem value="Hard">Hard</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
                     {/* Explanation */}
                     <div className="space-y-2">
                         <Label>Explanation / Feedback</Label>
@@ -249,7 +223,6 @@ export function QuestionForm({ onAddQuestion }) {
                             onClick={() => {
                                 setText("");
                                 setType("multiple-choice");
-                                setDifficulty("Easy");
                                 setOptions([
                                     { id: "1", text: "Option 1", isCorrect: false },
                                     { id: "2", text: "Option 2", isCorrect: false },
@@ -263,7 +236,7 @@ export function QuestionForm({ onAddQuestion }) {
                         </Button>
                     </div>
                 </form>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }

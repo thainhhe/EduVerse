@@ -11,6 +11,7 @@ import { useEnrollment } from "@/context/EnrollmentContext";
 import { useAuth } from "@/hooks/useAuth";
 import categoryService from "@/services/categoryService";
 import Pagination from "@/helper/Pagination";
+import { ToastHelper } from "@/helper/ToastHelper";
 
 const Courses = () => {
     const [searchParams] = useSearchParams();
@@ -56,32 +57,21 @@ const Courses = () => {
         scrollRef.current.scrollLeft = scrollLeft - walk;
     };
 
-    console.log("enrollments", enrollments);
-    // ✅ Lấy dữ liệu từ API thật
-
     useEffect(() => {
         const fetchCourses = async () => {
             try {
                 setLoading(true);
                 const res = await getAllCoursePublished();
-                console.log("res", res);
                 if (res?.success) {
-                    // ✅ Khi thành công
                     const data = res.data || [];
                     setCourses(data);
-                    console.log("Dữ liệu khóa học:", data);
                 } else {
-                    // ⚠️ Khi API trả về success = false
                     console.error("Lỗi từ server:", res?.message || "Không xác định");
-                    alert(res?.message || "Đã xảy ra lỗi khi lấy danh sách khóa học!");
+                    ToastHelper.error(res?.message || "Error fetching courses");
                 }
-                // const uniqueCategories = [
-                //   "All",
-                //   ...new Set(data.map((course) => course.category || "Unknown")),
-                // ];
-                // setCategories(uniqueCategories);
             } catch (err) {
                 setError("Failed to fetch courses.");
+                ToastHelper.error("Failed to fetch courses.");
             } finally {
                 setLoading(false);
             }
@@ -101,8 +91,6 @@ const Courses = () => {
         };
         fetchCategories();
     }, []);
-    console.log("category", categories);
-    console.log("selectedCategory", selectedCategory);
     useEffect(() => {
         setSearchTerm(searchParams.get("search") || "");
     }, [searchParams]);
@@ -150,7 +138,6 @@ const Courses = () => {
             }
         });
 
-    console.log("filteredCourses", filteredCourses);
     // ✅ Loading hoặc lỗi
     if (loading)
         return (
@@ -176,21 +163,21 @@ const Courses = () => {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8 sm:py-12">
+        <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
             <div className="container mx-auto">
                 {/* Search and Filters */}
                 <div className="flex flex-col justify-between md:flex-row gap-4 items-center text-center mb-4">
                     <span className="text-3xl font-bold text-gray-900">Browse Courses</span>
-                    <div className="relative w-full md:w-96">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                        <Input
-                            placeholder="Search courses..."
-                            className="pl-10 bg-gray-50 border-gray-200 focus:bg-white transition-all"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <div className="flex gap-3 w-full md:w-auto">
+                    <div className="flex gap-3 w-full items-center justify-center md:w-auto">
+                        <div className="relative w-full md:w-96">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                            <Input
+                                placeholder="Search courses..."
+                                className="pl-10 bg-gray-50 border-gray-200 focus:bg-white transition-all"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
                         <Select value={priceFilter} onValueChange={setPriceFilter}>
                             <SelectTrigger className="w-full md:w-[140px] bg-gray-50 border-gray-200">
                                 <SelectValue placeholder="Price" />
@@ -217,7 +204,6 @@ const Courses = () => {
                 </div>
 
                 <div className="mb-8">
-                    <h2 className="text-xl text-gray-500 font-semibold mb-4">Categories</h2>
                     <div
                         ref={scrollRef}
                         className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 select-none cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"

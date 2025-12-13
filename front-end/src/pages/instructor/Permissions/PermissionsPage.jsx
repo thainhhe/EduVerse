@@ -127,11 +127,11 @@ export default function PermissionsPage() {
                 ]);
                 getCourseWithPermission();
             } else {
-                ToastHelper.error("Thông tin không hợp lệ.");
+                ToastHelper.error("Invalid information");
             }
         } catch (error) {
             console.log("Err Permission:", error);
-            ToastHelper.error("Có lỗi xảy ra");
+            ToastHelper.error("An error occurred");
         }
     };
 

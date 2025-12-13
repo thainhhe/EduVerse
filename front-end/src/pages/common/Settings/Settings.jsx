@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Lock, Pencil, Trash2, Mail, Bell, Lightbulb } from "lucide-react";
+import { Lock, Pencil, Trash2, Mail, Bell, Lightbulb, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -236,9 +236,9 @@ const Settings = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
-            <div className="container mx-auto px-4 max-w-4xl">
-                <div className="mb-8">
+        <div className="min-h-screen bg-gray-50 py-4">
+            <div className="container mx-auto max-w-full">
+                <div className="mb-4">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">User Settings</h1>
                     <p className="text-gray-600">
                         Manage your CourseFlow account, preferences, and notification settings.
@@ -252,13 +252,22 @@ const Settings = () => {
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="flex items-center gap-4">
-                            <Avatar className="w-20 h-20 cursor-pointer" onClick={openFilePicker}>
-                                <AvatarImage
-                                    src={avatarPreview || profile.avatar || "/diverse-user-avatars.png"}
-                                    alt={profile.fullName}
-                                />
-                                <AvatarFallback>{(profile.fullName || "?").charAt(0)}</AvatarFallback>
-                            </Avatar>
+                            <div className="relative group">
+                                <Avatar className="w-20 h-20 cursor-pointer" onClick={openFilePicker}>
+                                    <AvatarImage
+                                        src={avatarPreview || profile.avatar || "/diverse-user-avatars.png"}
+                                        alt={profile.fullName}
+                                    />
+                                    <AvatarFallback>{(profile.fullName || "?").charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                {/* Camera overlay */}
+                                <div
+                                    className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                    onClick={openFilePicker}
+                                >
+                                    <Camera className="w-8 h-8 text-white" />
+                                </div>
+                            </div>
 
                             {/* hidden file input */}
                             <input
@@ -446,7 +455,8 @@ const Settings = () => {
                                 Save Changes
                             </Button>
                             <Button
-                                variant="ghost"
+                                variant="outline"
+                                className="text-red-600 hover:text-red-700"
                                 onClick={() => window.location.reload()}
                                 disabled={loading}
                             >

@@ -22,12 +22,12 @@ const BuilderInner = () => {
         try {
             const res = await deleteCourse(sessionCourse._id);
             if (res.success) {
-                ToastHelper.success("Đã xóa khóa học.");
+                ToastHelper.success("Deleted course successfully.");
                 navigate("/mycourses");
             }
         } catch (error) {
             console.log("err_delete_course:", error);
-            ToastHelper.error("Lỗi khi xóa khóa học.");
+            ToastHelper.error("Failed to delete course.");
         }
     };
 
@@ -35,12 +35,12 @@ const BuilderInner = () => {
         try {
             const res = await updateStatusPending(sessionCourse._id);
             if (res.success) {
-                ToastHelper.success("Đã gửi khóa học.");
+                ToastHelper.success("Submitted course successfully.");
                 navigate("/mycourses");
             }
         } catch (error) {
             console.log("err_update_course:", error);
-            ToastHelper.error("Lỗi khi gửi khóa học.");
+            ToastHelper.error("Failed to submit course.");
         }
     };
 

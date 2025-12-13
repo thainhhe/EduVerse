@@ -20,7 +20,6 @@ const getDifficultyColor = (difficulty) => {
 };
 
 export function QuestionGrid({ questions, onDeleteQuestion, onEditQuestion }) {
-    console.log("questions", questions)
     return (
         <div className="space-y-4">
             <div>
@@ -52,10 +51,11 @@ export function QuestionGrid({ questions, onDeleteQuestion, onEditQuestion }) {
                                     {question.options?.map((option) => (
                                         <div
                                             key={option.id}
-                                            className={`flex items-center gap-2 text-sm rounded-md py-1 ${option.isCorrect
+                                            className={`flex items-center gap-2 text-sm rounded-md py-1 ${
+                                                option.isCorrect
                                                     ? "bg-emerald-50 text-emerald-800"
                                                     : "bg-gray-50 text-gray-700"
-                                                }`}
+                                            }`}
                                         >
                                             {option.isCorrect ? (
                                                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />

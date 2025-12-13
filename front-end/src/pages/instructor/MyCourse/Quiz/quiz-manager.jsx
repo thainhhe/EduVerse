@@ -86,10 +86,10 @@ const QuizManager = ({
             const arr = Array.isArray(res)
                 ? res
                 : Array.isArray(res?.data)
-                    ? res.data
-                    : Array.isArray(res?.data?.data)
-                        ? res.data.data
-                        : res?.data?.items ?? [];
+                ? res.data
+                : Array.isArray(res?.data?.data)
+                ? res.data.data
+                : res?.data?.items ?? [];
             // map to minimal preview info
             const mapped = (arr || []).map((q) => ({
                 id: q._id ?? q.id ?? q.quizId ?? null,
@@ -408,9 +408,9 @@ const QuizManager = ({
     const handleDelete = async (quizId) => {
         try {
             const res = await api.delete(`/quiz/${quizId}`);
-            console.log("res", res)
+            console.log("res", res);
             if (res.success) {
-                ToastHelper.success("Delete quiz successfully")
+                ToastHelper.success("Delete quiz successfully");
             }
             await loadQuizzes();
         } catch (err) {
@@ -455,8 +455,8 @@ const QuizManager = ({
                                     {lessonId
                                         ? `Lesson Quizzes`
                                         : moduleId
-                                            ? `Module Quizzes`
-                                            : `Course Quizzes`}
+                                        ? `Module Quizzes`
+                                        : `Course Quizzes`}
                                 </div>
                             </div>
                             <div className="text-xs text-muted-foreground">
@@ -513,8 +513,9 @@ const QuizManager = ({
                                     </label>
                                     <input
                                         type="text"
-                                        className={`w-full border rounded-lg p-2 mt-1 ${errors.title ? "border-red-500" : ""
-                                            } bg-gray-200`}
+                                        className={`w-full border rounded-lg p-2 mt-1 ${
+                                            errors.title ? "border-red-500" : ""
+                                        } bg-gray-200`}
                                         placeholder="Enter quiz title..."
                                         value={quizInfo.title}
                                         onChange={(e) => {

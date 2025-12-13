@@ -12,7 +12,7 @@ import {
     getQuizzesByLesson,
     getQuizById,
 } from "@/services/courseService";
-import { Trash2, Plus, CloverIcon, X } from "lucide-react";
+import { Trash2, Plus, CloverIcon, X, ArrowLeft } from "lucide-react";
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 import api from "@/services/api";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -82,10 +82,10 @@ const QuizPage = () => {
             const arr = Array.isArray(res)
                 ? res
                 : Array.isArray(res?.data)
-                    ? res.data
-                    : Array.isArray(res?.data?.data)
-                        ? res.data.data
-                        : res?.data?.items ?? [];
+                ? res.data
+                : Array.isArray(res?.data?.data)
+                ? res.data.data
+                : res?.data?.items ?? [];
             // map to minimal preview info
             const mapped = (arr || []).map((q) => ({
                 id: q._id ?? q.id ?? q.quizId ?? null,
@@ -170,28 +170,15 @@ const QuizPage = () => {
         // map to UI question shape used in QuestionForm/QuestionGrid
         const mappedQuestions = (source.questions || []).map((q, idx) => {
             const correctArr = Array.isArray(q.correctAnswer) ? q.correctAnswer : [];
-            const hasNumeric = correctArr.some((c) => typeof c === "number" || /^\d+$/.test(String(c)));
-            const hasIdLike = correctArr.some((c) => typeof c === "string" && /^[0-9a-fA-F]{24}$/.test(c));
-
             const options = (q.options || []).map((opt, i) => {
-                const text = typeof opt === "string" ? opt : opt?.text ?? "";
-                let isCorrect = false;
-
-                if (hasNumeric) {
-                    const numericSet = new Set(correctArr.map((c) => Number(c)));
-                    isCorrect = numericSet.has(i);
-                } else if (hasIdLike && typeof opt === "object" && opt.id) {
-                    isCorrect = correctArr.includes(String(opt.id));
-                } else {
-                    // compare by text/value
-                    isCorrect = correctArr.some((c) => String(c) === String(text));
-                }
-
-                return typeof opt === "string"
-                    ? { id: String(i + 1), text, isCorrect }
-                    : { ...opt, id: opt.id ?? String(i + 1), text, isCorrect };
+                console.log("opt", opt);
+                let isCorrect = correctArr.includes(String(opt));
+                return {
+                    id: String(i),
+                    text: opt,
+                    isCorrect,
+                };
             });
-
             return {
                 id: `Question ${idx + 1}`,
                 text: q.questionText,
@@ -206,7 +193,6 @@ const QuizPage = () => {
     };
 
     const handleSaveQuiz = async () => {
-        console.log("Vô luôn")
         // const title = (quizInfo.title ?? "").trim();
         // if (!title) {
         //     setErrors({ title: "Please enter quiz title!" });
@@ -225,7 +211,8 @@ const QuizPage = () => {
 
         const description = (quizInfo.description ?? "").trim();
         if (!description) newErrors.description = "Description is required";
-        else if (description.length < 10) newErrors.description = "description must be at least 10 characters";
+        else if (description.length < 10)
+            newErrors.description = "description must be at least 10 characters";
         else if (description.length > 500) newErrors.description = "Description cannot exceed 500 characters";
 
         if (quizInfo.timeLimit < 5) newErrors.timeLimit = "Time limit must be at least 5 minutes";
@@ -235,8 +222,6 @@ const QuizPage = () => {
         if (quizInfo.passingScore > 100) newErrors.passingScore = "Passing score cannot exceed 100%";
 
         if (quizInfo.attemptsAllowed < 1) newErrors.attemptsAllowed = "Attempts must be at least 1";
-
-
 
         // Nếu có lỗi, update state và stop
         if (Object.keys(newErrors).length > 0) {
@@ -264,7 +249,7 @@ const QuizPage = () => {
                     const optionTexts = rawOptions
                         .map((opt) => (typeof opt === "string" ? opt : (opt?.text ?? "").toString().trim()))
                         .filter(Boolean);
-                    console.log("optionTexts", optionTexts)
+                    console.log("optionTexts", optionTexts);
                     // Build correct answers:
                     // 1) prefer explicit isCorrect flags on option objects
                     // 2) else fallback to stored _originalCorrectAnswer (could be indices / texts / ids)
@@ -272,7 +257,7 @@ const QuizPage = () => {
                     const optsWithFlags = rawOptions.filter(
                         (opt) => opt && typeof opt === "object" && "isCorrect" in opt
                     );
-                    console.log("optsWithFlags", optsWithFlags)
+                    console.log("optsWithFlags", optsWithFlags);
 
                     if (optsWithFlags.length) {
                         correct = rawOptions
@@ -281,16 +266,16 @@ const QuizPage = () => {
                                 typeof opt === "string" ? opt : (opt?.text ?? "").toString().trim()
                             )
                             .filter(Boolean);
-                        console.log("correct 1 ", correct)
+                        console.log("correct 1 ", correct);
                     } else if (Array.isArray(q._originalCorrectAnswer) && q._originalCorrectAnswer.length) {
                         const orig = q._originalCorrectAnswer;
                         const hasNumeric = orig.some((c) => typeof c === "number" || /^\d+$/.test(String(c)));
                         const hasIdLike = orig.some(
                             (c) => typeof c === "string" && /^[0-9a-fA-F]{24}$/.test(c)
                         );
-                        console.log("orig", orig)
-                        console.log("hasNumeric", hasNumeric)
-                        console.log("hasIdLike", hasIdLike)
+                        console.log("orig", orig);
+                        console.log("hasNumeric", hasNumeric);
+                        console.log("hasIdLike", hasIdLike);
 
                         if (hasNumeric) {
                             correct = orig
@@ -299,8 +284,7 @@ const QuizPage = () => {
                                     return optionTexts[idxOpt] ?? null;
                                 })
                                 .filter(Boolean);
-                            console.log("correct 2 ", correct)
-
+                            console.log("correct 2 ", correct);
                         } else if (hasIdLike) {
                             // try to match option.id -> optionTexts
                             correct = rawOptions
@@ -316,21 +300,18 @@ const QuizPage = () => {
                                     return null;
                                 })
                                 .filter(Boolean);
-                            console.log("correct 3 ", correct)
-
+                            console.log("correct 3 ", correct);
                         } else {
                             // assume orig are texts
                             correct = orig.map((c) => String(c)).filter((c) => optionTexts.includes(c));
-                            console.log("correct 4 ", correct)
-
+                            console.log("correct 4 ", correct);
                         }
                     } else if (Array.isArray(q.correctAnswer) && q.correctAnswer.length) {
                         correct = q.correctAnswer
                             .map((c) => (typeof c === "number" ? optionTexts[c] : c))
                             .map((c) => (c ?? "").toString().trim())
                             .filter((c) => optionTexts.includes(c));
-                        console.log("correct 5 ", correct)
-
+                        console.log("correct 5 ", correct);
                     } else {
                         // no flags and no original correct info -> try infer (none)
                         correct = [];
@@ -362,7 +343,7 @@ const QuizPage = () => {
             }));
             return;
         }
-        console.log("normalizedQuestions", normalizedQuestions)
+        console.log("normalizedQuestions", normalizedQuestions);
         if (normalizedQuestions.length === 0) {
             setErrors((prev) => ({
                 ...prev,
@@ -416,9 +397,9 @@ const QuizPage = () => {
     const handleDelete = async (quizId) => {
         try {
             const res = await api.delete(`/quiz/${quizId}`);
-            console.log("res", res)
+            console.log("res", res);
             if (res.success) {
-                ToastHelper.success("Delete quiz successfully")
+                ToastHelper.success("Delete quiz successfully");
             }
             await loadQuizzes();
         } catch (err) {
@@ -428,20 +409,22 @@ const QuizPage = () => {
     };
 
     const handleBack = () => {
-        console.log("Back");
         setMode("list");
         navigator(-1);
     };
-    console.log("quesstions", questions)
-    console.log('quizess', quizzes)
     return (
         // Mở rộng chiều ngang modal bằng max-w; nếu parent là modal, nội dung sẽ rộng hơn
-        <div className="p-2 bg-white rounded-md w-full">
+        <div className="bg-white rounded-md w-full">
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Quiz Manager</h2>
+                <div className="flex gap-2 items-center">
+                    <Button variant="outline" onClick={handleBack}>
+                        <ArrowLeft /> Back
+                    </Button>
+                    <h2 className="text-lg font-semibold">Quiz Manager</h2>
+                </div>
                 <div className="flex gap-2">
                     <Button
-                        variant="ghost"
+                        variant="outline"
                         className="bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors duration-200"
                         onClick={() => {
                             setMode("list");
@@ -450,39 +433,26 @@ const QuizPage = () => {
                     >
                         <Plus /> New Quiz
                     </Button>
-                    <Button
-                        onClick={handleBack}
-                        className="bg-white text-red-600 hover:bg-red-600 hover:text-white transition-colors duration-200"
-                    >
-                        <X className="w-5 h-5" /> Close
-                    </Button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
+            <div className="flex flex-col gap-4">
                 {mode === "list" && (
-                    <div className="col-span-1 border rounded-md p-2 max-h-[60vh] overflow-auto">
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="text-sm text-muted-foreground">Quizzes</div>
-                            <div className="flex items-center gap-2">
-                                <h3 className="text-md font-semibold">Scope</h3>
-                                <div className="text-sm text-muted-foreground">
-                                    {lessonId
-                                        ? `Lesson Quizzes`
-                                        : moduleId
-                                            ? `Module Quizzes`
-                                            : `Course Quizzes`}
-                                </div>
+                    <div className="col-span-1">
+                        <div className="flex items-center gap-4 mb-2">
+                            <div className="text-sm text-muted-foreground">
+                                Scope:{" "}
+                                {lessonId ? `Lesson Quizzes` : moduleId ? `Module Quizzes` : `Course Quizzes`}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                                {loadingList ? "Loading..." : `${quizzes.length}`}
+                                Total: {loadingList ? "Loading..." : `${quizzes.length}`}
                             </div>
                         </div>
                         <div className="space-y-2">
                             {quizzes.map((q) => (
                                 <div
                                     key={q.id}
-                                    className="p-2 border-1 rounded hover:bg-muted/50 flex items-center justify-between cursor-pointer"
+                                    className="py-2 px-4 border-1 rounded hover:bg-muted/50 flex items-center justify-between cursor-pointer"
                                     onClick={() => startEdit(q.raw)}
                                 >
                                     <div className="truncate">
@@ -493,18 +463,26 @@ const QuizPage = () => {
                                             </div>
                                         )}
                                         <div className="text-gray-600 text-sm">
-                                            Number of questions:  <span className="font-bold">{q?.raw?.questions?.length ?? 0}</span> -  Status: <span className="font-bold">{q.isPublished ? "Published" : "Draft"}</span>
+                                            Number of questions:{" "}
+                                            <span className="font-bold">
+                                                {q?.raw?.questions?.length ?? 0}
+                                            </span>{" "}
                                         </div>
-
+                                        <div className="text-gray-600 text-sm">
+                                            Status:{" "}
+                                            <span className="font-bold">
+                                                {q.isPublished ? "Published" : "Draft"}
+                                            </span>
+                                        </div>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <ConfirmationHelper
                                             trigger={
                                                 <button
-                                                    className="bg-white border p-1 rounded border-indigo-600 hover:bg-red-600 hover:text-white transition-colors duration-200 text-sm text-red-600"
+                                                    className="bg-white border p-1 rounded hover:bg-red-600 hover:text-white transition-colors duration-200 text-sm text-red-600"
                                                     title="Delete"
                                                 >
-                                                    <Trash2 className="h-4 w-4" />
+                                                    <X className="h-6 w-6" />
                                                 </button>
                                             }
                                             onConfirm={() => handleDelete(q.id)}
@@ -515,7 +493,7 @@ const QuizPage = () => {
                                 </div>
                             ))}
                             {quizzes.length === 0 && (
-                                <div className="text-sm text-muted-foreground">
+                                <div className="text-sm text-muted-foreground px-2">
                                     No quizzes found for this scope.
                                 </div>
                             )}
@@ -532,8 +510,9 @@ const QuizPage = () => {
                                     <label className="text-sm font-medium">Quiz Title</label>
                                     <input
                                         type="text"
-                                        className={`w-full border rounded-lg p-2 mt-1 ${errors.title ? "border-red-500" : ""
-                                            } bg-gray-200`}
+                                        className={`w-full border rounded-lg p-2 mt-1 ${
+                                            errors.title ? "border-red-500" : ""
+                                        } bg-gray-200`}
                                         placeholder="Enter quiz title..."
                                         value={quizInfo.title}
                                         onChange={(e) => {
@@ -632,7 +611,9 @@ const QuizPage = () => {
                             {/* Questions stacked vertically, full width, trong vùng cuộn */}
                             <ScrollArea className="max-h-[60vh] overflow-auto pb-28 space-y-6">
                                 {errors.questions && (
-                                    <div className="text-sm text-red-600 mt-2 text-center ">{errors.questions}</div>
+                                    <div className="text-sm text-red-600 mt-2 text-center ">
+                                        {errors.questions}
+                                    </div>
                                 )}
                                 {/* Add form - full width */}
                                 <div className="w-full">
@@ -664,7 +645,6 @@ const QuizPage = () => {
                                         }
                                     />
                                 </div>
-
                             </ScrollArea>
 
                             {/* Footer buttons below scrollable area */}

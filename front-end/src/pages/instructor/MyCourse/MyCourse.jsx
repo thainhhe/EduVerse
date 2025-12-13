@@ -165,20 +165,16 @@ const MyCourse = () => {
     const paginated = currentList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     return (
-        <div className="min-h-screen bg-background p-6 md:p-8 lg:p-12">
+        <div className="min-h-screen bg-background">
             <div className="mx-auto max-w-7xl">
                 {/* Header */}
                 <div className="mb-8 flex items-center justify-between">
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">My Courses</h1>
                     <div className="flex gap-3 items-center">
-                        <Button variant="outline" size="default" className="gap-2 bg-transparent">
-                            <Filter className="h-4 w-4" />
-                            Filter
-                        </Button>
                         <Link
                             to="/create-course-basic"
                             state={{ isNew: true }}
-                            className="flex items-center px-2 py-1 rounded-sm border-1  border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white transition"
+                            className="flex items-center gap-2 px-2 py-1 rounded-sm border-1  border-indigo-600 text-indigo-600 hover:bg-indigo-700 hover:text-white transition"
                         >
                             <Plus /> Create Course
                         </Link>
@@ -210,7 +206,7 @@ const MyCourse = () => {
 
                     <TabsContent value="published" className="space-y-8">
                         {/* Course Grid */}
-                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-3">
                             {loading ? (
                                 <div>Loading...</div>
                             ) : (
@@ -264,7 +260,7 @@ const MyCourse = () => {
                                 </div>
                             </>
                         ) : (
-                            <>Chưa có khóa học nào</>
+                            <>No course found</>
                         )}
                     </TabsContent>
 
@@ -328,7 +324,9 @@ const MyCourse = () => {
                                 </div>
                             </>
                         ) : (
-                            <>Chưa có khóa học </>
+                            <div className="flex items-center justify-center h-full">
+                                <p className="text-muted-foreground">Course is empty</p>
+                            </div>
                         )}
                     </TabsContent>
                     <TabsContent value="collaborative">
@@ -382,7 +380,9 @@ const MyCourse = () => {
                                 </div>
                             </>
                         ) : (
-                            "Chưa có data"
+                            <div className="flex items-center justify-center h-full">
+                                <p className="text-muted-foreground">Course is empty</p>
+                            </div>
                         )}
                     </TabsContent>
                 </Tabs>
