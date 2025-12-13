@@ -130,7 +130,7 @@ const seedData = async () => {
                     thumbnail: faker.image.urlLoremFlickr({ category: "education" }),
                     price: faker.number.int({ min: 10, max: 200 }),
                     rating: faker.number.float({ min: 3, max: 5, precision: 0.1 }),
-                    status: "pending",
+                    status: "draft",
                     isPublished: false,
                     totalEnrollments: 0,
                 });

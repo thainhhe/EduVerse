@@ -5,6 +5,7 @@ const { courseRepository } = require("../../repositories/course.repository");
 const { permissionRepository } = require("../../repositories/permission.repository");
 const { userRepository } = require("../../repositories/user.repository");
 const { sendInviteInstructorEmail } = require("../../utils/mail.util");
+const { notificationService } = require("../notification/notification.service");
 
 const permissionService = {
     getAll: async () => {
@@ -82,7 +83,9 @@ const permissionService = {
                 const validIds = validPermissions.map((p) => p._id.toString());
 
                 // Tìm instructor
-                const exist = course.instructors.find((inst) => inst.user._id.toString() === user._id.toString());
+                const exist = course.instructors.find(
+                    (inst) => inst.user._id.toString() === user._id.toString()
+                );
 
                 if (exist) {
                     // Thay vì merge => GHI ĐÈ permissions
@@ -99,6 +102,17 @@ const permissionService = {
                         isAccept: false,
                         permission: validIds,
                     });
+
+                    // await sendInviteInstructorEmail(user.email, user.username, course.title);
+
+                    await notificationService.create({
+                        receiverId: user._id,
+                        title: "Invitation to join the course",
+                        type: "success",
+                        message: `You have been invited to join the course ${course.title}.Click here to accept the invitation`,
+                        link: `/users/permission/accept/${user._id}/${course._id}`,
+                    });
+
                     results.push({
                         email,
                         success: true,
@@ -119,17 +133,44 @@ const permissionService = {
             throw new Error(error);
         }
     },
-    request_invite: async (data) => {
+    acceptInvite: async (data) => {
         try {
-            if (!data.to || !data.inviteLink || !data.courseName)
+            if (!data.userId || !data.courseId)
                 return {
                     status: system_enum.STATUS_CODE.BAD_REQUEST,
-                    message: "Lỗi thông tin.",
+                    message: "Error information.",
                 };
-            sendInviteInstructorEmail(data.to, data.inviteLink, data.inviterName, data.courseName);
+
+            const user = await userRepository.findById(data.userId);
+            if (!user)
+                return {
+                    status: system_enum.STATUS_CODE.NOT_FOUND,
+                    message: system_enum.SYSTEM_MESSAGE.NOT_FOUND,
+                };
+
+            const course = await courseRepository.getById(data.courseId);
+            if (!course)
+                return {
+                    status: system_enum.STATUS_CODE.NOT_FOUND,
+                    message: system_enum.SYSTEM_MESSAGE.NOT_FOUND,
+                };
+
+            const exist = course.instructors.find((inst) => inst.user._id.toString() === user._id.toString());
+
+            if (!exist) {
+                return {
+                    status: system_enum.STATUS_CODE.BAD_REQUEST,
+                    message: "User not exists in course.",
+                };
+            }
+
+            exist.isAccept = true;
+
+            await course.save();
+
             return {
                 status: system_enum.STATUS_CODE.OK,
-                message: system_enum.SYSTEM_MESSAGE.SEND_MAIL_OTP_SUCCESS,
+                message: "Accept invite successfully.",
             };
         } catch (error) {
             throw new Error(error);

@@ -257,74 +257,16 @@ const ModulesPage = () => {
 
     useEffect(() => {
         if (isQuizManagerOpen) {
-            navigator("/create-course/quiz", { state: currentQuizContext });
+            navigator("/create-course/modules/quiz", { state: currentQuizContext });
         }
     }, [isQuizManagerOpen]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50/30">
-            {/* Header Section */}
-            <div className="max-w-7xl mx-auto mb-6">
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100/50 p-6">
-                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                                <BookOpen className="w-4 h-4" />
-                                <span className="font-medium">Course Management</span>
-                                <span className="text-gray-300">/</span>
-                                <span className="text-indigo-600 font-medium">Modules & Lessons</span>
-                            </div>
-                            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-                                {sessionCourse?.title || "Course Modules"}
-                            </h1>
-                            <p className="text-gray-600 text-sm max-w-2xl">
-                                Organize and structure your course content into modules and lessons for better
-                                learning experience.
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            {canUpdateCourse && (
-                                <Button
-                                    variant="outline"
-                                    className="border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 transition-all shadow-sm"
-                                    onClick={() => {
-                                        if (!courseIdFromState) return;
-                                        setCurrentQuizContext({
-                                            courseId: courseIdFromState,
-                                            moduleId: null,
-                                            lessonId: null,
-                                        });
-                                        setIsQuizManagerOpen(true);
-                                    }}
-                                >
-                                    <FileQuestion className="w-4 h-4 mr-2" />
-                                    Manage Quizzes
-                                    <Badge
-                                        variant="secondary"
-                                        className="ml-2 bg-indigo-100 text-indigo-700 border-none"
-                                    >
-                                        {courseQuizCount}
-                                    </Badge>
-                                </Button>
-                            )}
-                            {canUpdateCourse && (
-                                <Button
-                                    className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
-                                    onClick={() => setIsAddModuleOpen(true)}
-                                >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Create Module
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             {/* Modules List */}
             <div className="max-w-7xl mx-auto">
-                <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-                    <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-indigo-50/50 to-white">
+                <div className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+                    <div className="border-b border-gray-100 bg-gradient-to-r from-indigo-50/50 to-white">
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 <div className="w-1 h-8 bg-gradient-to-b from-indigo-500 to-indigo-600 rounded-full" />
@@ -337,18 +279,42 @@ const ModulesPage = () => {
                                 </div>
                             </div>
                             {canUpdateCourse && (
-                                <Button
-                                    className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
-                                    onClick={() => setIsAddModuleOpen(true)}
-                                >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Create Module
-                                </Button>
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        className="border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 transition-all shadow-sm"
+                                        onClick={() => {
+                                            if (!courseIdFromState) return;
+                                            setCurrentQuizContext({
+                                                courseId: courseIdFromState,
+                                                moduleId: null,
+                                                lessonId: null,
+                                            });
+                                            setIsQuizManagerOpen(true);
+                                        }}
+                                    >
+                                        <FileQuestion className="w-4 h-4 mr-2" />
+                                        Manage Quizzes
+                                        <Badge
+                                            variant="secondary"
+                                            className="ml-2 bg-indigo-100 text-indigo-700 border-none"
+                                        >
+                                            {courseQuizCount}
+                                        </Badge>
+                                    </Button>
+                                    <Button
+                                        className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
+                                        onClick={() => setIsAddModuleOpen(true)}
+                                    >
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        Create Module
+                                    </Button>
+                                </div>
                             )}
                         </div>
-                    </CardHeader>
+                    </div>
 
-                    <CardContent className="p-6 space-y-4">
+                    <div className="space-y-4 mt-2">
                         {modules.length === 0 ? (
                             <div className="text-center py-16">
                                 <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
@@ -372,10 +338,10 @@ const ModulesPage = () => {
                             modules.map((module, moduleIndex) => {
                                 const isExpanded = expandedModules.includes(module.id);
                                 return (
-                                    <Card
+                                    <div
                                         key={module.id}
                                         className={cn(
-                                            "border-2 transition-all duration-300 ease-in-out relative",
+                                            "border-2 rounded-sm transition-all duration-300 ease-in-out relative",
                                             isExpanded
                                                 ? "border-indigo-200 shadow-lg bg-gradient-to-br from-white to-indigo-50/30"
                                                 : "border-gray-200 shadow-sm hover:border-indigo-200 hover:shadow-md bg-white",
@@ -559,7 +525,7 @@ const ModulesPage = () => {
                                                             <div
                                                                 key={lesson.id}
                                                                 className={cn(
-                                                                    "group/lesson bg-white border-2 border-gray-100 rounded-xl p-4 hover:border-indigo-200 hover:shadow-md transition-all duration-200 relative",
+                                                                    "group/lesson bg-white border-2 border-gray-100 rounded-sm p-4 hover:border-indigo-200 hover:shadow-md transition-all duration-200 relative",
                                                                     openLessonMenuId === lesson.id && "z-50"
                                                                 )}
                                                             >
@@ -744,12 +710,12 @@ const ModulesPage = () => {
                                                 )}
                                             </div>
                                         )}
-                                    </Card>
+                                    </div>
                                 );
                             })
                         )}
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             </div>
 
             {/* Quiz Manager Modal */}

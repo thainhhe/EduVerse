@@ -72,8 +72,8 @@ const ReviewPage = () => {
         <div className="max-w-full mx-auto space-y-8 animate-in fade-in duration-500">
             {/* Header Section */}
             <div className="flex flex-col gap-2">
-                <h1 className="text-2xl font-bold text-gray-900">Đánh giá từ học viên</h1>
-                <p className="text-gray-500">Xem và quản lý các phản hồi về khóa học của bạn.</p>
+                <h1 className="text-2xl font-bold text-gray-900">Reviews from students</h1>
+                <p className="text-gray-500">View and manage feedback about your course.</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -82,7 +82,7 @@ const ReviewPage = () => {
                     <Card className="border-none shadow-lg bg-white overflow-hidden">
                         <CardHeader className="bg-gradient-to-br from-indigo-50 to-white pb-6">
                             <CardTitle className="text-lg font-semibold text-gray-900">
-                                Tổng quan đánh giá
+                                Total reviews
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="pt-6">
@@ -104,7 +104,7 @@ const ReviewPage = () => {
                                         ))}
                                     </div>
                                     <span className="text-sm text-gray-500 font-medium">
-                                        {reviews.length} đánh giá
+                                        {reviews.length} reviews
                                     </span>
                                 </div>
                             </div>
@@ -152,7 +152,7 @@ const ReviewPage = () => {
                                     className="w-full mt-4 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
                                     onClick={() => setFilterRating(null)}
                                 >
-                                    Xóa bộ lọc
+                                    Remove filter
                                 </Button>
                             )}
                         </CardContent>
@@ -163,7 +163,7 @@ const ReviewPage = () => {
                 <div className="lg:col-span-8 space-y-6">
                     <div className="flex items-center justify-between">
                         <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                            {filterRating ? `Đánh giá ${filterRating} sao` : "Tất cả đánh giá"}
+                            {filterRating ? `Reviews ${filterRating} stars` : "All reviews"}
                             <Badge
                                 variant="secondary"
                                 className="bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -179,10 +179,10 @@ const ReviewPage = () => {
                                 }
                             >
                                 <SelectTrigger className="w-[180px] bg-white">
-                                    <SelectValue placeholder="Lọc theo đánh giá" />
+                                    <SelectValue placeholder="Filter by rating" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">Tất cả đánh giá</SelectItem>
+                                    <SelectItem value="all">All reviews</SelectItem>
                                     {[5, 4, 3, 2, 1].map((star) => (
                                         <SelectItem key={star} value={star.toString()}>
                                             <div className="flex items-center gap-2">
@@ -209,11 +209,11 @@ const ReviewPage = () => {
                                 <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
                                     <MessageSquare className="w-8 h-8 text-gray-300" />
                                 </div>
-                                <h3 className="text-lg font-medium text-gray-900">Chưa có đánh giá nào</h3>
+                                <h3 className="text-lg font-medium text-gray-900">No reviews yet</h3>
                                 <p className="text-gray-500 mt-1 max-w-sm">
                                     {filterRating
-                                        ? `Không tìm thấy đánh giá ${filterRating} sao nào.`
-                                        : "Khóa học này chưa nhận được đánh giá nào từ học viên."}
+                                        ? `No reviews found for ${filterRating} stars.`
+                                        : "This course has not received any reviews from students."}
                                 </p>
                                 {filterRating && (
                                     <Button
@@ -221,7 +221,7 @@ const ReviewPage = () => {
                                         onClick={() => setFilterRating(null)}
                                         className="mt-2 text-indigo-600"
                                     >
-                                        Xem tất cả đánh giá
+                                        View all reviews
                                     </Button>
                                 )}
                             </CardContent>
@@ -251,7 +251,7 @@ const ReviewPage = () => {
                                                             <span>
                                                                 {format(
                                                                     new Date(review.createdAt),
-                                                                    "dd 'tháng' MM, yyyy",
+                                                                    "dd 'month' MM, yyyy",
                                                                     { locale: vi }
                                                                 )}
                                                             </span>
@@ -269,7 +269,7 @@ const ReviewPage = () => {
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
                                                             <DropdownMenuItem>
-                                                                Báo cáo vi phạm
+                                                                Report violation
                                                             </DropdownMenuItem>
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
@@ -293,7 +293,7 @@ const ReviewPage = () => {
                                                         review.comment
                                                     ) : (
                                                         <span className="text-gray-400 italic">
-                                                            Không có nội dung bình luận
+                                                            No comment
                                                         </span>
                                                     )}
                                                 </div>
