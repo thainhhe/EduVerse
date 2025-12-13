@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { streamChatQuery } from "../../services/chatbotService";
+import Swal from "sweetalert2";
 
 const widgetBox = {
   position: "fixed",
@@ -252,7 +253,7 @@ export const ChatbotWidget = () => {
           ))}
 
           {/* Hiển thị Nguồn chung cho Numbered List */}
-          {sources && sources.length > 0 && (
+          {/* {sources && sources.length > 0 && (
             <div style={sourceBoxStyle}>
               <strong
                 style={{
@@ -272,7 +273,7 @@ export const ChatbotWidget = () => {
                 ))}
               </ul>
             </div>
-          )}
+          )} */}
         </div>
       );
     }
@@ -317,7 +318,7 @@ export const ChatbotWidget = () => {
         })}
 
         {/* Phần 2: Hiển thị Tổng hợp Nguồn ở cuối cùng */}
-        {safeSources && safeSources.length > 0 && (
+        {/* {safeSources && safeSources.length > 0 && (
           <div style={sourceBoxStyle}>
             <strong
               style={{
@@ -337,7 +338,7 @@ export const ChatbotWidget = () => {
               ))}
             </ul>
           </div>
-        )}
+        )} */}
       </div>
     );
   };
@@ -372,18 +373,33 @@ export const ChatbotWidget = () => {
             </div>
             <button
               onClick={() => {
-                if (
-                  window.confirm(
-                    "Bạn có chắc chắn muốn xóa tất cả lịch sử trò chuyện?"
-                  )
-                ) {
-                  setMessages([
-                    {
-                      sender: "bot",
-                      text: "Chào bạn! Tôi có thể giúp gì cho bạn?",
-                    },
-                  ]);
-                }
+                Swal.fire({
+                  title: "Xác nhận xóa",
+                  text: "Bạn có chắc chắn muốn xóa tất cả lịch sử trò chuyện?",
+                  icon: "warning",
+                  showCancelButton: true,
+                  confirmButtonColor: "#4F39F6",
+                  cancelButtonColor: "#d33",
+                  confirmButtonText: "Xóa",
+                  cancelButtonText: "Hủy",
+                }).then((result) => {
+                  if (result.isConfirmed) {
+                    setMessages([
+                      {
+                        sender: "bot",
+                        text: "Chào bạn! Tôi có thể giúp gì cho bạn?",
+                      },
+                    ]);
+                    Swal.fire({
+                      title: "Đã xóa!",
+                      text: "Lịch sử trò chuyện đã được xóa.",
+                      icon: "success",
+                      confirmButtonColor: "#4F39F6",
+                      timer: 1500,
+                      showConfirmButton: false,
+                    });
+                  }
+                });
               }}
               style={{
                 background: "none",

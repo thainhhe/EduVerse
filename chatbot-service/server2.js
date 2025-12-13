@@ -38,10 +38,11 @@ const embeddings = new GoogleGenerativeAIEmbeddings({
 });
 
 // 2. Khởi tạo VectorStore (Không đổi)
-const client = new ChromaClient({ host: "localhost", port: 8000, ssl: false });
+// const client = new ChromaClient({ host: "localhost", port: 8000, ssl: false });
 const vectorStore = new Chroma(embeddings, {
   collectionName: COLLECTION_NAME,
-  client,
+  url: CHROMA_URL,
+  // client,
 });
 
 console.log(
