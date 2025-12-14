@@ -337,7 +337,7 @@ const CourseManagementPage = () => {
                                     <SelectValue placeholder="Status" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All Statuses</SelectItem>
+                                    <SelectItem value="all">All Revisions</SelectItem>
                                     <SelectItem value="approve">Approved</SelectItem>
                                     <SelectItem value="pending">Pending</SelectItem>
                                     <SelectItem value="reject">Rejected</SelectItem>
@@ -383,6 +383,7 @@ const CourseManagementPage = () => {
                                     <TableHead>Created At</TableHead>
                                     <TableHead>Last update</TableHead>
                                     <TableHead>Status</TableHead>
+                                    <TableHead>Review</TableHead>
                                     {selectedCourses.length > 0 && (
                                         <TableHead className="text-right">Actions</TableHead>
                                     )}
@@ -452,6 +453,13 @@ const CourseManagementPage = () => {
                                             </TableCell>
                                             <TableCell className="text-gray-500 text-sm">
                                                 {formatDateTime(course.updatedAt)}
+                                            </TableCell>
+                                            <TableCell className="text-gray-500 text-sm">
+                                                {course.isDeleted ? (
+                                                    <span className="text-red-500">Deleted</span>
+                                                ) : (
+                                                    <span className="text-green-500">Active</span>
+                                                )}
                                             </TableCell>
                                             <TableCell>{getStatus(course.status)}</TableCell>
                                             {selectedCourses.length > 0 && (

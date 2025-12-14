@@ -35,6 +35,7 @@ const courseManagementRepository = {
             .populate("instructors.user", "username email")
             .populate("instructors.permission")
             .populate("category")
+            .sort({ createdAt: -1 })
             .exec();
         return courses.map((course) => {
             const courseObj = course.toObject();

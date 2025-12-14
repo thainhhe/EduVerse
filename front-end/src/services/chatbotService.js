@@ -13,19 +13,28 @@ export const streamChatQuery = async (
       ? api.defaults.baseURL + "/chatbot/query"
       : "/chatbot/query";
 
+  // 1. Khởi tạo headers cơ bản
+  const headers = {
+    "Content-Type": "application/json",
+  };
+
+  // 2. Lấy Authorization token an toàn từ axios defaults (nếu có)
+  // Lưu ý: api.defaults.headers.common thường chứa Authorization
+  if (api?.defaults?.headers?.common?.["Authorization"]) {
+    headers["Authorization"] = api.defaults.headers.common["Authorization"];
+  }
+  // Hoặc fallback lấy từ localStorage nếu bạn lưu token ở đó (ví dụ: 'accessToken')
+  else {
+    const token = localStorage.getItem("accessToken"); // Thay 'accessToken' bằng key thực tế của bạn
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+
   try {
     const response = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // Kéo các header mặc định từ axios wrapper (ví dụ Authorization)
-        ...(api &&
-        api.defaults &&
-        api.defaults.headers &&
-        api.defaults.headers.common
-          ? api.defaults.headers.common
-          : {}),
-      },
+      headers: headers, // Sử dụng biến headers đã chuẩn hóa
       body: JSON.stringify({ message, history }),
     });
 

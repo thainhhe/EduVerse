@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { streamChatQuery } from "../../services/chatbotService";
+import Swal from "sweetalert2";
 
 const widgetBox = {
   position: "fixed",
@@ -68,119 +69,84 @@ export const ChatbotWidget = () => {
   }, [messages, open]);
 
   const parseBotText = (text) => {
-    if (!text)
-      return { numbered: false, paragraphs: [], bullets: [], source: null };
+    if (!text) return { numbered: false, blocks: [], sources: [] };
 
-    if (/\n\s*\d+\.\s/.test("\n" + text)) {
-      const rawItems = text
+    // --- BƯỚC 1: Tách nguồn (Áp dụng Global cho mọi loại tin nhắn) ---
+    let cleanText = text;
+    const extractedSources = new Set();
+    const sourceRegex =
+      /(?:[\(\[])?\s*Nguồn\s*[:\-–]\s*([^\)\n\r\]]+)(?:[\)\]])?/gi;
+
+    cleanText = cleanText.replace(sourceRegex, (match, sourceContent) => {
+      if (sourceContent && sourceContent.trim()) {
+        extractedSources.add(sourceContent.trim());
+      }
+      return ""; // Xóa nguồn khỏi văn bản
+    });
+
+    const sourcesArray = Array.from(extractedSources);
+
+    // --- BƯỚC 2: Kiểm tra xem có phải Numbered List không ---
+    if (/\n\s*\d+\.\s/.test("\n" + cleanText)) {
+      const rawItems = cleanText
         .split(/\n\s*(?=\d+\.\s)/)
         .map((s) => s.trim())
         .filter(Boolean);
+
       const items = rawItems.map((item) => {
         const m = item.match(/^\s*\d+\.\s*(.*)$/s);
         let body = m ? m[1].trim() : item;
-        const srcIdx = body.search(/Nguồn\s*[:\-–]\s*/i);
-        let source = null;
-        if (srcIdx !== -1) {
-          source = body
-            .slice(srcIdx)
-            .replace(/^[^\:]*[:\-–]\s*/i, "")
-            .trim();
-          body = body.slice(0, srcIdx).trim();
-        }
+
+        // Cleanup formatting
         body = body
           .replace(/^\s*[\*\-]+\s*/, "")
           .replace(/^\*+|\*+$/g, "")
-          .trim();
-        if (source)
-          source = source
-            .replace(/^\*+|\*+$/g, "")
-            .replace(/[\)\s]+$/g, "")
-            .trim();
-        body = body
           .replace(/\*\*(.+?)\*\*/gs, "$1")
-          .replace(/\*(.+?)\*/gs, "$1");
-        return { content: body, source };
+          .replace(/\[(.+?)\]\((?:.+?)\)/gs, "$1")
+          .trim();
+
+        return { content: body };
       });
 
-      return { numbered: true, items };
+      return { numbered: true, items, sources: sourcesArray };
     }
 
-    const rawLines = text.split(/\r?\n/);
-    const lines = rawLines.map((l) => l.replace(/^\s+|\s+$/g, ""));
+    // --- BƯỚC 3: Xử lý văn bản thường (Blocks) ---
+    const rawLines = cleanText.split(/\r?\n/);
+    const lines = rawLines.map((l) => l.trim()).filter((l) => l !== "");
 
-    let source = null;
-    for (let i = lines.length - 1; i >= 0; i--) {
-      const withoutBullet = lines[i].replace(/^(\*+|\-|\u2022)\s*/, "").trim();
-      const normalized = withoutBullet.replace(/^[\(\*\s]+|[\)\*\s]+$/g, "");
-      const startMatch = normalized.match(
-        /^(?:\*{0,2})?Nguồn\b\s*[:\-–]?\s*(.*)$/i
-      );
-      if (startMatch) {
-        source = startMatch[1] ? startMatch[1].trim() : "";
-        lines.splice(i, 1);
-        break;
-      }
-      const inlineMatch = lines[i].match(/Nguồn\s*[:\-–]\s*([^\)\n\r]*)/i);
-      if (inlineMatch) {
-        source = inlineMatch[1].trim();
-        lines[i] = lines[i].replace(inlineMatch[0], "").trim();
-        if (!lines[i]) lines.splice(i, 1);
-        break;
-      }
-    }
-
-    let main = lines.join("\n").trim();
-    main = main.replace(/^[\s\*\(\-]+/, "").replace(/[\s\*\)\-]+$/, "");
-    if (source)
-      source = source.replace(/^[\s\*\(\-]+/, "").replace(/[\s\*\)\-]+$/, "");
-    main = main
-      .replace(/\*\*(.+?)\*\*/gs, "$1")
-      .replace(/\[(.+?)\]\((?:.+?)\)/gs, "$1");
-
-    if (!main.includes("\n") && /\*\s*[^ ]+/.test(main)) {
-      const parts = main
-        .split(/\s*\*\s*/)
-        .map((s) => s.replace(/^\s+|\s+$/g, ""))
-        .filter(Boolean);
-      if (parts.length > 1) {
-        const cleaned = parts.map((p) =>
-          p.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1")
-        );
-        return { numbered: false, paragraphs: [], bullets: cleaned, source };
-      }
-    }
-
-    const finalLines = main
-      .split(/\r?\n/)
-      .map((l) => l.replace(/^\s+|\s+$/g, ""));
-    const bullets = [];
-    const paragraphs = [];
-    let currentPara = [];
-
-    for (const line of finalLines) {
+    const blocks = [];
+    for (const line of lines) {
       const isBulletLine = /^(\*|-|\u2022)\s+/.test(line);
-      const content = isBulletLine
+      const rawContent = isBulletLine
         ? line.replace(/^(\*|-|\u2022)\s+/, "")
         : line;
-      const cleanedLine = content
+
+      const content = rawContent
         .replace(/\*\*(.+?)\*\*/g, "$1")
-        .replace(/\*(.+?)\*/g, "$1");
+        .replace(/\*(.+?)\*/g, "$1")
+        .trim();
+
       if (isBulletLine) {
-        bullets.push(cleanedLine.trim());
-      } else if (cleanedLine === "") {
-        if (currentPara.length) {
-          paragraphs.push(currentPara.join(" "));
-          currentPara = [];
+        const lastBlock = blocks[blocks.length - 1];
+        if (lastBlock && lastBlock.type === "list") {
+          lastBlock.items.push(content);
+        } else {
+          blocks.push({ type: "list", items: [content] });
         }
       } else {
-        currentPara.push(cleanedLine);
+        if (content === "") continue;
+
+        const lastBlock = blocks[blocks.length - 1];
+        if (lastBlock && lastBlock.type === "paragraph") {
+          lastBlock.content += " " + content;
+        } else {
+          blocks.push({ type: "paragraph", content: content });
+        }
       }
     }
 
-    if (currentPara.length) paragraphs.push(currentPara.join(" "));
-
-    return { numbered: false, paragraphs, bullets, source };
+    return { numbered: false, blocks, sources: sourcesArray };
   };
 
   const handleSend = async () => {
@@ -272,62 +238,107 @@ export const ChatbotWidget = () => {
   };
 
   const renderBotMessage = (text, idx) => {
-    const parsed = parseBotText(text);
+    const { numbered, items, blocks, sources } = parseBotText(text);
 
-    if (parsed.numbered && Array.isArray(parsed.items)) {
+    // Case 1: Numbered List
+    if (numbered && Array.isArray(items)) {
       return (
         <div key={idx} style={{ marginBottom: 8, width: "100%" }}>
-          {parsed.items.map((it, i) => (
+          {items.map((it, i) => (
             <div key={i} style={{ marginBottom: 12 }}>
-              <div
-                style={{ color: "#222", lineHeight: "1.4", marginBottom: 6 }}
-              >
-                {it.content}
+              <div style={{ color: "#222", lineHeight: "1.4" }}>
+                {i + 1}. {it.content}
               </div>
-              {it.source && (
-                <div style={sourceBoxStyle}>
-                  <strong style={{ display: "block", marginBottom: 6 }}>
-                    Nguồn
-                  </strong>
-                  <div style={{ whiteSpace: "pre-wrap", fontSize: 12 }}>
-                    {it.source}
-                  </div>
-                </div>
-              )}
             </div>
           ))}
+
+          {/* Hiển thị Nguồn chung cho Numbered List */}
+          {/* {sources && sources.length > 0 && (
+            <div style={sourceBoxStyle}>
+              <strong
+                style={{
+                  display: "block",
+                  marginBottom: 6,
+                  borderBottom: "1px solid #ddd",
+                  paddingBottom: 4,
+                }}
+              >
+                Nguồn tham khảo:
+              </strong>
+              <ul style={{ margin: 0, paddingLeft: 16 }}>
+                {sources.map((src, index) => (
+                  <li key={index} style={{ marginBottom: 4, fontSize: 12 }}>
+                    {src}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )} */}
         </div>
       );
     }
 
-    const { paragraphs, bullets, source } = parsed;
+    // Case 2: Blocks (Mixed Content)
+    const safeBlocks = blocks || [];
+    const safeSources = sources || [];
+
     return (
       <div key={idx} style={{ marginBottom: 8, width: "100%" }}>
-        {paragraphs.map((p, i) => (
-          <div
-            key={i}
-            style={{ marginBottom: 6, color: "#222", lineHeight: "1.4" }}
-          >
-            {p}
-          </div>
-        ))}
+        {/* Phần 1: Hiển thị nội dung văn bản (Liền mạch, không có nguồn xen giữa) */}
+        {safeBlocks.map((block, i) => {
+          if (block.type === "paragraph") {
+            return (
+              <div
+                key={i}
+                style={{ marginBottom: 6, color: "#222", lineHeight: "1.4" }}
+              >
+                {block.content}
+              </div>
+            );
+          }
+          if (block.type === "list") {
+            return (
+              <ul
+                key={i}
+                style={{
+                  margin: "6px 0 6px 18px",
+                  padding: 0,
+                  marginBottom: 6,
+                }}
+              >
+                {block.items.map((item, k) => (
+                  <li key={k} style={{ marginBottom: 4, color: "#222" }}>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            );
+          }
+          return null;
+        })}
 
-        {bullets.length > 0 && (
-          <ul style={{ margin: "6px 0 0 18px", padding: 0 }}>
-            {bullets.map((b, i) => (
-              <li key={i} style={{ marginBottom: 6, color: "#222" }}>
-                {b}
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {source && (
+        {/* Phần 2: Hiển thị Tổng hợp Nguồn ở cuối cùng */}
+        {/* {safeSources && safeSources.length > 0 && (
           <div style={sourceBoxStyle}>
-            <strong style={{ display: "block", marginBottom: 6 }}>Nguồn</strong>
-            <div style={{ whiteSpace: "pre-wrap", fontSize: 12 }}>{source}</div>
+            <strong
+              style={{
+                display: "block",
+                marginBottom: 6,
+                borderBottom: "1px solid #ddd",
+                paddingBottom: 4,
+              }}
+            >
+              Nguồn tham khảo:
+            </strong>
+            <ul style={{ margin: 0, paddingLeft: 16 }}>
+              {safeSources.map((src, index) => (
+                <li key={index} style={{ marginBottom: 4, fontSize: 12 }}>
+                  {src}
+                </li>
+              ))}
+            </ul>
           </div>
-        )}
+        )} */}
       </div>
     );
   };
@@ -362,18 +373,33 @@ export const ChatbotWidget = () => {
             </div>
             <button
               onClick={() => {
-                if (
-                  window.confirm(
-                    "Bạn có chắc chắn muốn xóa tất cả lịch sử trò chuyện?"
-                  )
-                ) {
-                  setMessages([
-                    {
-                      sender: "bot",
-                      text: "Chào bạn! Tôi có thể giúp gì cho bạn?",
-                    },
-                  ]);
-                }
+                Swal.fire({
+                  title: "Xác nhận xóa",
+                  text: "Bạn có chắc chắn muốn xóa tất cả lịch sử trò chuyện?",
+                  icon: "warning",
+                  showCancelButton: true,
+                  confirmButtonColor: "#4F39F6",
+                  cancelButtonColor: "#d33",
+                  confirmButtonText: "Xóa",
+                  cancelButtonText: "Hủy",
+                }).then((result) => {
+                  if (result.isConfirmed) {
+                    setMessages([
+                      {
+                        sender: "bot",
+                        text: "Chào bạn! Tôi có thể giúp gì cho bạn?",
+                      },
+                    ]);
+                    Swal.fire({
+                      title: "Đã xóa!",
+                      text: "Lịch sử trò chuyện đã được xóa.",
+                      icon: "success",
+                      confirmButtonColor: "#4F39F6",
+                      timer: 1500,
+                      showConfirmButton: false,
+                    });
+                  }
+                });
               }}
               style={{
                 background: "none",

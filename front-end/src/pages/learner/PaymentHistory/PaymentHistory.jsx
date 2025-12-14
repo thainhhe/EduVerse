@@ -108,12 +108,7 @@ const PaymentHistory = () => {
     }
 
     return (
-        <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 max-w-7xl">
-            <div className="mb-8 space-y-2">
-                <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Payment History</h1>
-                <p className="text-gray-500">View and manage your transaction history</p>
-            </div>
-
+        <div className="container mx-auto py-4 max-w-7xl">
             <Card className="shadow-xl border-0 bg-white overflow-hidden ring-1 ring-gray-100">
                 <CardHeader className="border-b bg-gray-50/40 px-6 py-5">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

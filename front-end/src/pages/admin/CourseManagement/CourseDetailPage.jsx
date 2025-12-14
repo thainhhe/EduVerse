@@ -194,6 +194,15 @@ const CourseDetailPage = () => {
                                 </span>
                                 <span>•</span>
                                 {getStatusBadge(course.status)}
+                                {course.status === "reject" && (
+                                    <span className="text-red-500">({course.reasonReject})</span>
+                                )}
+                                <span>•</span>
+                                {course.isDeleted ? (
+                                    <span className="text-red-500">Deleted</span>
+                                ) : (
+                                    <span className="text-green-500">Active</span>
+                                )}
                             </div>
                         </div>
                     </div>

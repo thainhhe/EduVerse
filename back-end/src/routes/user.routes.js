@@ -14,6 +14,6 @@ userRouter.post("/reset-password", userController.request_reset_password);
 userRouter.post("/verify-otp", userController.verify_otp_client);
 userRouter.post("/permission", permissionController.assign_permission);
 userRouter.get("/permission", permissionController.getAll);
-userRouter.post("/permission/invite", permissionController.request_invite);
+userRouter.post("/permission/accept/:userId/:courseId", permissionController.accept_invite);
 
 module.exports = userRouter;

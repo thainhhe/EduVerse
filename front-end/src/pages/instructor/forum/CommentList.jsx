@@ -20,7 +20,7 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
             const res = await commentService.getAllCommentInstructor(forumId);
             if (res.success) setComments(res.data.filter((c) => c.status !== "deleted") || []);
         } catch (err) {
-            console.error("❌ Lỗi khi load comment:", err);
+            console.error("❌ Error loading comments:", err);
         } finally {
             setLoading(false);
         }
@@ -32,7 +32,7 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
 
     const handleCreateComment = async () => {
         if (!canComment) {
-            ToastHelper.error("Bạn cần đăng ký khóa học trước khi bình luận!");
+            ToastHelper.error("You need to enroll in the course before commenting!");
             return;
         }
         if (!newComment.trim()) return;
@@ -54,13 +54,13 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
             if (data.status === 200 || data.success) {
                 setComments((prev) => [data.data, ...prev]);
                 setNewComment("");
-                ToastHelper.success("Đã gửi bình luận!");
+                ToastHelper.success("Comment sent successfully!");
             } else {
-                ToastHelper.error("Không thể gửi bình luận!");
+                ToastHelper.error("Failed to send comment!");
             }
         } catch (err) {
             console.error(err);
-            ToastHelper.error("Lỗi khi gửi bình luận!");
+            ToastHelper.error("Failed to send comment!");
         }
     };
 
@@ -102,13 +102,13 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
                         onChange={(e) => setFilter(e.target.value)}
                         className="flex-1 sm:flex-none px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                     >
-                        <option value="all">Tất cả bình luận</option>
-                        <option value="newest">Mới nhất</option>
-                        <option value="oldest">Cũ nhất</option>
-                        <option value="reported">Bị báo cáo</option>
+                        <option value="all">All comments</option>
+                        <option value="newest">Newest</option>
+                        <option value="oldest">Oldest</option>
+                        <option value="reported">Reported</option>
                         {isMainInstructor && (
                             <>
-                                <option value="hidden">Đã ẩn</option>
+                                <option value="hidden">Hidden</option>
                             </>
                         )}
                     </select>
@@ -118,7 +118,7 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
                     className="bg-indigo-100 text-indigo-700 border-indigo-200 px-3 py-1"
                 >
                     <MessageSquare className="w-3 h-3 mr-1" />
-                    {displayComments.length} bình luận
+                    {displayComments.length} comments
                 </Badge>
             </div>
 
@@ -129,7 +129,7 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
                         <div className="flex items-center justify-center py-12">
                             <div className="flex flex-col items-center gap-3">
                                 <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
-                                <p className="text-sm text-gray-500">Đang tải bình luận...</p>
+                                <p className="text-sm text-gray-500">Loading comments...</p>
                             </div>
                         </div>
                     ) : displayComments.length > 0 ? (
@@ -150,8 +150,8 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
                             <div className="bg-gradient-to-br from-gray-100 to-gray-200 w-16 h-16 rounded-2xl flex items-center justify-center mb-4">
                                 <MessageSquare className="w-8 h-8 text-gray-400" />
                             </div>
-                            <p className="text-gray-500 font-medium mb-1">Chưa có bình luận nào</p>
-                            <p className="text-sm text-gray-400">Hãy là người đầu tiên bình luận!</p>
+                            <p className="text-gray-500 font-medium mb-1">No comments yet</p>
+                            <p className="text-sm text-gray-400">Be the first to comment!</p>
                         </div>
                     )}
                 </div>
@@ -163,7 +163,7 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder={
-                        canComment ? "Chia sẻ suy nghĩ của bạn..." : "Bạn cần đăng ký khóa học để bình luận"
+                        canComment ? "Share your thoughts..." : "You need to enroll in the course to comment"
                     }
                     disabled={!canComment}
                     rows={3}
@@ -179,7 +179,7 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
                 />
                 <div className="flex items-center justify-between px-4 py-2 bg-gray-50/50 border-t border-gray-100">
                     <p className="text-xs text-gray-400 font-medium">
-                        {canComment ? "Nhấn Ctrl + Enter để gửi nhanh" : ""}
+                        {canComment ? "Press Ctrl + Enter to send fast" : ""}
                     </p>
                     <Button
                         onClick={handleCreateComment}
@@ -192,7 +192,7 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
                                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
                         )}
                     >
-                        Gửi bình luận
+                        Send comment
                         <Send className="w-3 h-3 ml-2" />
                     </Button>
                 </div>

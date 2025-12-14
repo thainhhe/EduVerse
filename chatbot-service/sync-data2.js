@@ -20,15 +20,12 @@ const BATCH_SIZE = Number(process.env.SYNC_BATCH_SIZE) || 128;
 
 const buildText = (type, doc) => {
   switch (type) {
-    // === THÊM MỚI TẠI ĐÂY ===
     case "faq":
     case "policy":
     case "course_policy":
-      // Định dạng cho các tài liệu chính sách/FAQ
       return `[${(doc.type || type).toString().toUpperCase()}] ${
         doc.title || "Untitled"
       }: ${doc.content || doc.description || ""}.`;
-    // ========================
 
     case "course": {
       const durationStr =
@@ -40,6 +37,18 @@ const buildText = (type, doc) => {
         Array.isArray(doc.main_instructor_subject)
           ? doc.main_instructor_subject.join(", ")
           : doc.main_instructor_subject || "N/A";
+
+      // Rating stats
+      const avgRating = doc.average_rating ?? 0;
+      const totalRatings = doc.total_ratings ?? 0;
+      const ratingText =
+        totalRatings > 0
+          ? `⭐ ${avgRating}/5 (${totalRatings} reviews)`
+          : "Chưa có đánh giá";
+
+      // Enrollment stats
+      const enrolledCount = doc.total_enrolled || 0;
+
       return `Course: ${doc.title || "Untitled"}. Description: ${
         doc.description || ""
       }. Price: ${doc.price ?? "N/A"}. Status: ${
@@ -48,8 +57,9 @@ const buildText = (type, doc) => {
         doc.main_instructor_name || doc.main_instructor || "N/A"
       } (${
         doc.main_instructor_job_title || "N/A"
-      }). Subjects: ${instrSubjects}. Duration: ${durationStr}.`;
+      }). Subjects: ${instrSubjects}. Duration: ${durationStr}. Rating: ${ratingText}. Students Enrolled: ${enrolledCount}.`;
     }
+
     case "category":
       return `Category: ${doc.name || "Untitled"}. Description: ${
         doc.description || ""
@@ -107,13 +117,17 @@ const buildText = (type, doc) => {
         doc.course_title || doc.courseId || "N/A"
       } by ${doc.user_name || doc.userId || "N/A"}. Rating: ${
         doc.rating ?? "N/A"
-      }. Comment: ${doc.comment || doc.content || ""}.`;
+      }/5. Comment: ${doc.comment || doc.content || "No comment"}. Posted: ${
+        doc.review_created_at || "N/A"
+      }.`;
+
     case "enrollment":
       return `Enrollment: User ${
         doc.user_name || doc.userId || "N/A"
       } enrolled in Course ${
         doc.course_title || doc.courseId || "N/A"
-      }. Status: ${doc.status || "N/A"}. Progress: ${doc.progress ?? "N/A"}.`;
+      }. Status: ${doc.status || "N/A"}. Progress: ${doc.progress ?? "N/A"}%.`;
+
     default:
       return JSON.stringify(doc);
   }
@@ -163,6 +177,7 @@ const STATIC_KB_FILES = [
   "faq_authentication.json",
   "faq_profile_policy.json",
   "policy_admin_action.json",
+  "faq_general_learning.json",
 ];
 
 // Hàm đọc và xử lý các file KB tĩnh
@@ -198,7 +213,6 @@ const readStaticKBFiles = () => {
 };
 
 const pushDocumentsToChroma = async (apiData) => {
-  // LẤY THÊM DỮ LIỆU KB TĨNH
   const staticKbDocs = readStaticKBFiles();
 
   const types = [
@@ -210,7 +224,6 @@ const pushDocumentsToChroma = async (apiData) => {
     { key: "quizzes", type: "quiz" },
     { key: "reviews", type: "review" },
     { key: "enrollments", type: "enrollment" },
-    // THÊM MỚI: key để chứa các docs tĩnh
     { key: "staticKb", type: "static_kb" },
   ];
 
@@ -378,9 +391,21 @@ async function runSync() {
             c.duration && typeof c.duration === "object"
               ? `${c.duration.value ?? ""} ${c.duration.unit ?? ""}`.trim()
               : c.duration || "N/A";
+
+          // Thêm thông tin Rating vào dòng tóm tắt
+          const avgRating = c.average_rating ?? 0;
+          const totalRatings = c.total_ratings ?? 0;
+          const ratingInfo =
+            totalRatings > 0
+              ? `Rating: ${avgRating}/5 (${totalRatings} đánh giá)`
+              : "Chưa có đánh giá";
+
+          // Thêm thông tin số học viên
+          const enrolled = c.total_enrolled || 0;
+
           return `${
             c.title || "Untitled"
-          } (Giá: ${price}; GV: ${instr}; Thời lượng: ${durationStr})`;
+          } (Giá: ${price}; GV: ${instr}; Thời lượng: ${durationStr}; ${ratingInfo}; Số học viên: ${enrolled})`;
         });
 
         const summaryText = `Đây là danh sách tóm tắt tất cả các khóa học hiện có: ${summaryLines.join(

@@ -17,7 +17,6 @@ const User = require("../../models/User");
  */
 const getSyncData = async () => {
   // 1. Fetch tất cả collections song song
-  // GIỮ NGUYÊN logic lọc { status: "approve" } quan trọng của bạn
   const [
     courses,
     categories,
@@ -29,7 +28,7 @@ const getSyncData = async () => {
     enrollments,
     users,
   ] = await Promise.all([
-    Course.find({ status: "approve" }).lean().exec(), //
+    Course.find({ status: "approve" }).lean().exec(),
     Category.find().lean().exec(),
     Module.find().lean().exec(),
     Lesson.find().lean().exec(),
@@ -40,18 +39,46 @@ const getSyncData = async () => {
     User.find().lean().exec(),
   ]);
 
-  // 2. Tạo Maps để tra cứu (giống hệt sync-data.js)
+  // 2. Tạo Maps để tra cứu
   const courseMap = new Map(courses.map((c) => [String(c._id), c]));
   const moduleMap = new Map(modules.map((m) => [String(m._id), m]));
-  const lessonMap = new Map(lessons.map((l) => [String(l._id), l])); // ...existing code...
+  const lessonMap = new Map(lessons.map((l) => [String(l._id), l]));
   const userMap = new Map(users.map((u) => [String(u._id), u]));
-
-  // NEW: map categories for denormalization
   const categoryMap = new Map(categories.map((cat) => [String(cat._id), cat]));
 
-  // --- NEW: enrich courses with instructor name + ensure duration kept ---
+  // NEW: Tính toán rating statistics theo courseId
+  const ratingStatsByCourse = new Map();
+  reviews.forEach((review) => {
+    const courseId = String(review.courseId);
+    if (!ratingStatsByCourse.has(courseId)) {
+      ratingStatsByCourse.set(courseId, {
+        totalRatings: 0,
+        totalScore: 0,
+        averageRating: 0,
+        ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+      });
+    }
+
+    const stats = ratingStatsByCourse.get(courseId);
+    stats.totalRatings += 1;
+    stats.totalScore += review.rating;
+    stats.ratingDistribution[review.rating] =
+      (stats.ratingDistribution[review.rating] || 0) + 1;
+    stats.averageRating = (stats.totalScore / stats.totalRatings).toFixed(2);
+  });
+
+  // NEW: Tính toán số lượng học viên theo courseId
+  const enrollmentStatsByCourse = new Map();
+  enrollments.forEach((en) => {
+    // Chỉ đếm các enrollment hợp lệ (ví dụ: đã thanh toán/đang học) nếu cần
+    // Ở đây ta đếm hết
+    const courseId = String(en.courseId);
+    const currentCount = enrollmentStatsByCourse.get(courseId) || 0;
+    enrollmentStatsByCourse.set(courseId, currentCount + 1);
+  });
+
+  // --- Enrich courses with instructor name + rating stats + enrollment stats ---
   const processedCourses = courses.map((c) => {
-    // Hỗ trợ cả trường hợp c.main_instructor là ObjectId hoặc là object populated { _id, username, email }
     const populatedInstructor =
       c.main_instructor &&
       typeof c.main_instructor === "object" &&
@@ -67,7 +94,6 @@ const getSyncData = async () => {
 
     const userFromMap = instructorId ? userMap.get(instructorId) : null;
 
-    // Lấy tên hiển thị ưu tiên: populated.username -> userFromMap.username -> userFromMap.email -> null
     const instructorName =
       (populatedInstructor &&
         (populatedInstructor.username ||
@@ -77,17 +103,16 @@ const getSyncData = async () => {
         (userFromMap.username || userFromMap.name || userFromMap.email)) ||
       null;
 
-    // NEW: lấy subject_instructor và job_title từ populated hoặc userMap
     const instructorSubject =
       (populatedInstructor && populatedInstructor.subject_instructor) ||
       (userFromMap && userFromMap.subject_instructor) ||
       null;
+
     const instructorJobTitle =
       (populatedInstructor && populatedInstructor.job_title) ||
       (userFromMap && userFromMap.job_title) ||
       null;
 
-    // Resolve category (if any)
     const cat =
       c.category && String(c.category)
         ? categoryMap.get(String(c.category))
@@ -95,25 +120,41 @@ const getSyncData = async () => {
     const categoryName = cat ? cat.name : null;
     const categoryId = cat && cat._id ? String(cat._id) : null;
 
+    // NEW: Lấy rating stats cho course này
+    const courseId = String(c._id);
+    const ratingStats = ratingStatsByCourse.get(courseId) || {
+      totalRatings: 0,
+      totalScore: 0,
+      averageRating: 0,
+      ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+    };
+
+    // NEW: Lấy số lượng học viên
+    const totalEnrolled = enrollmentStatsByCourse.get(courseId) || 0;
+
     return {
       ...c,
       main_instructor_name: instructorName,
-      // NEW: expose subject & job_title on course doc for downstream denorm
       main_instructor_subject: instructorSubject,
       main_instructor_job_title: instructorJobTitle,
       duration: c.duration || null,
       category_name: categoryName,
       category_id: categoryId,
+      // Rating stats
+      total_ratings: ratingStats.totalRatings,
+      average_rating: parseFloat(ratingStats.averageRating),
+      rating_distribution: ratingStats.ratingDistribution,
+      // Enrollment stats
+      total_enrolled: totalEnrolled,
     };
   });
 
-  // Replace courseMap so downstream denormalization reads enriched fields
+  // Replace courseMap với enriched version
   const enrichedCourseMap = new Map(
     processedCourses.map((c) => [String(c._id), c])
   );
 
-  // 3. Denormalize (làm giàu) dữ liệu
-
+  // 3. Denormalize data
   const processedModules = modules.map((m) => {
     const course = m.courseId
       ? enrichedCourseMap.get(String(m.courseId))
@@ -125,11 +166,15 @@ const getSyncData = async () => {
       course_category_name: course?.category_name || null,
       course_category_id: course?.category_id || null,
       course_main_instructor_name: course?.main_instructor_name,
-      // NEW: propagate subject & job_title
       course_main_instructor_subject: course?.main_instructor_subject || null,
       course_main_instructor_job_title:
         course?.main_instructor_job_title || null,
       course_duration: course?.duration,
+      // Rating stats
+      course_average_rating: course?.average_rating || 0,
+      course_total_ratings: course?.total_ratings || 0,
+      // Enrollment stats
+      course_total_enrolled: course?.total_enrolled || 0,
     };
   });
 
@@ -150,11 +195,10 @@ const getSyncData = async () => {
       module_title: module?.title,
       course_title: course?.title,
       course_price: course?.price,
-      courseId: l.courseId || resolvedCourseId, // <-- THÊM DÒNG NÀY
+      courseId: l.courseId || resolvedCourseId,
       course_category_name: course?.category_name || null,
       course_category_id: course?.category_id || null,
       course_main_instructor_name: course?.main_instructor_name,
-      // NEW:
       course_main_instructor_subject: course?.main_instructor_subject || null,
       course_main_instructor_job_title:
         course?.main_instructor_job_title || null,
@@ -173,7 +217,6 @@ const getSyncData = async () => {
       course_category_name: course?.category_name || null,
       course_category_id: course?.category_id || null,
       course_main_instructor_name: course?.main_instructor_name,
-      // NEW:
       course_main_instructor_subject: course?.main_instructor_subject || null,
       course_main_instructor_job_title:
         course?.main_instructor_job_title || null,
@@ -196,7 +239,6 @@ const getSyncData = async () => {
           doc.course_category_name = course?.category_name || null;
           doc.course_category_id = course?.category_id || null;
           doc.course_main_instructor_name = course?.main_instructor_name;
-          // NEW:
           doc.course_main_instructor_subject =
             course?.main_instructor_subject || null;
           doc.course_main_instructor_job_title =
@@ -214,7 +256,6 @@ const getSyncData = async () => {
         doc.course_category_name = course?.category_name || null;
         doc.course_category_id = course?.category_id || null;
         doc.course_main_instructor_name = course?.main_instructor_name;
-        // NEW:
         doc.course_main_instructor_subject =
           course?.main_instructor_subject || null;
         doc.course_main_instructor_job_title =
@@ -228,7 +269,6 @@ const getSyncData = async () => {
       doc.course_category_name = course?.category_name || null;
       doc.course_category_id = course?.category_id || null;
       doc.course_main_instructor_name = course?.main_instructor_name;
-      // NEW:
       doc.course_main_instructor_subject =
         course?.main_instructor_subject || null;
       doc.course_main_instructor_job_title =
@@ -246,16 +286,19 @@ const getSyncData = async () => {
     return {
       ...r,
       course_title: course?.title,
-      user_name: user?.name,
       course_price: course?.price,
+      user_name: user?.name || user?.username || user?.email,
       course_category_name: course?.category_name || null,
       course_category_id: course?.category_id || null,
       course_main_instructor_name: course?.main_instructor_name,
-      // NEW:
       course_main_instructor_subject: course?.main_instructor_subject || null,
       course_main_instructor_job_title:
         course?.main_instructor_job_title || null,
       course_duration: course?.duration,
+      rating: r.rating,
+      comment: r.comment || "",
+      review_created_at: r.createdAt,
+      review_updated_at: r.updatedAt,
     };
   });
 
@@ -272,7 +315,6 @@ const getSyncData = async () => {
       course_category_name: course?.category_name || null,
       course_category_id: course?.category_id || null,
       course_main_instructor_name: course?.main_instructor_name,
-      // NEW:
       course_main_instructor_subject: course?.main_instructor_subject || null,
       course_main_instructor_job_title:
         course?.main_instructor_job_title || null,
@@ -280,9 +322,9 @@ const getSyncData = async () => {
     };
   });
 
-  // 4. Trả về một đối tượng JSON lớn
+  // 4. Trả về
   return {
-    courses: processedCourses, // enriched courses (approve)
+    courses: processedCourses,
     categories,
     modules: processedModules,
     lessons: processedLessons,
@@ -290,7 +332,6 @@ const getSyncData = async () => {
     quizzes: processedQuizzes,
     reviews: processedReviews,
     enrollments: processedEnrollments,
-    // Chúng ta không cần gửi 'users'
   };
 };
 

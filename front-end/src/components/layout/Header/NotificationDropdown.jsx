@@ -41,16 +41,6 @@ const NotificationDropdown = () => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const handleMarkAsRead = async (id) => {
-        try {
-            await notificationService.markAsRead(id);
-            setNotifications((prev) => prev.map((n) => (n._id === id ? { ...n, isRead: true } : n)));
-            setUnreadCount((prev) => Math.max(0, prev - 1));
-        } catch (error) {
-            console.error("Error marking as read", error);
-        }
-    };
-
     const handleMarkAllAsRead = async () => {
         if (!user?._id) return;
         try {
@@ -66,13 +56,8 @@ const NotificationDropdown = () => {
     };
 
     const handleNotificationClick = async (notification) => {
-        if (!notification.isRead) {
-            handleMarkAsRead(notification._id);
-        }
         setIsOpen(false);
-        if (notification.link) {
-            navigate(notification.link);
-        }
+        navigate("/notifications");
     };
 
     return (
