@@ -1,26 +1,19 @@
+import {
+    AlertCircle,
+    BookOpen,
+    Check,
+    CheckCircle,
+    Download,
+    Eye,
+    Search,
+    X,
+    XCircle
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-    Search,
-    CheckCircle,
-    XCircle,
-    Eye,
-    BookOpen,
-    AlertCircle,
-    Check,
-    X,
-    CircleCheck,
-    TextAlignJustify,
-    File,
-    FileText,
-    Download,
-} from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
     Dialog,
@@ -30,13 +23,15 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { approveCourse, getAllCourse, rejectCourse } from "@/services/courseService";
-import { ToastHelper } from "@/helper/ToastHelper";
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
+import { ToastHelper } from "@/helper/ToastHelper";
 import categoryService from "@/services/categoryService";
+import { approveCourse, getAllCourse, rejectCourse } from "@/services/courseService";
 import Swal from "sweetalert2";
-import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
 const CourseManagementPage = () => {
     const [search, setSearch] = useState("");
@@ -294,7 +289,6 @@ const CourseManagementPage = () => {
 
     return (
         <div className="max-w-full mx-auto space-y-4 min-h-screen bg-gray-50/50">
-            <LoadingOverlay isVisible={isFirstLoad && loading} progress={80} />
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {stats.map((stat, index) => (
                     <div

@@ -1,17 +1,17 @@
-import { useEffect, useState, useRef } from "react";
-import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FaRegStar } from "react-icons/fa";
-import { Search } from "lucide-react";
-import { getAllCoursePublished } from "@/services/courseService";
 import { useEnrollment } from "@/context/EnrollmentContext";
-import { useAuth } from "@/hooks/useAuth";
-import categoryService from "@/services/categoryService";
 import Pagination from "@/helper/Pagination";
 import { ToastHelper } from "@/helper/ToastHelper";
+import { useAuth } from "@/hooks/useAuth";
+import categoryService from "@/services/categoryService";
+import { getAllCoursePublished } from "@/services/courseService";
+import { Search } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { FaRegStar } from "react-icons/fa";
+import { Link, useSearchParams } from "react-router-dom";
 
 const Courses = () => {
     const [searchParams] = useSearchParams();
@@ -146,12 +146,6 @@ const Courses = () => {
             </div>
         );
 
-    if (error)
-        return (
-            <div className="flex justify-center items-center min-h-screen">
-                <p className="text-red-500 text-lg">{error}</p>
-            </div>
-        );
 
     const itemsPerPage = 6; // số khóa học mỗi trang
     const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
