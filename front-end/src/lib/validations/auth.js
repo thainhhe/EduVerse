@@ -39,9 +39,6 @@ export const registerLearnerSchema = z
       .refine((s) => s.trim().length > 0, {
         message: "Confirm password cannot be only whitespace",
       }),
-    agreeTerms: z.boolean().refine((v) => v === true, {
-      message: "You must agree to the terms and conditions",
-    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",

@@ -155,7 +155,7 @@ const RegisterInstructor = () => {
       confirmPassword: "",
       subjects: [],
       jobTitle: "",
-      agreeTerms: false,
+      agreeTerms: true,
     },
   });
 
