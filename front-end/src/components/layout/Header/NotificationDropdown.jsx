@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "react-query";
-import { Bell, Check } from "lucide-react";
+import { Bell, BellRing, Check } from "lucide-react";
 import { useAuth } from "@hooks/useAuth";
 import notificationService from "@/services/notificationService";
 import { formatDistanceToNow } from "date-fns";
@@ -66,7 +66,7 @@ const NotificationDropdown = () => {
                 onClick={() => setIsOpen(!isOpen)}
                 className="relative p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-100 rounded-full transition-colors focus:outline-none"
             >
-                <Bell className="w-6 h-6" />
+                <BellRing className="w-6 h-6" />
                 {unreadCount > 0 && (
                     <span className="absolute top-1 right-1 flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-500 rounded-full">
                         {unreadCount > 9 ? "9+" : unreadCount}

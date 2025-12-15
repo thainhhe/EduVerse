@@ -7,12 +7,12 @@ import { EditForum } from "./EditForum";
 import { useCourse } from "@/context/CourseProvider";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 export default function ForumManagement() {
     const sessionCourseId = typeof window !== "undefined" ? sessionStorage.getItem("currentCourseId") : null;
     const rawCourseData = typeof window !== "undefined" ? sessionStorage.getItem("currentCourseData") : null;
     const sessionCourseData = rawCourseData ? JSON.parse(rawCourseData) : null;
+    const isApproved = sessionCourseData?.status === "approve";
     const { user } = useAuth();
     const [forum, setForum] = useState(null);
 
@@ -39,7 +39,6 @@ export default function ForumManagement() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50/30 p-6">
             <div className="max-w-7xl mx-auto space-y-6">
-                {/* Header Section */}
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100/50 p-6">
                     <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                         <div className="space-y-2 flex-1">
@@ -74,7 +73,6 @@ export default function ForumManagement() {
                             )}
                         </div>
 
-                        {/* Stats Cards */}
                         <div className="flex items-center gap-3">
                             <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 rounded-xl p-4 min-w-[120px]">
                                 <div className="flex items-center gap-2 mb-1">
@@ -89,7 +87,6 @@ export default function ForumManagement() {
                     </div>
                 </div>
 
-                {/* Forum Content */}
                 <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
                     <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-indigo-50/50 to-white">
                         <div className="flex items-center gap-3">
@@ -111,12 +108,20 @@ export default function ForumManagement() {
                             canComment={isCollab}
                             isMainInstructor={isMainInstructor}
                             isCollab={isCollab}
+                            isApproved={isApproved}
                         />
                     </CardContent>
                 </Card>
             </div>
 
-            <EditForum open={isOpenEdit} onOpenChange={setIsOpenEdit} onUpdate={fetchForum} forum={forum} />
+            {isApproved && (
+                <EditForum
+                    open={isOpenEdit}
+                    onOpenChange={setIsOpenEdit}
+                    onUpdate={fetchForum}
+                    forum={forum}
+                />
+            )}
         </div>
     );
 }

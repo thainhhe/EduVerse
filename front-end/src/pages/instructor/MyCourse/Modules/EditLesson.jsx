@@ -9,23 +9,19 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-// import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
 import { updateLesson } from "@/services/courseService";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import { ToastHelper } from "@/helper/ToastHelper";
 
 export function EditLesson({ open, onOpenChange, lesson, onUpdate }) {
     const [lessonTitle, setLessonTitle] = useState("");
     const [contentGroup, setContentGroup] = useState("");
-    const [isPublic, setIsPublic] = useState(false);
 
     useEffect(() => {
         if (!open) return;
         if (lesson) {
             setLessonTitle(lesson.title || "");
             setContentGroup(lesson.content || "");
-            setIsPublic(lesson.status !== "hidden");
         }
     }, [lesson]);
 
@@ -35,31 +31,29 @@ export function EditLesson({ open, onOpenChange, lesson, onUpdate }) {
                 moduleId: lesson.moduleId,
                 title: lessonTitle?.trim(),
                 content: contentGroup?.trim(),
-                status: isPublic ? "published" : "hidden",
+                status: lesson.status,
                 order: lesson.order,
             };
-            // xóa các key rỗng/undefined
             Object.keys(payload).forEach((k) => {
                 if (payload[k] === "" || payload[k] === undefined) delete payload[k];
             });
             const res = await updateLesson(lesson.id, payload);
-            console.log("Update lesson response:", res?.data ?? res);
-            // reset + close + notify parent
-            setLessonTitle("");
-            setContentGroup("");
-            // setDescription("");
-            onOpenChange(false);
-            if (typeof onUpdate === "function") onUpdate();
+            if (res.success) {
+                ToastHelper.success("Update lesson successfully");
+                setLessonTitle("");
+                setContentGroup("");
+                onOpenChange(false);
+                if (typeof onUpdate === "function") onUpdate();
+            } else {
+                ToastHelper.error("Update lesson failed");
+            }
         } catch (err) {
             console.error("Update lesson failed:", err.response?.status, err.response?.data ?? err.message);
-            alert("Update lesson failed. Kiểm tra console/server logs.");
+            ToastHelper.error("Update lesson failed");
         }
     };
 
     const handleCancel = () => {
-        // Reset form
-        // setLessonTitle("");
-        // setContentGroup("");
         onOpenChange(false);
     };
 
@@ -100,16 +94,6 @@ export function EditLesson({ open, onOpenChange, lesson, onUpdate }) {
                             onChange={(e) => setContentGroup(e.target.value)}
                             className="min-h-[170px] resize-y !w-full !block whitespace-pre-wrap break-all p-3 rounded-md border border-input bg-transparent text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                         />
-                    </div>
-
-                    <div className="space-y-2">
-                        <div
-                            className="flex items-center gap-2 cursor-pointer p-2 border-1 rounded-lg"
-                            onClick={() => setIsPublic(!isPublic)}
-                        >
-                            <Checkbox checked={isPublic} onCheckedChange={() => setIsPublic(!isPublic)} />
-                            <span className="text-sm text-gray-700">Public lesson</span>
-                        </div>
                     </div>
                 </div>
 

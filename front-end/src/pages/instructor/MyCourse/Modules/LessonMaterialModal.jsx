@@ -5,12 +5,16 @@ import DocumentViewer from "@/components/minio/DocumentViewer";
 import { getFilesByLessonId } from "@/services/minio";
 import FileList from "@/components/minio/FileList";
 import { X } from "lucide-react";
+import UploadMaterialModal from "../Upload/UploadMaterialModal";
+import { Button } from "@/components/ui/button";
 
-const LessonMaterialModal = ({ open, onOpenChange, lessonId, canUpdate = true }) => {
+const LessonMaterialModal = ({ open, onOpenChange, lessonId, canUpdate = true, onUpdated }) => {
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedVideo, setSelectedVideo] = useState(null);
     const [selectedDocument, setSelectedDocument] = useState(null);
+    const [openUploadModal, setOpenUploadModal] = useState(false);
+    const [messageUploadSuccess, setMessageUploadSuccess] = useState("");
 
     const loadFilesByLessonId = async () => {
         try {
@@ -46,32 +50,58 @@ const LessonMaterialModal = ({ open, onOpenChange, lessonId, canUpdate = true })
         }
     };
 
+    const displayMessage = () => {
+        setMessageUploadSuccess("Upload material success!");
+        setTimeout(() => {
+            setMessageUploadSuccess("");
+        }, 3000);
+    };
+
+    const handleUploadSuccess = () => {
+        setOpenUploadModal(false);
+        loadFilesByLessonId();
+        displayMessage();
+    };
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-9/12 p-6 overflow-y-auto max-h-[90vh]">
                 <DialogHeader>
                     <DialogTitle>Lesson Materials</DialogTitle>
                 </DialogHeader>
-                <div className="app">
-                    <main className="main-content">
-                        <section className="files-section">
-                            <h2 className="section-title">
-                                Your Files <span className="file-count">({files.length})</span>
-                            </h2>
-                            {loading ? (
-                                <div className="loading">Loading files...</div>
-                            ) : (
-                                <FileList
-                                    files={files}
-                                    onFileClick={handleFileClick}
-                                    onFileDeleted={handleFileDeleted}
-                                    canUpdate={canUpdate}
-                                />
-                            )}
-                        </section>
-                    </main>
+                <div className="bg-gray-500 h-0.5 w-full"></div>
+                <div className="w-full">
+                    <div className="w-full">
+                        <div className="flex items-center justify-between py-2">
+                            <div className="flex items-center gap-2">
+                                Your Files <span className="">({files.length})</span>
+                                <span className="text-green-500">{messageUploadSuccess}</span>
+                            </div>
+                            <Button variant="outline" onClick={() => setOpenUploadModal(true)}>
+                                Upload New File
+                            </Button>
+                        </div>
+                        {loading ? (
+                            <div className="">Loading files...</div>
+                        ) : (
+                            <FileList
+                                files={files}
+                                onFileClick={handleFileClick}
+                                onFileDeleted={handleFileDeleted}
+                                canUpdate={canUpdate}
+                            />
+                        )}
+                    </div>
+                    {openUploadModal && (
+                        <UploadMaterialModal
+                            open={openUploadModal}
+                            onOpenChange={() => setOpenUploadModal(false)}
+                            lessonId={lessonId}
+                            onUploaded={handleUploadSuccess}
+                        />
+                    )}
                     {selectedVideo && (
-                        <div className="mt-6 border rounded-lg overflow-hidden bg-black shadow-lg">
+                        <div className="mt-6 border rounded-lg overflow-hidden bg-black shadow-lg w-full">
                             <div className="flex items-center justify-between p-3 bg-gray-900 text-white border-b border-gray-800">
                                 <span className="text-sm font-medium truncate">
                                     {selectedVideo.originalName}

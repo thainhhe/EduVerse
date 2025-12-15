@@ -2,6 +2,7 @@ import { deleteFile, getDownloadUrl } from "@/services/minio";
 import { FileText, Video, Download, Trash2, Calendar, HardDrive } from "lucide-react";
 import "./FileList.css";
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
+import { ToastHelper } from "@/helper/ToastHelper";
 
 const FileList = ({ files, onFileClick, onFileDeleted, canDelete = true, canUpdate = true }) => {
     const handleDelete = async (e, fileId) => {
@@ -12,9 +13,10 @@ const FileList = ({ files, onFileClick, onFileDeleted, canDelete = true, canUpda
             if (onFileDeleted) {
                 onFileDeleted(fileId);
             }
+            ToastHelper.success("File deleted successfully");
         } catch (error) {
             console.error("Delete error:", error);
-            alert("Failed to delete file");
+            ToastHelper.error("Failed to delete file");
         }
     };
 

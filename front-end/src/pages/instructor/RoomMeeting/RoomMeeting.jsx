@@ -11,16 +11,19 @@ import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import EditRoom from "./EditRoom";
 import AddRoom from "./AddRoom";
+import { useCourse } from "@/context/CourseProvider";
 
 const RoomMeeting = () => {
     const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(false);
     const params = useParams();
     const location = useLocation();
-    const { user } = useAuth();
     const [statusFilter, setStatusFilter] = useState("all");
     const [editingRoom, setEditingRoom] = useState(null);
     const [openEdit, setOpenEdit] = useState(false);
+
+    const { draft } = useCourse();
+    const isApproved = draft.status === "approve";
 
     // Create room dialog state
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -166,6 +169,7 @@ const RoomMeeting = () => {
                 {/* Create Room Button */}
                 <Button
                     onClick={() => setCreateDialogOpen(true)}
+                    disabled={!isApproved}
                     className="bg-indigo-600 text-white hover:bg-indigo-700"
                 >
                     <Plus className="mr-2 h-4 w-4" />
@@ -178,7 +182,9 @@ const RoomMeeting = () => {
                 {loading && <p>Loading room list...</p>}
 
                 {!loading && rooms.length === 0 && (
-                    <div className="text-gray-500 italic">Chưa có phòng nào.</div>
+                    <div className="text-gray-500 italic">
+                        {isApproved ? "No rooms found." : "Course is not approved yet."}
+                    </div>
                 )}
 
                 {!loading &&

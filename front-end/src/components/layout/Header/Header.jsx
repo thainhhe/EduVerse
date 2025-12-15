@@ -314,7 +314,7 @@ const Header = () => {
                                         } text-white shadow-md hover:shadow-lg`}
                                     >
                                         <FaUserPlus className="text-lg" />
-                                        <span>Signup</span>
+                                        <span>Sign up</span>
                                         <ChevronDown
                                             className={`w-4 h-4 transition-transform duration-200 ${
                                                 showSignupMenu ? "rotate-180" : ""

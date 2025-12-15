@@ -10,6 +10,7 @@ import categoryService from "@/services/categoryService";
 import { useAuth } from "@/hooks/useAuth";
 import api from "@/services/api";
 import { useCourse } from "@/context/CourseProvider";
+import { Loader2 } from "lucide-react";
 
 const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
     const navigate = useNavigate();
@@ -439,8 +440,9 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                             variant="outline"
                             className="bg-white border border-indigo-600 text-black hover:bg-indigo-600 hover:text-white transition-colors duration-200"
                             onClick={handleNext}
+                            disabled={saving}
                         >
-                            Next →
+                            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Next →"}
                         </Button>
                     </div>
                 </CardContent>
