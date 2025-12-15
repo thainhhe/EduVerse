@@ -8,20 +8,17 @@ const createRoomValidator = Yup.object().shape({
         .max(100, "Room name must not exceed 100 characters")
         .required("Please enter room name"),
     description: Yup.string().trim().max(500, "Description must not exceed 500 characters").nullable(),
-    courseId: Yup.string()
-        .matches(/^[0-9a-fA-F]{24}$/, "Invalid courseId")
-        .required("Please enter courseId"),
-    createdBy: Yup.string()
-        .matches(/^[0-9a-fA-F]{24}$/, "Invalid createdBy")
-        .required("Please enter createdBy"),
+    courseId: Yup.string().required("Please enter courseId"),
+    createdBy: Yup.string().required("Please enter createdBy"),
     link: Yup.string().url("Link must be a valid URL").nullable(),
     password: Yup.string().max(50, "Password must not exceed 50 characters").nullable(),
     isPublic: Yup.boolean().default(false),
     startTime: Yup.date().nullable(),
     endTime: Yup.date()
         .nullable()
-        .when("startTime", (startTime, schema) => {
-            return startTime ? schema.min(startTime, "End time must be after start time") : schema;
+        .when("startTime", ([startTime], schema) => {
+            if (!startTime) return schema;
+            return schema.min(startTime, "End time must be after start time");
         }),
 });
 
@@ -36,7 +33,12 @@ const updateRoomValidator = Yup.object().shape({
     password: Yup.string().max(50, "Password must not exceed 50 characters").nullable(),
     isPublic: Yup.boolean(),
     startTime: Yup.date().nullable(),
-    endTime: Yup.date().nullable(),
+    endTime: Yup.date()
+        .nullable()
+        .when("startTime", ([startTime], schema) => {
+            if (!startTime) return schema;
+            return schema.min(startTime, "End time must be after start time");
+        }),
     status: Yup.string().oneOf(["pending", "ongoing", "ended"], "Status must be pending, ongoing or ended"),
 });
 

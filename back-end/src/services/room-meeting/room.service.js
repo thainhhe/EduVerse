@@ -79,8 +79,8 @@ const roomService = {
                 password,
                 status,
                 link: meetingLink ?? link,
-                startTime: startTime ? new Date(startTime) : defaultStart,
-                endTime: endTime || null,
+                startTime: startTime === "" ? defaultStart : new Date(startTime),
+                endTime: new Date(endTime) || null,
             };
             const result = await roomMeetingRepository.createRoom(roomData);
             return {

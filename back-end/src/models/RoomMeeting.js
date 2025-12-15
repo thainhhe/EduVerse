@@ -12,7 +12,7 @@ const roomSchema = new mongoose.Schema(
         createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
         startTime: { type: Date, default: Date.now },
         status: { type: String, enum: ["pending", "ongoing", "ended"], default: "pending" },
-        endTime: { type: Date },
+        endTime: { type: Date, default: null },
     },
     {
         timestamps: true,

@@ -78,7 +78,6 @@ const AddRoom = ({ open, setOpen, courseId, onCreated }) => {
                 resetForm();
                 onCreated && onCreated();
                 setOpen(false);
-
                 // Auto open link if available
                 const created = res?.data?.data ?? res?.data ?? res;
                 const link = created?.link ?? created?.url ?? created?.meetingUrl ?? null;
