@@ -22,8 +22,14 @@ const RoomMeeting = () => {
     const [editingRoom, setEditingRoom] = useState(null);
     const [openEdit, setOpenEdit] = useState(false);
 
-    const { draft } = useCourse();
-    const isApproved = draft.status === "approve";
+    // const { draft } = useCourse();
+    // console.log("draft", draft)
+    // const isApproved = draft.status === "approve";
+
+    const rawCourseData = typeof window !== "undefined" ? sessionStorage.getItem("currentCourseData") : null;
+    const sessionCourseData = rawCourseData ? JSON.parse(rawCourseData) : null;
+    const isApproved = sessionCourseData?.status === "approve";
+    console.log("isApproved", isApproved)
 
     // Create room dialog state
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -178,7 +184,7 @@ const RoomMeeting = () => {
             </div>
 
             {/* Rooms List */}
-            <div className="space-y-3 max-h-[350px] overflow-y-auto mt-2 p-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
+            <div className="space-y-3 max-h-[450px] overflow-y-auto mt-2 p-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
                 {loading && <p>Loading room list...</p>}
 
                 {!loading && rooms.length === 0 && (
@@ -225,13 +231,12 @@ const RoomMeeting = () => {
                                     )}
                                     <div className="flex items-center gap-2 mt-1">
                                         <span
-                                            className={`text-xs px-2 py-1 rounded-full ${
-                                                room.status === "ongoing"
-                                                    ? "bg-green-100 text-green-700"
-                                                    : room.status === "ended"
+                                            className={`text-xs px-2 py-1 rounded-full ${room.status === "ongoing"
+                                                ? "bg-green-100 text-green-700"
+                                                : room.status === "ended"
                                                     ? "bg-gray-100 text-gray-700"
                                                     : "bg-yellow-100 text-yellow-700"
-                                            }`}
+                                                }`}
                                         >
                                             {room.status}
                                         </span>

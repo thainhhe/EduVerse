@@ -23,7 +23,7 @@ const EditRoom = ({ room, open, setOpen, onUpdated }) => {
         endTime: room.endTime ? new Date(room.endTime).toISOString().slice(0, 16) : "",
     });
     const [submitting, setSubmitting] = useState(false);
-
+    console.log("formData", formData)
     useEffect(() => {
         if (room) {
             setFormData({
@@ -125,7 +125,7 @@ const EditRoom = ({ room, open, setOpen, onUpdated }) => {
                     </div>
 
                     {/* Link */}
-                    <div>
+                    {/* <div>
                         <Label htmlFor="link" className="font-medium">
                             Meeting Link
                         </Label>
@@ -136,7 +136,7 @@ const EditRoom = ({ room, open, setOpen, onUpdated }) => {
                             placeholder="Enter meeting link (Zoom/Meet/Jitsi)..."
                             className="mt-1"
                         />
-                    </div>
+                    </div> */}
 
                     {/* Password */}
                     <div>
