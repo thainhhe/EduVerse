@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useEffect } from "react";
+import { ToastHelper } from "@/helper/ToastHelper";
 
 const formSchema = z.object({
     moduleTitle: z
@@ -36,8 +37,6 @@ const formSchema = z.object({
         .refine((val) => val.trim().length > 0, {
             message: "Description cannot be empty or spaces only",
         }),
-
-    makeVisible: z.boolean().optional(),
 });
 
 export function EditModuleModal({ open, onOpenChange, module_, onUpdate }) {
@@ -46,7 +45,6 @@ export function EditModuleModal({ open, onOpenChange, module_, onUpdate }) {
         defaultValues: {
             moduleTitle: "",
             moduleDescription: "",
-            makeVisible: false,
         },
     });
 
@@ -55,7 +53,6 @@ export function EditModuleModal({ open, onOpenChange, module_, onUpdate }) {
         form.reset({
             moduleTitle: module_?.title || "",
             moduleDescription: module_?.description || "",
-            makeVisible: !!module_?.makeVisible,
         });
     }, [open, module_]);
 
@@ -65,18 +62,20 @@ export function EditModuleModal({ open, onOpenChange, module_, onUpdate }) {
                 title: values.moduleTitle,
                 description: values.moduleDescription,
                 courseId: module_?.courseId,
-                makeVisible: values.makeVisible,
             };
 
-            console.log("moduleUpdate:", module_);
-            await updateModule(module_.id, payload);
-            form.reset();
-            onOpenChange(false);
-
-            if (typeof onUpdate === "function") onUpdate();
+            const res = await updateModule(module_.id, payload);
+            if (res.success) {
+                ToastHelper.success("Update module successfully");
+                form.reset();
+                onOpenChange(false);
+                if (typeof onUpdate === "function") onUpdate();
+            } else {
+                ToastHelper.error("Update module failed");
+            }
         } catch (err) {
             console.error("Create module failed:", err.response?.data ?? err);
-            alert("Create module failed. Check console/server logs.");
+            ToastHelper.error("Create module failed");
         }
     };
 
@@ -93,7 +92,6 @@ export function EditModuleModal({ open, onOpenChange, module_, onUpdate }) {
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-4">
-                        {/* Module Title */}
                         <FormField
                             control={form.control}
                             name="moduleTitle"
@@ -107,9 +105,6 @@ export function EditModuleModal({ open, onOpenChange, module_, onUpdate }) {
                                 </FormItem>
                             )}
                         />
-
-                        {/* Module Description */}
-                        {/* Module Description */}
                         <FormField
                             control={form.control}
                             name="moduleDescription"
@@ -128,26 +123,6 @@ export function EditModuleModal({ open, onOpenChange, module_, onUpdate }) {
                                 </FormItem>
                             )}
                         />
-
-                        {/* Visibility */}
-                        <FormField
-                            control={form.control}
-                            name="makeVisible"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
-                                    <FormControl>
-                                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                                    </FormControl>
-                                    <div className="space-y-1 leading-none">
-                                        <FormLabel>
-                                            Make module visible to students immediately upon saving.
-                                        </FormLabel>
-                                    </div>
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Buttons */}
                         <DialogFooter className="gap-2 pt-4">
                             <Button
                                 type="button"

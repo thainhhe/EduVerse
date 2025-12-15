@@ -1,13 +1,12 @@
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Upload } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import UploadZone from "@/components/minio/UploadZone";
+import { Button } from "@/components/ui/button";
 
-const UploadMaterialModal = ({ open, onOpenChange, lessonId, onUploaded }) => {
+const UploadMaterialModal = ({ open, lessonId, onUploaded, onOpenChange }) => {
     const { user } = useAuth();
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
@@ -17,18 +16,18 @@ const UploadMaterialModal = ({ open, onOpenChange, lessonId, onUploaded }) => {
         setTitle("");
         setDescription("");
         setAccessLevel("public");
-    }, []);
+    }, [open]);
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-7xl p-6">
+        <div className={`mt-2 overflow-y-auto ${open ? "block" : "hidden"}`}>
+            <div className="max-w-full p-4 border border-gray-300 rounded-sm">
                 <div className="space-y-4">
-                    <h2 className="text-xl font-semibold flex items-center gap-2">
-                        <Upload className="w-5 h-5 text-indigo-500" />
-                        Upload Material
-                    </h2>
-
-                    {/* Title */}
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-xl font-semibold flex items-center gap-2">Upload Material</h2>
+                        <Button variant="outline" onClick={onOpenChange} className="ml-auto">
+                            Close
+                        </Button>
+                    </div>
                     <div className="space-y-2">
                         <Label>Title</Label>
                         <Input
@@ -37,8 +36,6 @@ const UploadMaterialModal = ({ open, onOpenChange, lessonId, onUploaded }) => {
                             onChange={(e) => setTitle(e.target.value)}
                         />
                     </div>
-
-                    {/* Description */}
                     <div className="space-y-2">
                         <Label>Description</Label>
                         <textarea
@@ -49,8 +46,6 @@ const UploadMaterialModal = ({ open, onOpenChange, lessonId, onUploaded }) => {
                             onChange={(e) => setDescription(e.target.value)}
                         />
                     </div>
-
-                    {/* Access level */}
                     <div className="space-y-2">
                         <Label>Access Level</Label>
                         <Select value={accessLevel} onValueChange={setAccessLevel}>
@@ -63,17 +58,13 @@ const UploadMaterialModal = ({ open, onOpenChange, lessonId, onUploaded }) => {
                             </SelectContent>
                         </Select>
                     </div>
-
-                    {/* Upload area */}
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
-                        <UploadZone
-                            data={{ title, description, accessLevel, lessonId, uploadedBy: user._id }}
-                            onUploadSuccess={onUploaded}
-                        />
-                    </div>
+                    <UploadZone
+                        data={{ title, description, accessLevel, lessonId, uploadedBy: user._id }}
+                        onUploadSuccess={onUploaded}
+                    />
                 </div>
-            </DialogContent>
-        </Dialog>
+            </div>
+        </div>
     );
 };
 

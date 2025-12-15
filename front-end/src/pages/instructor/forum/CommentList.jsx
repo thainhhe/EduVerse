@@ -7,13 +7,12 @@ import { ToastHelper } from "@/helper/ToastHelper";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-export default function CommentList({ forumId, userId, canComment, isMainInstructor, isCollab }) {
+export default function CommentList({ forumId, userId, canComment, isMainInstructor, isCollab, isApproved }) {
     const [comments, setComments] = useState([]);
     const [loading, setLoading] = useState(false);
     const [newComment, setNewComment] = useState("");
     const [filter, setFilter] = useState("all");
 
-    // Load danh sách bình luận
     const fetchComments = async () => {
         setLoading(true);
         try {
@@ -93,7 +92,6 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
 
     return (
         <div className="space-y-4">
-            {/* Filter Bar */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100">
                 <div className="flex items-center gap-3 flex-1">
                     <Filter className="w-4 h-4 text-gray-500" />
@@ -183,7 +181,7 @@ export default function CommentList({ forumId, userId, canComment, isMainInstruc
                     </p>
                     <Button
                         onClick={handleCreateComment}
-                        disabled={!canComment || !newComment.trim()}
+                        disabled={!canComment || !newComment.trim() || !isApproved}
                         size="sm"
                         className={cn(
                             "px-4 transition-all",

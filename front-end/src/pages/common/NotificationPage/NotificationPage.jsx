@@ -194,7 +194,7 @@ const NotificationPage = () => {
                                                     }`}
                                                 >
                                                     {notification.message}
-                                                    {notification.link.includes("/permission/accept") && (
+                                                    {notification?.link?.includes("/permission/accept") && (
                                                         <span
                                                             className="text-indigo-600 font-semibold cursor-pointer mx-4"
                                                             onClick={() =>

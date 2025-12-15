@@ -1,28 +1,22 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
     ChevronDown,
-    ChevronRight,
-    CheckCircle2,
     Edit,
     Ellipsis,
-    FileText,
     Plus,
-    Settings,
     BookOpen,
-    FileQuestion,
     Trash2,
     Eye,
     TextAlignJustify,
     ScrollText,
+    MessageCircleQuestionMark,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import { Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { AddModuleModal } from "./AddModule";
 import { AddLessonModal } from "./AddLesson";
-import QuizManager from "../Quiz/quiz-manager";
 import {
     getModulesInCourse,
     getQuizzesByCourse,
@@ -34,9 +28,8 @@ import {
 import LessonMaterialModal from "./LessonMaterialModal";
 import { EditLesson } from "./EditLesson";
 import { EditModuleModal } from "./EditModule";
-import { toast } from "react-toastify";
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
-import UploadMaterialModal from "../Upload/UploadMaterialModal";
+import { ToastHelper } from "@/helper/ToastHelper";
 
 const ModulesPage = () => {
     const [expandedModules, setExpandedModules] = useState([]);
@@ -231,12 +224,12 @@ const ModulesPage = () => {
             const res = await deleteModule(id);
             if (res.success) {
                 await fetchModules(courseIdFromState);
-                toast.success("Đã xóa module!");
+                ToastHelper.success("Module deleted successfully");
                 setOpenModuleMenuId(null);
             }
         } catch (error) {
-            console.log("Lỗi khi xóa", error);
-            toast.error("Lỗi khi xóa!");
+            console.log("Failed to delete module", error);
+            ToastHelper.error("Failed to delete module");
         }
     };
 
@@ -246,12 +239,12 @@ const ModulesPage = () => {
             const res = await deleteLesson(id);
             if (res.success) {
                 await fetchModules(courseIdFromState);
-                toast.success("Đã xóa lesson!");
+                ToastHelper.success("Lesson deleted successfully");
                 setOpenLessonMenuId(null);
             }
         } catch (error) {
-            console.log("Lỗi khi xóa", error);
-            toast.error("Lỗi khi xóa!");
+            console.log("Failed to delete lesson", error);
+            ToastHelper.error("Failed to delete lesson");
         }
     };
 
@@ -263,7 +256,6 @@ const ModulesPage = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50/30">
-            {/* Modules List */}
             <div className="max-w-7xl mx-auto">
                 <div className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
                     <div className="border-b border-gray-100 bg-gradient-to-r from-indigo-50/50 to-white">
@@ -293,17 +285,11 @@ const ModulesPage = () => {
                                             setIsQuizManagerOpen(true);
                                         }}
                                     >
-                                        <FileQuestion className="w-4 h-4 mr-2" />
-                                        Manage Quizzes
-                                        <Badge
-                                            variant="secondary"
-                                            className="ml-2 bg-indigo-100 text-indigo-700 border-none"
-                                        >
-                                            {courseQuizCount}
-                                        </Badge>
+                                        <MessageCircleQuestionMark className="w-4 h-4 mr-2" />
+                                        Course Quizzes
                                     </Button>
                                     <Button
-                                        className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
+                                        className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-md transition-all hover:shadow-lg"
                                         onClick={() => setIsAddModuleOpen(true)}
                                     >
                                         <Plus className="w-4 h-4 mr-2" />
@@ -324,15 +310,6 @@ const ModulesPage = () => {
                                 <p className="text-gray-500 mb-6 max-w-md mx-auto">
                                     Get started by creating your first module to organize your course content.
                                 </p>
-                                {canUpdateCourse && (
-                                    <Button
-                                        className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white"
-                                        onClick={() => setIsAddModuleOpen(true)}
-                                    >
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        Create First Module
-                                    </Button>
-                                )}
                             </div>
                         ) : (
                             modules.map((module, moduleIndex) => {
@@ -469,10 +446,10 @@ const ModulesPage = () => {
                                                                         setOpenModuleMenuId(null);
                                                                     }}
                                                                 >
-                                                                    <FileQuestion className="w-4 h-4 text-purple-600" />
+                                                                    <MessageCircleQuestionMark className="w-4 h-4 text-purple-600" />
                                                                 </button>
                                                                 <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-xs bg-gray-900 text-white px-3 py-1.5 rounded-lg opacity-0 invisible group-hover/quiz:opacity-100 group-hover/quiz:visible pointer-events-none transition-all duration-200 delay-300 whitespace-nowrap z-[100] shadow-lg">
-                                                                    Quiz
+                                                                    Module quiz
                                                                     <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></span>
                                                                 </span>
                                                             </div>
@@ -483,7 +460,7 @@ const ModulesPage = () => {
                                                                             <Trash2 className="w-4 h-4 text-red-600" />
                                                                         </button>
                                                                         <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-xs bg-gray-900 text-white px-3 py-1.5 rounded-lg opacity-0 invisible group-hover/delete:opacity-100 group-hover/delete:visible pointer-events-none transition-all duration-200 delay-300 whitespace-nowrap z-[100] shadow-lg">
-                                                                            Delete
+                                                                            Delete module
                                                                             <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></span>
                                                                         </span>
                                                                     </div>
@@ -539,23 +516,6 @@ const ModulesPage = () => {
                                                                                 <h4 className="font-semibold text-gray-900 truncate">
                                                                                     {lesson.title}
                                                                                 </h4>
-                                                                                {/* <Badge
-                                                                                    variant={
-                                                                                        lesson.status ===
-                                                                                        "published"
-                                                                                            ? "default"
-                                                                                            : "secondary"
-                                                                                    }
-                                                                                    className={cn(
-                                                                                        "text-xs",
-                                                                                        lesson.status ===
-                                                                                            "published"
-                                                                                            ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                                                                                            : "bg-gray-100 text-gray-600"
-                                                                                    )}
-                                                                                >
-                                                                                    {lesson.status}
-                                                                                </Badge> */}
                                                                                 <span className="text-xs text-gray-500">
                                                                                     {lessonQuizCounts[
                                                                                         lesson.id
@@ -628,7 +588,7 @@ const ModulesPage = () => {
                                                                                             <Edit className="w-4 h-4 text-blue-600" />
                                                                                         </button>
                                                                                         <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs bg-gray-900 text-white px-2 py-1 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible pointer-events-none transition-all duration-200 delay-300 whitespace-nowrap z-[100]">
-                                                                                            Edit
+                                                                                            Edit lesson
                                                                                         </span>
                                                                                     </div>
                                                                                     <div className="relative group">
@@ -652,31 +612,10 @@ const ModulesPage = () => {
                                                                                                 );
                                                                                             }}
                                                                                         >
-                                                                                            <Plus className="w-4 h-4 text-purple-600" />
+                                                                                            <MessageCircleQuestionMark className="w-4 h-4 text-purple-600" />
                                                                                         </button>
                                                                                         <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs bg-gray-900 text-white px-2 py-1 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible pointer-events-none transition-all duration-200 delay-300 whitespace-nowrap z-[100]">
-                                                                                            Add Quiz
-                                                                                        </span>
-                                                                                    </div>
-                                                                                    <div className="relative group">
-                                                                                        <button
-                                                                                            className="p-2.5 rounded-lg hover:bg-orange-50 transition-all duration-200 hover:scale-110"
-                                                                                            onClick={() => {
-                                                                                                setIsDocumentModalOpen(
-                                                                                                    true
-                                                                                                );
-                                                                                                setSelectedLessonId(
-                                                                                                    lesson.id
-                                                                                                );
-                                                                                                setOpenLessonMenuId(
-                                                                                                    null
-                                                                                                );
-                                                                                            }}
-                                                                                        >
-                                                                                            <FileText className="w-4 h-4 text-orange-600" />
-                                                                                        </button>
-                                                                                        <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs bg-gray-900 text-white px-2 py-1 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible pointer-events-none transition-all duration-200 delay-300 whitespace-nowrap z-[100]">
-                                                                                            Material
+                                                                                            Lesson Quiz
                                                                                         </span>
                                                                                     </div>
                                                                                     <ConfirmationHelper
@@ -687,6 +626,7 @@ const ModulesPage = () => {
                                                                                                 </button>
                                                                                                 <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs bg-gray-900 text-white px-2 py-1 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible pointer-events-none transition-all duration-200 delay-300 whitespace-nowrap z-[100]">
                                                                                                     Delete
+                                                                                                    lesson
                                                                                                 </span>
                                                                                             </div>
                                                                                         }
@@ -718,22 +658,6 @@ const ModulesPage = () => {
                 </div>
             </div>
 
-            {/* Quiz Manager Modal */}
-            {/* {isQuizManagerOpen && (
-                // <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                //     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[1400px] mx-auto p-6 relative overflow-y-auto max-h-[92vh] animate-in zoom-in-95 duration-200">
-                //         <QuizManager
-                //             courseId={currentQuizContext.courseId}
-                //             moduleId={currentQuizContext.moduleId}
-                //             lessonId={currentQuizContext.lessonId}
-                //             onClose={() => setIsQuizManagerOpen(false)}
-                //         />
-                //     </div>
-                // </div>
-                <Outlet />
-            )} */}
-
-            {/* Modals */}
             <AddModuleModal
                 open={isAddModuleOpen}
                 onOpenChange={setIsAddModuleOpen}
@@ -760,17 +684,12 @@ const ModulesPage = () => {
                 lesson={selectedLesson}
                 onUpdate={() => fetchModules(courseIdFromState)}
             />
-            <UploadMaterialModal
-                open={isDocumentModalOpen}
-                lessonId={selectedLessonId}
-                onOpenChange={setIsDocumentModalOpen}
-                onUpdate={() => fetchModules(courseIdFromState)}
-            />
             <LessonMaterialModal
                 open={openMaterialModal}
                 onOpenChange={setOpenMaterialModal}
                 lessonId={selectedLessonId}
                 canUpdate={canUpdateCourse}
+                onUpdated={() => fetchModules(courseIdFromState)}
             />
         </div>
     );

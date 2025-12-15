@@ -12,7 +12,7 @@ import {
     getQuizzesByLesson,
     getQuizById,
 } from "@/services/courseService";
-import { Trash2, Plus, CloverIcon, X, ArrowLeft } from "lucide-react";
+import { Plus, X, ArrowLeft } from "lucide-react";
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 import api from "@/services/api";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,6 +28,8 @@ const QuizPage = () => {
     const [mode, setMode] = useState(initialMode);
     const [quizzes, setQuizzes] = useState([]);
     const [loadingList, setLoadingList] = useState(false);
+    const [activeTab, setActiveTab] = useState("info");
+    const [showQuestionForm, setShowQuestionForm] = useState(false);
 
     const [quizInfo, setQuizInfo] = useState({
         title: "",
@@ -41,7 +43,6 @@ const QuizPage = () => {
     const [editingQuizId, setEditingQuizId] = useState(null);
     const [errors, setErrors] = useState({});
 
-    // Normalize server quiz -> local editor shape if needed
     const mapServerToLocal = (q) => {
         if (!q) return null;
         return {
@@ -77,8 +78,6 @@ const QuizPage = () => {
             else if (moduleId) res = await getQuizzesByModule(moduleId);
             else res = await getQuizzesByCourse(courseId);
 
-            // courseService returns axios .get result (api interceptor returns response.data)
-            // normalize to array
             const arr = Array.isArray(res)
                 ? res
                 : Array.isArray(res?.data)
@@ -86,7 +85,6 @@ const QuizPage = () => {
                 : Array.isArray(res?.data?.data)
                 ? res.data.data
                 : res?.data?.items ?? [];
-            // map to minimal preview info
             const mapped = (arr || []).map((q) => ({
                 id: q._id ?? q.id ?? q.quizId ?? null,
                 title: q.title ?? q.name ?? "(untitled)",
@@ -106,17 +104,12 @@ const QuizPage = () => {
         loadQuizzes();
     }, [loadQuizzes]);
 
-    // Nếu component được mở ở chế độ edit kèm quiz data, populate editor ngay
     useEffect(() => {
-        // bỏ rule eslint cho phụ thuộc hàm startEdit để đơn giản
         if ((initialMode === "edit" || initialQuizData) && initialQuizData) {
-            // safe: startEdit có kiểm tra null bên trong
             startEdit(initialQuizData);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialMode, initialQuizData]);
 
-    // prepare editor for new quiz
     const startAdd = () => {
         setMode("add");
         setEditingQuizId(null);
@@ -132,13 +125,10 @@ const QuizPage = () => {
         setErrors({});
     };
 
-    // open existing quiz for edit (fetch full quiz with answers when needed)
     const startEdit = async (quizRaw) => {
         const local = mapServerToLocal(quizRaw);
         if (!local) return;
         setErrors({});
-
-        // If questions exist but seem to lack correctAnswer info, try fetching full quiz
         let source = local;
         try {
             const firstQ = (local.questions || [])[0];
@@ -167,7 +157,6 @@ const QuizPage = () => {
             isPublished: source.isPublished,
         });
 
-        // map to UI question shape used in QuestionForm/QuestionGrid
         const mappedQuestions = (source.questions || []).map((q, idx) => {
             const correctArr = Array.isArray(q.correctAnswer) ? q.correctAnswer : [];
             const options = (q.options || []).map((opt, i) => {
@@ -193,18 +182,14 @@ const QuizPage = () => {
     };
 
     const handleSaveQuiz = async () => {
-        // const title = (quizInfo.title ?? "").trim();
-        // if (!title) {
-        //     setErrors({ title: "Please enter quiz title!" });
-        //     // focus title input if available
-        //     document.querySelector('input[placeholder="Enter quiz title..."]')?.focus();
-        //     return;
-        // }
-        // setErrors({});
+        const title = (quizInfo.title ?? "").trim();
+        if (!title) {
+            setErrors({ title: "Please enter quiz title!" });
+            document.querySelector('input[placeholder="Enter quiz title..."]')?.focus();
+            return;
+        }
         const newErrors = {};
 
-        // --- Quiz info validation ---
-        const title = (quizInfo.title ?? "").trim();
         if (!title) newErrors.title = "Please enter quiz title!";
         else if (title.length < 3) newErrors.title = "Title must be at least 3 characters";
         else if (title.length > 200) newErrors.title = "Title must be at most 200 characters";
@@ -223,7 +208,6 @@ const QuizPage = () => {
 
         if (quizInfo.attemptsAllowed < 1) newErrors.attemptsAllowed = "Attempts must be at least 1";
 
-        // Nếu có lỗi, update state và stop
         if (Object.keys(newErrors).length > 0) {
             console.log("%c--- VALIDATION ERRORS ---", "color: red; font-weight: bold");
 
@@ -234,8 +218,6 @@ const QuizPage = () => {
             setErrors(newErrors);
             return;
         }
-
-        console.log("đến đấy");
 
         const normalizeType = (t) => (t ?? "").toString().replace(/[-\s]/g, "_").toLowerCase();
 
@@ -249,15 +231,10 @@ const QuizPage = () => {
                     const optionTexts = rawOptions
                         .map((opt) => (typeof opt === "string" ? opt : (opt?.text ?? "").toString().trim()))
                         .filter(Boolean);
-                    console.log("optionTexts", optionTexts);
-                    // Build correct answers:
-                    // 1) prefer explicit isCorrect flags on option objects
-                    // 2) else fallback to stored _originalCorrectAnswer (could be indices / texts / ids)
                     let correct = [];
                     const optsWithFlags = rawOptions.filter(
                         (opt) => opt && typeof opt === "object" && "isCorrect" in opt
                     );
-                    console.log("optsWithFlags", optsWithFlags);
 
                     if (optsWithFlags.length) {
                         correct = rawOptions
@@ -266,7 +243,6 @@ const QuizPage = () => {
                                 typeof opt === "string" ? opt : (opt?.text ?? "").toString().trim()
                             )
                             .filter(Boolean);
-                        console.log("correct 1 ", correct);
                     } else if (Array.isArray(q._originalCorrectAnswer) && q._originalCorrectAnswer.length) {
                         const orig = q._originalCorrectAnswer;
                         const hasNumeric = orig.some((c) => typeof c === "number" || /^\d+$/.test(String(c)));
@@ -284,9 +260,7 @@ const QuizPage = () => {
                                     return optionTexts[idxOpt] ?? null;
                                 })
                                 .filter(Boolean);
-                            console.log("correct 2 ", correct);
                         } else if (hasIdLike) {
-                            // try to match option.id -> optionTexts
                             correct = rawOptions
                                 .map((opt) => {
                                     if (
@@ -300,26 +274,20 @@ const QuizPage = () => {
                                     return null;
                                 })
                                 .filter(Boolean);
-                            console.log("correct 3 ", correct);
                         } else {
-                            // assume orig are texts
                             correct = orig.map((c) => String(c)).filter((c) => optionTexts.includes(c));
-                            console.log("correct 4 ", correct);
                         }
                     } else if (Array.isArray(q.correctAnswer) && q.correctAnswer.length) {
                         correct = q.correctAnswer
                             .map((c) => (typeof c === "number" ? optionTexts[c] : c))
                             .map((c) => (c ?? "").toString().trim())
                             .filter((c) => optionTexts.includes(c));
-                        console.log("correct 5 ", correct);
                     } else {
-                        // no flags and no original correct info -> try infer (none)
                         correct = [];
                     }
 
                     if (!questionText || optionTexts.length === 0) return null;
                     if (!correct || correct.length === 0) {
-                        // surface friendly error and stop saving
                         throw new Error(`Question ${idx + 1} requires at least one correct answer`);
                     }
 
@@ -336,14 +304,12 @@ const QuizPage = () => {
                 .filter(Boolean);
         } catch (mapErr) {
             console.error("Quiz mapping error:", mapErr);
-            // show inline error instead of browser alert
             setErrors((prev) => ({
                 ...prev,
                 questions: mapErr.message || "Question mapping error. Check questions and correct answers.",
             }));
             return;
         }
-        console.log("normalizedQuestions", normalizedQuestions);
         if (normalizedQuestions.length === 0) {
             setErrors((prev) => ({
                 ...prev,
@@ -409,91 +375,154 @@ const QuizPage = () => {
     };
 
     const handleBack = () => {
-        setMode("list");
-        navigator(-1);
+        if (mode === "add" || mode === "edit") {
+            setMode("list");
+        } else {
+            navigator(-1);
+        }
     };
     return (
-        // Mở rộng chiều ngang modal bằng max-w; nếu parent là modal, nội dung sẽ rộng hơn
-        <div className="bg-white rounded-md w-full">
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex gap-2 items-center">
-                    <Button variant="outline" onClick={handleBack}>
-                        <ArrowLeft /> Back
-                    </Button>
-                    <h2 className="text-lg font-semibold">Quiz Manager</h2>
-                </div>
-                <div className="flex gap-2">
+        <div className="w-full">
+            <div className="flex items-center justify-between mb-2 border-b-2 border-dashed border-gray-200 pb-2">
+                <div className="flex gap-3 items-center">
                     <Button
-                        variant="outline"
-                        className="bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors duration-200"
+                        size="icon"
+                        variant="ghost"
+                        className="rounded-sm hover:bg-gray-100"
+                        onClick={handleBack}
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                    </Button>
+                    <h2 className="text-xl font-semibold text-gray-800">
+                        {lessonId ? `Lesson Quizzes` : moduleId ? `Module Quizzes` : `Course Quizzes`}
+                    </h2>
+                </div>
+                {mode === "list" && (
+                    <Button
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm"
                         onClick={() => {
-                            setMode("list");
+                            setMode("add");
                             startAdd();
                         }}
                     >
-                        <Plus /> New Quiz
+                        <Plus className="w-4 h-4 mr-2" /> New Quiz
                     </Button>
-                </div>
+                )}
             </div>
 
             <div className="flex flex-col gap-4">
                 {mode === "list" && (
                     <div className="col-span-1">
-                        <div className="flex items-center gap-4 mb-2">
-                            <div className="text-sm text-muted-foreground">
-                                Scope:{" "}
-                                {lessonId ? `Lesson Quizzes` : moduleId ? `Module Quizzes` : `Course Quizzes`}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                                Total: {loadingList ? "Loading..." : `${quizzes.length}`}
-                            </div>
+                        <div className="text-sm text-gray-600 mb-3 font-medium">
+                            Total Quizzes: {loadingList ? "Loading..." : `${quizzes.length}`}
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                             {quizzes.map((q) => (
                                 <div
                                     key={q.id}
-                                    className="py-2 px-4 border-1 rounded hover:bg-muted/50 flex items-center justify-between cursor-pointer"
-                                    onClick={() => startEdit(q.raw)}
+                                    className="group relative bg-white border border-gray-200 rounded-sm hover:border-indigo-300 hover:shadow-lg transition-all duration-200"
                                 >
-                                    <div className="truncate">
-                                        <div className="font-medium">Title: {q.title}</div>
-                                        {q?.raw?.description && (
-                                            <div className="text-gray-700 text-sm line-clamp-2">
-                                                Desciption: {q.raw.description}
-                                            </div>
-                                        )}
-                                        <div className="text-gray-600 text-sm">
-                                            Number of questions:{" "}
-                                            <span className="font-bold">
-                                                {q?.raw?.questions?.length ?? 0}
-                                            </span>{" "}
-                                        </div>
-                                        <div className="text-gray-600 text-sm">
-                                            Status:{" "}
-                                            <span className="font-bold">
+                                    <div className="p-5 cursor-pointer" onClick={() => startEdit(q.raw)}>
+                                        <div className="flex items-start justify-between mb-3">
+                                            <h3 className="font-semibold text-lg text-gray-900 flex-1 pr-4">
+                                                {q.title}
+                                            </h3>
+                                            <span
+                                                className={`px-2.5 py-1 text-xs font-medium rounded-full flex-shrink-0 ${
+                                                    q.isPublished
+                                                        ? "bg-green-100 text-green-700 border border-green-200"
+                                                        : "bg-orange-100 text-orange-700 border border-orange-200"
+                                                }`}
+                                            >
                                                 {q.isPublished ? "Published" : "Draft"}
                                             </span>
                                         </div>
+
+                                        {q?.raw?.description && (
+                                            <p className="text-gray-600 text-sm line-clamp-2 mb-4">
+                                                {q.raw.description}
+                                            </p>
+                                        )}
+
+                                        <div className="flex items-center gap-4 text-sm">
+                                            <div className="flex items-center gap-1.5 text-gray-600">
+                                                <svg
+                                                    className="w-4 h-4"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                    />
+                                                </svg>
+                                                <span className="font-medium text-indigo-600">
+                                                    {q?.raw?.questions?.length ?? 0}
+                                                </span>
+                                                <span>questions</span>
+                                            </div>
+                                            {q?.raw?.timeLimit > 0 && (
+                                                <div className="flex items-center gap-1.5 text-gray-600">
+                                                    <svg
+                                                        className="w-4 h-4"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            strokeWidth={2}
+                                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                        />
+                                                    </svg>
+                                                    <span>{q.raw.timeLimit} min</span>
+                                                </div>
+                                            )}
+                                            {q?.raw?.passingScore > 0 && (
+                                                <div className="flex items-center gap-1.5 text-gray-600">
+                                                    <svg
+                                                        className="w-4 h-4"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            strokeWidth={2}
+                                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                        />
+                                                    </svg>
+                                                    <span>{q.raw.passingScore}% to pass</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
+
+                                    <div className="absolute top-[50%] right-4 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                         <ConfirmationHelper
                                             trigger={
                                                 <button
-                                                    className="bg-white border p-1 rounded hover:bg-red-600 hover:text-white transition-colors duration-200 text-sm text-red-600"
-                                                    title="Delete"
+                                                    className="p-2 bg-white border border-gray-200 rounded-sm hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-all duration-200 text-gray-400 shadow-sm"
+                                                    title="Delete Quiz"
+                                                    onClick={(e) => e.stopPropagation()}
                                                 >
-                                                    <X className="h-6 w-6" />
+                                                    <X className="h-4 w-4" />
                                                 </button>
                                             }
                                             onConfirm={() => handleDelete(q.id)}
                                             title="Delete Quiz"
-                                            message="Are you sure you want to delete this quiz?"
+                                            message="Are you sure you want to delete this quiz? This action cannot be undone."
                                         />
                                     </div>
                                 </div>
                             ))}
                             {quizzes.length === 0 && (
-                                <div className="text-sm text-muted-foreground px-2">
+                                <div className="text-center text-gray-500 py-8 bg-gray-50 rounded-sm border border-dashed border-gray-300">
                                     No quizzes found for this scope.
                                 </div>
                             )}
@@ -504,155 +533,274 @@ const QuizPage = () => {
                 <div className={mode === "list" ? "col-span-1 lg:col-span-2" : "col-span-1 lg:col-span-3"}>
                     {(mode === "add" || mode === "edit") && (
                         <div className="space-y-4">
-                            {/* metadata */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="text-sm font-medium">Quiz Title</label>
-                                    <input
-                                        type="text"
-                                        className={`w-full border rounded-lg p-2 mt-1 ${
-                                            errors.title ? "border-red-500" : ""
-                                        } bg-gray-200`}
-                                        placeholder="Enter quiz title..."
-                                        value={quizInfo.title}
-                                        onChange={(e) => {
-                                            setQuizInfo({ ...quizInfo, title: e.target.value });
-                                            if (errors.title)
-                                                setErrors((prev) => ({ ...prev, title: undefined }));
-                                        }}
-                                    />
-                                    {errors.title && (
-                                        <p className="text-sm text-red-600 mt-1">{errors.title}</p>
-                                    )}
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium">Time Limit (minutes)</label>
-                                    <input
-                                        type="number"
-                                        className="w-full border rounded-lg p-2 mt-1 bg-gray-200"
-                                        value={quizInfo.timeLimit}
-                                        onChange={(e) =>
-                                            setQuizInfo({
-                                                ...quizInfo,
-                                                timeLimit: Number(e.target.value),
-                                            })
-                                        }
-                                    />
-                                    {errors.timeLimit && (
-                                        <p className="text-sm text-red-600 mt-1">{errors.timeLimit}</p>
-                                    )}
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium">Passing Score (%)</label>
-                                    <input
-                                        type="number"
-                                        className="w-full border rounded-lg p-2 mt-1 bg-gray-200"
-                                        value={quizInfo.passingScore}
-                                        onChange={(e) =>
-                                            setQuizInfo({
-                                                ...quizInfo,
-                                                passingScore: Number(e.target.value),
-                                            })
-                                        }
-                                    />
-                                    {errors.passingScore && (
-                                        <p className="text-sm text-red-600 mt-1">{errors.passingScore}</p>
-                                    )}
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium">Attempts Allowed</label>
-                                    <input
-                                        type="number"
-                                        className="w-full border rounded-lg p-2 mt-1 bg-gray-200"
-                                        value={quizInfo.attemptsAllowed}
-                                        onChange={(e) =>
-                                            setQuizInfo({
-                                                ...quizInfo,
-                                                attemptsAllowed: Number(e.target.value),
-                                            })
-                                        }
-                                    />
-                                    {errors.attemptsAllowed && (
-                                        <p className="text-sm text-red-600 mt-1">{errors.attemptsAllowed}</p>
-                                    )}
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className="text-sm font-medium">Description</label>
-                                    <textarea
-                                        className="w-full border rounded-lg p-2 mt-1 bg-gray-200"
-                                        rows={2}
-                                        placeholder="Short description..."
-                                        value={quizInfo.description}
-                                        onChange={(e) =>
-                                            setQuizInfo({ ...quizInfo, description: e.target.value })
-                                        }
-                                    />
-                                    {errors.description && (
-                                        <p className="text-sm text-red-600 mt-1">{errors.description}</p>
-                                    )}
-                                </div>
-                                <div
-                                    className="md:col-span-2 border border-gray-200 flex items-center justify-start gap-2 p-2 rounded-lg cursor-pointer bg-gray-200"
-                                    onClick={() =>
-                                        setQuizInfo({ ...quizInfo, isPublished: !quizInfo.isPublished })
-                                    }
+                            <div className="flex gap-1 border-b-2 border-gray-200">
+                                <button
+                                    onClick={() => setActiveTab("info")}
+                                    className={`px-4 py-2.5 text-sm font-medium transition-all relative ${
+                                        activeTab === "info"
+                                            ? "text-indigo-600"
+                                            : "text-gray-600 hover:text-gray-900"
+                                    }`}
                                 >
-                                    <input
-                                        type="checkbox"
-                                        checked={quizInfo.isPublished}
-                                        onChange={(e) =>
-                                            setQuizInfo({ ...quizInfo, isPublished: e.target.checked })
-                                        }
-                                    />
-                                    <label className="text-sm font-medium">Published</label>
-                                </div>
+                                    Quiz Info
+                                    {activeTab === "info" && (
+                                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600"></div>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab("questions")}
+                                    className={`px-4 py-2.5 text-sm font-medium transition-all relative ${
+                                        activeTab === "questions"
+                                            ? "text-indigo-600"
+                                            : "text-gray-600 hover:text-gray-900"
+                                    }`}
+                                >
+                                    Questions{" "}
+                                    {questions.length > 0 && (
+                                        <span className="ml-1 px-1.5 py-0.5 text-xs bg-indigo-100 text-indigo-700 rounded-full">
+                                            {questions.length}
+                                        </span>
+                                    )}
+                                    {activeTab === "questions" && (
+                                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600"></div>
+                                    )}
+                                </button>
                             </div>
 
-                            {/* Questions stacked vertically, full width, trong vùng cuộn */}
-                            <ScrollArea className="max-h-[60vh] overflow-auto pb-28 space-y-6">
-                                {errors.questions && (
-                                    <div className="text-sm text-red-600 mt-2 text-center ">
-                                        {errors.questions}
+                            {activeTab === "info" && (
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-sm border border-gray-200">
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-700">
+                                                Quiz Title
+                                            </label>
+                                            <input
+                                                type="text"
+                                                className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${
+                                                    errors.title
+                                                        ? "border-red-500 bg-red-50"
+                                                        : "border-gray-300 bg-white"
+                                                }`}
+                                                placeholder="Enter quiz title..."
+                                                value={quizInfo.title}
+                                                onChange={(e) => {
+                                                    setQuizInfo({ ...quizInfo, title: e.target.value });
+                                                    if (errors.title)
+                                                        setErrors((prev) => ({ ...prev, title: undefined }));
+                                                }}
+                                            />
+                                            {errors.title && (
+                                                <p className="text-sm text-red-600 mt-1">{errors.title}</p>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-700">
+                                                Time Limit (minutes)
+                                            </label>
+                                            <input
+                                                type="number"
+                                                className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${
+                                                    errors.timeLimit
+                                                        ? "border-red-500 bg-red-50"
+                                                        : "border-gray-300 bg-white"
+                                                }`}
+                                                value={quizInfo.timeLimit}
+                                                onChange={(e) =>
+                                                    setQuizInfo({
+                                                        ...quizInfo,
+                                                        timeLimit: Number(e.target.value),
+                                                    })
+                                                }
+                                            />
+                                            {errors.timeLimit && (
+                                                <p className="text-sm text-red-600 mt-1">
+                                                    {errors.timeLimit}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-700">
+                                                Passing Score (%)
+                                            </label>
+                                            <input
+                                                type="number"
+                                                className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${
+                                                    errors.passingScore
+                                                        ? "border-red-500 bg-red-50"
+                                                        : "border-gray-300 bg-white"
+                                                }`}
+                                                value={quizInfo.passingScore}
+                                                onChange={(e) =>
+                                                    setQuizInfo({
+                                                        ...quizInfo,
+                                                        passingScore: Number(e.target.value),
+                                                    })
+                                                }
+                                            />
+                                            {errors.passingScore && (
+                                                <p className="text-sm text-red-600 mt-1">
+                                                    {errors.passingScore}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-700">
+                                                Attempts Allowed
+                                            </label>
+                                            <input
+                                                type="number"
+                                                className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${
+                                                    errors.attemptsAllowed
+                                                        ? "border-red-500 bg-red-50"
+                                                        : "border-gray-300 bg-white"
+                                                }`}
+                                                value={quizInfo.attemptsAllowed}
+                                                onChange={(e) =>
+                                                    setQuizInfo({
+                                                        ...quizInfo,
+                                                        attemptsAllowed: Number(e.target.value),
+                                                    })
+                                                }
+                                            />
+                                            {errors.attemptsAllowed && (
+                                                <p className="text-sm text-red-600 mt-1">
+                                                    {errors.attemptsAllowed}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="text-sm font-medium text-gray-700">
+                                                Description
+                                            </label>
+                                            <textarea
+                                                className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none ${
+                                                    errors.description
+                                                        ? "border-red-500 bg-red-50"
+                                                        : "border-gray-300 bg-white"
+                                                }`}
+                                                rows={3}
+                                                placeholder="Short description..."
+                                                value={quizInfo.description}
+                                                onChange={(e) =>
+                                                    setQuizInfo({ ...quizInfo, description: e.target.value })
+                                                }
+                                            />
+                                            {errors.description && (
+                                                <p className="text-sm text-red-600 mt-1">
+                                                    {errors.description}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div
+                                            className="md:col-span-2 border border-gray-300 flex items-center justify-start gap-2 p-3 rounded-sm cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                                            onClick={() =>
+                                                setQuizInfo({
+                                                    ...quizInfo,
+                                                    isPublished: !quizInfo.isPublished,
+                                                })
+                                            }
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={quizInfo.isPublished}
+                                                onChange={(e) =>
+                                                    setQuizInfo({
+                                                        ...quizInfo,
+                                                        isPublished: e.target.checked,
+                                                    })
+                                                }
+                                                className="w-4 h-4 text-indigo-600 rounded-sm"
+                                            />
+                                            <label className="text-sm font-medium text-gray-700 cursor-pointer">
+                                                Published
+                                            </label>
+                                        </div>
                                     </div>
-                                )}
-                                {/* Add form - full width */}
-                                <div className="w-full">
-                                    <QuestionForm
-                                        onAddQuestion={(q) =>
-                                            setQuestions((prev) => {
-                                                setErrors((p) => ({ ...p, questions: undefined }));
-                                                return [...prev, q];
-                                            })
-                                        }
-                                    />
-                                </div>
 
-                                {/* Existing questions list/grid - full width */}
-                                <div className="w-full">
-                                    <QuestionGrid
-                                        questions={questions}
-                                        onDeleteQuestion={(id) =>
-                                            setQuestions((prev) => {
-                                                setErrors((p) => ({ ...p, questions: undefined }));
-                                                return prev.filter((q) => q.id !== id);
-                                            })
-                                        }
-                                        onEditQuestion={(id, updated) =>
-                                            setQuestions((prev) => {
-                                                setErrors((p) => ({ ...p, questions: undefined }));
-                                                return prev.map((q) => (q.id === id ? updated : q));
-                                            })
-                                        }
-                                    />
+                                    {/* Navigation hint */}
+                                    <div className="bg-blue-50 border border-blue-200 rounded-sm p-3 text-sm text-blue-800">
+                                        💡 Click on the <strong>Questions</strong> tab above to add questions
+                                        to your quiz.
+                                    </div>
                                 </div>
-                            </ScrollArea>
+                            )}
 
-                            {/* Footer buttons below scrollable area */}
-                            <div className="flex justify-end gap-2 mt-4">
-                                <Button variant="outline" onClick={() => setMode("list")}>
-                                    Cancel
-                                </Button>
-                                <Button onClick={handleSaveQuiz} className="bg-indigo-600 text-white">
+                            {activeTab === "questions" && (
+                                <div className="space-y-4 bg-white p-4 rounded-sm border border-gray-200">
+                                    {errors.questions && (
+                                        <div className="text-sm text-red-600 mt-2 text-center bg-red-50 p-3 rounded-sm border border-red-200">
+                                            {errors.questions}
+                                        </div>
+                                    )}
+                                    {!showQuestionForm && (
+                                        <div className="flex justify-between items-center">
+                                            <div className="border-b border-gray-200 pb-0.5">
+                                                <h2 className="text-lg font-semibold text-gray-800">
+                                                    Existing Questions
+                                                </h2>
+                                                <p className="text-sm text-gray-600 mt-1">
+                                                    View and manage questions with their answer options
+                                                </p>
+                                            </div>
+                                            <Button
+                                                onClick={() => setShowQuestionForm(true)}
+                                                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm"
+                                            >
+                                                <Plus className="w-4 h-4 mr-1" />
+                                                Add Question
+                                            </Button>
+                                        </div>
+                                    )}
+
+                                    {showQuestionForm && (
+                                        <div className="w-full">
+                                            <QuestionForm
+                                                onAddQuestion={(q) => {
+                                                    setQuestions((prev) => {
+                                                        setErrors((p) => ({ ...p, questions: undefined }));
+                                                        return [...prev, q];
+                                                    });
+                                                    setShowQuestionForm(false);
+                                                }}
+                                            />
+                                            <div className="flex justify-end mt-3">
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() => setShowQuestionForm(false)}
+                                                    className="rounded-sm"
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {!showQuestionForm && (
+                                        <ScrollArea className="max-h-[60vh] overflow-auto">
+                                            <div className="w-full">
+                                                <QuestionGrid
+                                                    questions={questions}
+                                                    onDeleteQuestion={(id) =>
+                                                        setQuestions((prev) => {
+                                                            setErrors((p) => ({
+                                                                ...p,
+                                                                questions: undefined,
+                                                            }));
+                                                            return prev.filter((q) => q.id !== id);
+                                                        })
+                                                    }
+                                                />
+                                            </div>
+                                        </ScrollArea>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                                <Button
+                                    onClick={handleSaveQuiz}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm"
+                                >
                                     Save Quiz
                                 </Button>
                             </div>
