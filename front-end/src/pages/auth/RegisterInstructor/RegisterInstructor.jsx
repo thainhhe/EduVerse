@@ -89,16 +89,14 @@ const MultiSelectDropdown = ({ value = [], onChange, options = [] }) => {
                                 <div
                                     key={opt}
                                     onClick={() => toggle(opt)}
-                                    className={`flex items-center gap-2 p-2 rounded-sm cursor-pointer text-sm transition-colors ${
-                                        checked ? "bg-indigo-50 text-indigo-900" : "hover:bg-gray-100"
-                                    }`}
+                                    className={`flex items-center gap-2 p-2 rounded-sm cursor-pointer text-sm transition-colors ${checked ? "bg-indigo-50 text-indigo-900" : "hover:bg-gray-100"
+                                        }`}
                                 >
                                     <div
-                                        className={`w-4 h-4 rounded border flex items-center justify-center ${
-                                            checked
+                                        className={`w-4 h-4 rounded border flex items-center justify-center ${checked
                                                 ? "bg-indigo-600 border-indigo-600 text-white"
                                                 : "border-gray-300"
-                                        }`}
+                                            }`}
                                     >
                                         {checked && <X className="w-3 h-3 rotate-45" />}
                                     </div>
@@ -236,9 +234,7 @@ const RegisterInstructor = () => {
                                 id="email"
                                 type="email"
                                 placeholder="name@example.com"
-                                className={`bg-gray-50 ${
-                                    errors.email ? "border-red-500 ring-1 ring-red-500" : ""
-                                }`}
+                                className={`bg-gray-50 `}
                                 {...register("email")}
                                 aria-invalid={!!errors.email}
                                 onBlur={() => handleTrimAndValidate("email")}
