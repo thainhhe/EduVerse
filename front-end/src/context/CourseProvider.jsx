@@ -21,7 +21,7 @@ export const CourseProvider = ({ children, courseId = "new" }) => {
             return {};
         }
     });
-
+    console.log("draft in CourseDraftProvider:", draft);
     // persist draft to sessionStorage
     useEffect(() => {
         try {
@@ -33,7 +33,7 @@ export const CourseProvider = ({ children, courseId = "new" }) => {
                 sessionStorage.removeItem(key);
                 sessionStorage.setItem(BROADCAST_KEY, JSON.stringify({ key, at: Date.now() }));
             }
-        } catch {}
+        } catch { }
     }, [key, draft]);
 
     // listen to storage events
@@ -65,7 +65,7 @@ export const CourseProvider = ({ children, courseId = "new" }) => {
                         sessionStorage.setItem(key, JSON.stringify(next));
                         sessionStorage.setItem(BROADCAST_KEY, JSON.stringify({ key, at: Date.now() }));
                     }
-                } catch {}
+                } catch { }
                 return next;
             });
         },
@@ -79,7 +79,7 @@ export const CourseProvider = ({ children, courseId = "new" }) => {
                 sessionStorage.removeItem(key);
                 sessionStorage.setItem(BROADCAST_KEY, JSON.stringify({ key, at: Date.now() }));
             }
-        } catch {}
+        } catch { }
     }, [key]);
 
     const [coursePermissions, setCoursePermissions] = useState([]);
