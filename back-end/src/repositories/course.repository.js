@@ -417,6 +417,10 @@ const courseRepository = {
             { $limit: lim },
         ]).exec();
     },
+
+    updateFlagCourse: async (id, flag) => {
+        return await Course.findByIdAndUpdate(id, { flag });
+    },
 };
 
 module.exports = { courseRepository };

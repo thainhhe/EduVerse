@@ -21,6 +21,7 @@ import {
     Infinity as InfinityIcon,
     Smartphone,
     Lock,
+    LockIcon,
 } from "lucide-react";
 import { getCourseById } from "@/services/courseService";
 import { useEffect, useState } from "react";
@@ -825,22 +826,7 @@ const CourseDetail = () => {
                                                                                 : "No schedule"}
                                                                         </span>
                                                                     </div>
-                                                                    <Badge
-                                                                        variant={
-                                                                            room.status === "ongoing"
-                                                                                ? "default"
-                                                                                : room.status === "ended"
-                                                                                ? "secondary"
-                                                                                : "outline"
-                                                                        }
-                                                                        className={
-                                                                            room.status === "ongoing"
-                                                                                ? "bg-green-500"
-                                                                                : ""
-                                                                        }
-                                                                    >
-                                                                        {room.status}
-                                                                    </Badge>
+
                                                                     {room.isPublic && (
                                                                         <Badge
                                                                             variant="outline"
@@ -855,16 +841,20 @@ const CourseDetail = () => {
                                                                                 variant="outline"
                                                                                 className="bg-amber-50 text-amber-700 border-amber-200"
                                                                             >
-                                                                                🔒 Protected
+                                                                                <LockIcon className="w-4 h-4 mr-2" />{" "}
+                                                                                Protected
                                                                             </Badge>
                                                                         )}
                                                                 </div>
                                                             </div>
 
                                                             <div className="ml-4">
-                                                                {room.status === "ended" ? (
+                                                                {room.status === "ended" ||
+                                                                room.status === "pending" ? (
                                                                     <Button disabled variant="secondary">
-                                                                        Ended
+                                                                        {room.status === "ended"
+                                                                            ? "Ended"
+                                                                            : "Waiting"}
                                                                     </Button>
                                                                 ) : (
                                                                     <Button
@@ -874,7 +864,7 @@ const CourseDetail = () => {
                                                                         {room.password &&
                                                                         room.password.trim() !== "" ? (
                                                                             <>
-                                                                                <Lock className="h-4 w-4 mr-2" />
+                                                                                <LockIcon className="w-4 h-4 mr-2" />
                                                                                 Join Now
                                                                             </>
                                                                         ) : (

@@ -4,6 +4,7 @@ const { course_enum } = require("../../config/enum/course.constants");
 const { system_enum } = require("../../config/enum/system.constant");
 const { sendCourseApprovalEmail, sendCourseRejectionEmail } = require("../../utils/mail.util");
 const { notificationService } = require("../notification/notification.service");
+const { courseRepository } = require("../../repositories/course.repository");
 
 const courseManagementService = {
     getAllCourses: async () => {
@@ -219,6 +220,24 @@ const courseManagementService = {
         } catch (error) {
             console.error("Error in rejectCourse:", error);
             // ... (error handling không đổi) ...
+        }
+    },
+
+    updateFlagCourse: async (id, flag) => {
+        try {
+            if (!id)
+                return {
+                    status: system_enum.STATUS_CODE.CONFLICT,
+                    message: course_enum.COURSE_MESSAGE.INVALID_OBJECT_ID,
+                };
+            const result = await courseRepository.updateFlagCourse(id, flag);
+            return {
+                status: system_enum.STATUS_CODE.OK,
+                message: course_enum.COURSE_MESSAGE.UPDATE_SUCCESS,
+                data: result,
+            };
+        } catch (error) {
+            throw new Error(error);
         }
     },
 };

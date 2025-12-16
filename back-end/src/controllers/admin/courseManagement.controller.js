@@ -44,6 +44,17 @@ const adminCourseManagementController = {
             return error_response(res, error);
         }
     },
+
+    updateFlagCourse: async (req, res) => {
+        try {
+            const id = req.params.id;
+            const flag = req.body.flag;
+            const result = await courseManagementService.updateFlagCourse(id, flag);
+            return response(res, result);
+        } catch (error) {
+            return error_response(res, error);
+        }
+    },
 };
 
 module.exports = { adminCourseManagementController };

@@ -9,12 +9,6 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { reviewService } from "@/services/reviewService";
 
@@ -186,7 +180,7 @@ const ReviewPage = () => {
                                     {[5, 4, 3, 2, 1].map((star) => (
                                         <SelectItem key={star} value={star.toString()}>
                                             <div className="flex items-center gap-2">
-                                                <span>{star} sao</span>
+                                                <span>{star} stars</span>
                                                 <div className="flex gap-0.5">
                                                     {[...Array(star)].map((_, i) => (
                                                         <Star
@@ -257,22 +251,6 @@ const ReviewPage = () => {
                                                             </span>
                                                         </div>
                                                     </div>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-8 w-8 text-gray-400 hover:text-gray-600"
-                                                            >
-                                                                <MoreHorizontal className="w-4 h-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem>
-                                                                Report violation
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
                                                 </div>
 
                                                 <div className="flex items-center gap-1 mb-3">

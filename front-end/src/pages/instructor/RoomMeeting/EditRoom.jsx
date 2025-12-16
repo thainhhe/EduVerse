@@ -15,7 +15,6 @@ const EditRoom = ({ room, open, setOpen, onUpdated }) => {
     const [formData, setFormData] = useState({
         name: room.name || "",
         description: room.description || "",
-        link: room.link || "",
         password: room.password || "",
         isPublic: room.isPublic || false,
         status: room.status || "pending",
@@ -29,7 +28,6 @@ const EditRoom = ({ room, open, setOpen, onUpdated }) => {
             setFormData({
                 name: room.name || "",
                 description: room.description || "",
-                link: room.link || "",
                 password: room.password || "",
                 isPublic: room.isPublic || false,
                 status: room.status || "pending",
@@ -60,7 +58,6 @@ const EditRoom = ({ room, open, setOpen, onUpdated }) => {
             const payload = {
                 name: formData.name,
                 description: formData.description,
-                link: formData.link,
                 password: formData.password,
                 isPublic: formData.isPublic,
                 status: formData.status,
@@ -68,9 +65,7 @@ const EditRoom = ({ room, open, setOpen, onUpdated }) => {
                 endTime: formData.endTime ? new Date(formData.endTime).toISOString() : null,
             };
 
-            console.log("Updating room:", room._id, payload);
             const res = await roomService.updateRoom(room._id, payload);
-            console.log("Update response:", res);
 
             if (res && (res.success || res.status === 200)) {
                 ToastHelper.success("Room updated successfully!");
@@ -121,20 +116,6 @@ const EditRoom = ({ room, open, setOpen, onUpdated }) => {
                             placeholder="Enter room description..."
                             className="mt-1"
                             rows={3}
-                        />
-                    </div>
-
-                    {/* Link */}
-                    <div>
-                        <Label htmlFor="link" className="font-medium">
-                            Meeting Link
-                        </Label>
-                        <Input
-                            id="link"
-                            value={formData.link}
-                            onChange={(e) => handleChange("link", e.target.value)}
-                            placeholder="Enter meeting link (Zoom/Meet/Jitsi)..."
-                            className="mt-1"
                         />
                     </div>
 

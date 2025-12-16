@@ -11,7 +11,6 @@ import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import EditRoom from "./EditRoom";
 import AddRoom from "./AddRoom";
-import { useCourse } from "@/context/CourseProvider";
 
 const RoomMeeting = () => {
     const [rooms, setRooms] = useState([]);
@@ -22,8 +21,9 @@ const RoomMeeting = () => {
     const [editingRoom, setEditingRoom] = useState(null);
     const [openEdit, setOpenEdit] = useState(false);
 
-    const { draft } = useCourse();
-    const isApproved = draft.status === "approve";
+    const rawCourseData = typeof window !== "undefined" ? sessionStorage.getItem("currentCourseData") : null;
+    const sessionCourseData = rawCourseData ? JSON.parse(rawCourseData) : null;
+    const isApproved = sessionCourseData?.status === "approve";
 
     // Create room dialog state
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
