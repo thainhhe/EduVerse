@@ -1,17 +1,17 @@
-import { useEffect, useState, useRef } from "react";
-import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FaRegStar } from "react-icons/fa";
-import { Search } from "lucide-react";
-import { getAllCoursePublished } from "@/services/courseService";
 import { useEnrollment } from "@/context/EnrollmentContext";
-import { useAuth } from "@/hooks/useAuth";
-import categoryService from "@/services/categoryService";
 import Pagination from "@/helper/Pagination";
 import { ToastHelper } from "@/helper/ToastHelper";
+import { useAuth } from "@/hooks/useAuth";
+import categoryService from "@/services/categoryService";
+import { getAllCoursePublished } from "@/services/courseService";
+import { Search } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { FaRegStar } from "react-icons/fa";
+import { Link, useSearchParams } from "react-router-dom";
 
 const Courses = () => {
     const [searchParams] = useSearchParams();
@@ -198,11 +198,10 @@ const Courses = () => {
                         <Button
                             variant={selectedCategory === "All" ? "default" : "outline"}
                             onClick={() => setSelectedCategory("All")}
-                            className={`whitespace-nowrap rounded-full px-6 transition-all duration-200 ${
-                                selectedCategory === "All"
+                            className={`whitespace-nowrap rounded-full px-6 transition-all duration-200 ${selectedCategory === "All"
                                     ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transform scale-105"
                                     : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
-                            }`}
+                                }`}
                         >
                             All
                         </Button>
@@ -212,11 +211,10 @@ const Courses = () => {
                                 key={category.id}
                                 variant={selectedCategory === category.id ? "default" : "outline"}
                                 onClick={() => setSelectedCategory(category.id)}
-                                className={`whitespace-nowrap rounded-full px-6 transition-all duration-200 ${
-                                    selectedCategory === category.id
+                                className={`whitespace-nowrap rounded-full px-6 transition-all duration-200 ${selectedCategory === category.id
                                         ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transform scale-105"
                                         : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
-                                }`}
+                                    }`}
                             >
                                 {category.name}
                             </Button>
@@ -293,9 +291,9 @@ const Courses = () => {
                                                         : Number(course?.displayPrice ?? 0);
                                                 return priceVal
                                                     ? priceVal.toLocaleString("vi-VN", {
-                                                          style: "currency",
-                                                          currency: "VND",
-                                                      })
+                                                        style: "currency",
+                                                        currency: "VND",
+                                                    })
                                                     : "Free";
                                             })()}
                                         </span>

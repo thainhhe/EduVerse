@@ -50,8 +50,8 @@ const LearnerList = () => {
             .filter((l) => (statusFilter === "all" ? true : l.status === statusFilter))
             .filter((l) => {
                 if (progressFilter === "all") return true;
-                if (progressFilter === "completed") return l.progress >= 1;
-                if (progressFilter === "incomplete") return l.progress < 1;
+                if (progressFilter === "completed") return l.progress >= 100;
+                if (progressFilter === "incomplete") return l.progress < 100;
                 return true;
             });
     }, [learners, search, statusFilter, progressFilter]);
