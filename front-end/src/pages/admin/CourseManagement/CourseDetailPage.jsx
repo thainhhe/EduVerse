@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
     ChevronDown,
     Circle,
@@ -34,7 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { approveCourse, getAllCourseById, rejectCourse } from "@/services/courseService";
+import { approveCourse, getAllCourseById, rejectCourse, updateFlagCourse } from "@/services/courseService";
 import { ToastHelper } from "@/helper/ToastHelper";
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 import { getFilesByLessonId } from "@/services/minio";
@@ -51,6 +51,11 @@ const CourseDetailPage = () => {
     const [rejectReason, setRejectReason] = useState("");
     const [videoIndex, setVideoIndex] = useState(0);
     const [selectedDocument, setSelectedDocument] = useState(null);
+    const navigate = useNavigate();
+
+    const flagList = ["No flag", "Invalid content", "Inappropriate content", "Spam", "Other"];
+
+    const [flag, setFlag] = useState(course?.flag);
 
     useEffect(() => {
         const fetchCourses = async () => {
@@ -69,6 +74,7 @@ const CourseDetailPage = () => {
             setLoading(false);
         };
         fetchCourses();
+        console.log("c:::", course);
     }, [id]);
 
     const loadFilesByLessonId = async (lessonId) => {
@@ -95,26 +101,39 @@ const CourseDetailPage = () => {
     const handleApprove = async () => {
         const res = await approveCourse(id);
         if (res?.success) {
-            ToastHelper.success("✅ Khóa học đã được duyệt!");
+            ToastHelper.success("Course approved successfully!");
             setCourse((prev) => ({ ...prev, status: "approve" }));
         } else {
-            ToastHelper.error("❌ Duyệt thất bại!");
+            ToastHelper.error("Approve failed!");
         }
     };
 
     const handleReject = async () => {
         if (!rejectReason.trim()) {
-            ToastHelper.warning("Vui lòng nhập lý do từ chối!");
+            ToastHelper.warning("Please enter a reason for rejection!");
             return;
         }
         const res = await rejectCourse(id, rejectReason);
         if (res?.success) {
-            ToastHelper.success("⚠ Khóa học đã bị từ chối!");
+            ToastHelper.success("Course rejected successfully!");
             setCourse((prev) => ({ ...prev, status: "reject" }));
             setShowRejectModal(false);
             setRejectReason("");
         } else {
-            ToastHelper.error("❌ Từ chối thất bại!");
+            ToastHelper.error("Reject failed!");
+        }
+    };
+
+    const handleBack = async () => {
+        try {
+            const res = await updateFlagCourse(id, flag);
+            if (res?.success) {
+                setCourse((prev) => ({ ...prev, flag: flag }));
+            }
+        } catch (error) {
+            console.log("err flag course", error);
+        } finally {
+            navigate("/admin/courses");
         }
     };
 
@@ -176,10 +195,8 @@ const CourseDetailPage = () => {
             <div className="max-w-[1600px] mx-auto mb-2">
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" asChild>
-                            <Link to="/admin/courses" className=" py-2 px-4 border rounded-full">
-                                <ArrowLeft className="w-5 h-5" />
-                            </Link>
+                        <Button variant="ghost" size="icon" onClick={handleBack}>
+                            <ArrowLeft className="w-5 h-5" />
                         </Button>
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">{course.title}</h1>
@@ -194,6 +211,23 @@ const CourseDetailPage = () => {
                                 </span>
                                 <span>•</span>
                                 {getStatusBadge(course.status)}
+                                {course.status === "reject" && (
+                                    <span className="text-red-500">({course.reasonReject})</span>
+                                )}
+                                <span>•</span>
+                                {course.isDeleted ? (
+                                    <span className="text-red-500">Deleted</span>
+                                ) : (
+                                    <span className="text-green-500">Active</span>
+                                )}
+                                <span>|</span>
+                                <select defaultValue={course?.flag} onChange={(e) => setFlag(e.target.value)}>
+                                    {flagList.map((flag, i) => (
+                                        <option key={i} value={flag}>
+                                            {flag}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
                     </div>

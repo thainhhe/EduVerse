@@ -50,8 +50,8 @@ const LearnerList = () => {
             .filter((l) => (statusFilter === "all" ? true : l.status === statusFilter))
             .filter((l) => {
                 if (progressFilter === "all") return true;
-                if (progressFilter === "completed") return l.progress >= 1;
-                if (progressFilter === "incomplete") return l.progress < 1;
+                if (progressFilter === "completed") return l.progress >= 100;
+                if (progressFilter === "incomplete") return l.progress < 100;
                 return true;
             });
     }, [learners, search, statusFilter, progressFilter]);
@@ -73,12 +73,12 @@ const LearnerList = () => {
     return (
         <div className="flex-1">
             <div className="flex flex-col md:flex-row gap-4 mb-2 text-sm">
-                <span className="font-semibold">Tổng học viên: {total}</span>
+                <span className="font-semibold">Total Learners: {total}</span>
                 <span className="font-semibold text-indigo-600">
-                    Tỉ lệ hoàn thành: {completedCount}/{total} ({completionRate}%)
+                    Rate completed: {completedCount}/{total} ({completionRate}%)
                 </span>
             </div>
-            <div className="space-y-4 border-2 border-white border-t-indigo-600">
+            <div className="space-y-4 border-t-2  border-gray-200 border-t-indigo-600">
                 {/* Filters Section */}
                 <div className="flex flex-col md:flex-row gap-4 items-start md:items-center bg-white p-4 shadow-sm">
                     {/* Search */}

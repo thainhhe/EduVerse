@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Lightbulb } from "lucide-react";
 
 export function AddInstructorModal({ open, onOpenChange, onSubmit, permissionOptions }) {
     const [email, setEmail] = useState("");
@@ -10,9 +11,9 @@ export function AddInstructorModal({ open, onOpenChange, onSubmit, permissionOpt
     const [error, setError] = useState("");
 
     const validateEmail = (value) => {
-        if (!value.trim()) return "Email không được để trống";
+        if (!value.trim()) return "Email is required";
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(value)) return "Email không hợp lệ";
+        if (!emailRegex.test(value)) return "Email invalid";
         return "";
     };
 
@@ -52,8 +53,15 @@ export function AddInstructorModal({ open, onOpenChange, onSubmit, permissionOpt
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md bg-white">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-semibold text-gray-900">Add New Instructor</DialogTitle>
-                    <p className="text-sm text-gray-600 mt-1">Enter the instructor's email and assign permissions.</p>
+                    <DialogTitle className="text-xl font-semibold text-gray-900">
+                        Add New Instructor
+                    </DialogTitle>
+                    <div className="flex items-center gap-2">
+                        <Lightbulb className="text-yellow-500 inline mr-1" />
+                        <span className="text-sm text-gray-600 mt-1">
+                            The email must be registered as instructor in the system.
+                        </span>
+                    </div>
                 </DialogHeader>
 
                 <div className="space-y-6 py-4">
@@ -85,7 +93,10 @@ export function AddInstructorModal({ open, onOpenChange, onSubmit, permissionOpt
                                         checked={permissions[option._id] || false}
                                         onCheckedChange={() => togglePermission(option._id)}
                                     />
-                                    <label htmlFor={option._id} className="text-sm text-gray-700 cursor-pointer">
+                                    <label
+                                        htmlFor={option._id}
+                                        className="text-sm text-gray-700 cursor-pointer"
+                                    >
                                         {option.name}
                                     </label>
                                 </div>

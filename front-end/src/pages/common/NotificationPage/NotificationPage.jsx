@@ -6,6 +6,7 @@ import notificationService from "@/services/notificationService";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { ToastHelper } from "@/helper/ToastHelper";
+import api from "@/services/api";
 
 const NotificationPage = () => {
     const { user } = useAuth();
@@ -72,31 +73,26 @@ const NotificationPage = () => {
         }
     };
 
-    // const handleDelete = async (id, e) => {
-    //     e.stopPropagation();
-    //     try {
-    //         await notificationService.delete(id);
-    //         setNotifications((prev) => prev.filter((n) => n._id !== id));
-    //         queryClient.invalidateQueries(["notifications", user?._id]);
-    //         ToastHelper.success("Notification deleted");
-    //     } catch (error) {
-    //         console.error("Error deleting notification", error);
-    //         ToastHelper.error("Failed to delete notification");
-    //     }
-    // };
-
     const handleNotificationClick = async (notification) => {
         if (!notification.isRead) {
             handleMarkAsRead(notification._id);
         }
-        if (notification.link) {
-            navigate(notification.link);
+    };
+
+    const handleAcceptInvitation = async (notification) => {
+        try {
+            await api.post(notification.link);
+            handleMarkAsRead(notification._id);
+            ToastHelper.success("Invitation accepted successfully");
+        } catch (error) {
+            console.error("Error accepting invitation", error);
+            ToastHelper.error("Failed to accept invitation");
         }
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl mx-auto">
+        <div className="min-h-screen bg-gray-50 py-8">
+            <div className="max-w-full mx-auto">
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-100 bg-white sticky top-0 z-10">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -198,19 +194,22 @@ const NotificationPage = () => {
                                                     }`}
                                                 >
                                                     {notification.message}
+                                                    {notification?.link?.includes("/permission/accept") && (
+                                                        <span
+                                                            className="text-indigo-600 font-semibold cursor-pointer mx-4"
+                                                            onClick={() =>
+                                                                handleAcceptInvitation(notification)
+                                                            }
+                                                        >
+                                                            Accept
+                                                        </span>
+                                                    )}
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-2 flex-shrink-0">
                                                 {!notification.isRead && (
                                                     <span className="w-2.5 h-2.5 bg-indigo-600 rounded-full ring-2 ring-indigo-100"></span>
                                                 )}
-                                                {/* <button
-                                                    onClick={(e) => handleDelete(notification._id, e)}
-                                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                                                    title="Delete notification"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button> */}
                                             </div>
                                         </div>
                                         <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">

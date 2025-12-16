@@ -10,6 +10,7 @@ import categoryService from "@/services/categoryService";
 import { useAuth } from "@/hooks/useAuth";
 import api from "@/services/api";
 import { useCourse } from "@/context/CourseProvider";
+import { Loader2 } from "lucide-react";
 
 const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
     const navigate = useNavigate();
@@ -384,13 +385,13 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                         </div>
 
                         <div>
-                            <Label htmlFor="description" className={`mb-2 `}>
+                            <Label htmlFor="duration" className={`mb-2 `}>
                                 Duration
                             </Label>
                             <div className="flex gap-2">
                                 <Input
                                     disabled={!isEditable}
-                                    id="durationValue"
+                                    id="duration"
                                     type="number"
                                     min="0"
                                     value={durationValue}
@@ -413,22 +414,25 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                                 </Select>
                             </div>
                         </div>
-
-                        <div>
-                            <Label htmlFor="description" className="mb-2">
-                                Description <span className="text-red-500">*</span>
-                            </Label>
-                            <Textarea
-                                id="description"
-                                disabled={!isEditable}
-                                value={description}
-                                onChange={(e) => isEditable && setDescription(e.target.value)}
-                                className={errors.description ? "border-red-600 ring-red-600" : ""}
-                            />
-                            {errors.description && (
-                                <p className="text-red-600 text-sm mt-1">{errors.description}</p>
-                            )}
-                        </div>
+                    </div>
+                    <div className="mt-4">
+                        <Label htmlFor="description" className="mb-2">
+                            Description <span className="text-red-500">*</span>
+                        </Label>
+                        <Textarea
+                            id="description"
+                            disabled={!isEditable}
+                            value={description}
+                            onChange={(e) => isEditable && setDescription(e.target.value)}
+                            className={
+                                errors.description
+                                    ? "border-red-600 ring-red-600 focus:border-red-600 focus:ring-red-600"
+                                    : "h-28"
+                            }
+                        />
+                        {errors.description && (
+                            <p className="text-red-600 text-sm mt-1">{errors.description}</p>
+                        )}
                     </div>
 
                     <div className="flex justify-end pt-4 border-t mt-5">
@@ -436,8 +440,9 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                             variant="outline"
                             className="bg-white border border-indigo-600 text-black hover:bg-indigo-600 hover:text-white transition-colors duration-200"
                             onClick={handleNext}
+                            disabled={saving}
                         >
-                            Next →
+                            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Next →"}
                         </Button>
                     </div>
                 </CardContent>

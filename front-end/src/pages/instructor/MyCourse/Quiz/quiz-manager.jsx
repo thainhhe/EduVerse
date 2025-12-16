@@ -16,6 +16,7 @@ import { Trash2, Plus, CloverIcon, X } from "lucide-react";
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 import api from "@/services/api";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ToastHelper } from "@/helper/ToastHelper";
 
 const QuizManager = ({
     mode: initialMode = "list", // default show list
@@ -406,7 +407,11 @@ const QuizManager = ({
 
     const handleDelete = async (quizId) => {
         try {
-            await api.delete(`/quiz/${quizId}`);
+            const res = await api.delete(`/quiz/${quizId}`);
+            console.log("res", res);
+            if (res.success) {
+                ToastHelper.success("Delete quiz successfully");
+            }
             await loadQuizzes();
         } catch (err) {
             console.error("Delete failed", err);
@@ -632,6 +637,7 @@ const QuizManager = ({
                                         onDeleteQuestion={(id) =>
                                             setQuestions((prev) => {
                                                 setErrors((p) => ({ ...p, questions: undefined }));
+
                                                 return prev.filter((q) => q.id !== id);
                                             })
                                         }

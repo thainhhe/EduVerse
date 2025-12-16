@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const CourseCardUnPublish = ({ course }) => {
@@ -33,27 +34,29 @@ const CourseCardUnPublish = ({ course }) => {
                                 ? "Draft"
                                 : course.status === "pending"
                                 ? "Your course is pending review"
-                                : "Published"}
-                        </span>
-                        <span className="text-muted-foreground">
-                            {course.isPublished ? "Public" : "Private"}
+                                : course.status === "reject"
+                                ? "Your course is rejected"
+                                : "Unknown"}
                         </span>
                     </div>
-                    <div>
-                        <p className="text-sm text-muted-foreground mb-1">Progress: {course.progress}%</p>
-                        <Progress value={course.progress} className="h-2 bg-muted-foreground/20" />
-                    </div>
+                    <span className="text-muted-foreground">{course.isPublished ? "Public" : "Private"}</span>
                 </div>
             </div>
             {/* Action */}
             <div className="flex flex-1 flex-row-reverse">
-                <Button
-                    variant="default"
-                    onClick={handleEdit}
-                    className="text-sm mr-2.5 p-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
-                >
-                    Continue create
-                </Button>
+                {course.isDeleted ? (
+                    <span className="text-sm mr-2.5 p-2 rounded-lg text-red-500">This course is deleted</span>
+                ) : course.status === "pending" ? (
+                    <span className="text-sm mr-2.5 p-2 rounded-lg text-yellow-500">Pending</span>
+                ) : (
+                    <Button
+                        variant="default"
+                        onClick={handleEdit}
+                        className="text-sm mr-2.5 p-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+                    >
+                        Next step <ArrowRight />
+                    </Button>
+                )}
             </div>
         </div>
     );

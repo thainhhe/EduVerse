@@ -26,14 +26,6 @@ const courseRepository = {
                     as: "courses",
                 },
             },
-            // {
-            //     $lookup: {
-            //         from: "categories",
-            //         localField: "courses.category",
-            //         foreignField: "_id",
-            //         as: "categoryInfo",
-            //     },
-            // },
             {
                 $lookup: {
                     from: "courses",
@@ -295,7 +287,15 @@ const courseRepository = {
     },
 
     getCollaborativeCourse: async (userId) => {
-        return await Course.find({ "instructors.user": userId, isDeleted: false })
+        return await Course.find({
+            isDeleted: false,
+            instructors: {
+                $elemMatch: {
+                    user: userId,
+                    isAccept: true,
+                },
+            },
+        })
             .populate("category")
             .populate("main_instructor")
             .populate("instructors.user")
@@ -416,6 +416,10 @@ const courseRepository = {
             { $sort: { totalEnrollments: -1, avgRating: -1 } },
             { $limit: lim },
         ]).exec();
+    },
+
+    updateFlagCourse: async (id, flag) => {
+        return await Course.findByIdAndUpdate(id, { flag });
     },
 };
 

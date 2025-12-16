@@ -3,6 +3,7 @@ import { useDropzone } from "react-dropzone";
 import { Upload, FileText, Video } from "lucide-react";
 import { uploadDocument, uploadVideo } from "@/services/minio";
 import "./UploadZone.css";
+import { ToastHelper } from "@/helper/ToastHelper";
 
 const UploadZone = ({ onUploadSuccess, data, type = "document" }) => {
     const [uploading, setUploading] = useState(false);
@@ -27,8 +28,10 @@ const UploadZone = ({ onUploadSuccess, data, type = "document" }) => {
                     setProgress(percent);
                 });
 
-                if (onUploadSuccess) {
-                    onUploadSuccess(response.data.file);
+                if (onUploadSuccess && response.status === 201) {
+                    onUploadSuccess();
+                } else {
+                    ToastHelper.error("Upload failed");
                 }
 
                 setProgress(100);
@@ -38,7 +41,7 @@ const UploadZone = ({ onUploadSuccess, data, type = "document" }) => {
                 }, 1000);
             } catch (error) {
                 console.error("Upload error:", error);
-                alert("Upload failed: " + (error.response?.data?.error || error.message));
+                ToastHelper.error("Upload failed");
                 setUploading(false);
                 setProgress(0);
             }

@@ -2,16 +2,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Plus, X } from "lucide-react";
+import { ToastHelper } from "@/helper/ToastHelper";
 
 export function QuestionForm({ onAddQuestion }) {
     const [text, setText] = useState("");
     const [type, setType] = useState("multiple-choice");
-    const [difficulty, setDifficulty] = useState("Easy");
     const [options, setOptions] = useState([
         { id: "1", text: "Option 1", isCorrect: false },
         { id: "2", text: "Option 2", isCorrect: false },
@@ -52,6 +49,7 @@ export function QuestionForm({ onAddQuestion }) {
 
     const handleAddOption = () => {
         const newId = String(Math.max(...options.map((o) => parseInt(o.id)), 0) + 1);
+
         setOptions([...options, { id: newId, text: `Option ${options.length + 1}`, isCorrect: false }]);
     };
 
@@ -68,18 +66,20 @@ export function QuestionForm({ onAddQuestion }) {
             field === "isCorrect" &&
             value === true
         ) {
-            setOptions(options.map((o) => ({ ...o, isCorrect: o.id === id })));
+            setOptions(options.map((o) => ({ ...o, isCorrect: o.id.toString() === id.toString() })));
         }
         // Nếu là checkbox → có thể chọn nhiều đúng
         else {
-            setOptions(options.map((o) => (o.id === id ? { ...o, [field]: value } : o)));
+            setOptions(
+                options.map((o) => (o.id.toString() === id.toString() ? { ...o, [field]: value } : o))
+            );
         }
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!text.trim() || !options.some((o) => o.isCorrect)) {
-            alert("Please fill in all required fields and select at least one correct answer.");
+            ToastHelper.error("Please fill in all required fields and select at least one correct answer.");
             return;
         }
 
@@ -87,7 +87,6 @@ export function QuestionForm({ onAddQuestion }) {
             id: "",
             text,
             type,
-            difficulty,
             options,
             explanation,
         };
@@ -97,7 +96,6 @@ export function QuestionForm({ onAddQuestion }) {
         // Reset form
         setText("");
         setType("multiple-choice");
-        setDifficulty("Easy");
         setOptions([
             { id: "1", text: "Option 1", isCorrect: false },
             { id: "2", text: "Option 2", isCorrect: false },
@@ -111,46 +109,36 @@ export function QuestionForm({ onAddQuestion }) {
     // UI
     // ======================
     return (
-        <Card className="sticky top-6 h-fit">
-            <CardHeader>
-                <CardTitle>Add New Question</CardTitle>
-                <CardDescription>Fill in the details to create a new quiz question.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Question Text */}
-                    <div className="space-y-2">
-                        <Label>Question Text</Label>
-                        <Textarea
-                            placeholder="Enter your question here..."
-                            value={text}
-                            onChange={(e) => setText(e.target.value)}
-                            className="min-h-14 resize-y bg-gray-200 whitespace-pre-wrap break-all"
-                        />
+        <div className="w-full">
+            <form onSubmit={handleSubmit} className="space-y-2">
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                        <h2 className="text-lg font-semibold text-gray-800">New Question</h2>
+                        <select
+                            className="border border-gray-300 rounded-sm px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                            value={type}
+                            onChange={(e) => setType(e.target.value)}
+                        >
+                            <option value="multiple-choice">Multiple Choice</option>
+                            <option value="checkbox">Checkbox (Multiple Answers)</option>
+                            <option value="true-false">True / False</option>
+                        </select>
                     </div>
-
-                    {/* Question Type */}
+                    <Textarea
+                        placeholder="Enter your question here..."
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        className="min-h-20 resize-y bg-white border-gray-300 rounded-sm whitespace-pre-wrap break-all focus:ring-2 focus:ring-indigo-500 transition-all"
+                    />
+                </div>
+                <div className="space-y-1">
+                    <Label className="text-sm font-medium text-gray-700">Answer Options</Label>
                     <div className="space-y-2">
-                        <Label>Question Type</Label>
-                        <Select value={type} onValueChange={setType}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
-                                <SelectItem value="checkbox">Checkbox (Multiple Answers)</SelectItem>
-                                <SelectItem value="true-false">True / False</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    {/* Answer Options */}
-                    <div className="space-y-3">
-                        <Label>Answer Options</Label>
-
                         {options.map((option) => (
-                            <div key={option.id} className="flex items-center gap-2">
-                                {/* Checkbox hoặc Radio tùy theo type */}
+                            <div
+                                key={option.id}
+                                className="flex items-center gap-2 p-2 bg-gray-50 rounded-sm border border-gray-200"
+                            >
                                 {type === "checkbox" ? (
                                     <input
                                         type="checkbox"
@@ -158,7 +146,7 @@ export function QuestionForm({ onAddQuestion }) {
                                         onChange={(e) =>
                                             handleOptionChange(option.id, "isCorrect", e.target.checked)
                                         }
-                                        className="h-4 w-4 accent-indigo-600 cursor-pointer"
+                                        className="h-4 w-4 accent-indigo-600 cursor-pointer rounded-sm"
                                     />
                                 ) : (
                                     <input
@@ -168,101 +156,85 @@ export function QuestionForm({ onAddQuestion }) {
                                         onChange={(e) =>
                                             handleOptionChange(option.id, "isCorrect", e.target.checked)
                                         }
-                                        className="h-4 w-4 accent-indigo-600"
+                                        className="h-4 w-4 accent-indigo-600 cursor-pointer"
                                     />
                                 )}
 
-                                {/* Ô nhập text */}
                                 <Input
                                     placeholder="Option text"
                                     value={option.text}
                                     onChange={(e) => handleOptionChange(option.id, "text", e.target.value)}
-                                    className={`flex-1 border border-gray-300 ${
-                                        option.isCorrect ? "bg-green-200" : "bg-gray-200"
+                                    className={`flex-1 border-gray-300 rounded-sm transition-all ${
+                                        option.isCorrect
+                                            ? "bg-green-50 border-green-400 focus:ring-green-500"
+                                            : "bg-white focus:ring-indigo-500"
                                     }`}
-                                    disabled={type === "true-false"} // true/false thì không chỉnh sửa text
+                                    disabled={type === "true-false"}
                                 />
 
-                                {/* Nút xóa */}
                                 {type !== "true-false" && (
                                     <button
                                         type="button"
                                         onClick={() => handleRemoveOption(option.id)}
-                                        className="text-destructive hover:text-destructive/80"
+                                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-sm transition-colors"
                                     >
                                         <X className="h-4 w-4" />
                                     </button>
                                 )}
                             </div>
                         ))}
-
-                        {/* Nút thêm option */}
-                        {type !== "true-false" && (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={handleAddOption}
-                                className="w-full bg-transparent"
-                            >
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add Option
-                            </Button>
-                        )}
                     </div>
 
-                    {/* Difficulty */}
-                    <div className="space-y-2">
-                        <Label>Difficulty</Label>
-                        <Select value={difficulty} onValueChange={setDifficulty}>
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="Easy">Easy</SelectItem>
-                                <SelectItem value="Medium">Medium</SelectItem>
-                                <SelectItem value="Hard">Hard</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    {/* Explanation */}
-                    <div className="space-y-2">
-                        <Label>Explanation / Feedback</Label>
-                        <Textarea
-                            placeholder="Provide a detailed explanation or feedback for the question"
-                            value={explanation}
-                            onChange={(e) => setExplanation(e.target.value)}
-                            className="min-h-16 resize-none"
-                        />
-                    </div>
-
-                    {/* Buttons */}
-                    <div className="flex gap-2 pt-4">
-                        <Button type="submit" className="flex-1">
-                            Add Question
-                        </Button>
+                    {type !== "true-false" && (
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => {
-                                setText("");
-                                setType("multiple-choice");
-                                setDifficulty("Easy");
-                                setOptions([
-                                    { id: "1", text: "Option 1", isCorrect: false },
-                                    { id: "2", text: "Option 2", isCorrect: false },
-                                    { id: "3", text: "Option 3", isCorrect: false },
-                                    { id: "4", text: "Option 4", isCorrect: false },
-                                ]);
-                                setExplanation("");
-                            }}
+                            size="sm"
+                            onClick={handleAddOption}
+                            className="w-full bg-white hover:bg-gray-50 rounded-sm border-dashed border-gray-300 hover:border-indigo-400 transition-all"
                         >
-                            Clear Form
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Option
                         </Button>
-                    </div>
-                </form>
-            </CardContent>
-        </Card>
+                    )}
+                </div>
+                <div className="space-y-3">
+                    <Label className="text-sm font-medium text-gray-700">Explanation / Feedback</Label>
+                    <Textarea
+                        placeholder="Provide a detailed explanation or feedback for the question"
+                        value={explanation}
+                        onChange={(e) => setExplanation(e.target.value)}
+                        className="min-h-20 resize-none bg-white border-gray-300 rounded-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+                    />
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t border-gray-200">
+                    <Button
+                        type="submit"
+                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm"
+                    >
+                        Add Question
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-sm"
+                        onClick={() => {
+                            setText("");
+                            setType("multiple-choice");
+                            setOptions([
+                                { id: "1", text: "Option 1", isCorrect: false },
+                                { id: "2", text: "Option 2", isCorrect: false },
+                                { id: "3", text: "Option 3", isCorrect: false },
+                                { id: "4", text: "Option 4", isCorrect: false },
+                            ]);
+                            setExplanation("");
+                        }}
+                    >
+                        Clear Form
+                    </Button>
+                </div>
+            </form>
+        </div>
     );
 }

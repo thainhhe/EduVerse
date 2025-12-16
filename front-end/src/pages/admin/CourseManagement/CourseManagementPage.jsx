@@ -1,26 +1,19 @@
+import {
+    AlertCircle,
+    BookOpen,
+    Check,
+    CheckCircle,
+    Download,
+    Eye,
+    Search,
+    X,
+    XCircle
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-    Search,
-    CheckCircle,
-    XCircle,
-    Eye,
-    BookOpen,
-    AlertCircle,
-    Check,
-    X,
-    CircleCheck,
-    TextAlignJustify,
-    File,
-    FileText,
-    Download,
-} from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
     Dialog,
@@ -30,13 +23,15 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { approveCourse, getAllCourse, rejectCourse } from "@/services/courseService";
-import { ToastHelper } from "@/helper/ToastHelper";
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
+import { ToastHelper } from "@/helper/ToastHelper";
 import categoryService from "@/services/categoryService";
+import { approveCourse, getAllCourse, rejectCourse } from "@/services/courseService";
 import Swal from "sweetalert2";
-import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
 const CourseManagementPage = () => {
     const [search, setSearch] = useState("");
@@ -55,16 +50,22 @@ const CourseManagementPage = () => {
 
     const fetchCourses = async ({ skipLoading = false }) => {
         setLoading(true);
-        const res = await getAllCourse({ skipLoading });
-        if (res?.success) {
-            const data = res.data.filter((course) => course.status !== "draft") || [];
-            setCourses(data);
-        } else {
-            console.error("Lỗi từ server:", res?.message || "Không xác định");
-            ToastHelper.error(res?.message || "Đã xảy ra lỗi khi lấy danh sách khóa học!");
+        try {
+            const res = await getAllCourse({ skipLoading });
+            if (res?.success) {
+                const data = res.data.filter((course) => course.status !== "draft") || [];
+                setCourses(data);
+            } else {
+                console.error("Lỗi từ server:", res?.message || "Không xác định");
+                ToastHelper.error(res?.message || "Failed to load courses!");
+            }
+        } catch (err) {
+            console.error("Failed to load courses:", err);
+            ToastHelper.error("Failed to load courses!");
+        } finally {
+            setLoading(false);
+            setIsFirstLoad(false);
         }
-        setLoading(false);
-        setIsFirstLoad(false);
     };
 
     useEffect(() => {
@@ -100,7 +101,6 @@ const CourseManagementPage = () => {
         });
     };
 
-    // Selection Handlers
     const handleSelectAll = (checked) => {
         if (checked) {
             const currentIds = currentCourses.map((c) => c._id);
@@ -119,51 +119,28 @@ const CourseManagementPage = () => {
         }
     };
 
-    // Actions
     const handleApprove = async (id) => {
         try {
             const res = await approveCourse(id, { skipLoading: true });
             if (res?.success) {
                 Swal.fire({
                     icon: "success",
-                    title: "Duyệt thành công!",
-                    text: "Khóa học đã được duyệt thành công!",
+                    title: "Approve successfully!",
+                    text: "Course has been approved successfully!",
                 });
                 setSelectedCourses((prev) => prev.filter((itemId) => itemId !== id));
                 fetchCourses({ skipLoading: true });
             } else {
                 Swal.fire({
                     icon: "error",
-                    title: "Duyệt thất bại!",
-                    text: res?.message || "Duyệt thất bại!",
+                    title: "Approve failed!",
+                    text: res?.message || "Approve failed!",
                 });
             }
         } catch (err) {
             Swal.fire({
                 icon: "error",
-                title: "Lỗi hệ thống khi duyệt!",
-            });
-        }
-    };
-
-    const handleBulkApprove = async () => {
-        try {
-            let successCount = 0;
-            for (const id of selectedCourses) {
-                const res = await approveCourse(id);
-                if (res?.success) successCount++;
-            }
-            Swal.fire({
-                icon: "success",
-                title: "Duyệt thành công!",
-                text: `Đã duyệt thành công ${successCount} khóa học!`,
-            });
-            setSelectedCourses([]);
-            fetchCourses();
-        } catch (err) {
-            Swal.fire({
-                icon: "error",
-                title: "Lỗi hệ thống khi duyệt hàng loạt!",
+                title: "System error when approving!",
             });
         }
     };
@@ -172,7 +149,7 @@ const CourseManagementPage = () => {
         if (!rejectReason.trim()) {
             Swal.fire({
                 icon: "warning",
-                title: "Vui lòng nhập lý do từ chối!",
+                title: "Please enter the reason for rejection!",
             });
             return;
         }
@@ -183,8 +160,8 @@ const CourseManagementPage = () => {
                 if (res?.success) {
                     Swal.fire({
                         icon: "success",
-                        title: "Từ chối thành công!",
-                        text: "Khóa học đã bị từ chối!",
+                        title: "Reject successfully!",
+                        text: "Course has been rejected successfully!",
                     });
                     setShowRejectModal(false);
                     setRejectReason("");
@@ -193,8 +170,8 @@ const CourseManagementPage = () => {
                 } else {
                     Swal.fire({
                         icon: "error",
-                        title: "Từ chối thất bại!",
-                        text: res?.message || "Từ chối thất bại!",
+                        title: "Reject failed!",
+                        text: res?.message || "Reject failed!",
                     });
                 }
             } else if (selectedCourses.length > 0) {
@@ -205,8 +182,8 @@ const CourseManagementPage = () => {
                 }
                 Swal.fire({
                     icon: "success",
-                    title: "Từ chối thành công!",
-                    text: `Đã từ chối ${successCount} khóa học!`,
+                    title: "Reject successfully!",
+                    text: `Rejected ${successCount} courses successfully!`,
                 });
                 setShowRejectModal(false);
                 setRejectReason("");
@@ -216,17 +193,11 @@ const CourseManagementPage = () => {
         } catch (err) {
             Swal.fire({
                 icon: "error",
-                title: "Lỗi hệ thống khi từ chối!",
+                title: "System error when rejecting!",
             });
         }
     };
 
-    const openBulkRejectModal = () => {
-        setSelectedCourseId(null);
-        setShowRejectModal(true);
-    };
-
-    // Filtering
     const filteredCourses = courses.filter((course) => {
         const matchSearch =
             course.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -238,7 +209,6 @@ const CourseManagementPage = () => {
         return matchSearch && matchStatus && matchCategory;
     });
 
-    // Pagination
     const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
     const indexOfLastCourse = currentPage * coursesPerPage;
     const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
@@ -247,7 +217,6 @@ const CourseManagementPage = () => {
     const isAllSelected =
         currentCourses.length > 0 && currentCourses.every((c) => selectedCourses.includes(c._id));
 
-    // Stats
     const stats = [
         {
             title: "Total Courses",
@@ -294,7 +263,6 @@ const CourseManagementPage = () => {
 
     return (
         <div className="max-w-full mx-auto space-y-4 min-h-screen bg-gray-50/50">
-            <LoadingOverlay isVisible={isFirstLoad && loading} progress={80} />
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {stats.map((stat, index) => (
                     <div
@@ -314,7 +282,6 @@ const CourseManagementPage = () => {
                 ))}
             </div>
 
-            {/* Filters & Table */}
             <div className="border-indigo-500 shadow-sm">
                 <div className="pb-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-600 text-black p-2">
@@ -337,7 +304,7 @@ const CourseManagementPage = () => {
                                     <SelectValue placeholder="Status" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All Statuses</SelectItem>
+                                    <SelectItem value="all">All Revisions</SelectItem>
                                     <SelectItem value="approve">Approved</SelectItem>
                                     <SelectItem value="pending">Pending</SelectItem>
                                     <SelectItem value="reject">Rejected</SelectItem>
@@ -383,6 +350,7 @@ const CourseManagementPage = () => {
                                     <TableHead>Created At</TableHead>
                                     <TableHead>Last update</TableHead>
                                     <TableHead>Status</TableHead>
+                                    <TableHead>Review</TableHead>
                                     {selectedCourses.length > 0 && (
                                         <TableHead className="text-right">Actions</TableHead>
                                     )}
@@ -452,6 +420,13 @@ const CourseManagementPage = () => {
                                             </TableCell>
                                             <TableCell className="text-gray-500 text-sm">
                                                 {formatDateTime(course.updatedAt)}
+                                            </TableCell>
+                                            <TableCell className="text-gray-500 text-sm">
+                                                {course.isDeleted ? (
+                                                    <span className="text-red-500">Deleted</span>
+                                                ) : (
+                                                    <span className="text-green-500">Active</span>
+                                                )}
                                             </TableCell>
                                             <TableCell>{getStatus(course.status)}</TableCell>
                                             {selectedCourses.length > 0 && (

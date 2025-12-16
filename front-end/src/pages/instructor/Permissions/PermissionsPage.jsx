@@ -21,8 +21,9 @@ export default function PermissionsPage() {
 
     const rawCourseData = typeof window !== "undefined" ? sessionStorage.getItem("currentCourseData") : null;
     const sessionCourseData = rawCourseData ? JSON.parse(rawCourseData) : null;
-
-    const isOwner = sessionCourseData?.main_instructor?._id === user?._id;
+    const isOwner =
+        sessionCourseData?.main_instructor?._id === user?._id ||
+        sessionCourseData?.main_instructor === user?._id;
     console.log("isOwner", isOwner);
     console.log("user", user);
     console.log("sessionCourseData", sessionCourseData);
@@ -127,11 +128,11 @@ export default function PermissionsPage() {
                 ]);
                 getCourseWithPermission();
             } else {
-                ToastHelper.error("Thông tin không hợp lệ.");
+                ToastHelper.error("Invalid information");
             }
         } catch (error) {
             console.log("Err Permission:", error);
-            ToastHelper.error("Có lỗi xảy ra");
+            ToastHelper.error("An error occurred");
         }
     };
 

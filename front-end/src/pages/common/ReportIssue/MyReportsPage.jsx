@@ -8,7 +8,6 @@ const MyReportsPage = () => {
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
 
-
     const [currentPage, setCurrentPage] = useState(1);
     const pageSize = 5;
 
@@ -37,7 +36,7 @@ const MyReportsPage = () => {
     const paginatedReports = reports.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
     return (
-        <div className="max-w-4xl mx-auto mt-10 bg-white p-8 rounded-lg shadow">
+        <div className="max-w-full mx-auto mt-10 bg-white p-8 rounded-lg shadow">
             <h1 className="text-3xl font-bold mb-6">My Report History</h1>
 
             {loading ? (
@@ -56,12 +55,13 @@ const MyReportsPage = () => {
                                 <p className="text-sm mt-2">
                                     Status:{" "}
                                     <span
-                                        className={`font-medium ${report.status === "open"
-                                            ? "text-blue-600"
-                                            : report.status === "inprogress"
+                                        className={`font-medium ${
+                                            report.status === "open"
+                                                ? "text-blue-600"
+                                                : report.status === "inprogress"
                                                 ? "text-yellow-600"
                                                 : "text-green-600"
-                                            }`}
+                                        }`}
                                     >
                                         {report.status}
                                     </span>

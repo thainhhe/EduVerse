@@ -1,28 +1,22 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
     ChevronDown,
-    ChevronRight,
-    CheckCircle2,
     Edit,
     Ellipsis,
-    FileText,
     Plus,
-    Settings,
     BookOpen,
-    FileQuestion,
     Trash2,
     Eye,
     TextAlignJustify,
     ScrollText,
+    MessageCircleQuestionMark,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import { Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { AddModuleModal } from "./AddModule";
 import { AddLessonModal } from "./AddLesson";
-import QuizManager from "../Quiz/quiz-manager";
 import {
     getModulesInCourse,
     getQuizzesByCourse,
@@ -34,9 +28,8 @@ import {
 import LessonMaterialModal from "./LessonMaterialModal";
 import { EditLesson } from "./EditLesson";
 import { EditModuleModal } from "./EditModule";
-import { toast } from "react-toastify";
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
-import UploadMaterialModal from "../Upload/UploadMaterialModal";
+import { ToastHelper } from "@/helper/ToastHelper";
 
 const ModulesPage = () => {
     const [expandedModules, setExpandedModules] = useState([]);
@@ -231,12 +224,12 @@ const ModulesPage = () => {
             const res = await deleteModule(id);
             if (res.success) {
                 await fetchModules(courseIdFromState);
-                toast.success("Đã xóa module!");
+                ToastHelper.success("Module deleted successfully");
                 setOpenModuleMenuId(null);
             }
         } catch (error) {
-            console.log("Lỗi khi xóa", error);
-            toast.error("Lỗi khi xóa!");
+            console.log("Failed to delete module", error);
+            ToastHelper.error("Failed to delete module");
         }
     };
 
@@ -246,85 +239,26 @@ const ModulesPage = () => {
             const res = await deleteLesson(id);
             if (res.success) {
                 await fetchModules(courseIdFromState);
-                toast.success("Đã xóa lesson!");
+                ToastHelper.success("Lesson deleted successfully");
                 setOpenLessonMenuId(null);
             }
         } catch (error) {
-            console.log("Lỗi khi xóa", error);
-            toast.error("Lỗi khi xóa!");
+            console.log("Failed to delete lesson", error);
+            ToastHelper.error("Failed to delete lesson");
         }
     };
 
     useEffect(() => {
         if (isQuizManagerOpen) {
-            navigator("/create-course/quiz", { state: currentQuizContext });
+            navigator("/create-course/modules/quiz", { state: currentQuizContext });
         }
     }, [isQuizManagerOpen]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50/30">
-            {/* Header Section */}
-            <div className="max-w-7xl mx-auto mb-6">
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100/50 p-6">
-                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                                <BookOpen className="w-4 h-4" />
-                                <span className="font-medium">Course Management</span>
-                                <span className="text-gray-300">/</span>
-                                <span className="text-indigo-600 font-medium">Modules & Lessons</span>
-                            </div>
-                            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-                                {sessionCourse?.title || "Course Modules"}
-                            </h1>
-                            <p className="text-gray-600 text-sm max-w-2xl">
-                                Organize and structure your course content into modules and lessons for better
-                                learning experience.
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            {canUpdateCourse && (
-                                <Button
-                                    variant="outline"
-                                    className="border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 transition-all shadow-sm"
-                                    onClick={() => {
-                                        if (!courseIdFromState) return;
-                                        setCurrentQuizContext({
-                                            courseId: courseIdFromState,
-                                            moduleId: null,
-                                            lessonId: null,
-                                        });
-                                        setIsQuizManagerOpen(true);
-                                    }}
-                                >
-                                    <FileQuestion className="w-4 h-4 mr-2" />
-                                    Manage Quizzes
-                                    <Badge
-                                        variant="secondary"
-                                        className="ml-2 bg-indigo-100 text-indigo-700 border-none"
-                                    >
-                                        {courseQuizCount}
-                                    </Badge>
-                                </Button>
-                            )}
-                            {canUpdateCourse && (
-                                <Button
-                                    className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
-                                    onClick={() => setIsAddModuleOpen(true)}
-                                >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Create Module
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Modules List */}
             <div className="max-w-7xl mx-auto">
-                <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-                    <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-indigo-50/50 to-white">
+                <div className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+                    <div className="border-b border-gray-100 bg-gradient-to-r from-indigo-50/50 to-white">
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 <div className="w-1 h-8 bg-gradient-to-b from-indigo-500 to-indigo-600 rounded-full" />
@@ -337,18 +271,36 @@ const ModulesPage = () => {
                                 </div>
                             </div>
                             {canUpdateCourse && (
-                                <Button
-                                    className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
-                                    onClick={() => setIsAddModuleOpen(true)}
-                                >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Create Module
-                                </Button>
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        className="border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50 hover:border-indigo-300 transition-all shadow-sm"
+                                        onClick={() => {
+                                            if (!courseIdFromState) return;
+                                            setCurrentQuizContext({
+                                                courseId: courseIdFromState,
+                                                moduleId: null,
+                                                lessonId: null,
+                                            });
+                                            setIsQuizManagerOpen(true);
+                                        }}
+                                    >
+                                        <MessageCircleQuestionMark className="w-4 h-4 mr-2" />
+                                        Course Quizzes
+                                    </Button>
+                                    <Button
+                                        className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-md transition-all hover:shadow-lg"
+                                        onClick={() => setIsAddModuleOpen(true)}
+                                    >
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        Create Module
+                                    </Button>
+                                </div>
                             )}
                         </div>
-                    </CardHeader>
+                    </div>
 
-                    <CardContent className="p-6 space-y-4">
+                    <div className="space-y-4 mt-2">
                         {modules.length === 0 ? (
                             <div className="text-center py-16">
                                 <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
@@ -358,24 +310,15 @@ const ModulesPage = () => {
                                 <p className="text-gray-500 mb-6 max-w-md mx-auto">
                                     Get started by creating your first module to organize your course content.
                                 </p>
-                                {canUpdateCourse && (
-                                    <Button
-                                        className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white"
-                                        onClick={() => setIsAddModuleOpen(true)}
-                                    >
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        Create First Module
-                                    </Button>
-                                )}
                             </div>
                         ) : (
                             modules.map((module, moduleIndex) => {
                                 const isExpanded = expandedModules.includes(module.id);
                                 return (
-                                    <Card
+                                    <div
                                         key={module.id}
                                         className={cn(
-                                            "border-2 transition-all duration-300 ease-in-out relative",
+                                            "border-2 rounded-sm transition-all duration-300 ease-in-out relative",
                                             isExpanded
                                                 ? "border-indigo-200 shadow-lg bg-gradient-to-br from-white to-indigo-50/30"
                                                 : "border-gray-200 shadow-sm hover:border-indigo-200 hover:shadow-md bg-white",
@@ -503,10 +446,10 @@ const ModulesPage = () => {
                                                                         setOpenModuleMenuId(null);
                                                                     }}
                                                                 >
-                                                                    <FileQuestion className="w-4 h-4 text-purple-600" />
+                                                                    <MessageCircleQuestionMark className="w-4 h-4 text-purple-600" />
                                                                 </button>
                                                                 <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-xs bg-gray-900 text-white px-3 py-1.5 rounded-lg opacity-0 invisible group-hover/quiz:opacity-100 group-hover/quiz:visible pointer-events-none transition-all duration-200 delay-300 whitespace-nowrap z-[100] shadow-lg">
-                                                                    Quiz
+                                                                    Module quiz
                                                                     <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></span>
                                                                 </span>
                                                             </div>
@@ -517,7 +460,7 @@ const ModulesPage = () => {
                                                                             <Trash2 className="w-4 h-4 text-red-600" />
                                                                         </button>
                                                                         <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-xs bg-gray-900 text-white px-3 py-1.5 rounded-lg opacity-0 invisible group-hover/delete:opacity-100 group-hover/delete:visible pointer-events-none transition-all duration-200 delay-300 whitespace-nowrap z-[100] shadow-lg">
-                                                                            Delete
+                                                                            Delete module
                                                                             <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></span>
                                                                         </span>
                                                                     </div>
@@ -559,7 +502,7 @@ const ModulesPage = () => {
                                                             <div
                                                                 key={lesson.id}
                                                                 className={cn(
-                                                                    "group/lesson bg-white border-2 border-gray-100 rounded-xl p-4 hover:border-indigo-200 hover:shadow-md transition-all duration-200 relative",
+                                                                    "group/lesson bg-white border-2 border-gray-100 rounded-sm p-4 hover:border-indigo-200 hover:shadow-md transition-all duration-200 relative",
                                                                     openLessonMenuId === lesson.id && "z-50"
                                                                 )}
                                                             >
@@ -573,23 +516,6 @@ const ModulesPage = () => {
                                                                                 <h4 className="font-semibold text-gray-900 truncate">
                                                                                     {lesson.title}
                                                                                 </h4>
-                                                                                {/* <Badge
-                                                                                    variant={
-                                                                                        lesson.status ===
-                                                                                        "published"
-                                                                                            ? "default"
-                                                                                            : "secondary"
-                                                                                    }
-                                                                                    className={cn(
-                                                                                        "text-xs",
-                                                                                        lesson.status ===
-                                                                                            "published"
-                                                                                            ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                                                                                            : "bg-gray-100 text-gray-600"
-                                                                                    )}
-                                                                                >
-                                                                                    {lesson.status}
-                                                                                </Badge> */}
                                                                                 <span className="text-xs text-gray-500">
                                                                                     {lessonQuizCounts[
                                                                                         lesson.id
@@ -662,7 +588,7 @@ const ModulesPage = () => {
                                                                                             <Edit className="w-4 h-4 text-blue-600" />
                                                                                         </button>
                                                                                         <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs bg-gray-900 text-white px-2 py-1 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible pointer-events-none transition-all duration-200 delay-300 whitespace-nowrap z-[100]">
-                                                                                            Edit
+                                                                                            Edit lesson
                                                                                         </span>
                                                                                     </div>
                                                                                     <div className="relative group">
@@ -686,31 +612,10 @@ const ModulesPage = () => {
                                                                                                 );
                                                                                             }}
                                                                                         >
-                                                                                            <Plus className="w-4 h-4 text-purple-600" />
+                                                                                            <MessageCircleQuestionMark className="w-4 h-4 text-purple-600" />
                                                                                         </button>
                                                                                         <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs bg-gray-900 text-white px-2 py-1 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible pointer-events-none transition-all duration-200 delay-300 whitespace-nowrap z-[100]">
-                                                                                            Add Quiz
-                                                                                        </span>
-                                                                                    </div>
-                                                                                    <div className="relative group">
-                                                                                        <button
-                                                                                            className="p-2.5 rounded-lg hover:bg-orange-50 transition-all duration-200 hover:scale-110"
-                                                                                            onClick={() => {
-                                                                                                setIsDocumentModalOpen(
-                                                                                                    true
-                                                                                                );
-                                                                                                setSelectedLessonId(
-                                                                                                    lesson.id
-                                                                                                );
-                                                                                                setOpenLessonMenuId(
-                                                                                                    null
-                                                                                                );
-                                                                                            }}
-                                                                                        >
-                                                                                            <FileText className="w-4 h-4 text-orange-600" />
-                                                                                        </button>
-                                                                                        <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs bg-gray-900 text-white px-2 py-1 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible pointer-events-none transition-all duration-200 delay-300 whitespace-nowrap z-[100]">
-                                                                                            Material
+                                                                                            Lesson Quiz
                                                                                         </span>
                                                                                     </div>
                                                                                     <ConfirmationHelper
@@ -721,6 +626,7 @@ const ModulesPage = () => {
                                                                                                 </button>
                                                                                                 <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs bg-gray-900 text-white px-2 py-1 rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible pointer-events-none transition-all duration-200 delay-300 whitespace-nowrap z-[100]">
                                                                                                     Delete
+                                                                                                    lesson
                                                                                                 </span>
                                                                                             </div>
                                                                                         }
@@ -744,30 +650,14 @@ const ModulesPage = () => {
                                                 )}
                                             </div>
                                         )}
-                                    </Card>
+                                    </div>
                                 );
                             })
                         )}
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             </div>
 
-            {/* Quiz Manager Modal */}
-            {/* {isQuizManagerOpen && (
-                // <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                //     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[1400px] mx-auto p-6 relative overflow-y-auto max-h-[92vh] animate-in zoom-in-95 duration-200">
-                //         <QuizManager
-                //             courseId={currentQuizContext.courseId}
-                //             moduleId={currentQuizContext.moduleId}
-                //             lessonId={currentQuizContext.lessonId}
-                //             onClose={() => setIsQuizManagerOpen(false)}
-                //         />
-                //     </div>
-                // </div>
-                <Outlet />
-            )} */}
-
-            {/* Modals */}
             <AddModuleModal
                 open={isAddModuleOpen}
                 onOpenChange={setIsAddModuleOpen}
@@ -794,17 +684,12 @@ const ModulesPage = () => {
                 lesson={selectedLesson}
                 onUpdate={() => fetchModules(courseIdFromState)}
             />
-            <UploadMaterialModal
-                open={isDocumentModalOpen}
-                lessonId={selectedLessonId}
-                onOpenChange={setIsDocumentModalOpen}
-                onUpdate={() => fetchModules(courseIdFromState)}
-            />
             <LessonMaterialModal
                 open={openMaterialModal}
                 onOpenChange={setOpenMaterialModal}
                 lessonId={selectedLessonId}
                 canUpdate={canUpdateCourse}
+                onUpdated={() => fetchModules(courseIdFromState)}
             />
         </div>
     );

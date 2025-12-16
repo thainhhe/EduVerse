@@ -4,6 +4,7 @@ const notificationSchema = new mongoose.Schema(
     {
         receiverId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false },
         senderId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        courseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: false, default: null },
         title: { type: String },
         type: {
             type: String,
@@ -12,7 +13,7 @@ const notificationSchema = new mongoose.Schema(
             default: "info",
         },
         message: { type: String, required: true },
-        link: { type: String },
+        link: { type: String, required: false, default: null },
         isRead: { type: Boolean, default: false },
         isGlobal: { type: Boolean, default: false },
         readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],

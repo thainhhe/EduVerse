@@ -23,6 +23,7 @@ import NotificationDropdown from "./NotificationDropdown";
 import { useSystem } from "@/context/SystemContext";
 import { getAllCoursePublished } from "@/services/courseService";
 import { getAllInstructor } from "@/services/userService";
+import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
 
 const Header = () => {
     // Force update
@@ -46,6 +47,7 @@ const Header = () => {
         const fetchSuggestions = async () => {
             if (searchTerm.trim().length < 2) {
                 setSuggestions({ courses: [], instructors: [] });
+                setShowSuggestions(false);
                 return;
             }
 
@@ -68,6 +70,8 @@ const Header = () => {
                     .slice(0, 3);
 
                 setSuggestions({ courses, instructors });
+                // Tự động hiển thị suggestions khi có kết quả
+                setShowSuggestions(true);
             } catch (error) {
                 console.error("Error fetching suggestions:", error);
             } finally {
@@ -80,6 +84,7 @@ const Header = () => {
                 fetchSuggestions();
             } else {
                 setSuggestions({ courses: [], instructors: [] });
+                setShowSuggestions(false);
             }
         }, 300);
 
@@ -181,15 +186,11 @@ const Header = () => {
                             })}
                         </nav>
                         <div className="relative w-72" ref={searchRef}>
-                            <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-4 py-2 bg-white w-full focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all">
-                                <FaSearch
-                                    className="text-gray-400 cursor-pointer hover:text-indigo-600 transition-colors"
-                                    onClick={handleSearchSubmit}
-                                />
+                            <div className="flex items-center gap-0 border border-gray-200 rounded-lg bg-white overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all">
                                 <input
                                     type="text"
                                     placeholder="Search for courses, instructors..."
-                                    className="bg-transparent border-none outline-none w-full text-sm"
+                                    className="bg-transparent border-none outline-none flex-1 text-sm px-4 py-2"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
@@ -197,6 +198,13 @@ const Header = () => {
                                         if (searchTerm.trim().length >= 2) setShowSuggestions(true);
                                     }}
                                 />
+                                <button
+                                    onClick={handleSearchSubmit}
+                                    className="flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2.5 transition-colors"
+                                    title="Search"
+                                >
+                                    <FaSearch className="text-base" />
+                                </button>
                             </div>
 
                             {/* Search Suggestions Dropdown */}
@@ -216,9 +224,6 @@ const Header = () => {
                                             {/* Courses Section */}
                                             {suggestions.courses.length > 0 && (
                                                 <div className="py-2">
-                                                    <div className="px-4 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                                                        <BookOpen className="w-3 h-3" /> Courses
-                                                    </div>
                                                     {suggestions.courses.map((course) => (
                                                         <div
                                                             key={course._id}
@@ -255,10 +260,6 @@ const Header = () => {
                                             {/* Instructors Section */}
                                             {suggestions.instructors.length > 0 && (
                                                 <div className="py-2 border-t border-gray-50">
-                                                    <div className="px-4 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                                                        <FaChalkboardTeacher className="w-3 h-3" />{" "}
-                                                        Instructors
-                                                    </div>
                                                     {suggestions.instructors.map((instructor) => (
                                                         <div
                                                             key={instructor._id}
@@ -313,7 +314,7 @@ const Header = () => {
                                         } text-white shadow-md hover:shadow-lg`}
                                     >
                                         <FaUserPlus className="text-lg" />
-                                        <span>Signup</span>
+                                        <span>Sign up</span>
                                         <ChevronDown
                                             className={`w-4 h-4 transition-transform duration-200 ${
                                                 showSignupMenu ? "rotate-180" : ""
@@ -375,27 +376,48 @@ const Header = () => {
                         ) : (
                             // Avatar + dropdown
                             <div className="relative" ref={avatarRef}>
-                                <button
-                                    onClick={() => setShowAvatarMenu((s) => !s)}
-                                    className={`w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold shadow-md transition-all duration-200 focus:outline-none ${
-                                        showAvatarMenu
-                                            ? "ring-2 ring-indigo-200 ring-offset-2"
-                                            : "hover:shadow-lg"
-                                    }`}
-                                    title={user?.username || user?.name || "User"}
-                                >
-                                    {initials(user?.username || user?.name)}
-                                </button>
-
+                                {user?.avatar ? (
+                                    <img
+                                        src={user.avatar}
+                                        alt={user?.username || user?.name}
+                                        className={`w-10 h-10 rounded-full cursor-pointer object-cover shadow-md transition-all duration-200 ${
+                                            showAvatarMenu
+                                                ? "ring-2 ring-indigo-200 ring-offset-2"
+                                                : "hover:shadow-lg"
+                                        }`}
+                                        onClick={() => setShowAvatarMenu((s) => !s)}
+                                    />
+                                ) : (
+                                    <div
+                                        className={`w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm cursor-pointer shadow-md transition-all duration-200 ${
+                                            showAvatarMenu
+                                                ? "ring-2 ring-indigo-200 ring-offset-2"
+                                                : "hover:shadow-lg"
+                                        }`}
+                                        onClick={() => setShowAvatarMenu((s) => !s)}
+                                        title={user?.username || user?.name || "User"}
+                                    >
+                                        {initials(user?.username || user?.name)}
+                                    </div>
+                                )}
                                 <div
-                                    className={`absolute left-1/2 mt-3 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50 transform transition-all duration-200 origin-top ${
-                                        showAvatarMenu
-                                            ? "opacity-100 scale-100 -translate-x-1/2 translate-y-0 visible"
-                                            : "opacity-0 scale-95 -translate-x-1/2 -translate-y-2 invisible"
+                                    className={`absolute left-1/2 -translate-x-1/2 mt-3 min-w-[200px] w-max bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50 transition-all duration-300 ease-out ${
+                                        showAvatarMenu ? "opacity-100 visible" : "opacity-0 invisible"
                                     }`}
                                 >
                                     {/* User Profile Summary */}
-                                    <div className="px-4 py-3 border-b border-gray-50 mb-2">
+                                    <div
+                                        className={`px-4 py-3 border-b border-gray-50 mb-2 transition-all duration-300 ease-out overflow-hidden ${
+                                            showAvatarMenu ? "opacity-100 max-h-20" : "opacity-0 max-h-0"
+                                        }`}
+                                        style={{
+                                            transitionDelay: showAvatarMenu
+                                                ? "50ms"
+                                                : user?.role === "instructor"
+                                                ? "350ms"
+                                                : "250ms",
+                                        }}
+                                    >
                                         <p className="text-sm font-bold text-gray-900 truncate">
                                             {user?.username || user?.name}
                                         </p>
@@ -407,59 +429,127 @@ const Header = () => {
                                     <div className="px-2 space-y-1">
                                         <Link
                                             to="/dashboard"
-                                            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                                            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 ease-out overflow-hidden ${
+                                                showAvatarMenu ? "opacity-100 max-h-20" : "opacity-0 max-h-0"
+                                            }`}
+                                            style={{
+                                                transitionDelay: showAvatarMenu
+                                                    ? "100ms"
+                                                    : user?.role === "instructor"
+                                                    ? "300ms"
+                                                    : "200ms",
+                                            }}
                                             onClick={() => setShowAvatarMenu(false)}
                                         >
                                             <GraduationCap className="w-4 h-4" />
                                             Learning
                                         </Link>
+
+                                        {user?.role === "instructor" && (
+                                            <>
+                                                <Link
+                                                    to="/dashboard-instructor"
+                                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 ease-out overflow-hidden ${
+                                                        showAvatarMenu
+                                                            ? "opacity-100 max-h-20"
+                                                            : "opacity-0 max-h-0"
+                                                    }`}
+                                                    style={{
+                                                        transitionDelay: showAvatarMenu ? "150ms" : "250ms",
+                                                    }}
+                                                    onClick={() => setShowAvatarMenu(false)}
+                                                >
+                                                    <LayoutDashboard className="w-4 h-4" />
+                                                    Dashboard
+                                                </Link>
+                                                <Link
+                                                    to="/mycourses"
+                                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 ease-out overflow-hidden ${
+                                                        showAvatarMenu
+                                                            ? "opacity-100 max-h-20"
+                                                            : "opacity-0 max-h-0"
+                                                    }`}
+                                                    style={{
+                                                        transitionDelay: showAvatarMenu ? "200ms" : "200ms",
+                                                    }}
+                                                    onClick={() => setShowAvatarMenu(false)}
+                                                >
+                                                    <BookOpen className="w-4 h-4" />
+                                                    My Courses
+                                                </Link>
+                                            </>
+                                        )}
+
                                         <Link
                                             to="/reports/my-reports"
-                                            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                                            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 ease-out overflow-hidden ${
+                                                showAvatarMenu ? "opacity-100 max-h-20" : "opacity-0 max-h-0"
+                                            }`}
+                                            style={{
+                                                transitionDelay: showAvatarMenu
+                                                    ? user?.role === "instructor"
+                                                        ? "250ms"
+                                                        : "150ms"
+                                                    : "150ms",
+                                            }}
                                             onClick={() => setShowAvatarMenu(false)}
                                         >
                                             <FileText className="w-4 h-4" />
                                             My Reports
                                         </Link>
-                                        <Link
-                                            to="/settings"
-                                            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-                                            onClick={() => setShowAvatarMenu(false)}
-                                        >
-                                            <Settings className="w-4 h-4" />
-                                            Settings
-                                        </Link>
+
                                         <Link
                                             to="/payment-history"
-                                            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                                            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-300 ease-out overflow-hidden ${
+                                                showAvatarMenu ? "opacity-100 max-h-20" : "opacity-0 max-h-0"
+                                            }`}
+                                            style={{
+                                                transitionDelay: showAvatarMenu
+                                                    ? user?.role === "instructor"
+                                                        ? "300ms"
+                                                        : "200ms"
+                                                    : "100ms",
+                                            }}
                                             onClick={() => setShowAvatarMenu(false)}
                                         >
                                             <CreditCard className="w-4 h-4" />
                                             Payment History
                                         </Link>
 
-                                        {user?.role === "instructor" && (
-                                            <>
-                                                <Link
-                                                    to="/mycourses"
-                                                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-                                                    onClick={() => setShowAvatarMenu(false)}
-                                                >
-                                                    <BookOpen className="w-4 h-4" />
-                                                    My Courses
-                                                </Link>
-                                                <Link
-                                                    to="/dashboard-instructor"
-                                                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-                                                    onClick={() => setShowAvatarMenu(false)}
-                                                >
-                                                    <LayoutDashboard className="w-4 h-4" />
-                                                    Dashboard
-                                                </Link>
-                                            </>
-                                        )}
+                                        <div
+                                            className={`border-t border-gray-50 my-1 pt-1 transition-all duration-300 ease-out overflow-hidden ${
+                                                showAvatarMenu ? "opacity-100 max-h-20" : "opacity-0 max-h-0"
+                                            }`}
+                                            style={{
+                                                transitionDelay: showAvatarMenu
+                                                    ? user?.role === "instructor"
+                                                        ? "350ms"
+                                                        : "250ms"
+                                                    : "50ms",
+                                            }}
+                                        >
+                                            <Link
+                                                to="/settings"
+                                                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                                                onClick={() => setShowAvatarMenu(false)}
+                                            >
+                                                <Settings className="w-4 h-4" />
+                                                Settings
+                                            </Link>
+                                        </div>
 
-                                        <div className="border-t border-gray-50 my-1 pt-1">
+                                        <div
+                                            className={`border-t border-gray-50 my-1 pt-1 transition-all duration-300 ease-out overflow-hidden ${
+                                                showAvatarMenu ? "opacity-100 max-h-20" : "opacity-0 max-h-0"
+                                            }`}
+                                            style={{
+                                                transitionDelay: showAvatarMenu
+                                                    ? user?.role === "instructor"
+                                                        ? "400ms"
+                                                        : "300ms"
+                                                    : "0ms",
+                                            }}
+                                        >
                                             <button
                                                 onClick={onLogout}
                                                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors text-left"

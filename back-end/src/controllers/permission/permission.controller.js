@@ -19,10 +19,11 @@ const permissionController = {
             return error_response(res, error);
         }
     },
-    request_invite: async (req, res) => {
+    accept_invite: async (req, res) => {
         try {
-            const data = req.body;
-            const result = await permissionService.request_invite(data);
+            const userId = req.params.userId;
+            const courseId = req.params.courseId;
+            const result = await permissionService.acceptInvite({ userId, courseId });
             return response(res, result);
         } catch (error) {
             return error_response(res, error);

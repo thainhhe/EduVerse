@@ -8,7 +8,7 @@ export const loginSchema = z.object({
     .email({ message: "Please enter a valid email address." }),
   password: z
     .string()
-    .min(6, "Password must be at least 6 characters")
+    .min(8, "Password must be at least 8 characters")
     .refine((s) => s.trim().length > 0, {
       message: "Password cannot be only whitespace",
     }),
@@ -28,7 +28,7 @@ export const registerLearnerSchema = z
       .email({ message: "Please enter a valid email address." }),
     password: z
       .string()
-      .min(6, "Password must be at least 6 characters.")
+      .min(8, "Password must be at least 8 characters.")
       .max(50, "Password must not exceed 50 characters.")
       .refine((s) => s.trim().length > 0, {
         message: "Password cannot be only whitespace",
@@ -59,7 +59,7 @@ export const registerInstructorSchema = z
       .email({ message: "Please enter a valid email address." }),
     password: z
       .string()
-      .min(6, "Password must be at least 6 characters.")
+      .min(8, "Password must be at least 8 characters.")
       .max(50, "Password must not exceed 50 characters.")
       .refine((s) => s.trim().length > 0, {
         message: "Password cannot be only whitespace",

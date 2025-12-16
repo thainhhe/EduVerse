@@ -1,10 +1,10 @@
-import express from 'express';
 import cors from 'cors';
+import express from 'express';
 import connectDB from './config/database.js';
 import { initializeBuckets } from './config/minio.js';
-import uploadRoutes from './routes/upload.js';
 import filesRoutes from './routes/files.js';
 import streamRoutes from './routes/stream.js';
+import uploadRoutes from './routes/upload.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
