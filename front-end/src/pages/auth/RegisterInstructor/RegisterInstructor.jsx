@@ -1,16 +1,15 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useAuth } from "@hooks/useAuth";
-import { registerInstructorSchema } from "@/lib/validations/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { registerInstructorSchema } from "@/lib/validations/auth";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "@hooks/useAuth";
 import { ChevronDown, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { Link, useNavigate } from "react-router-dom";
 
 const SUBJECT_OPTIONS = ["Marketing", "Programming", "Design", "Business", "Math", "Physics"];
 
@@ -90,16 +89,14 @@ const MultiSelectDropdown = ({ value = [], onChange, options = [] }) => {
                                 <div
                                     key={opt}
                                     onClick={() => toggle(opt)}
-                                    className={`flex items-center gap-2 p-2 rounded-sm cursor-pointer text-sm transition-colors ${
-                                        checked ? "bg-indigo-50 text-indigo-900" : "hover:bg-gray-100"
-                                    }`}
+                                    className={`flex items-center gap-2 p-2 rounded-sm cursor-pointer text-sm transition-colors ${checked ? "bg-indigo-50 text-indigo-900" : "hover:bg-gray-100"
+                                        }`}
                                 >
                                     <div
-                                        className={`w-4 h-4 rounded border flex items-center justify-center ${
-                                            checked
+                                        className={`w-4 h-4 rounded border flex items-center justify-center ${checked
                                                 ? "bg-indigo-600 border-indigo-600 text-white"
                                                 : "border-gray-300"
-                                        }`}
+                                            }`}
                                     >
                                         {checked && <X className="w-3 h-3 rotate-45" />}
                                     </div>
@@ -237,9 +234,7 @@ const RegisterInstructor = () => {
                                 id="email"
                                 type="email"
                                 placeholder="name@example.com"
-                                className={`bg-gray-50 ${
-                                    errors.email ? "border-red-500 ring-1 ring-red-500" : ""
-                                }`}
+                                className={`bg-gray-50 `}
                                 {...register("email")}
                                 aria-invalid={!!errors.email}
                                 onBlur={() => handleTrimAndValidate("email")}
