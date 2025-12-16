@@ -1,41 +1,31 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-    PlusCircle,
-    Search,
-    ChevronLeft,
-    ChevronRight,
-    Eye,
-    Lock,
-    Unlock,
-    Download,
-    Plus,
-} from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Eye, Lock, Unlock, Download, Plus } from "lucide-react";
 import { ToastHelper } from "@/helper/ToastHelper";
 import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 import { getAllUsers, lockUser, unlockUser } from "@/services/userService";
 import Swal from "sweetalert2";
+import { AddNewUser } from "./AddNewUser";
 
 const UserManagementPage = () => {
-    const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedUsers, setSelectedUsers] = useState([]);
 
-    // Filters
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState("all");
     const [statusFilter, setStatusFilter] = useState("all");
 
-    // Pagination
+    const [openAddNewUser, setOpenAddNewUser] = useState(false);
+    const [openEditUser, setOpenEditUser] = useState(false);
+
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -60,7 +50,6 @@ const UserManagementPage = () => {
         }
     };
 
-    // Filter users
     const filteredUsers = users.filter((user) => {
         const matchesSearch =
             user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -70,12 +59,10 @@ const UserManagementPage = () => {
         return matchesSearch && matchesRole && matchesStatus;
     });
 
-    // Pagination
     const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const currentUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
 
-    // Selection handlers
     const handleSelectAll = (checked) => {
         if (checked) {
             setSelectedUsers(currentUsers.map((user) => user._id));
@@ -92,7 +79,6 @@ const UserManagementPage = () => {
         }
     };
 
-    // Action handlers
     const handleLockUser = async (userId) => {
         try {
             const res = await lockUser(userId);
@@ -149,6 +135,15 @@ const UserManagementPage = () => {
         }
     };
 
+    const handleAddSuccess = async () => {
+        Swal.fire({
+            icon: "success",
+            title: "Added!",
+            text: "User added successfully!",
+        });
+        await fetchUsers();
+    };
+
     const getStatusBadge = (status) => {
         switch (status) {
             case "active":
@@ -177,13 +172,12 @@ const UserManagementPage = () => {
 
     return (
         <div className="min-h-screen bg-white">
-            {/* Filters & Table */}
             <div className="max-w-full mx-auto shadow-sm border-none">
                 <div className="pb-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-2  bg-gray-500 text-black">
                         <div className="flex flex-col items-center sm:flex-row gap-2">
                             <Select value={roleFilter} onValueChange={setRoleFilter}>
-                                <SelectTrigger className="w-full sm:w-[150px] max-w-[100px] bg-white">
+                                <SelectTrigger className="w-full sm:w-[150px] max-w-[100px] bg-white text-black flex items-center hover:text-white hover:bg-indigo-600">
                                     <SelectValue placeholder="Role" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -193,7 +187,7 @@ const UserManagementPage = () => {
                                 </SelectContent>
                             </Select>
                             <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                <SelectTrigger className="w-full sm:w-[150px] max-w-[100px] bg-white">
+                                <SelectTrigger className="w-full sm:w-[150px] max-w-[100px] bg-white text-black flex items-center hover:text-white hover:bg-indigo-600">
                                     <SelectValue placeholder="Status" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -205,12 +199,15 @@ const UserManagementPage = () => {
                             </Select>
                             <Button
                                 variant="outline"
-                                className="bg-white text-black hover:bg-gray-100"
+                                className="bg-white text-black flex items-center hover:text-white hover:bg-indigo-600"
                                 // onClick={handleReset}
                             >
                                 <Download /> Export
                             </Button>
-                            <Button className="bg-white text-black flex items-center">
+                            <Button
+                                className="bg-white text-black flex items-center hover:text-white hover:bg-indigo-600"
+                                onClick={() => setOpenAddNewUser(true)}
+                            >
                                 <Plus className="h-4 w-4" />
                                 New User
                             </Button>
@@ -242,7 +239,7 @@ const UserManagementPage = () => {
                                             className="!rounded"
                                         />
                                     </TableHead>
-                                    <TableHead>User</TableHead>
+                                    <TableHead>User(Total:{users.length})</TableHead>
                                     <TableHead>Role</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>Created At</TableHead>
@@ -330,7 +327,7 @@ const UserManagementPage = () => {
                                                                     onConfirm={() => handleLockUser(user._id)}
                                                                 />
                                                             )}
-                                                            {user.status === "locked" && (
+                                                            {user.status === "banned" && (
                                                                 <ConfirmationHelper
                                                                     trigger={
                                                                         <Button
@@ -421,6 +418,11 @@ const UserManagementPage = () => {
                     </div>
                 </div>
             </div>
+            <AddNewUser
+                open={openAddNewUser}
+                onOpenChange={(open) => setOpenAddNewUser(open)}
+                onAddSuccess={handleAddSuccess}
+            />
         </div>
     );
 };

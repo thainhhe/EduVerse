@@ -295,6 +295,8 @@ const QuizContent = ({ quizId, onQuizSubmitted }) => {
                                                     ? answers[index]?.includes(option)
                                                     : answers[index] === option;
 
+                                            const isCheckboxType = q.questionType === "checkbox";
+
                                             return (
                                                 <label
                                                     key={i}
@@ -304,19 +306,22 @@ const QuizContent = ({ quizId, onQuizSubmitted }) => {
                                                             : "bg-white border-gray-200 hover:bg-gray-50 hover:border-gray-300"
                                                     }`}
                                                 >
+                                                    {/* Custom Radio/Checkbox Indicator */}
                                                     <div
-                                                        className={`flex items-center justify-center w-5 h-5 rounded border mr-3 transition-colors ${
+                                                        className={`flex items-center justify-center w-5 h-5 border mr-3 transition-colors flex-shrink-0 ${
                                                             isSelected
-                                                                ? "bg-indigo-600 border-indigo-600 text-white"
+                                                                ? "bg-indigo-600 border-indigo-600"
                                                                 : "bg-white border-gray-300 group-hover:border-gray-400"
-                                                        } ${
-                                                            q.questionType === "radio"
-                                                                ? "rounded-full"
-                                                                : "rounded"
-                                                        }`}
+                                                        } ${isCheckboxType ? "rounded" : "rounded-full"}`}
                                                     >
                                                         {isSelected && (
-                                                            <CheckCircle2 className="w-3.5 h-3.5" />
+                                                            <>
+                                                                {isCheckboxType ? (
+                                                                    <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                                                                ) : (
+                                                                    <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                                                                )}
+                                                            </>
                                                         )}
                                                     </div>
 
@@ -339,7 +344,7 @@ const QuizContent = ({ quizId, onQuizSubmitted }) => {
                                                         className="hidden"
                                                     />
                                                     <span
-                                                        className={`text-base ${
+                                                        className={`text-base flex-1 ${
                                                             isSelected
                                                                 ? "text-indigo-900 font-medium"
                                                                 : "text-gray-700"

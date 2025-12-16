@@ -5,8 +5,8 @@ import { useParams } from "react-router-dom";
 
 export default function PracticeTest() {
     const { quizId } = useParams();
-    const { user } = useAuth()
-    const userId = user._id
+    const { user } = useAuth();
+    const userId = user._id;
     const [quiz, setQuiz] = useState(null);
     const [answers, setAnswers] = useState({});
 
@@ -27,7 +27,7 @@ export default function PracticeTest() {
     }, [quizId]);
 
     if (!quiz) return <p className="p-8">Loading quiz...</p>;
-    console.log("quiz", quiz)
+    console.log("quiz", quiz);
     // ✅ Cập nhật đáp án
     const handleChange = (index, value, isCheckbox) => {
         setAnswers((prev) => {
@@ -45,12 +45,10 @@ export default function PracticeTest() {
 
     // ✅ Submit quiz
     const handleSubmit = async () => {
-        console.log("quiz.questions", quiz.questions)
+        console.log("quiz.questions", quiz.questions);
         const formattedAnswers = quiz.questions.map((q, index) => ({
             questionId: q.id || null,
-            userAnswer: Array.isArray(answers[index])
-                ? answers[index]
-                : [answers[index]],
+            userAnswer: Array.isArray(answers[index]) ? answers[index] : [answers[index]],
         }));
 
         const body = {
@@ -59,7 +57,7 @@ export default function PracticeTest() {
             answers: formattedAnswers,
             timeTaken: 45, // ví dụ
         };
-        console.log("body", body)
+        console.log("body", body);
 
         try {
             const res = await fetch("http://localhost:9999/api/v1/score/submit", {
@@ -73,11 +71,11 @@ export default function PracticeTest() {
 
             const result = await res.json();
             console.log("✅ Kết quả:", result);
-            console.log(result.success)
+            console.log(result.success);
             if (result.success) {
-                ToastHelper.success(result.message)
+                ToastHelper.success(result.message);
             } else {
-                ToastHelper.warning(result.message)
+                ToastHelper.warning(result.message);
             }
 
             // alert(`Nộp bài thành công! Điểm: ${result.data?.percentage || 0}`);
@@ -108,9 +106,7 @@ export default function PracticeTest() {
                                         ? answers[index]?.includes(option)
                                         : answers[index] === option
                                 }
-                                onChange={(e) =>
-                                    handleChange(index, option, q.questionType === "checkbox")
-                                }
+                                onChange={(e) => handleChange(index, option, q.questionType === "checkbox")}
                                 className="mr-2 accent-indigo-600"
                             />
                             {option}
@@ -119,10 +115,7 @@ export default function PracticeTest() {
                 </div>
             ))}
 
-            <button
-                onClick={handleSubmit}
-                className="bg-indigo-600 text-white px-6 py-3 rounded-md"
-            >
+            <button onClick={handleSubmit} className="bg-indigo-600 text-white px-6 py-3 rounded-md">
                 Submit Quiz
             </button>
         </div>

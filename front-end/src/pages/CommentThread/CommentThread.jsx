@@ -3,20 +3,19 @@ import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
 import CommentItem from "./CommentItem";
+import { ToastHelper } from "@/helper/ToastHelper";
 
 export default function CommentThread({ forumId, userId, courseId, canComment }) {
     const [comments, setComments] = useState([]);
     const [loading, setLoading] = useState(false);
     const [newComment, setNewComment] = useState("");
 
-    console.log("canComment", canComment)
+    console.log("canComment", canComment);
     // 🔹 Load danh sách bình luận
     const fetchComments = async () => {
         setLoading(true);
         try {
-            const res = await fetch(
-                `http://localhost:9999/api/v1/comment/forum/${forumId}`
-            );
+            const res = await fetch(`http://localhost:9999/api/v1/comment/forum/${forumId}`);
             const json = await res.json();
             setComments(json.data || []);
         } catch (err) {
@@ -30,38 +29,35 @@ export default function CommentThread({ forumId, userId, courseId, canComment })
         if (forumId) fetchComments();
     }, [forumId]);
 
-
     const handleCreateComment = async () => {
         if (!canComment) {
-            alert("⚠️ Bạn cần đăng ký khóa học trước khi bình luận!");
+            ToastHelper.error("You need to enroll in the course to comment!");
             return;
         }
         if (!newComment.trim()) return;
 
         try {
-            const res = await fetch(
-                "http://localhost:9999/api/v1/comment/create-comment",
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        forumId,
-                        userId,
-                        content: newComment,
-                        parentCommentId: null,
-                    }),
-                }
-            );
+            const res = await fetch("http://localhost:9999/api/v1/comment/create-comment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    forumId,
+                    userId,
+                    content: newComment,
+                    parentCommentId: null,
+                }),
+            });
 
             const data = await res.json();
             if (data.status === 200 || data.success) {
                 setComments((prev) => [data.data, ...prev]);
                 setNewComment("");
             } else {
-                alert("Không thể gửi bình luận!");
+                ToastHelper.error("Failed to create comment!");
             }
         } catch (err) {
             console.error(err);
+            ToastHelper.error("Failed to create comment!");
         }
     };
 
@@ -75,8 +71,8 @@ export default function CommentThread({ forumId, userId, courseId, canComment })
                         onChange={(e) => setNewComment(e.target.value)}
                         placeholder={
                             canComment
-                                ? "Viết bình luận của bạn..."
-                                : "Bạn cần đăng ký khóa học để bình luận"
+                                ? "Write your comment..."
+                                : "You need to enroll in the course to comment"
                         }
                         rows={3}
                         disabled={!canComment}
@@ -95,7 +91,7 @@ export default function CommentThread({ forumId, userId, courseId, canComment })
                 {/* Danh sách bình luận */}
                 <div className="max-h-[700px] overflow-y-auto p-2  ">
                     {loading ? (
-                        <p className="">Đang tải bình luận...</p>
+                        <p className="">Loading comments...</p>
                     ) : comments.length > 0 ? (
                         comments.map((c) => (
                             <CommentItem
@@ -108,10 +104,9 @@ export default function CommentThread({ forumId, userId, courseId, canComment })
                             />
                         ))
                     ) : (
-                        <p className="text-gray-500 text-sm italic">Chưa có bình luận nào</p>
+                        <p className="text-gray-500 text-sm italic">No comments yet</p>
                     )}
                 </div>
-
             </div>
         </main>
     );

@@ -25,7 +25,7 @@ const RoomList = () => {
                 if (res.success) {
                     const data = res?.data?.data ?? res?.data ?? [];
                     // Only show public rooms
-                    setRooms(data.filter((room) => room.isPublic === true));
+                    setRooms(data.filter((room) => room.isPublic === true && room.status === "ongoing"));
                 }
             } catch (err) {
                 console.error("❌ Failed to fetch rooms:", err);

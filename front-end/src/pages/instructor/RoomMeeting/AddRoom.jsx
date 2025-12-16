@@ -14,7 +14,6 @@ const AddRoom = ({ open, setOpen, courseId, onCreated }) => {
     const [formData, setFormData] = useState({
         name: "",
         description: "",
-        link: "",
         password: "",
         isPublic: false,
         startTime: "",
@@ -30,7 +29,6 @@ const AddRoom = ({ open, setOpen, courseId, onCreated }) => {
         setFormData({
             name: "",
             description: "",
-            link: "",
             password: "",
             isPublic: false,
             startTime: "",
@@ -60,7 +58,6 @@ const AddRoom = ({ open, setOpen, courseId, onCreated }) => {
             const payload = {
                 name: formData.name,
                 description: formData.description,
-                link: formData.link,
                 password: formData.password,
                 isPublic: formData.isPublic,
                 courseId: courseId,
@@ -130,23 +127,6 @@ const AddRoom = ({ open, setOpen, courseId, onCreated }) => {
                             className="mt-1"
                             rows={3}
                         />
-                    </div>
-
-                    {/* Link */}
-                    <div>
-                        <Label htmlFor="link" className="font-medium">
-                            Meeting Link
-                        </Label>
-                        <Input
-                            id="link"
-                            value={formData.link}
-                            onChange={(e) => handleChange("link", e.target.value)}
-                            placeholder="Enter meeting link (Zoom/Meet/Jitsi)..."
-                            className="mt-1"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                            Leave empty to auto-generate a Jitsi link
-                        </p>
                     </div>
 
                     {/* Password */}
