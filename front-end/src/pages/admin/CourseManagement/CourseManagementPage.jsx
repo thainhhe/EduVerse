@@ -50,16 +50,22 @@ const CourseManagementPage = () => {
 
     const fetchCourses = async ({ skipLoading = false }) => {
         setLoading(true);
-        const res = await getAllCourse({ skipLoading });
-        if (res?.success) {
-            const data = res.data.filter((course) => course.status !== "draft") || [];
-            setCourses(data);
-        } else {
-            console.error("Lỗi từ server:", res?.message || "Không xác định");
-            ToastHelper.error(res?.message || "Đã xảy ra lỗi khi lấy danh sách khóa học!");
+        try {
+            const res = await getAllCourse({ skipLoading });
+            if (res?.success) {
+                const data = res.data.filter((course) => course.status !== "draft") || [];
+                setCourses(data);
+            } else {
+                console.error("Lỗi từ server:", res?.message || "Không xác định");
+                ToastHelper.error(res?.message || "Failed to load courses!");
+            }
+        } catch (err) {
+            console.error("Failed to load courses:", err);
+            ToastHelper.error("Failed to load courses!");
+        } finally {
+            setLoading(false);
+            setIsFirstLoad(false);
         }
-        setLoading(false);
-        setIsFirstLoad(false);
     };
 
     useEffect(() => {
@@ -95,7 +101,6 @@ const CourseManagementPage = () => {
         });
     };
 
-    // Selection Handlers
     const handleSelectAll = (checked) => {
         if (checked) {
             const currentIds = currentCourses.map((c) => c._id);
@@ -114,51 +119,28 @@ const CourseManagementPage = () => {
         }
     };
 
-    // Actions
     const handleApprove = async (id) => {
         try {
             const res = await approveCourse(id, { skipLoading: true });
             if (res?.success) {
                 Swal.fire({
                     icon: "success",
-                    title: "Duyệt thành công!",
-                    text: "Khóa học đã được duyệt thành công!",
+                    title: "Approve successfully!",
+                    text: "Course has been approved successfully!",
                 });
                 setSelectedCourses((prev) => prev.filter((itemId) => itemId !== id));
                 fetchCourses({ skipLoading: true });
             } else {
                 Swal.fire({
                     icon: "error",
-                    title: "Duyệt thất bại!",
-                    text: res?.message || "Duyệt thất bại!",
+                    title: "Approve failed!",
+                    text: res?.message || "Approve failed!",
                 });
             }
         } catch (err) {
             Swal.fire({
                 icon: "error",
-                title: "Lỗi hệ thống khi duyệt!",
-            });
-        }
-    };
-
-    const handleBulkApprove = async () => {
-        try {
-            let successCount = 0;
-            for (const id of selectedCourses) {
-                const res = await approveCourse(id);
-                if (res?.success) successCount++;
-            }
-            Swal.fire({
-                icon: "success",
-                title: "Duyệt thành công!",
-                text: `Đã duyệt thành công ${successCount} khóa học!`,
-            });
-            setSelectedCourses([]);
-            fetchCourses();
-        } catch (err) {
-            Swal.fire({
-                icon: "error",
-                title: "Lỗi hệ thống khi duyệt hàng loạt!",
+                title: "System error when approving!",
             });
         }
     };
@@ -167,7 +149,7 @@ const CourseManagementPage = () => {
         if (!rejectReason.trim()) {
             Swal.fire({
                 icon: "warning",
-                title: "Vui lòng nhập lý do từ chối!",
+                title: "Please enter the reason for rejection!",
             });
             return;
         }
@@ -178,8 +160,8 @@ const CourseManagementPage = () => {
                 if (res?.success) {
                     Swal.fire({
                         icon: "success",
-                        title: "Từ chối thành công!",
-                        text: "Khóa học đã bị từ chối!",
+                        title: "Reject successfully!",
+                        text: "Course has been rejected successfully!",
                     });
                     setShowRejectModal(false);
                     setRejectReason("");
@@ -188,8 +170,8 @@ const CourseManagementPage = () => {
                 } else {
                     Swal.fire({
                         icon: "error",
-                        title: "Từ chối thất bại!",
-                        text: res?.message || "Từ chối thất bại!",
+                        title: "Reject failed!",
+                        text: res?.message || "Reject failed!",
                     });
                 }
             } else if (selectedCourses.length > 0) {
@@ -200,8 +182,8 @@ const CourseManagementPage = () => {
                 }
                 Swal.fire({
                     icon: "success",
-                    title: "Từ chối thành công!",
-                    text: `Đã từ chối ${successCount} khóa học!`,
+                    title: "Reject successfully!",
+                    text: `Rejected ${successCount} courses successfully!`,
                 });
                 setShowRejectModal(false);
                 setRejectReason("");
@@ -211,17 +193,11 @@ const CourseManagementPage = () => {
         } catch (err) {
             Swal.fire({
                 icon: "error",
-                title: "Lỗi hệ thống khi từ chối!",
+                title: "System error when rejecting!",
             });
         }
     };
 
-    const openBulkRejectModal = () => {
-        setSelectedCourseId(null);
-        setShowRejectModal(true);
-    };
-
-    // Filtering
     const filteredCourses = courses.filter((course) => {
         const matchSearch =
             course.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -233,7 +209,6 @@ const CourseManagementPage = () => {
         return matchSearch && matchStatus && matchCategory;
     });
 
-    // Pagination
     const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
     const indexOfLastCourse = currentPage * coursesPerPage;
     const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
@@ -242,7 +217,6 @@ const CourseManagementPage = () => {
     const isAllSelected =
         currentCourses.length > 0 && currentCourses.every((c) => selectedCourses.includes(c._id));
 
-    // Stats
     const stats = [
         {
             title: "Total Courses",
@@ -308,7 +282,6 @@ const CourseManagementPage = () => {
                 ))}
             </div>
 
-            {/* Filters & Table */}
             <div className="border-indigo-500 shadow-sm">
                 <div className="pb-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-600 text-black p-2">

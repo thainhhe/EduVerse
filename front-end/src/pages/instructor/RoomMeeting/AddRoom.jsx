@@ -16,7 +16,6 @@ const AddRoom = ({ open, setOpen, courseId, onCreated }) => {
     const [formData, setFormData] = useState({
         name: "",
         description: "",
-        link: "",
         password: "",
         isPublic: false,
         startTime: "",
@@ -42,7 +41,6 @@ const AddRoom = ({ open, setOpen, courseId, onCreated }) => {
         setFormData({
             name: "",
             description: "",
-            link: "",
             password: "",
             isPublic: false,
             startTime: "",
@@ -90,7 +88,6 @@ const AddRoom = ({ open, setOpen, courseId, onCreated }) => {
             const payload = {
                 name: formData.name,
                 description: formData.description,
-                link: formData.link,
                 password: formData.password,
                 isPublic: formData.isPublic,
                 courseId: courseId,

@@ -23,6 +23,9 @@ export const approveCourse = (id) => api.put(`/admin/courses/${id}/approve`);
 // ✅ Reject course
 export const rejectCourse = (id, reason) => api.put(`/admin/courses/${id}/reject`, { reasonReject: reason });
 
+// ✅ Update flag course
+export const updateFlagCourse = (id, flag) => api.put(`/admin/courses/${id}/flag`, { flag });
+
 export const getModulesInCourse = async (courseId) => {
     try {
         return await api.get(`/modules/course-module/${courseId}`);

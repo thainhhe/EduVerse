@@ -29,7 +29,6 @@ const Courses = () => {
     const { user } = useAuth();
     const { enrollments } = useEnrollment();
 
-    // Drag to scroll logic
     const scrollRef = useRef(null);
     const [isDragging, setIsDragging] = useState(false);
     const [startX, setStartX] = useState(0);
@@ -53,7 +52,7 @@ const Courses = () => {
         if (!isDragging) return;
         e.preventDefault();
         const x = e.pageX - scrollRef.current.offsetLeft;
-        const walk = (x - startX) * 2; // Scroll-fast
+        const walk = (x - startX) * 2;
         scrollRef.current.scrollLeft = scrollLeft - walk;
     };
 
@@ -101,13 +100,8 @@ const Courses = () => {
 
     const filteredCourses = courses
         .filter((course) => {
-            // 1. Category Filter
             const matchCategory = selectedCategory === "All" || course.category === selectedCategory;
-
-            // 2. Search Filter
             const matchSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase());
-
-            // 3. Price Filter
             let matchPrice = true;
             const price =
                 typeof course?.price === "number" ? course.price : Number(course?.displayPrice ?? 0);
@@ -117,7 +111,6 @@ const Courses = () => {
             return matchCategory && matchSearch && matchPrice;
         })
         .sort((a, b) => {
-            // 4. Sorting
             const priceA = typeof a?.price === "number" ? a.price : Number(a?.displayPrice ?? 0);
             const priceB = typeof b?.price === "number" ? b.price : Number(b?.displayPrice ?? 0);
             const ratingA = Number(a?.avgRating ?? a?.rating ?? 0);
@@ -138,7 +131,6 @@ const Courses = () => {
             }
         });
 
-    // ✅ Loading hoặc lỗi
     if (loading)
         return (
             <div className="flex justify-center items-center min-h-screen">
@@ -146,11 +138,9 @@ const Courses = () => {
             </div>
         );
 
-
-    const itemsPerPage = 6; // số khóa học mỗi trang
+    const itemsPerPage = 6;
     const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
 
-    // cắt dữ liệu để hiển thị theo trang
     const paginatedCourses = filteredCourses.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
@@ -159,7 +149,6 @@ const Courses = () => {
     return (
         <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
             <div className="container mx-auto">
-                {/* Search and Filters */}
                 <div className="flex flex-col justify-between md:flex-row gap-4 items-center text-center mb-4">
                     <span className="text-3xl font-bold text-gray-900">Browse Courses</span>
                     <div className="flex gap-3 w-full items-center justify-center md:w-auto">
@@ -206,15 +195,13 @@ const Courses = () => {
                         onMouseUp={handleMouseUp}
                         onMouseMove={handleMouseMove}
                     >
-                        {/* 🔹 Button ALL */}
                         <Button
                             variant={selectedCategory === "All" ? "default" : "outline"}
                             onClick={() => setSelectedCategory("All")}
-                            className={`whitespace-nowrap rounded-full px-6 transition-all duration-200 ${
-                                selectedCategory === "All"
+                            className={`whitespace-nowrap rounded-full px-6 transition-all duration-200 ${selectedCategory === "All"
                                     ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transform scale-105"
                                     : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
-                            }`}
+                                }`}
                         >
                             All
                         </Button>
@@ -224,11 +211,10 @@ const Courses = () => {
                                 key={category.id}
                                 variant={selectedCategory === category.id ? "default" : "outline"}
                                 onClick={() => setSelectedCategory(category.id)}
-                                className={`whitespace-nowrap rounded-full px-6 transition-all duration-200 ${
-                                    selectedCategory === category.id
+                                className={`whitespace-nowrap rounded-full px-6 transition-all duration-200 ${selectedCategory === category.id
                                         ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transform scale-105"
                                         : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
-                                }`}
+                                    }`}
                             >
                                 {category.name}
                             </Button>
@@ -245,12 +231,17 @@ const Courses = () => {
                                 key={course?._id || course?.id}
                                 className="overflow-hidden hover:shadow-xl transition-shadow flex flex-col group"
                             >
-                                <div className="overflow-hidden">
+                                <div className="relative overflow-hidden">
                                     <img
                                         src={course?.thumbnail || "/placeholder.svg"}
                                         alt={course?.title}
                                         className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-300"
                                     />
+                                    {course?.flag && course.flag !== "No flag" && (
+                                        <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-sm shadow-md">
+                                            {course.flag}
+                                        </div>
+                                    )}
                                 </div>
                                 <CardContent className="p-4 flex flex-col flex-grow">
                                     <h3 className="text-lg font-semibold mb-2">{course?.title}</h3>
@@ -300,9 +291,9 @@ const Courses = () => {
                                                         : Number(course?.displayPrice ?? 0);
                                                 return priceVal
                                                     ? priceVal.toLocaleString("vi-VN", {
-                                                          style: "currency",
-                                                          currency: "VND",
-                                                      })
+                                                        style: "currency",
+                                                        currency: "VND",
+                                                    })
                                                     : "Free";
                                             })()}
                                         </span>

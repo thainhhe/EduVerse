@@ -8,7 +8,7 @@ export const loginSchema = z.object({
     .email({ message: "Please enter a valid email address." }),
   password: z
     .string()
-    .min(6, "Password must be at least 6 characters")
+    .min(8, "Password must be at least 8 characters")
     .refine((s) => s.trim().length > 0, {
       message: "Password cannot be only whitespace",
     }),

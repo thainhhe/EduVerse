@@ -11,7 +11,6 @@ import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import EditRoom from "./EditRoom";
 import AddRoom from "./AddRoom";
-import { useCourse } from "@/context/CourseProvider";
 
 const RoomMeeting = () => {
     const [rooms, setRooms] = useState([]);
