@@ -13,6 +13,8 @@ const permissionController = {
     assign_permission: async (req, res) => {
         try {
             const data = req.body;
+            const userId = req.userId;
+            data.userId = userId;
             const result = await permissionService.assignPermission(data);
             return response(res, result);
         } catch (error) {

@@ -12,8 +12,8 @@ userRouter.put("/profile/:id", verifyToken, upload.single("avatar"), userControl
 userRouter.put("/close-account/:id", verifyToken, userController.closeAccount);
 userRouter.post("/reset-password", userController.request_reset_password);
 userRouter.post("/verify-otp", userController.verify_otp_client);
-userRouter.post("/permission", permissionController.assign_permission);
+userRouter.post("/permission", verifyToken, permissionController.assign_permission);
 userRouter.get("/permission", permissionController.getAll);
-userRouter.post("/permission/accept/:userId/:courseId", permissionController.accept_invite);
+userRouter.post("/permission/accept/:userId/:courseId", verifyToken, permissionController.accept_invite);
 
 module.exports = userRouter;
