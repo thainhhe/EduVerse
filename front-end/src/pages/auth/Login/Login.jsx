@@ -60,14 +60,33 @@ const Login = () => {
     }
   };
 
+  // Remove all whitespace from email (leading/trailing/in-between) on blur, then validate
+  const normalizeEmail = () => {
+    const val = getValues("email") || "";
+    const cleaned = val.replace(/\s+/g, "");
+    if (cleaned !== val) {
+      setValue("email", cleaned, { shouldValidate: true, shouldDirty: true });
+    } else {
+      trigger("email");
+    }
+  };
+
   const onSubmit = async (data) => {
+    const emailCleaned = (data.email || "").replace(/\s+/g, "");
+    if (emailCleaned !== data.email) {
+      setValue("email", emailCleaned, {
+        shouldValidate: false,
+        shouldDirty: true,
+      });
+    }
+
     if (rememberMe) {
-      localStorage.setItem("rememberedEmail", data.email);
+      localStorage.setItem("rememberedEmail", emailCleaned);
     } else {
       localStorage.removeItem("rememberedEmail");
     }
 
-    const result = await login(data.email, data.password);
+    const result = await login(emailCleaned, data.password);
     if (result.success) {
       const role = result.user?.role || user?.role || "learner"; // fallback
 
@@ -116,7 +135,7 @@ const Login = () => {
                 placeholder="example.email@gmail.com"
                 className="bg-gray-50"
                 {...register("email")}
-                onBlur={() => handleTrimAndValidate("email")}
+                onBlur={normalizeEmail}
               />
               {errors.email && (
                 <p className="text-sm text-red-500">{errors.email.message}</p>
