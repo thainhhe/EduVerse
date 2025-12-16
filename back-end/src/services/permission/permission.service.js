@@ -24,7 +24,7 @@ const permissionService = {
     },
     assignPermission: async (data) => {
         try {
-            const { currentCourseId, instructors } = data;
+            const { currentCourseId, instructors, userId } = data;
 
             if (!currentCourseId)
                 return {
@@ -55,7 +55,7 @@ const permissionService = {
                     continue;
                 }
 
-                const user = await userRepository.findByEmail(email);
+                const user = await userRepository.findForPermissionCourse(userId, email);
                 if (!user) {
                     results.push({ email, success: false, message: "User not found" });
                     continue;
