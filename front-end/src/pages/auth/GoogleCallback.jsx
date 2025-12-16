@@ -2,10 +2,12 @@ import React, { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import authService from "@/services/authService";
 import { toast } from "react-toastify";
+import { useAuth } from "@hooks/useAuth";
 
 const GoogleCallback = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { setUser } = useAuth();
 
   useEffect(() => {
     const handleGoogleCallback = async () => {
@@ -29,6 +31,10 @@ const GoogleCallback = () => {
         try {
           const userInfo = await authService.getCurrentUser();
           const user = userInfo?.data?.user || userInfo?.data || userInfo;
+
+          if (user) {
+            setUser(user);
+          }
 
           const role = user?.role || "learner"; // fallback to learner
 
