@@ -148,6 +148,27 @@ const courseRepository = {
                     foreignField: "main_instructor",
                     as: "courses",
                     pipeline: [
+                        // Lookup reviews to calculate avgRating
+                        {
+                            $lookup: {
+                                from: "reviews",
+                                localField: "_id",
+                                foreignField: "courseId",
+                                as: "reviews",
+                            },
+                        },
+                        {
+                            $addFields: {
+                                rating: {
+                                    $cond: [
+                                        { $gt: [{ $size: "$reviews" }, 0] },
+                                        { $round: [{ $avg: "$reviews.rating" }, 2] },
+                                        0,
+                                    ],
+                                },
+                                reviewsCount: { $size: "$reviews" },
+                            },
+                        },
                         { $sort: { rating: -1 } },
                         // Lookup category
                         {
@@ -233,7 +254,7 @@ const courseRepository = {
                                         as: "inst",
                                         in: {
                                             isAccept: "$$inst.isAccept",
-                                            permissions: "$$inst.permission", // giữ nguyên ObjectId
+                                            permissions: "$$inst.permission",
                                             email: {
                                                 $arrayElemAt: [
                                                     {
@@ -257,7 +278,7 @@ const courseRepository = {
                                 },
                             },
                         },
-                        { $unset: "instructorUsers" },
+                        { $unset: ["instructorUsers", "reviews"] },
                     ],
                 },
             },
@@ -278,12 +299,113 @@ const courseRepository = {
         ]);
     },
     getById: async (id) => {
-        return await Course.findById({ _id: id, isDeleted: false })
-            .populate("category")
-            .populate("main_instructor")
-            .populate("instructors.user")
-            .populate("instructors.permission")
-            .exec();
+        const result = await Course.aggregate([
+            { $match: { _id: new mongoose.Types.ObjectId(id), isDeleted: false } },
+            {
+                $lookup: {
+                    from: "reviews",
+                    localField: "_id",
+                    foreignField: "courseId",
+                    as: "reviews",
+                },
+            },
+            {
+                $addFields: {
+                    rating: {
+                        $cond: [
+                            { $gt: [{ $size: "$reviews" }, 0] },
+                            { $round: [{ $avg: "$reviews.rating" }, 2] },
+                            0,
+                        ],
+                    },
+                    reviewsCount: { $size: "$reviews" },
+                },
+            },
+            {
+                $lookup: {
+                    from: "categories",
+                    localField: "category",
+                    foreignField: "_id",
+                    as: "category",
+                },
+            },
+            {
+                $unwind: { path: "$category", preserveNullAndEmptyArrays: true },
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "main_instructor",
+                    foreignField: "_id",
+                    as: "main_instructor",
+                },
+            },
+            {
+                $unwind: { path: "$main_instructor", preserveNullAndEmptyArrays: true },
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "instructors.user",
+                    foreignField: "_id",
+                    as: "instructorUsers",
+                },
+            },
+            {
+                $lookup: {
+                    from: "permissions",
+                    localField: "instructors.permission",
+                    foreignField: "_id",
+                    as: "instructorPermissions",
+                },
+            },
+            {
+                $addFields: {
+                    instructors: {
+                        $map: {
+                            input: "$instructors",
+                            as: "inst",
+                            in: {
+                                user: {
+                                    $arrayElemAt: [
+                                        {
+                                            $filter: {
+                                                input: "$instructorUsers",
+                                                as: "u",
+                                                cond: { $eq: ["$$u._id", "$$inst.user"] },
+                                            },
+                                        },
+                                        0,
+                                    ],
+                                },
+                                permission: {
+                                    $arrayElemAt: [
+                                        {
+                                            $filter: {
+                                                input: "$instructorPermissions",
+                                                as: "p",
+                                                cond: { $eq: ["$$p._id", "$$inst.permission"] },
+                                            },
+                                        },
+                                        0,
+                                    ],
+                                },
+                                isAccept: "$$inst.isAccept",
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                $project: {
+                    reviews: 0,
+                    instructorUsers: 0,
+                    instructorPermissions: 0,
+                },
+            },
+        ]).exec();
+
+        return result && result.length > 0 ? result[0] : null;
     },
 
     getCollaborativeCourse: async (userId) => {

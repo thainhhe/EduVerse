@@ -112,7 +112,7 @@ const BuilderInner = () => {
                     <div className="flex-shrink-0 bg-white h-full">
                         <SideBar />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 overflow-auto">
                         <Outlet />
                     </div>
                 </div>
