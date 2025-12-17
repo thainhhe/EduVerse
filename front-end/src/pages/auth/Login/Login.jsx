@@ -59,6 +59,13 @@ const Login = () => {
     }
   };
 
+  // Clean input by collapsing multiple whitespaces to a single space and trimming ends
+  const handleCleanInput = (fieldName) => {
+    const value = getValues(fieldName) || "";
+    const cleanValue = value.replace(/\s+/g, " ").trim();
+    setValue(fieldName, cleanValue, { shouldValidate: true });
+  };
+
   const normalizeEmail = () => {
     const val = getValues("email") || "";
     const cleaned = val.replace(/\s+/g, "");
@@ -133,7 +140,10 @@ const Login = () => {
                 placeholder="example.email@gmail.com"
                 className="bg-gray-50"
                 {...register("email")}
-                onBlur={normalizeEmail}
+                onBlur={(e) => {
+                  register("email").onBlur(e);
+                  handleCleanInput("email");
+                }}
               />
               {errors.email && (
                 <p className="text-sm text-red-500">{errors.email.message}</p>
