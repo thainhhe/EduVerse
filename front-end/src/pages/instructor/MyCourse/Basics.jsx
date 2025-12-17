@@ -107,7 +107,7 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                     value: durationValue,
                 },
             });
-        } catch {}
+        } catch { }
     }, [
         title,
         description,
@@ -345,8 +345,9 @@ const Basics = ({ courseId = null, isUpdate = false, courseData = null }) => {
                                 disabled={!isEditable}
                                 value={price}
                                 min={1}
-                                max={9999999999} // giới hạn giá tối đa
+                                max={9999999999}
                                 onChange={(e) => isEditable && setPrice(e.target.value)}
+                                className={errors.price ? "border-red-600 ring-red-600" : ""}
                             />
                             {errors.price && <p className="text-red-600 text-sm mt-1">{errors.price}</p>}
                         </div>
