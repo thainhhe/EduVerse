@@ -19,7 +19,6 @@ const LearningSidebar = ({ course, onSelectItem, selectedItem, userId, passedQui
     const [loadingLessonId, setLoadingLessonId] = useState(null);
     const [error, setError] = useState("");
 
-    // Open first module by default when course loads
     useEffect(() => {
         if (course?.modules?.[0]?._id) {
             setExpandedSections((prev) => ({
@@ -35,43 +34,23 @@ const LearningSidebar = ({ course, onSelectItem, selectedItem, userId, passedQui
     const totalLessons = course.modules.reduce((acc, m) => acc + (m.lessons?.length || 0), 0);
 
     const completedLessons = course.modules.reduce(
-        (acc, m) => acc + (m.lessons?.filter((l) => l.user_completed?.length > 0).length || 0),
+        (acc, m) => acc + (m.lessons?.filter((l) => l.user_completed?.includes(userId)).length || 0),
         0
     );
-
-    const totalQuizzes =
-        (course.courseQuizzes?.length || 0) +
-        course.modules.reduce(
-            (acc, m) =>
-                acc +
-                (m.moduleQuizzes?.length || 0) +
-                m.lessons?.reduce((sum, l) => sum + (l.quizzes?.length || 0), 0),
-            0
-        );
-
-    /** Quizzes Completed */
-    const completedQuizzes =
-        (course.courseQuizzes?.filter((q) => passedQuizzes.includes(q._id)).length || 0) +
-        course.modules.reduce(
-            (acc, m) =>
-                acc +
-                (m.moduleQuizzes?.filter((q) => passedQuizzes.includes(q._id)).length || 0) +
-                m.lessons?.reduce(
-                    (sum, l) => sum + (l.quizzes?.filter((q) => passedQuizzes.includes(q._id)).length || 0),
-                    0
-                ),
-            0
-        );
-
-    /** Tổng items cho progress */
-    const totalItems = totalLessons + totalQuizzes;
-    const completedItems = completedLessons + completedQuizzes;
-
+    const totalCourseQuizzes = course.courseQuizzes?.length || 0;
+    const completedCourseQuizzes =
+        course.courseQuizzes?.filter((q) => passedQuizzes.includes(q._id)).length || 0;
+    const totalModuleQuizzes = course.modules.reduce((acc, m) => acc + (m.moduleQuizzes?.length || 0), 0);
+    const completedModuleQuizzes = course.modules.reduce(
+        (acc, m) => acc + (m.moduleQuizzes?.filter((q) => passedQuizzes.includes(q._id)).length || 0),
+        0
+    );
+    const totalItems = totalLessons + totalModuleQuizzes + totalCourseQuizzes;
+    const completedItems = completedLessons + completedModuleQuizzes + completedCourseQuizzes;
     const progressPercentage = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
-    /** Toggle Lesson Completion */
     const handleLessonToggle = async (e, lesson) => {
-        e.stopPropagation(); // Prevent triggering item selection
+        e.stopPropagation();
         if (loadingLessonId) return;
 
         const isCompleted = lesson.user_completed?.length > 0;
@@ -87,8 +66,6 @@ const LearningSidebar = ({ course, onSelectItem, selectedItem, userId, passedQui
                 await uncompleteLesson(lesson._id, userId);
                 lesson.user_completed = [];
             }
-
-            // Calling onSelectItem to refresh current view if it's the selected one
             if (selectedItem?.data?._id === lesson._id) {
                 onSelectItem({ type: "lesson", data: lesson });
             }
@@ -101,7 +78,6 @@ const LearningSidebar = ({ course, onSelectItem, selectedItem, userId, passedQui
 
     return (
         <div className="w-80 flex flex-col border-r border-gray-200 bg-white h-screen shadow-sm">
-            {/* Header with Progress */}
             <div className="p-6 border-b border-gray-100 bg-white z-10">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Course Content</h2>
                 <div className="space-y-2">
@@ -119,11 +95,8 @@ const LearningSidebar = ({ course, onSelectItem, selectedItem, userId, passedQui
                     </div>
                 </div>
             </div>
-
-            {/* Content List */}
             <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 hover:scrollbar-thumb-gray-300">
                 <div className="py-2">
-                    {/* Course Quizzes */}
                     {course.courseQuizzes?.length > 0 && course.courseQuizzes.some((q) => q.isPublished) && (
                         <div className="mb-2">
                             <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -159,8 +132,6 @@ const LearningSidebar = ({ course, onSelectItem, selectedItem, userId, passedQui
                                 })}
                         </div>
                     )}
-
-                    {/* Modules */}
                     {course.modules.map((module, index) => {
                         const isExpanded = !!expandedSections[module._id];
                         const completedCount =
@@ -200,7 +171,6 @@ const LearningSidebar = ({ course, onSelectItem, selectedItem, userId, passedQui
                                     }`}
                                 >
                                     <div className="bg-gray-50/50 pb-2">
-                                        {/* Lessons */}
                                         {module.lessons?.map((lesson) => {
                                             const isSelected = selectedItem?.data?._id === lesson._id;
                                             const isCompleted = lesson.user_completed?.length > 0;
@@ -241,8 +211,6 @@ const LearningSidebar = ({ course, onSelectItem, selectedItem, userId, passedQui
                                                             </p>
                                                         </div>
                                                     </div>
-
-                                                    {/* Nested Quizzes for Lesson */}
                                                     {lesson.quizzes?.length > 0 &&
                                                         lesson.quizzes.some((quiz) => quiz.isPublished) && (
                                                             <div className="ml-10 mt-1 space-y-1 mb-2 border-l-2 border-gray-200 pl-2">
@@ -286,8 +254,6 @@ const LearningSidebar = ({ course, onSelectItem, selectedItem, userId, passedQui
                                                 </div>
                                             );
                                         })}
-
-                                        {/* Module Quizzes */}
                                         {module.moduleQuizzes?.length > 0 && (
                                             <div className="mt-2 pt-2 border-t border-gray-100">
                                                 <div className="px-6 py-1 text-xs font-semibold text-gray-400 uppercase">

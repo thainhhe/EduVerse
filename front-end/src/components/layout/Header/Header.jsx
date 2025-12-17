@@ -42,6 +42,16 @@ const Header = () => {
     const signupRef = useRef(null);
     const avatarRef = useRef(null);
 
+    const removeVietnameseTones = (str) => {
+        return str
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/đ/g, "d")
+            .replace(/Đ/g, "D")
+            .toLowerCase()
+            .trim();
+    };
+
     // Fetch suggestions with debounce
     useEffect(() => {
         const fetchSuggestions = async () => {
@@ -62,15 +72,22 @@ const Header = () => {
                 console.log("instructorsRes", instructorsRes);
 
                 const courses = (coursesRes?.data || [])
-                    .filter((c) => c.title.toLowerCase().includes(searchTerm.toLowerCase()))
+                    .filter((c) =>
+                        removeVietnameseTones(c.title.toLowerCase()).includes(
+                            removeVietnameseTones(searchTerm.toLowerCase())
+                        )
+                    )
                     .slice(0, 5);
 
                 const instructors = (instructorsRes?.data || [])
-                    .filter((i) => i.username.toLowerCase().includes(searchTerm.toLowerCase()))
+                    .filter((i) =>
+                        removeVietnameseTones(i.username.toLowerCase()).includes(
+                            removeVietnameseTones(searchTerm.toLowerCase())
+                        )
+                    )
                     .slice(0, 3);
 
                 setSuggestions({ courses, instructors });
-                // Tự động hiển thị suggestions khi có kết quả
                 setShowSuggestions(true);
             } catch (error) {
                 console.error("Error fetching suggestions:", error);
