@@ -77,9 +77,11 @@ const LessonMaterialModal = ({ open, onOpenChange, lessonId, canUpdate = true, o
                                 Your Files <span className="">({files.length})</span>
                                 <span className="text-green-500">{messageUploadSuccess}</span>
                             </div>
-                            <Button variant="outline" onClick={() => setOpenUploadModal(true)}>
-                                Upload New File
-                            </Button>
+                            {canUpdate && (
+                                <Button variant="outline" onClick={() => setOpenUploadModal(true)}>
+                                    Upload New File
+                                </Button>
+                            )}
                         </div>
                         {loading ? (
                             <div className="">Loading files...</div>

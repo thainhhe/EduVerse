@@ -5,13 +5,20 @@ import { Input } from "@/components/ui/input";
 
 export const ReasonDialog = ({ open, onOpenChange, onSubmit }) => {
     const [reason, setReason] = useState("");
+    const [error, setError] = useState("");
 
     const handleReasonChange = (e) => {
         setReason(e.target.value);
     };
 
     const handleSubmit = () => {
-        onSubmit(reason);
+        if (!reason || !reason.trim()) {
+            setError("Reason is required");
+            return;
+        }
+
+        const normalizedReason = reason.trim().replace(/\s+/g, " ");
+        onSubmit(normalizedReason);
         onOpenChange(false);
     };
 
@@ -22,6 +29,7 @@ export const ReasonDialog = ({ open, onOpenChange, onSubmit }) => {
                     <DialogTitle>Reason for reporting this comment</DialogTitle>
                 </DialogHeader>
                 <Input value={reason} onChange={handleReasonChange} />
+                {error && <p className="text-red-500">{error}</p>}
                 <Button onClick={handleSubmit}>Submit</Button>
             </DialogContent>
         </Dialog>
