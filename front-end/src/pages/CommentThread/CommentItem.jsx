@@ -1,6 +1,6 @@
-"use client"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
+"use client";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
     ThumbsUp,
     MessageCircle,
@@ -12,39 +12,40 @@ import {
     Check,
     X,
     MoreVertical,
-} from "lucide-react"
-import { formatDistanceToNow } from "date-fns"
-import { vi } from "date-fns/locale"
-import { Avatar } from "@radix-ui/react-avatar"
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { vi } from "date-fns/locale";
+import { Avatar } from "@radix-ui/react-avatar";
 import {
     DropdownMenu,
     DropdownMenuTrigger,
     DropdownMenuContent,
     DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { ToastHelper } from "@/helper/ToastHelper";
 export default function CommentItem({ comment, level, forumId, userId, refresh }) {
-    const [likes, setLikes] = useState(comment.likes || 0)
-    const [userLiked, setUserLiked] = useState(false)
-    const [isReplying, setIsReplying] = useState(false)
-    const [replyContent, setReplyContent] = useState("")
-    const [childComments, setChildComments] = useState(comment.childComments || [])
-    const [showAll, setShowAll] = useState(false)
-    const [showMenu, setShowMenu] = useState(false)
-    const [isEditing, setIsEditing] = useState(false)
-    const [editContent, setEditContent] = useState(comment.content)
+    const [likes, setLikes] = useState(comment.likes || 0);
+    const [userLiked, setUserLiked] = useState(false);
+    const [isReplying, setIsReplying] = useState(false);
+    const [replyContent, setReplyContent] = useState("");
+    const [childComments, setChildComments] = useState(comment.childComments || []);
+    const [showAll, setShowAll] = useState(false);
+    const [showMenu, setShowMenu] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editContent, setEditContent] = useState(comment.content);
 
-    const MAX_PREVIEW = 0
-    const visibleComments = showAll ? childComments : childComments.slice(0, MAX_PREVIEW)
-    const hiddenCount = childComments.length - MAX_PREVIEW
+    const MAX_PREVIEW = 0;
+    const visibleComments = showAll ? childComments : childComments.slice(0, MAX_PREVIEW);
+    const hiddenCount = childComments.length - MAX_PREVIEW;
 
     const toggleLike = () => {
-        setUserLiked((prev) => !prev)
-        setLikes((prev) => (userLiked ? prev - 1 : prev + 1))
-    }
+        setUserLiked((prev) => !prev);
+        setLikes((prev) => (userLiked ? prev - 1 : prev + 1));
+    };
 
     // 🟢 Gửi phản hồi
     const handleReply = async () => {
-        if (!replyContent.trim()) return alert("Vui lòng nhập nội dung phản hồi!")
+        if (!replyContent.trim()) return ToastHelper.error("Please enter a reply!");
         try {
             const res = await fetch("http://localhost:9999/api/v1/comment/create-comment", {
                 method: "POST",
@@ -55,102 +56,95 @@ export default function CommentItem({ comment, level, forumId, userId, refresh }
                     content: replyContent,
                     parentCommentId: comment._id,
                 }),
-            })
-            const data = await res.json()
+            });
+            const data = await res.json();
             if (res.ok && (data.status === 200 || data.success)) {
-                setChildComments((prev) => [...prev, data.data])
-                setReplyContent("")
-                setIsReplying(false)
+                setChildComments((prev) => [...prev, data.data]);
+                setReplyContent("");
+                setIsReplying(false);
             } else {
-                alert(data.message || "Không thể gửi phản hồi!")
+                ToastHelper.error(data.message || "Failed to send reply!");
             }
         } catch (err) {
-            console.error("Reply failed:", err)
-            alert("Có lỗi khi gửi phản hồi.")
+            console.error("Reply failed:", err);
+            ToastHelper.error("Failed to send reply.");
         }
-    }
+    };
 
     // 🟢 Xóa bình luận
     const handleDelete = async () => {
-        if (!window.confirm("Bạn có chắc muốn xóa bình luận này không?")) return
+        if (!window.confirm("Are you sure you want to delete this comment?")) return;
         try {
             const res = await fetch(`http://localhost:9999/api/v1/comment/${comment._id}`, {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId }),
-            })
-            const data = await res.json()
+            });
+            const data = await res.json();
             if (res.ok) {
-                alert(data.message || "Đã xóa bình luận")
-                setShowMenu(false)
-                refresh()
+                ToastHelper.success(data.message || "Comment deleted successfully!");
+                setShowMenu(false);
+                refresh();
             } else {
-                alert(data.message || "Không thể xóa bình luận")
+                ToastHelper.error(data.message || "Failed to delete comment!");
             }
         } catch (err) {
-            console.error("Delete failed:", err)
-            alert("Có lỗi khi xóa bình luận.")
+            console.error("Delete failed:", err);
+            ToastHelper.error("Failed to delete comment.");
         }
-    }
+    };
 
     // 🟢 Cập nhật bình luận
     const handleUpdate = async () => {
-        if (!editContent.trim()) return alert("Nội dung bình luận không được để trống")
+        if (!editContent.trim()) return ToastHelper.error("Comment content cannot be empty!");
         try {
             const res = await fetch(`http://localhost:9999/api/v1/comment/${comment._id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId, content: editContent }),
-            })
-            const data = await res.json()
-            console.log("data", data)
-            if ((data.status === 200 || data.success)) {
-                console.log("hello")
-                alert("Cập nhật bình luận thành công!")
-                comment.content = editContent
-                setIsEditing(false)
-                console.log("isEditing", isEditing)
-                setShowMenu(false)
+            });
+            const data = await res.json();
+            console.log("data", data);
+            if (data.status === 200 || data.success) {
+                ToastHelper.success("Comment updated successfully!");
+                comment.content = editContent;
+                setIsEditing(false);
+                setShowMenu(false);
             } else {
-                alert(data.message || "Cập nhật thất bại!")
+                ToastHelper.error(data.message || "Failed to update comment!");
             }
-
         } catch (err) {
-            console.error("Update failed:", err)
-            alert("Có lỗi khi cập nhật bình luận.")
+            console.error("Update failed:", err);
+            ToastHelper.error("Failed to update comment.");
         }
-    }
+    };
 
     // 🟢 Báo cáo bình luận
     const handleReport = async () => {
-        const reason = prompt("Lý do báo cáo bình luận này:")
-        if (!reason) return
+        const reason = prompt("Reason for reporting this comment:");
+        if (!reason) return ToastHelper.error("Please enter a reason for reporting this comment!");
         try {
-            const res = await fetch(
-                `http://localhost:9999/api/v1/comment/${comment._id}/report`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ userId, reason }),
-                }
-            )
-            const data = await res.json()
-            alert(data.message || "Đã gửi báo cáo")
-            setShowMenu(false)
+            const res = await fetch(`http://localhost:9999/api/v1/comment/${comment._id}/report`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, reason }),
+            });
+            const data = await res.json();
+            ToastHelper.success(data.message || "Reported successfully!");
+            setShowMenu(false);
         } catch (err) {
-            console.error("Report failed:", err)
-            alert("Có lỗi khi gửi báo cáo.")
+            console.error("Report failed:", err);
+            ToastHelper.error("Failed to report comment.");
         }
-    }
+    };
 
-    const getInitial = (name) =>
-        name && typeof name === "string" ? name.charAt(0).toUpperCase() : "?"
-    const userName = comment.userId?.email?.split("@")[0] || "Người dùng"
-    const isMyComment = comment.userId?._id === userId
+    const getInitial = (name) => (name && typeof name === "string" ? name.charAt(0).toUpperCase() : "?");
+    const userName = comment.userId?.email?.split("@")[0] || "Người dùng";
+    const isMyComment = comment.userId?._id === userId;
     const createdTime = formatDistanceToNow(new Date(comment.createdAt), {
         addSuffix: true,
         locale: vi,
-    })
+    });
 
     return (
         <div className={`${level > 0 ? "ml-6 border-l border-gray-200 pl-4" : ""}`}>
@@ -178,17 +172,17 @@ export default function CommentItem({ comment, level, forumId, userId, refresh }
                                         onClick={handleUpdate}
                                         className="bg-green-500 text-white hover:bg-green-600"
                                     >
-                                        <Check className="w-4 h-4 mr-1" /> Lưu
+                                        <Check className="w-4 h-4 mr-1" /> Save
                                     </Button>
                                     <Button
                                         size="sm"
                                         variant="outline"
                                         onClick={() => {
-                                            setIsEditing(false)
-                                            setEditContent(comment.content)
+                                            setIsEditing(false);
+                                            setEditContent(comment.content);
                                         }}
                                     >
-                                        <X className="w-4 h-4 mr-1" /> Hủy
+                                        <X className="w-4 h-4 mr-1" /> Cancel
                                     </Button>
                                 </div>
                             </div>
@@ -203,12 +197,9 @@ export default function CommentItem({ comment, level, forumId, userId, refresh }
                             variant="ghost"
                             size="sm"
                             onClick={toggleLike}
-                            className={`h-6 px-0 font-medium ${userLiked ? "text-blue-600" : ""
-                                }`}
+                            className={`h-6 px-0 font-medium ${userLiked ? "text-blue-600" : ""}`}
                         >
-                            <ThumbsUp
-                                className={`w-3.5 h-3.5 mr-1 ${userLiked ? "fill-current" : ""}`}
-                            />
+                            <ThumbsUp className={`w-3.5 h-3.5 mr-1 ${userLiked ? "fill-current" : ""}`} />
                             {likes > 0 && likes}
                         </Button>
 
@@ -263,7 +254,7 @@ export default function CommentItem({ comment, level, forumId, userId, refresh }
                                     onClick={() => setShowAll(true)}
                                     className="text-blue-500 text-sm font-medium hover:underline ml-10 cursor-pointer"
                                 >
-                                    Xem thêm {hiddenCount} phản hồi khác
+                                    Show more {hiddenCount} replies
                                 </button>
                             )}
                         </div>
@@ -288,13 +279,13 @@ export default function CommentItem({ comment, level, forumId, userId, refresh }
                                             setIsEditing(true);
                                         }}
                                     >
-                                        <PenOffIcon className="w-4 h-4 mr-2" /> Chỉnh sửa bình luận
+                                        <PenOffIcon className="w-4 h-4 mr-2" /> Edit comment
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                         className="text-red-600 focus:text-red-700"
                                         onClick={handleDelete}
                                     >
-                                        <Trash2 className="w-4 h-4 mr-2" /> Xóa bình luận
+                                        <Trash2 className="w-4 h-4 mr-2" /> Delete comment
                                     </DropdownMenuItem>
                                 </>
                             ) : (
@@ -302,14 +293,13 @@ export default function CommentItem({ comment, level, forumId, userId, refresh }
                                     className="text-yellow-600 focus:text-yellow-700"
                                     onClick={handleReport}
                                 >
-                                    <Flag className="w-4 h-4 mr-2" /> Báo cáo bình luận
+                                    <Flag className="w-4 h-4 mr-2" /> Report comment
                                 </DropdownMenuItem>
                             )}
                         </DropdownMenuContent>
                     </DropdownMenu>
-
                 </div>
             </div>
         </div>
-    )
+    );
 }
