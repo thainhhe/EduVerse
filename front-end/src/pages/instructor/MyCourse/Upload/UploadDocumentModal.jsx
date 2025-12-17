@@ -26,13 +26,23 @@ const UploadDocumentModal = ({ open, onOpenChange, lessonId, onUploaded }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState("");
 
+  // Normalize title: trim edges and collapse multiple spaces into single space
+  const normalizeTitle = () => {
+    const normalized = (title || "").trim().replace(/\s+/g, " ");
+    if (normalized !== title) setTitle(normalized);
+  };
+
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
     setMessage("");
   };
 
   const handleUpload = async () => {
-    if (!selectedFile || !title.trim()) {
+    // Clean title before validating and uploading
+    const normalizedTitle = (title || "").trim().replace(/\s+/g, " ");
+    if (normalizedTitle !== title) setTitle(normalizedTitle);
+
+    if (!selectedFile || !normalizedTitle) {
       setMessage("⚠️ Please select a file and enter title.");
       return;
     }
@@ -44,7 +54,7 @@ const UploadDocumentModal = ({ open, onOpenChange, lessonId, onUploaded }) => {
       const formData = new FormData();
       formData.append("file", selectedFile);
       formData.append("type", "document");
-      formData.append("title", title);
+      formData.append("title", normalizedTitle);
       formData.append("description", description || "No description");
       formData.append("uploadedBy", user?._id);
       formData.append("accessLevel", accessLevel);
@@ -93,6 +103,7 @@ const UploadDocumentModal = ({ open, onOpenChange, lessonId, onUploaded }) => {
               placeholder="Enter document title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              onBlur={normalizeTitle}
             />
           </div>
 

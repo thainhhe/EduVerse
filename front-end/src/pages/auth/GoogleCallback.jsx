@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import authService from "@/services/authService";
 import { toast } from "react-toastify";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@hooks/useAuth";
 
 const GoogleCallback = () => {
     const navigate = useNavigate();
