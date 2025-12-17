@@ -1,14 +1,4 @@
-import {
-    AlertCircle,
-    BookOpen,
-    Check,
-    CheckCircle,
-    Download,
-    Eye,
-    Search,
-    X,
-    XCircle
-} from "lucide-react";
+import { AlertCircle, BookOpen, Check, CheckCircle, Download, Eye, Search, X, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -436,7 +426,7 @@ const CourseManagementPage = () => {
                                             <TableCell className="font-medium text-gray-900 max-w-[200px] overflow-hidden">
                                                 {course.title}
                                             </TableCell>
-                                            <TableCell>{course.category.name}</TableCell>
+                                            <TableCell>{course.category?.name}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Avatar className="h-8 w-8">

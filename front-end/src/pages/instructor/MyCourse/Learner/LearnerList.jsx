@@ -44,19 +44,15 @@ const LearnerList = () => {
                 const name = l.userId?.username?.toLowerCase() || "";
                 const email = l.userId?.email?.toLowerCase() || "";
                 const searchTerm = search.toLowerCase();
-                const status = l.status;
-                console.log("Status:", status);
-
                 return name.includes(searchTerm) || email.includes(searchTerm);
             })
-            .filter((l) => (statusFilter === "all" ? true : l.status === statusFilter))
             .filter((l) => {
                 if (progressFilter === "all") return true;
                 if (progressFilter === "completed") return l.progress >= 100;
                 if (progressFilter === "incomplete") return l.progress < 100;
                 return true;
             });
-    }, [learners, search, statusFilter, progressFilter]);
+    }, [learners, search, progressFilter]);
 
     const total = learners.length;
     const completedCount = learners.filter((l) => l.progress >= 1).length;
@@ -90,18 +86,6 @@ const LearnerList = () => {
                         onChange={(e) => setSearch(e.target.value)}
                         className="md:w-1/3"
                     />
-
-                    {/* Status Filter */}
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-full md:w-40">
-                            <SelectValue placeholder="Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Status</SelectItem>
-                            <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="inactive">Inactive</SelectItem>
-                        </SelectContent>
-                    </Select>
 
                     {/* Progress Filter */}
                     <Select value={progressFilter} onValueChange={setProgressFilter}>

@@ -263,14 +263,14 @@ const commentService = {
             if (!comment)
                 return {
                     status: STATUS_CODE.NOT_FOUND,
-                    message: "Comment không tồn tại",
+                    message: "Comment not found",
                 };
 
             if (comment.userId.toString() !== userId.toString()) {
                 console.log("hú hú", comment.userId.toString(), userId.toString());
                 return {
                     status: STATUS_CODE.FORBIDDEN,
-                    message: "Bạn không có quyền sửa comment này",
+                    message: "You don't have permission to update this comment",
                 };
             }
 
@@ -281,7 +281,7 @@ const commentService = {
             return {
                 status: STATUS_CODE.OK,
                 success: true,
-                message: "Cập nhật comment thành công",
+                message: "Comment updated successfully",
                 data: comment,
             };
         } catch (error) {
@@ -323,13 +323,13 @@ const commentService = {
             if (!comment)
                 return {
                     status: STATUS_CODE.NOT_FOUND,
-                    message: "Comment không tồn tại",
+                    message: "Comment not found",
                 };
 
             if (comment.userId.toString() !== userId.toString()) {
                 return {
                     status: STATUS_CODE.FORBIDDEN,
-                    message: "Bạn không có quyền xóa comment này",
+                    message: "You don't have permission to delete this comment",
                 };
             }
 
@@ -342,7 +342,7 @@ const commentService = {
 
             return {
                 status: STATUS_CODE.OK,
-                message: "Đã xóa comment và toàn bộ comment con",
+                message: "Comment deleted successfully",
             };
         } catch (error) {
             throw new Error(error);
@@ -367,7 +367,7 @@ const commentService = {
             if (!comment) {
                 return {
                     status: STATUS_CODE.NOT_FOUND,
-                    message: COMMENT_ERROR_MESSAGE.COMMENT_NOT_FOUND || "Không tìm thấy comment",
+                    message: COMMENT_ERROR_MESSAGE.COMMENT_NOT_FOUND || "Comment not found",
                 };
             }
 
@@ -376,7 +376,7 @@ const commentService = {
             if (alreadyReported) {
                 return {
                     status: STATUS_CODE.CONFLICT,
-                    message: "Bạn đã báo cáo comment này rồi",
+                    message: "You have already reported this comment",
                 };
             }
 
@@ -385,7 +385,7 @@ const commentService = {
 
             return {
                 status: STATUS_CODE.OK,
-                message: "Báo cáo comment thành công",
+                message: "Comment reported successfully",
                 data: comment,
             };
         } catch (error) {
@@ -399,7 +399,7 @@ const commentService = {
             if (!comment) {
                 return {
                     status: STATUS_CODE.NOT_FOUND,
-                    message: COMMENT_ERROR_MESSAGE.COMMENT_NOT_FOUND || "Không tìm thấy comment",
+                    message: COMMENT_ERROR_MESSAGE.COMMENT_NOT_FOUND || "Comment not found",
                 };
             }
             // Nếu người dùng có like trước đớ:
@@ -421,14 +421,14 @@ const commentService = {
             else
                 return {
                     status: STATUS_CODE.BAD_REQUEST,
-                    message: "Hành động không hợp lệ (chỉ nhận like/dislike)",
+                    message: "Invalid action (only like/dislike)",
                 };
 
             await comment.save();
 
             return {
                 status: STATUS_CODE.OK,
-                message: "Thao tác thành công",
+                message: "Action successfully",
                 data: comment,
             };
         } catch (error) {
@@ -443,19 +443,19 @@ const commentService = {
             if (!comment) {
                 return {
                     status: STATUS_CODE.NOT_FOUND,
-                    message: COMMENT_ERROR_MESSAGE.COMMENT_NOT_FOUND || "Không tìm thấy comment",
+                    message: COMMENT_ERROR_MESSAGE.COMMENT_NOT_FOUND || "Comment not found",
                 };
             }
             if (comment.status === "deleted")
                 return {
                     status: STATUS_CODE.CONFLICT,
-                    message: "Comment da xoa",
+                    message: "Comment already deleted",
                 };
             comment.status = "hidden";
             await comment.save();
             return {
                 status: STATUS_CODE.OK,
-                message: "Thao tác thành công",
+                message: "Comment hidden successfully",
                 data: comment,
             };
         } catch (error) {
