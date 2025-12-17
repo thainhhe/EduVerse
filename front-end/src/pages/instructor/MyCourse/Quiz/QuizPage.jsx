@@ -671,11 +671,7 @@ const QuizPage = () => {
                       </label>
                       <input
                         type="text"
-                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${
-                          errors.title
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-300 bg-white"
-                        }`}
+                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all border-gray-300 bg-white`}
                         placeholder="Enter quiz title..."
                         value={quizInfo.title}
                         onChange={(e) => {
@@ -700,11 +696,7 @@ const QuizPage = () => {
                       </label>
                       <input
                         type="number"
-                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${
-                          errors.timeLimit
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-300 bg-white"
-                        }`}
+                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all border-gray-300 bg-white`}
                         value={quizInfo.timeLimit}
                         onChange={(e) =>
                           setQuizInfo({
@@ -725,11 +717,7 @@ const QuizPage = () => {
                       </label>
                       <input
                         type="number"
-                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${
-                          errors.passingScore
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-300 bg-white"
-                        }`}
+                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all border-gray-300 bg-white`}
                         value={quizInfo.passingScore}
                         onChange={(e) =>
                           setQuizInfo({
@@ -750,11 +738,7 @@ const QuizPage = () => {
                       </label>
                       <input
                         type="number"
-                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${
-                          errors.attemptsAllowed
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-300 bg-white"
-                        }`}
+                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all border-gray-300 bg-white`}
                         value={quizInfo.attemptsAllowed}
                         onChange={(e) =>
                           setQuizInfo({
@@ -774,11 +758,7 @@ const QuizPage = () => {
                         Description
                       </label>
                       <textarea
-                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none ${
-                          errors.description
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-300 bg-white"
-                        }`}
+                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none border-gray-300 bg-white`}
                         rows={3}
                         placeholder="Short description..."
                         value={quizInfo.description}

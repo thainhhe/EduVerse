@@ -137,9 +137,7 @@ export function EditLesson({ open, onOpenChange, lesson, onUpdate }) {
                   setErrors((p) => ({ ...p, lessonTitle: undefined }));
               }}
               onBlur={normalizeLessonTitle}
-              className={`w-full ${
-                errors.lessonTitle ? "border-red-500 ring-1 ring-red-300" : ""
-              }`}
+              className="w-full"
             />
             {errors.lessonTitle && (
               <p className="text-red-600 text-sm mt-1">{errors.lessonTitle}</p>
@@ -161,11 +159,7 @@ export function EditLesson({ open, onOpenChange, lesson, onUpdate }) {
                   setErrors((p) => ({ ...p, contentGroup: undefined }));
               }}
               onBlur={normalizeContent}
-              className={`min-h-[170px] resize-y !w-full !block whitespace-pre-wrap break-all p-3 rounded-md border bg-transparent text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
-                errors.contentGroup
-                  ? "border-red-500 ring-1 ring-red-300"
-                  : "border-input"
-              }`}
+              className="min-h-[170px] resize-y !w-full !block whitespace-pre-wrap break-all p-3 rounded-md border border-input bg-transparent text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
             {errors.contentGroup && (
               <p className="text-sm text-red-600">{errors.contentGroup}</p>
