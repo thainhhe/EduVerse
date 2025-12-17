@@ -150,7 +150,7 @@ const Login = () => {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter at least 6 characters"
+                  placeholder="Enter at least 8 characters"
                   className="bg-gray-50 pr-10"
                   {...register("password")}
                   onBlur={() => trigger("password")}
