@@ -100,16 +100,16 @@ const commentController = {
             const userId = req.user?._id || req.body.userId;
 
             const comment = await Comment.findById(id);
-            if (!comment) return error_response(res, "Comment không tồn tại", 404);
+            if (!comment) return error_response(res, "Comment not found", 404);
 
             // Kiểm tra đã báo cáo chưa
             const alreadyReported = comment.reported.some((r) => r.user_id.toString() === userId.toString());
-            if (alreadyReported) return error_response(res, "Bạn đã báo cáo comment này rồi", 400);
+            if (alreadyReported) return error_response(res, "You have already reported this comment", 400);
 
             comment.reported.push({ user_id: userId, reason });
             await comment.save();
 
-            return response(res, { message: "Đã gửi báo cáo" });
+            return response(res, { message: "Reported successfully" });
         } catch (error) {
             return error_response(res, error);
         }
