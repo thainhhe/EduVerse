@@ -182,8 +182,9 @@ const UserManagementPage = () => {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Roles</SelectItem>
-                                    <SelectItem value="student">Student</SelectItem>
+                                    <SelectItem value="learner">Learner</SelectItem>
                                     <SelectItem value="instructor">Instructor</SelectItem>
+                                    <SelectItem value="admin">Admin</SelectItem>
                                 </SelectContent>
                             </Select>
                             <Select value={statusFilter} onValueChange={setStatusFilter}>

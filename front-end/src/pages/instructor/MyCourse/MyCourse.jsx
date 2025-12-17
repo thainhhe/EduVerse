@@ -154,7 +154,12 @@ const MyCourse = () => {
         setCurrentPage(1);
     }, [activeTab]);
 
-    const total = activeTab === "published" ? publishedList.length : unpublishedList.length;
+    const total =
+        activeTab === "published"
+            ? publishedList.length
+            : activeTab === "unpublished"
+            ? unpublishedList.length
+            : collaborativeCourses.length;
     const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
     const currentList =
         activeTab === "published"
