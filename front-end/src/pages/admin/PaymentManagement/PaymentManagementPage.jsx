@@ -11,7 +11,7 @@ import { ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
+import * as XLSX from "xlsx";
 const PaymentManagementPage = () => {
     const navigate = useNavigate();
     const [payments, setPayments] = useState([]);
@@ -103,6 +103,61 @@ const PaymentManagementPage = () => {
     const totalRevenue = payments
         .filter((p) => p.status === "paid")
         .reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
+    const formatCurrency = (amount) => {
+        return amount?.toLocaleString("vi-VN", {
+            style: "currency",
+            currency: "VND",
+        });
+    };
+    const formatDateTime = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString("vi-VN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        });
+    };
+    const handleExportExcel = () => {
+
+        // 1. Xác định dữ liệu cần export
+        const exportSource =
+            selectedPayments.length > 0
+                ? filteredPayments.filter(p => selectedPayments.includes(p._id || p.id))
+                : filteredPayments;
+
+        if (exportSource.length === 0) {
+            ToastHelper.error("No payments to export");
+            return;
+        }
+        console.log("exportSource", exportSource)
+
+        // 2. Chuẩn hoá dữ liệu cho Excel
+        const exportData = exportSource.map((payment, index) => ({
+            "No": index + 1,
+            "Transaction ID": payment?._id || "",
+            "Order ID": payment?.orderId || "",
+            "Code": payment?.orderCode || "",
+            "User": payment?.userId?.username || "",
+            "Course": payment?.courseId?.title || "",
+            "Amount": payment.amount != null ? formatCurrency(payment.amount) : "",
+            "Status": payment.status || "",
+            "Date": formatDateTime(payment.createdAt),
+
+        }));
+
+        // 3. Tạo worksheet & workbook
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Courses");
+
+        // // 4. Xuất file
+        const fileName =
+            selectedPayments.length > 0
+                ? `payments_selected_${Date.now()}.xlsx`
+                : `payments_${Date.now()}.xlsx`;
+
+        XLSX.writeFile(workbook, fileName);
+    };
 
     return (
         <div className="max-w-full mx-auto space-y-4 bg-slate-50/50 min-h-screen">
@@ -138,7 +193,11 @@ const PaymentManagementPage = () => {
                 <div className="pb-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-2 bg-gray-500 text-black">
                         <div className="flex flex-col items-center sm:flex-row gap-2">
-                            <Button variant="outline" className="bg-white text-black hover:bg-gray-100">
+                            <Button
+                                variant="outline"
+                                className="bg-white text-black hover:bg-gray-100"
+                                onClick={handleExportExcel}
+                            >
                                 <Download className="mr-2 h-4 w-4" /> Export
                             </Button>
                         </div>
@@ -206,11 +265,10 @@ const PaymentManagementPage = () => {
                                     currentPayments.map((payment) => (
                                         <TableRow
                                             key={payment._id || payment.id}
-                                            className={`hover:bg-gray-200 transition-colors cursor-pointer ${
-                                                selectedPayments.includes(payment._id || payment.id)
-                                                    ? "bg-gray-200"
-                                                    : ""
-                                            }`}
+                                            className={`hover:bg-gray-200 transition-colors cursor-pointer ${selectedPayments.includes(payment._id || payment.id)
+                                                ? "bg-gray-200"
+                                                : ""
+                                                }`}
                                             onClick={() => toggleSelectPayment(payment._id || payment.id)}
                                         >
                                             <TableCell onClick={(e) => e.stopPropagation()}>
@@ -307,8 +365,7 @@ const PaymentManagementPage = () => {
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 navigate(
-                                                                    `/admin/payment/${
-                                                                        payment._id || payment.id
+                                                                    `/admin/payment/${payment._id || payment.id
                                                                     }`
                                                                 );
                                                             }}
