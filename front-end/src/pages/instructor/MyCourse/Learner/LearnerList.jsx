@@ -44,6 +44,8 @@ const LearnerList = () => {
                 const name = l.userId?.username?.toLowerCase() || "";
                 const email = l.userId?.email?.toLowerCase() || "";
                 const searchTerm = search.toLowerCase();
+                const status = l.status;
+                console.log("Status:", status);
 
                 return name.includes(searchTerm) || email.includes(searchTerm);
             })

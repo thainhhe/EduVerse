@@ -11,7 +11,7 @@ import { enrollmentService } from "@/services/enrollmentService";
 
 const Dashboard = () => {
     const { user } = useAuth();
-    const { enrollments } = useEnrollment(); // keep if needed elsewhere
+    const { enrollments } = useEnrollment();
     const [detailedEnrollments, setDetailedEnrollments] = useState([]);
     const [recentActivities, setRecentActivities] = useState([]);
 
@@ -22,9 +22,7 @@ const Dashboard = () => {
         (async () => {
             try {
                 const data = await enrollmentService.getEnrollmentsDetailByUser(uid);
-                // data may be an array of enrollment objects (as in your payload)
                 setDetailedEnrollments(Array.isArray(data) ? data : []);
-                // collect recent quiz activities across enrollments
                 const allScores = (Array.isArray(data) ? data : []).flatMap((enr) =>
                     (enr.allScores || []).map((s) => ({
                         ...s,
@@ -42,7 +40,6 @@ const Dashboard = () => {
         })();
     }, [user]);
 
-    // helper to compute dates
     const toLocaleDate = (iso) => (iso ? new Date(iso).toLocaleDateString("vi-VN") : "-");
 
     const now = new Date();
@@ -57,7 +54,6 @@ const Dashboard = () => {
                     </p>
                 </div>
 
-                {/* Enrolled Courses */}
                 <section className="mb-6">
                     {detailedEnrollments.length > 0 ? (
                         <>
@@ -68,7 +64,6 @@ const Dashboard = () => {
                                     const startDate = new Date(enr.enrollmentDate || Date.now());
                                     const durationValue = course.duration?.value ?? 0;
                                     const durationUnit = course.duration?.unit ?? "day";
-                                    // assume unit is 'day' for now; convert to days
                                     const durationDays =
                                         durationUnit === "day" ? durationValue : durationValue;
                                     const endDate = new Date(
@@ -96,26 +91,21 @@ const Dashboard = () => {
                                                         {course.main_instructor?.email || "Instructor"}
                                                     </p>
                                                     <div className="space-y-2 mb-4">
-                                                        {/* Dòng 1: Date start */}
                                                         <div className="flex justify-between text-sm">
                                                             <span className="text-gray-600">
                                                                 Date start: {toLocaleDate(enr.enrollmentDate)}
                                                             </span>
                                                         </div>
-
-                                                        {/* Dòng 2: Ends */}
                                                         <div className="flex justify-between text-sm">
                                                             <span className="text-gray-600">
                                                                 Ends: {toLocaleDate(endDate.toISOString())}
                                                             </span>
                                                             <span className="text-gray-600">
                                                                 {daysRemaining >= 0
-                                                                    ? `${daysRemaining} ngày còn lại`
-                                                                    : `đã kết thúc`}
+                                                                    ? `${daysRemaining} days remaining`
+                                                                    : `Ended`}
                                                             </span>
                                                         </div>
-
-                                                        {/* Dòng 3: Progress (được căn chỉnh vị trí cố định) */}
                                                         <div className="pt-2">
                                                             <div className="flex items-center justify-between text-sm mb-1">
                                                                 <span className="text-gray-600">
@@ -189,7 +179,9 @@ const Dashboard = () => {
                                                 </div>
                                             </div>
                                             <div className="text-sm text-gray-500">
-                                                {daysRemaining >= 0 ? `${daysRemaining} ngày` : "Đã hết hạn"}
+                                                {daysRemaining >= 0
+                                                    ? `${daysRemaining} days remaining`
+                                                    : "Ended"}
                                             </div>
                                         </div>
                                     );

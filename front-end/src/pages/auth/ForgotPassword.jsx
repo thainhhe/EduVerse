@@ -11,7 +11,11 @@ import { toast } from "react-toastify";
 import { FaArrowLeft } from "react-icons/fa";
 
 const forgotPasswordSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Invalid email"),
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .transform((val) => val.replace(/\s+/g, ""))
+    .pipe(z.string().email("Invalid email")),
 });
 
 const otpSchema = z.object({
@@ -27,9 +31,12 @@ const ForgotPassword = () => {
   const {
     register,
     handleSubmit,
+    setValue,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(forgotPasswordSchema),
+    mode: "onBlur", // Validate ngay khi blur
   });
 
   const {
@@ -40,8 +47,26 @@ const ForgotPassword = () => {
     resolver: zodResolver(otpSchema),
   });
 
+  const handleEmailBlur = async (e) => {
+    const rawValue = e.target.value;
+    const cleanedValue = rawValue.replace(/\s+/g, "");
+
+    if (rawValue !== cleanedValue) {
+      e.target.value = cleanedValue;
+
+      setValue("email", cleanedValue, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    } else {
+      trigger("email");
+    }
+  };
+
   const onSubmit = async (data) => {
     try {
+      setValue("email", data.email);
+
       await authService.forgotPassword(data.email);
       toast.success("Password reset OTP has been sent to your email!");
       setIsEmailSent(true);
@@ -57,8 +82,6 @@ const ForgotPassword = () => {
     try {
       const body = { email: sentEmail, otp: payload.otp };
       await authService.verifyOtp(body);
-
-      // Thay đổi: thông báo người dùng check email và redirect về login
       toast.success("OTP verified. Check your email for the new password.");
       navigate("/login");
     } catch (error) {
@@ -78,6 +101,8 @@ const ForgotPassword = () => {
     }
   };
 
+  const emailRegister = register("email");
+
   const renderContent = () => {
     if (isEmailSent) {
       return (
@@ -96,14 +121,12 @@ const ForgotPassword = () => {
             We sent an OTP to <strong>{sentEmail}</strong>. Enter it below to
             verify and reset your password.
           </p>
-
           <form
             onSubmit={handleSubmitOtp(onVerifyOtp)}
             className="space-y-6 text-left"
             autoComplete="off"
             noValidate
           >
-            {/* Hidden dummy email để trình duyệt autofill vào chỗ khác */}
             <input
               type="email"
               name="username"
@@ -119,35 +142,20 @@ const ForgotPassword = () => {
               }}
               readOnly
             />
-
             <div className="space-y-2">
               <Label htmlFor="otp">
                 Enter OTP<span className="text-red-500 -ml-1">*</span>
               </Label>
               <Input
                 id="otp"
-                name="otp"
-                type="text"
-                autoComplete="one-time-code"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-                minLength={6}
-                required
-                placeholder="Enter code from email"
                 {...registerOtp("otp")}
-                spellCheck="false"
-                onFocus={(e) => {
-                  // remove readonly attribute if browser put it; prevents some autofill behaviors
-                  e.currentTarget.removeAttribute("readonly");
-                }}
-                readOnly // keep readonly until focused to reduce autofill
+                placeholder="Enter code from email"
+                maxLength={6}
               />
               {otpErrors.otp && (
                 <p className="text-sm text-red-500">{otpErrors.otp.message}</p>
               )}
             </div>
-
             <div className="flex gap-2">
               <Button
                 type="submit"
@@ -168,7 +176,6 @@ const ForgotPassword = () => {
               </Button>
             </div>
           </form>
-
           <Button variant="link" asChild className="mt-6 text-gray-600">
             <Link to="/login">
               <FaArrowLeft className="mr-2" /> Back to Login
@@ -203,15 +210,21 @@ const ForgotPassword = () => {
             <Label htmlFor="email">
               Email<span className="text-red-500 -ml-1">*</span>
             </Label>
+
             <Input
               id="email"
               type="email"
               placeholder="Enter your email"
-              {...register("email")}
               required
               autoComplete="email"
               aria-invalid={!!errors.email}
+              {...emailRegister}
+              onBlur={(e) => {
+                handleEmailBlur(e);
+                emailRegister.onBlur(e);
+              }}
             />
+
             {errors.email && (
               <p className="text-sm text-red-500">{errors.email.message}</p>
             )}
