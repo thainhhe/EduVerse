@@ -168,7 +168,7 @@ const InstructorProfile = () => {
                                                 <div className="flex justify-between items-start mb-2">
                                                     <div className="flex items-center gap-1 text-amber-400 text-sm font-medium">
                                                         <span>⭐</span>
-                                                        <span>{course.rating || 0}/5</span>
+                                                        <span>{course.rating.toFixed(1) || 0}</span>
                                                     </div>
                                                     <span className="text-sm font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
                                                         {course.price
