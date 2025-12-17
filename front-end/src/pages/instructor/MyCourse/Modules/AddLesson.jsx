@@ -34,12 +34,26 @@ export function AddLessonModal({
     }
   };
 
+  // Normalize content: trim and collapse multiple spaces
+  const normalizeContent = () => {
+    const normalized = contentGroup.trim().replace(/\s+/g, " ");
+    if (normalized !== contentGroup) {
+      setContentGroup(normalized);
+    }
+  };
+
   const handleSave = async () => {
     // Normalize before validation
     const normalized = lessonTitle.trim().replace(/\s+/g, " ");
     if (normalized !== lessonTitle) {
       setLessonTitle(normalized);
     }
+
+    const normalizedContent = contentGroup.trim().replace(/\s+/g, " ");
+    if (normalizedContent !== contentGroup) {
+      setContentGroup(normalizedContent);
+    }
+
     if (!moduleId) {
       setErrors({ moduleId: "Module ID is required." });
       return;
@@ -54,7 +68,7 @@ export function AddLessonModal({
     else if (trimmedTitle.length > 200)
       newErrors.lessonTitle = "Title must be at most 200 characters";
 
-    const trimmedContent = contentGroup.trim();
+    const trimmedContent = normalizedContent || contentGroup.trim();
     if (!trimmedContent) newErrors.contentGroup = "Content is required";
     else if (trimmedContent.length < 10)
       newErrors.contentGroup = "Content must be at least 10 characters";
@@ -66,7 +80,7 @@ export function AddLessonModal({
     try {
       const payload = {
         title: normalized,
-        content: contentGroup?.trim(),
+        content: normalizedContent,
         moduleId,
         order: (moduleLessonsCount || 0) + 1,
       };
@@ -156,6 +170,7 @@ export function AddLessonModal({
               placeholder="Enter content group"
               value={contentGroup}
               onChange={(e) => setContentGroup(e.target.value)}
+              onBlur={normalizeContent}
               className={`w-full min-h-[170px] resize-y ${
                 errors.contentGroup ? "border-red-500 ring-1 ring-red-300" : ""
               }`}

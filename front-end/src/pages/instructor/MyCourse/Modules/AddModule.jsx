@@ -72,14 +72,26 @@ export function AddModuleModal({
     }
   };
 
+  // Normalize module description: trim and collapse multiple spaces
+  const normalizeModuleDescription = () => {
+    const current = form.getValues("moduleDescription");
+    const normalized = current.trim().replace(/\s+/g, " ");
+    if (normalized !== current) {
+      form.setValue("moduleDescription", normalized, { shouldValidate: true });
+    }
+  };
+
   const onSubmit = async (values) => {
-    // Normalize title before submission
+    // Normalize title and description before submission
     const normalizedTitle = values.moduleTitle.trim().replace(/\s+/g, " ");
+    const normalizedDescription = values.moduleDescription
+      .trim()
+      .replace(/\s+/g, " ");
 
     try {
       const payload = {
         title: normalizedTitle,
-        description: values.moduleDescription,
+        description: normalizedDescription,
         courseId: courseId,
         order: nextOrder,
       };
@@ -175,6 +187,10 @@ export function AddModuleModal({
                       placeholder="Provide a detailed overview of the module content and learning objectives."
                       className="min-h-[100px] resize-y"
                       {...field}
+                      onBlur={(e) => {
+                        field.onBlur();
+                        normalizeModuleDescription();
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

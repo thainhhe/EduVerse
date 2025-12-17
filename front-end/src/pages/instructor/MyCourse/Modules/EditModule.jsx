@@ -64,6 +64,15 @@ export function EditModuleModal({ open, onOpenChange, module_, onUpdate }) {
     }
   };
 
+  // Normalize module description: trim and collapse multiple spaces
+  const normalizeModuleDescription = () => {
+    const current = form.getValues("moduleDescription");
+    const normalized = current.trim().replace(/\s+/g, " ");
+    if (normalized !== current) {
+      form.setValue("moduleDescription", normalized, { shouldValidate: true });
+    }
+  };
+
   useEffect(() => {
     if (!open) return;
     form.reset({
@@ -73,13 +82,16 @@ export function EditModuleModal({ open, onOpenChange, module_, onUpdate }) {
   }, [open, module_]);
 
   const onSubmit = async (values) => {
-    // Normalize title before submission
+    // Normalize title and description before submission
     const normalizedTitle = values.moduleTitle.trim().replace(/\s+/g, " ");
+    const normalizedDescription = values.moduleDescription
+      .trim()
+      .replace(/\s+/g, " ");
 
     try {
       const payload = {
         title: normalizedTitle,
-        description: values.moduleDescription,
+        description: normalizedDescription,
         courseId: module_?.courseId,
       };
 
@@ -152,6 +164,10 @@ export function EditModuleModal({ open, onOpenChange, module_, onUpdate }) {
                       className="min-h-[170px] resize-y !w-full !block whitespace-pre-wrap break-all p-3 rounded-md border border-input bg-transparent text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                       value={field.value}
                       onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={(e) => {
+                        field.onBlur();
+                        normalizeModuleDescription();
+                      }}
                     />
                   </FormControl>
                   <FormMessage />

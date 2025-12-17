@@ -26,6 +26,14 @@ export function EditLesson({ open, onOpenChange, lesson, onUpdate }) {
     }
   };
 
+  // Normalize content: trim and collapse multiple spaces
+  const normalizeContent = () => {
+    const normalized = contentGroup.trim().replace(/\s+/g, " ");
+    if (normalized !== contentGroup) {
+      setContentGroup(normalized);
+    }
+  };
+
   useEffect(() => {
     if (!open) return;
     if (lesson) {
@@ -41,6 +49,11 @@ export function EditLesson({ open, onOpenChange, lesson, onUpdate }) {
       setLessonTitle(normalized);
     }
 
+    const normalizedContent = contentGroup.trim().replace(/\s+/g, " ");
+    if (normalizedContent !== contentGroup) {
+      setContentGroup(normalizedContent);
+    }
+
     const newErrors = {};
 
     const trimmedTitle = normalized || lessonTitle.trim();
@@ -50,7 +63,7 @@ export function EditLesson({ open, onOpenChange, lesson, onUpdate }) {
     else if (trimmedTitle.length > 200)
       newErrors.lessonTitle = "Title must be at most 200 characters";
 
-    const trimmedContent = contentGroup.trim();
+    const trimmedContent = normalizedContent || contentGroup.trim();
     if (!trimmedContent) newErrors.contentGroup = "Content is required";
     else if (trimmedContent.length < 10)
       newErrors.contentGroup = "Content must be at least 10 characters";
@@ -64,7 +77,7 @@ export function EditLesson({ open, onOpenChange, lesson, onUpdate }) {
       const payload = {
         moduleId: lesson.moduleId,
         title: normalized,
-        content: contentGroup?.trim(),
+        content: normalizedContent,
         status: lesson.status,
         order: lesson.order,
       };
@@ -147,6 +160,7 @@ export function EditLesson({ open, onOpenChange, lesson, onUpdate }) {
                 if (errors.contentGroup)
                   setErrors((p) => ({ ...p, contentGroup: undefined }));
               }}
+              onBlur={normalizeContent}
               className={`min-h-[170px] resize-y !w-full !block whitespace-pre-wrap break-all p-3 rounded-md border bg-transparent text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
                 errors.contentGroup
                   ? "border-red-500 ring-1 ring-red-300"
