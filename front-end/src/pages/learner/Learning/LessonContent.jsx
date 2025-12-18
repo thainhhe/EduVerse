@@ -72,9 +72,8 @@ const LessonContent = ({ lesson, course, module }) => {
                                 {module.description && (
                                     <div className="w-full">
                                         <p
-                                            className={`text-white/90 text-sm leading-relaxed transition-all duration-300 break-all whitespace-pre-wrap ${
-                                                isDescriptionExpanded ? "" : "line-clamp-1"
-                                            }`}
+                                            className={`text-white/90 text-sm leading-relaxed transition-all duration-300 break-all whitespace-pre-wrap ${isDescriptionExpanded ? "" : "line-clamp-1"
+                                                }`}
                                         >
                                             {module.description}
                                         </p>
@@ -87,9 +86,8 @@ const LessonContent = ({ lesson, course, module }) => {
                                             >
                                                 {isDescriptionExpanded ? "Show less" : "Show more"}
                                                 <ChevronDown
-                                                    className={`w-4 h-4 transition-transform duration-300 ${
-                                                        isDescriptionExpanded ? "rotate-180" : ""
-                                                    }`}
+                                                    className={`w-4 h-4 transition-transform duration-300 ${isDescriptionExpanded ? "rotate-180" : ""
+                                                        }`}
                                                 />
                                             </button>
                                         )}
@@ -125,7 +123,7 @@ const LessonContent = ({ lesson, course, module }) => {
                             <VideoPlayer
                                 key={lessonVideos[videoIndex]._id}
                                 file={lessonVideos[videoIndex]}
-                                onClose={() => {}}
+                                onClose={() => { }}
                                 canClose={false}
                             />
                         </div>
@@ -185,12 +183,6 @@ const LessonContent = ({ lesson, course, module }) => {
                     >
                         Resources ({lessonDocuments.length})
                     </TabsTrigger>
-                    <TabsTrigger
-                        value="discussion"
-                        className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 data-[state=active]:bg-transparent font-medium text-gray-500 hover:text-gray-700 transition-colors"
-                    >
-                        Discussion
-                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="summary" className="mt-0 animate-in fade-in-50 duration-300">
@@ -225,7 +217,7 @@ const LessonContent = ({ lesson, course, module }) => {
                                     <FileList
                                         files={lessonDocuments}
                                         onFileClick={handleFileClick}
-                                        onFileDeleted={() => {}}
+                                        onFileDeleted={() => { }}
                                         canDelete={false}
                                     />
                                 ) : (

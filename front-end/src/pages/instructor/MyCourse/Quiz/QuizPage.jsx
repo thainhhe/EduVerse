@@ -89,10 +89,10 @@ const QuizPage = () => {
     const scopeName = lessonId
       ? "lesson"
       : moduleId
-      ? "module"
-      : courseId
-      ? "course"
-      : null;
+        ? "module"
+        : courseId
+          ? "course"
+          : null;
     if (!scopeName) {
       setQuizzes([]);
       return;
@@ -107,10 +107,10 @@ const QuizPage = () => {
       const arr = Array.isArray(res)
         ? res
         : Array.isArray(res?.data)
-        ? res.data
-        : Array.isArray(res?.data?.data)
-        ? res.data.data
-        : res?.data?.items ?? [];
+          ? res.data
+          : Array.isArray(res?.data?.data)
+            ? res.data.data
+            : res?.data?.items ?? [];
       const mapped = (arr || []).map((q) => ({
         id: q._id ?? q.id ?? q.quizId ?? null,
         title: q.title ?? q.name ?? "(untitled)",
@@ -395,6 +395,7 @@ const QuizPage = () => {
         questions:
           "Please add at least one valid question with options and correct answer.",
       }));
+      ToastHelper.error("Please add at least one valid question with options and correct answer in tab Questions");
       return;
     }
 
@@ -479,8 +480,8 @@ const QuizPage = () => {
             {lessonId
               ? `Lesson Quizzes`
               : moduleId
-              ? `Module Quizzes`
-              : `Course Quizzes`}
+                ? `Module Quizzes`
+                : `Course Quizzes`}
           </h2>
         </div>
         {mode === "list" && (
@@ -517,11 +518,10 @@ const QuizPage = () => {
                         {q.title}
                       </h3>
                       <span
-                        className={`px-2.5 py-1 text-xs font-medium rounded-full flex-shrink-0 ${
-                          q.isPublished
-                            ? "bg-green-100 text-green-700 border border-green-200"
-                            : "bg-orange-100 text-orange-700 border border-orange-200"
-                        }`}
+                        className={`px-2.5 py-1 text-xs font-medium rounded-full flex-shrink-0 ${q.isPublished
+                          ? "bg-green-100 text-green-700 border border-green-200"
+                          : "bg-orange-100 text-orange-700 border border-orange-200"
+                          }`}
                       >
                         {q.isPublished ? "Published" : "Draft"}
                       </span>
@@ -631,11 +631,10 @@ const QuizPage = () => {
               <div className="flex gap-1 border-b-2 border-gray-200">
                 <button
                   onClick={() => setActiveTab("info")}
-                  className={`px-4 py-2.5 text-sm font-medium transition-all relative ${
-                    activeTab === "info"
-                      ? "text-indigo-600"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={`px-4 py-2.5 text-sm font-medium transition-all relative ${activeTab === "info"
+                    ? "text-indigo-600"
+                    : "text-gray-600 hover:text-gray-900"
+                    }`}
                 >
                   Quiz Info
                   {activeTab === "info" && (
@@ -644,11 +643,10 @@ const QuizPage = () => {
                 </button>
                 <button
                   onClick={() => setActiveTab("questions")}
-                  className={`px-4 py-2.5 text-sm font-medium transition-all relative ${
-                    activeTab === "questions"
-                      ? "text-indigo-600"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={`px-4 py-2.5 text-sm font-medium transition-all relative ${activeTab === "questions"
+                    ? "text-indigo-600"
+                    : "text-gray-600 hover:text-gray-900"
+                    }`}
                 >
                   Questions{" "}
                   {questions.length > 0 && (
@@ -671,11 +669,10 @@ const QuizPage = () => {
                       </label>
                       <input
                         type="text"
-                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${
-                          errors.title
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-300 bg-white"
-                        }`}
+                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${errors.title
+                          ? "border-red-500 bg-red-50"
+                          : "border-gray-300 bg-white"
+                          }`}
                         placeholder="Enter quiz title..."
                         value={quizInfo.title}
                         onChange={(e) => {
@@ -700,11 +697,10 @@ const QuizPage = () => {
                       </label>
                       <input
                         type="number"
-                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${
-                          errors.timeLimit
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-300 bg-white"
-                        }`}
+                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${errors.timeLimit
+                          ? "border-red-500 bg-red-50"
+                          : "border-gray-300 bg-white"
+                          }`}
                         value={quizInfo.timeLimit}
                         onChange={(e) =>
                           setQuizInfo({
@@ -725,11 +721,10 @@ const QuizPage = () => {
                       </label>
                       <input
                         type="number"
-                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${
-                          errors.passingScore
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-300 bg-white"
-                        }`}
+                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${errors.passingScore
+                          ? "border-red-500 bg-red-50"
+                          : "border-gray-300 bg-white"
+                          }`}
                         value={quizInfo.passingScore}
                         onChange={(e) =>
                           setQuizInfo({
@@ -750,11 +745,10 @@ const QuizPage = () => {
                       </label>
                       <input
                         type="number"
-                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${
-                          errors.attemptsAllowed
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-300 bg-white"
-                        }`}
+                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${errors.attemptsAllowed
+                          ? "border-red-500 bg-red-50"
+                          : "border-gray-300 bg-white"
+                          }`}
                         value={quizInfo.attemptsAllowed}
                         onChange={(e) =>
                           setQuizInfo({
@@ -774,11 +768,10 @@ const QuizPage = () => {
                         Description
                       </label>
                       <textarea
-                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none ${
-                          errors.description
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-300 bg-white"
-                        }`}
+                        className={`w-full border rounded-sm p-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none ${errors.description
+                          ? "border-red-500 bg-red-50"
+                          : "border-gray-300 bg-white"
+                          }`}
                         rows={3}
                         placeholder="Short description..."
                         value={quizInfo.description}

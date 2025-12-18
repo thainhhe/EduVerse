@@ -169,15 +169,11 @@ const RegisterInstructor = () => {
     }
   };
 
-  // Remove all whitespace from email (leading/trailing/in-between) on blur, then validate
-  const normalizeEmail = () => {
-    const val = getValues("email") || "";
-    const cleaned = val.replace(/\s+/g, "");
-    if (cleaned !== val) {
-      setValue("email", cleaned, { shouldValidate: true, shouldDirty: true });
-    } else {
-      trigger("email");
-    }
+  // Shared cleaner: collapse multiple spaces and trim ends, then validate
+  const handleCleanInput = (fieldName) => {
+    const val = getValues(fieldName) || "";
+    const cleaned = val.replace(/\s+/g, " ").trim();
+    setValue(fieldName, cleaned, { shouldValidate: true });
   };
 
   const onSubmit = async (data) => {
@@ -256,7 +252,10 @@ const RegisterInstructor = () => {
                 className="bg-gray-50"
                 maxLength={50}
                 aria-invalid={!!errors.fullName}
-                onBlur={() => handleTrimAndValidate("fullName")}
+                onBlur={(e) => {
+                  register("fullName").onBlur(e);
+                  handleCleanInput("fullName");
+                }}
               />
               {errors.fullName && (
                 <p className="text-sm text-red-600 mt-1">
@@ -276,7 +275,10 @@ const RegisterInstructor = () => {
                 className={`bg-gray-50 `}
                 {...register("email")}
                 aria-invalid={!!errors.email}
-                onBlur={normalizeEmail}
+                onBlur={(e) => {
+                  register("email").onBlur(e);
+                  handleCleanInput("email");
+                }}
               />
               {errors.email && (
                 <p className="text-sm text-red-500 mt-1">
