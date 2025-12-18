@@ -13,6 +13,7 @@ import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 import { getAllUsers, lockUser, unlockUser } from "@/services/userService";
 import Swal from "sweetalert2";
 import { AddNewUser } from "./AddNewUser";
+import { useAuth } from "@/hooks/useAuth";
 
 const UserManagementPage = () => {
     const [users, setUsers] = useState([]);
@@ -28,6 +29,7 @@ const UserManagementPage = () => {
 
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const { user } = useAuth();
 
     useEffect(() => {
         fetchUsers();
@@ -205,13 +207,15 @@ const UserManagementPage = () => {
                             >
                                 <Download /> Export
                             </Button>
-                            <Button
-                                className="bg-white text-black flex items-center hover:text-white hover:bg-indigo-600"
-                                onClick={() => setOpenAddNewUser(true)}
-                            >
-                                <Plus className="h-4 w-4" />
-                                New User
-                            </Button>
+                            {user?.isSuperAdmin && (
+                                <Button
+                                    className="bg-white text-black flex items-center hover:text-white hover:bg-indigo-600"
+                                    onClick={() => setOpenAddNewUser(true)}
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    New User
+                                </Button>
+                            )}
                         </div>
                         <div className="relative">
                             <Search className="absolute left-2.5 top-3 h-4 w-4 text-gray-500" />
