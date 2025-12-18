@@ -244,13 +244,15 @@ const UserManagementPage = () => {
                                 Export
                             </Button>
 
-                            <Button
-                                className="bg-white text-black flex items-center hover:text-white hover:bg-indigo-600"
-                                onClick={() => setOpenAddNewUser(true)}
-                            >
-                                <Plus className="h-4 w-4" />
-                                New User
-                            </Button>
+                            {user?.isSuperAdmin && (
+                                <Button
+                                    className="bg-white text-black flex items-center hover:text-white hover:bg-indigo-600"
+                                    onClick={() => setOpenAddNewUser(true)}
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    New User
+                                </Button>
+                            )}
                         </div>
                         <div className="relative">
                             <Search className="absolute left-2.5 top-3 h-4 w-4 text-gray-500" />
