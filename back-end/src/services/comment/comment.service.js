@@ -50,7 +50,7 @@ const commentService = {
             if (!forum) {
                 return {
                     status: STATUS_CODE.NOT_FOUND,
-                    message: "Forum không tồn tại",
+                    message: "Forum not found",
                 };
             }
 
@@ -59,7 +59,7 @@ const commentService = {
             if (!user) {
                 return {
                     status: STATUS_CODE.NOT_FOUND,
-                    message: "User không tồn tại",
+                    message: "User not found",
                 };
             }
             const courseId = forum.courseId; // forum gắn với 1 khóa học
@@ -80,7 +80,7 @@ const commentService = {
             if (!isMainInstructor && !enrollment && !isCollab) {
                 return {
                     status: STATUS_CODE.FORBIDDEN,
-                    message: "Bạn cần đăng ký khóa học trước khi bình luận.",
+                    message: "You need to enroll in the course before commenting.",
                     success: false,
                 };
             }
@@ -111,7 +111,7 @@ const commentService = {
 
             return {
                 status: STATUS_CODE.OK,
-                message: "Tạo comment thành công",
+                message: "Create comment successfully",
                 data: populatedComment,
                 success: true,
             };
