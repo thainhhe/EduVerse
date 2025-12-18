@@ -192,7 +192,11 @@ export default function CommentItem({ comment, level, forumId, userId, refresh }
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-sm mt-1">{comment.content}</div>
+                            // <div className="text-sm mt-1">{comment.content}</div>
+                            <div className="text-sm mt-1 break-all whitespace-pre-wrap">
+                                {comment.content}
+                            </div>
+
                         )}
                     </div>
 
