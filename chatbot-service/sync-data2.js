@@ -178,6 +178,7 @@ const STATIC_KB_FILES = [
   "faq_profile_policy.json",
   "policy_admin_action.json",
   "faq_general_learning.json",
+  "about_eduverse.json",
 ];
 
 // Hàm đọc và xử lý các file KB tĩnh
