@@ -1,23 +1,14 @@
 import { useState, useEffect } from "react";
-import {
-    ChevronDown,
-    ChevronRight,
-    CheckCircle2,
-    Circle,
-    PlayCircle,
-    FileText,
-    HelpCircle,
-    Trophy,
-    Layout,
-} from "lucide-react";
+import { ChevronDown, ChevronRight, CheckCircle2, Circle, HelpCircle, Trophy, ArrowLeft } from "lucide-react";
 import { completeLesson, uncompleteLesson } from "@/services/courseService";
 import { ToastHelper } from "@/helper/ToastHelper";
-import { Progress } from "@/components/ui/progress";
+import { useNavigate } from "react-router-dom";
 
 const LearningSidebar = ({ course, onSelectItem, selectedItem, userId, passedQuizzes }) => {
     const [expandedSections, setExpandedSections] = useState({});
     const [loadingLessonId, setLoadingLessonId] = useState(null);
     const [error, setError] = useState("");
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (course?.modules?.[0]?._id) {
@@ -76,11 +67,18 @@ const LearningSidebar = ({ course, onSelectItem, selectedItem, userId, passedQui
         }
     };
 
+    const handleBackToCourse = () => {
+        navigate(-1);
+    };
+
     return (
-        <div className="w-80 flex flex-col border-r border-gray-200 bg-white h-screen shadow-sm">
-            <div className="p-6 border-b border-gray-100 bg-white z-10">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Course Content</h2>
-                <div className="space-y-2">
+        <div className="w-80 flex flex-col border-r border-gray-200 bg-white h-screen shadow-sm sticky top-0 z-10">
+            <div className="flex items-center gap-2 cursor-pointer py-2 px-1" onClick={handleBackToCourse}>
+                <ArrowLeft className="text-indigo-600" size={17} />
+                <span className="text-indigo-600">Back to Course</span>
+            </div>
+            <div className="px-6 pt-2 border-b border-gray-100 bg-white z-10">
+                <div className="space-y-1">
                     <div className="flex justify-between text-sm font-medium">
                         <span className="text-gray-600">{progressPercentage}% Completed</span>
                         <span className="text-indigo-600">

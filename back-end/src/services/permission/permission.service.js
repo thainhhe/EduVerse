@@ -38,7 +38,7 @@ const permissionService = {
                     message: "instructors array is required",
                 };
 
-            const course = await courseRepository.getById(currentCourseId);
+            const course = await courseRepository.findById(currentCourseId);
             if (!course)
                 return {
                     status: system_enum.STATUS_CODE.NOT_FOUND,
@@ -148,7 +148,7 @@ const permissionService = {
                     message: system_enum.SYSTEM_MESSAGE.NOT_FOUND,
                 };
 
-            const course = await courseRepository.getById(data.courseId);
+            const course = await courseRepository.findById(data.courseId);
             if (!course)
                 return {
                     status: system_enum.STATUS_CODE.NOT_FOUND,

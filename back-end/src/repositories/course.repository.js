@@ -299,8 +299,22 @@ const courseRepository = {
         ]);
     },
     getById: async (id) => {
-        const result = await Course.aggregate([
-            { $match: { _id: new mongoose.Types.ObjectId(id), isDeleted: false } },
+        // 1. Get Course Document to support .save()
+        const course = await Course.findOne({
+            _id: id,
+            isDeleted: false,
+        })
+            .populate("category")
+            .populate("main_instructor")
+            .populate("instructors.user")
+            .populate("instructors.permission")
+            .exec();
+
+        if (!course) return null;
+
+        // 2. Calculate Stats separately
+        const stats = await Course.aggregate([
+            { $match: { _id: new mongoose.Types.ObjectId(id) } },
             {
                 $lookup: {
                     from: "reviews",
@@ -310,7 +324,7 @@ const courseRepository = {
                 },
             },
             {
-                $addFields: {
+                $project: {
                     rating: {
                         $cond: [
                             { $gt: [{ $size: "$reviews" }, 0] },
@@ -321,91 +335,15 @@ const courseRepository = {
                     reviewsCount: { $size: "$reviews" },
                 },
             },
-            {
-                $lookup: {
-                    from: "categories",
-                    localField: "category",
-                    foreignField: "_id",
-                    as: "category",
-                },
-            },
-            {
-                $unwind: { path: "$category", preserveNullAndEmptyArrays: true },
-            },
-            {
-                $lookup: {
-                    from: "users",
-                    localField: "main_instructor",
-                    foreignField: "_id",
-                    as: "main_instructor",
-                },
-            },
-            {
-                $unwind: { path: "$main_instructor", preserveNullAndEmptyArrays: true },
-            },
-            {
-                $lookup: {
-                    from: "users",
-                    localField: "instructors.user",
-                    foreignField: "_id",
-                    as: "instructorUsers",
-                },
-            },
-            {
-                $lookup: {
-                    from: "permissions",
-                    localField: "instructors.permission",
-                    foreignField: "_id",
-                    as: "instructorPermissions",
-                },
-            },
-            {
-                $addFields: {
-                    instructors: {
-                        $map: {
-                            input: "$instructors",
-                            as: "inst",
-                            in: {
-                                user: {
-                                    $arrayElemAt: [
-                                        {
-                                            $filter: {
-                                                input: "$instructorUsers",
-                                                as: "u",
-                                                cond: { $eq: ["$$u._id", "$$inst.user"] },
-                                            },
-                                        },
-                                        0,
-                                    ],
-                                },
-                                permission: {
-                                    $arrayElemAt: [
-                                        {
-                                            $filter: {
-                                                input: "$instructorPermissions",
-                                                as: "p",
-                                                cond: { $eq: ["$$p._id", "$$inst.permission"] },
-                                            },
-                                        },
-                                        0,
-                                    ],
-                                },
-                                isAccept: "$$inst.isAccept",
-                            },
-                        },
-                    },
-                },
-            },
-            {
-                $project: {
-                    reviews: 0,
-                    instructorUsers: 0,
-                    instructorPermissions: 0,
-                },
-            },
-        ]).exec();
+        ]);
 
-        return result && result.length > 0 ? result[0] : null;
+        // 3. Attach stats to the document instance
+        if (stats.length > 0) {
+            course.set("rating", stats[0].rating, { strict: false });
+            course.set("reviewsCount", stats[0].reviewsCount, { strict: false });
+        }
+
+        return course;
     },
 
     getCollaborativeCourse: async (userId) => {
@@ -438,6 +376,10 @@ const courseRepository = {
         return await Course.findByIdAndUpdate(id, data, { new: true }).exec();
     },
 
+    findById: async (id) => {
+        return await Course.findById(id).populate("instructors.user");
+    },
+
     delete: async (id) => {
         const course = await Course.findById(id);
         if (!course) throw new Error("Course not found");
@@ -452,7 +394,7 @@ const courseRepository = {
     },
 
     save: async (data) => {
-        return data.save();
+        return await data.save();
     },
 
     findByInstructor: async (instructorId) => {
