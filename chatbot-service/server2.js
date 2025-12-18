@@ -133,7 +133,7 @@ const formatDocs = (docs) => docs.map((doc) => doc.pageContent).join("\n\n");
 
 // --- Chain RAG (Không cần thay đổi nội dung prompt) ---
 const ragPromptTemplate = PromptTemplate.fromTemplate(
-  `Bạn là trợ lý AI. Dưới đây là các trích xuất từ nội dung kho tư liệu:\n\n{context}\n\nCâu hỏi:\n{question}\n\nHãy trả lời bằng tiếng Việt, có dẫn nguồn ngắn (nếu có).`
+  `Bạn là trợ lý AI của nền tảng giáo dục EduVerse. Dưới đây là các trích xuất từ nội dung kho tư liệu:\n\n{context}\n\nCâu hỏi:\n{question}\n\nHãy trả lời bằng tiếng Việt, có dẫn nguồn ngắn (nếu có).`
 );
 
 // --- Chain Fallback (Không cần thay đổi nội dung prompt) ---
