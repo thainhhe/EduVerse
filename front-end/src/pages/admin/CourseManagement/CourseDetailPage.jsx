@@ -63,7 +63,7 @@ const CourseDetailPage = () => {
             const res = await getAllCourseById(id);
             if (res?.success) {
                 const data = res.data || {};
-                console.log("data", data)
+                console.log("data", data);
                 setCourse(data);
                 // Select the first module's first lesson by default if available, or the course info
                 if (data.modules?.[0]?.lessons?.[0]) {
@@ -77,7 +77,7 @@ const CourseDetailPage = () => {
         fetchCourses();
         console.log("c:::", course);
     }, [id]);
-    console.log("selectedItem", selectedItem)
+    console.log("selectedItem", selectedItem);
 
     const loadFilesByLessonId = async (lessonId) => {
         try {
@@ -375,7 +375,14 @@ const CourseDetailPage = () => {
                                             <span className="text-lg font-bold text-orange-700">
                                                 {(course.courseQuizzes?.length || 0) +
                                                     (course.modules?.reduce(
-                                                        (acc, m) => acc + (m.moduleQuizzes?.length || 0),
+                                                        (acc, m) =>
+                                                            acc +
+                                                            (m.moduleQuizzes?.length +
+                                                                m.lessons?.reduce(
+                                                                    (acc2, l) =>
+                                                                        acc2 + (l.quizzes?.length || 0),
+                                                                    0
+                                                                ) || 0),
                                                         0
                                                     ) || 0)}
                                             </span>
@@ -407,7 +414,7 @@ const CourseDetailPage = () => {
                                                     <VideoPlayer
                                                         key={lessonVideos[videoIndex]._id}
                                                         file={lessonVideos[videoIndex]}
-                                                        onClose={() => { }}
+                                                        onClose={() => {}}
                                                         canClose={false}
                                                     />
                                                 </div>
@@ -441,7 +448,6 @@ const CourseDetailPage = () => {
                                                     </Button>
                                                 </div>
                                             )}
-
                                         </div>
                                     ) : (
                                         <div className="mb-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 p-12 text-center">
@@ -627,10 +633,11 @@ const CourseDetailPage = () => {
                             {/* Course Info Button */}
                             <button
                                 onClick={() => setSelectedItem({ ...course, type: "course_info" })}
-                                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${selectedItem?.type === "course_info"
-                                    ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
-                                    : "hover:bg-gray-50 border border-transparent"
-                                    }`}
+                                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
+                                    selectedItem?.type === "course_info"
+                                        ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
+                                        : "hover:bg-gray-50 border border-transparent"
+                                }`}
                             >
                                 <div className="p-2 bg-white rounded-md shadow-sm">
                                     <FileText className="w-4 h-4 text-indigo-600" />
@@ -648,10 +655,11 @@ const CourseDetailPage = () => {
                                         <button
                                             key={quiz._id}
                                             onClick={() => handleSelectItem(quiz, "quiz")}
-                                            className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-left ${selectedItem?._id === quiz._id
-                                                ? "bg-orange-50 text-orange-700"
-                                                : "hover:bg-gray-50 text-gray-700"
-                                                }`}
+                                            className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors text-left ${
+                                                selectedItem?._id === quiz._id
+                                                    ? "bg-orange-50 text-orange-700"
+                                                    : "hover:bg-gray-50 text-gray-700"
+                                            }`}
                                         >
                                             <HelpCircle className="w-4 h-4" />
                                             <span className="text-sm truncate">{quiz.title}</span>
@@ -678,7 +686,6 @@ const CourseDetailPage = () => {
                                                     Module {index + 1}: {module.title}
                                                 </span>
                                             </div>
-
                                         </AccordionTrigger>
                                         {/* Module Description */}
                                         {module.description && (
@@ -687,8 +694,6 @@ const CourseDetailPage = () => {
                                             </div>
                                         )}
                                         <AccordionContent className="pb-3 pt-1 space-y-1">
-
-
                                             {/* Lessons */}
                                             {/* Lessons */}
                                             {module.lessons?.map((lesson) => (
@@ -696,17 +701,20 @@ const CourseDetailPage = () => {
                                                     {/* Lesson */}
                                                     <button
                                                         onClick={() => handleSelectItem(lesson, "lesson")}
-                                                        className={`w-full flex items-center gap-3 p-2 rounded-md transition-colors text-left pl-4 ${selectedItem?._id === lesson._id
-                                                            ? "bg-blue-50 text-blue-700"
-                                                            : "hover:bg-gray-100 text-gray-600"
-                                                            }`}
+                                                        className={`w-full flex items-center gap-3 p-2 rounded-md transition-colors text-left pl-4 ${
+                                                            selectedItem?._id === lesson._id
+                                                                ? "bg-blue-50 text-blue-700"
+                                                                : "hover:bg-gray-100 text-gray-600"
+                                                        }`}
                                                     >
                                                         {lesson.type === "video" ? (
                                                             <PlayCircle className="w-3.5 h-3.5" />
                                                         ) : (
                                                             <FileText className="w-3.5 h-3.5" />
                                                         )}
-                                                        <span className="text-sm truncate">{lesson.title}</span>
+                                                        <span className="text-sm truncate">
+                                                            {lesson.title}
+                                                        </span>
                                                     </button>
 
                                                     {/* ✅ Lesson Quizzes (THÊM ĐOẠN NÀY) */}
@@ -715,21 +723,25 @@ const CourseDetailPage = () => {
                                                             {lesson.quizzes.map((quiz) => (
                                                                 <button
                                                                     key={quiz._id}
-                                                                    onClick={() => handleSelectItem(quiz, "quiz")}
-                                                                    className={`w-full flex items-center gap-2 p-2 rounded-md text-left ${selectedItem?._id === quiz._id
-                                                                        ? "bg-orange-50 text-orange-700"
-                                                                        : "hover:bg-gray-100 text-gray-600"
-                                                                        }`}
+                                                                    onClick={() =>
+                                                                        handleSelectItem(quiz, "quiz")
+                                                                    }
+                                                                    className={`w-full flex items-center gap-2 p-2 rounded-md text-left ${
+                                                                        selectedItem?._id === quiz._id
+                                                                            ? "bg-orange-50 text-orange-700"
+                                                                            : "hover:bg-gray-100 text-gray-600"
+                                                                    }`}
                                                                 >
                                                                     <HelpCircle className="w-3.5 h-3.5" />
-                                                                    <span className="text-sm truncate">{quiz.title}</span>
+                                                                    <span className="text-sm truncate">
+                                                                        {quiz.title}
+                                                                    </span>
                                                                 </button>
                                                             ))}
                                                         </div>
                                                     )}
                                                 </div>
                                             ))}
-
 
                                             {/* Module Quizzes */}
                                             {module.moduleQuizzes?.length > 0 && (
@@ -741,10 +753,11 @@ const CourseDetailPage = () => {
                                                         <button
                                                             key={quiz._id}
                                                             onClick={() => handleSelectItem(quiz, "quiz")}
-                                                            className={`w-full flex items-center gap-3 p-2 rounded-md transition-colors text-left pl-4 ${selectedItem?._id === quiz._id
-                                                                ? "bg-orange-50 text-orange-700"
-                                                                : "hover:bg-gray-100 text-gray-600"
-                                                                }`}
+                                                            className={`w-full flex items-center gap-3 p-2 rounded-md transition-colors text-left pl-4 ${
+                                                                selectedItem?._id === quiz._id
+                                                                    ? "bg-orange-50 text-orange-700"
+                                                                    : "hover:bg-gray-100 text-gray-600"
+                                                            }`}
                                                         >
                                                             <HelpCircle className="w-3.5 h-3.5" />
                                                             <span className="text-sm truncate">

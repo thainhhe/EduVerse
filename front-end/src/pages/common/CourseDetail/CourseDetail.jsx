@@ -202,8 +202,6 @@ const CourseDetail = () => {
     };
 
     const handleDeleteReview = async (reviewId) => {
-        if (!confirm("Are you sure you want to delete this review?")) return;
-
         try {
             const res = await reviewService.deleteReview(reviewId);
             if (res) {
