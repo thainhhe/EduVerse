@@ -13,6 +13,7 @@ import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 import { getAllUsers, lockUser, unlockUser } from "@/services/userService";
 import Swal from "sweetalert2";
 import { AddNewUser } from "./AddNewUser";
+import * as XLSX from "xlsx";
 
 const UserManagementPage = () => {
     const [users, setUsers] = useState([]);
@@ -28,6 +29,7 @@ const UserManagementPage = () => {
 
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const { user } = useAuth();
 
     useEffect(() => {
         fetchUsers();
@@ -169,6 +171,40 @@ const UserManagementPage = () => {
     if (loading) {
         return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
     }
+    const handleExportExcel = () => {
+        // 1. Xác định dữ liệu cần export
+        const exportSource =
+            selectedUsers.length > 0
+                ? filteredUsers.filter((u) => selectedUsers.includes(u._id))
+                : filteredUsers;
+
+        if (exportSource.length === 0) {
+            ToastHelper.error("No users to export");
+            return;
+        }
+
+        // 2. Chuẩn hoá dữ liệu cho Excel
+        const exportData = exportSource.map((user, index) => ({
+            No: index + 1,
+            Username: user.username || "",
+            Email: user.email || "",
+            Role: user.role || "",
+            Status: user.status || "",
+            "Created At": formatDateTime(user.createdAt),
+            "Last Login": formatDateTime(user.lastLogin),
+        }));
+
+        // 3. Tạo worksheet & workbook
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
+
+        // 4. Xuất file
+        const fileName =
+            selectedUsers.length > 0 ? `users_selected_${Date.now()}.xlsx` : `users_${Date.now()}.xlsx`;
+
+        XLSX.writeFile(workbook, fileName);
+    };
 
     return (
         <div className="min-h-screen bg-white">
@@ -198,13 +234,16 @@ const UserManagementPage = () => {
                                     <SelectItem value="pending">Pending</SelectItem>
                                 </SelectContent>
                             </Select>
+
                             <Button
                                 variant="outline"
                                 className="bg-white text-black flex items-center hover:text-white hover:bg-indigo-600"
-                                // onClick={handleReset}
+                                onClick={handleExportExcel}
                             >
-                                <Download /> Export
+                                <Download className="mr-2 h-4 w-4" />
+                                Export
                             </Button>
+
                             <Button
                                 className="bg-white text-black flex items-center hover:text-white hover:bg-indigo-600"
                                 onClick={() => setOpenAddNewUser(true)}

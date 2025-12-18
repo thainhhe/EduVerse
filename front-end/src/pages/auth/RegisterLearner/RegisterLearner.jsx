@@ -30,18 +30,12 @@ const RegisterLearner = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Helper to trim and validate field
-  const handleTrimAndValidate = (fieldName) => {
-    const val = getValues(fieldName) || "";
-    const trimmed = val.trim();
-    if (trimmed !== val) {
-      setValue(fieldName, trimmed, { shouldValidate: true, shouldDirty: true });
-    } else {
-      trigger(fieldName);
-    }
+  const handleTrimAndValidate = (fieldName, e) => {
+    const val = e ? e.target.value : getValues(fieldName) || "";
+    const cleaned = val.replace(/\s+/g, " ").trim();
+    setValue(fieldName, cleaned, { shouldValidate: true });
   };
 
-  // Remove all whitespace from email on blur (leading/trailing/in-between) then validate
   const normalizeEmail = () => {
     const val = getValues("email") || "";
     const cleaned = val.replace(/\s+/g, "");
@@ -54,11 +48,19 @@ const RegisterLearner = () => {
 
   const onSubmit = async (data, e) => {
     e.preventDefault();
-    console.log("data", data);
+    // Clean email like Login: remove all whitespaces before submit
+    const emailCleaned = (data.email || "").replace(/\s+/g, "");
+    if (emailCleaned !== data.email) {
+      setValue("email", emailCleaned, {
+        shouldValidate: false,
+        shouldDirty: true,
+      });
+    }
+    console.log("data", { ...data, email: emailCleaned });
     try {
       const result = await registerUser({
         username: data.fullName,
-        email: data.email,
+        email: emailCleaned,
         password: data.password,
         role: "learner",
       });
@@ -95,8 +97,6 @@ const RegisterLearner = () => {
       } else {
         ToastHelper.error(err.message || "Registration failed");
       }
-      // keep console for debugging
-      // eslint-disable-next-line no-console
       console.error("Register error:", err);
     }
   };
@@ -139,7 +139,10 @@ const RegisterLearner = () => {
                 required
                 maxLength={50}
                 aria-invalid={!!errors.fullName}
-                onBlur={() => handleTrimAndValidate("fullName")}
+                onBlur={(e) => {
+                  register("fullName").onBlur(e);
+                  handleTrimAndValidate("fullName", e);
+                }}
               />
               {errors.fullName && (
                 <p className="text-sm text-red-600 mt-1">
@@ -159,7 +162,10 @@ const RegisterLearner = () => {
                 {...register("email")}
                 required
                 aria-invalid={!!errors.email}
-                onBlur={normalizeEmail}
+                onBlur={(e) => {
+                  register("email").onBlur(e);
+                  handleTrimAndValidate("email", e);
+                }}
               />
               {errors.email && (
                 <p className="text-sm text-red-600 mt-1">

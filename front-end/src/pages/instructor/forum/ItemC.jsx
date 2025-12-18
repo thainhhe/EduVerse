@@ -14,7 +14,7 @@ import {
     AlertTriangle,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { Avatar } from "@radix-ui/react-avatar";
 import {
     DropdownMenu,
@@ -62,9 +62,9 @@ export default function CommentItem({
     // 🟢 Gửi phản hồi
     const handleReply = async () => {
         if (!isMyComment && !isMainInstructor && !isCollab) {
-            return ToastHelper.error("Bạn không có quyền!");
+            return ToastHelper.error("You don't have permission!");
         }
-        if (!replyContent.trim()) return ToastHelper.info("Vui lòng nhập nội dung phản hồi!");
+        if (!replyContent.trim()) return ToastHelper.info("Please enter a reply!");
         try {
             const res = await fetch("http://localhost:9999/api/v1/comment/create-comment", {
                 method: "POST",
@@ -186,7 +186,7 @@ export default function CommentItem({
     const isMyComment = comment.userId?._id === userId;
     const createdTime = formatDistanceToNow(new Date(comment.createdAt), {
         addSuffix: true,
-        locale: vi,
+        locale: enUS,
     });
 
     return (
@@ -420,17 +420,6 @@ export default function CommentItem({
 
                     {/* Action Bar */}
                     <div className="flex items-center gap-4 mt-1 ml-1">
-                        <button
-                            onClick={toggleLike}
-                            className={cn(
-                                "flex items-center gap-1.5 text-xs font-medium transition-colors px-2 py-1 rounded-full hover:bg-gray-100",
-                                userLiked ? "text-indigo-600" : "text-gray-500 hover:text-gray-700"
-                            )}
-                        >
-                            <ThumbsUp className={cn("w-3.5 h-3.5", userLiked && "fill-current")} />
-                            {likes > 0 ? likes : "Like"}
-                        </button>
-
                         {!isEditing && (
                             <button
                                 onClick={() => setIsReplying(!isReplying)}

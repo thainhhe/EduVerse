@@ -150,9 +150,7 @@ export function AddLessonModal({
                   setErrors((p) => ({ ...p, lessonTitle: undefined }));
               }}
               onBlur={normalizeLessonTitle}
-              className={`w-full ${
-                errors.lessonTitle ? "border-red-500 ring-1 ring-red-300" : ""
-              }`}
+              className="w-full"
             />
 
             {errors.lessonTitle && (
@@ -171,9 +169,7 @@ export function AddLessonModal({
               value={contentGroup}
               onChange={(e) => setContentGroup(e.target.value)}
               onBlur={normalizeContent}
-              className={`w-full min-h-[170px] resize-y ${
-                errors.contentGroup ? "border-red-500 ring-1 ring-red-300" : ""
-              }`}
+              className="w-full min-h-[170px] resize-y"
             />
           </div>
           {errors.contentGroup && (
