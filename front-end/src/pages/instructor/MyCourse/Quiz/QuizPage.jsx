@@ -395,6 +395,9 @@ const QuizPage = () => {
         questions:
           "Please add at least one valid question with options and correct answer.",
       }));
+      ToastHelper.error(
+        "Please add at least one valid question with options and correct answer in tab Questions"
+      );
       return;
     }
 

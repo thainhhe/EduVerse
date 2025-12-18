@@ -23,6 +23,7 @@ import {
     DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { ToastHelper } from "@/helper/ToastHelper";
+import { ReasonDialog } from "./ReasonDialog";
 export default function CommentItem({ comment, level, forumId, userId, refresh }) {
     const [likes, setLikes] = useState(comment.likes || 0);
     const [userLiked, setUserLiked] = useState(false);
@@ -33,6 +34,8 @@ export default function CommentItem({ comment, level, forumId, userId, refresh }
     const [showMenu, setShowMenu] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(comment.content);
+
+    const [openReasonDialog, setOpenReasonDialog] = useState(false);
 
     const MAX_PREVIEW = 0;
     const visibleComments = showAll ? childComments : childComments.slice(0, MAX_PREVIEW);
@@ -120,8 +123,7 @@ export default function CommentItem({ comment, level, forumId, userId, refresh }
     };
 
     // 🟢 Báo cáo bình luận
-    const handleReport = async () => {
-        const reason = prompt("Reason for reporting this comment:");
+    const handleReport = async (reason) => {
         if (!reason) return ToastHelper.error("Please enter a reason for reporting this comment!");
         try {
             const res = await fetch(`http://localhost:9999/api/v1/comment/${comment._id}/report`, {
@@ -138,8 +140,12 @@ export default function CommentItem({ comment, level, forumId, userId, refresh }
         }
     };
 
+    const handleOpenReasonDialog = () => {
+        setOpenReasonDialog(true);
+    };
+
     const getInitial = (name) => (name && typeof name === "string" ? name.charAt(0).toUpperCase() : "?");
-    const userName = comment.userId?.email?.split("@")[0] || "Người dùng";
+    const userName = comment.userId?.email?.split("@")[0] || "User";
     const isMyComment = comment.userId?._id === userId;
     const createdTime = formatDistanceToNow(new Date(comment.createdAt), {
         addSuffix: true,
@@ -223,7 +229,7 @@ export default function CommentItem({ comment, level, forumId, userId, refresh }
                             <input
                                 value={replyContent}
                                 onChange={(e) => setReplyContent(e.target.value)}
-                                placeholder="Viết phản hồi..."
+                                placeholder="Write a reply..."
                                 className="flex-1 rounded-xl border border-gray-300 px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                             />
                             <Button
@@ -291,7 +297,7 @@ export default function CommentItem({ comment, level, forumId, userId, refresh }
                             ) : (
                                 <DropdownMenuItem
                                     className="text-yellow-600 focus:text-yellow-700"
-                                    onClick={handleReport}
+                                    onClick={handleOpenReasonDialog}
                                 >
                                     <Flag className="w-4 h-4 mr-2" /> Report comment
                                 </DropdownMenuItem>
@@ -300,6 +306,11 @@ export default function CommentItem({ comment, level, forumId, userId, refresh }
                     </DropdownMenu>
                 </div>
             </div>
+            <ReasonDialog
+                open={openReasonDialog}
+                onOpenChange={() => setOpenReasonDialog(false)}
+                onSubmit={handleReport}
+            />
         </div>
     );
 }

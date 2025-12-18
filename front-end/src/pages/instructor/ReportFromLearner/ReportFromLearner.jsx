@@ -86,24 +86,6 @@ const ReportFromLearner = () => {
 
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-    const handleUpdateStatus = async (id, newStatus) => {
-        try {
-            const res = await reportService.updateReportStatus(id, newStatus);
-            if (res.success) {
-                ToastHelper.success("Status updated successfully");
-                // Update local state to reflect change immediately without refetching
-                setReports((prev) =>
-                    prev.map((item) => (item._id === id ? { ...item, status: newStatus } : item))
-                );
-            } else {
-                ToastHelper.error("Failed to update status");
-            }
-        } catch (err) {
-            console.error(err);
-            ToastHelper.error("Error updating status");
-        }
-    };
-
     const getStatusBadge = (status) => {
         switch (status) {
             case "open":
@@ -218,9 +200,6 @@ const ReportFromLearner = () => {
                                         <TableHead className="w-[25%]">Description</TableHead>
                                         <TableHead className="w-[10%] whitespace-nowrap">Status</TableHead>
                                         <TableHead className="w-[10%] whitespace-nowrap">Date</TableHead>
-                                        <TableHead className="w-[5%] text-right whitespace-nowrap">
-                                            Action
-                                        </TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -273,54 +252,14 @@ const ReportFromLearner = () => {
                                             <TableCell>{getStatusBadge(item.status)}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                    <Calendar className="h-3.5 w-3.5" />
                                                     {new Date(item.createdAt).toLocaleDateString("vi-VN")}
                                                 </div>
-                                                <div className="text-xs text-muted-foreground pl-5.5">
+                                                <div className="text-xs text-muted-foreground">
                                                     {new Date(item.createdAt).toLocaleTimeString("vi-VN", {
                                                         hour: "2-digit",
                                                         minute: "2-digit",
                                                     })}
                                                 </div>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Select
-                                                    value={item.status}
-                                                    onValueChange={(value) =>
-                                                        handleUpdateStatus(item._id, value)
-                                                    }
-                                                >
-                                                    <SelectTrigger className="w-[130px] ml-auto h-8 text-xs bg-white">
-                                                        <SelectValue placeholder="Update Status" />
-                                                    </SelectTrigger>
-                                                    <SelectContent align="end">
-                                                        <SelectItem
-                                                            value="open"
-                                                            className="text-blue-600 focus:text-blue-700 focus:bg-blue-50"
-                                                        >
-                                                            <div className="flex items-center gap-2">
-                                                                <AlertCircle className="h-3.5 w-3.5" /> Open
-                                                            </div>
-                                                        </SelectItem>
-                                                        <SelectItem
-                                                            value="inprogress"
-                                                            className="text-yellow-600 focus:text-yellow-700 focus:bg-yellow-50"
-                                                        >
-                                                            <div className="flex items-center gap-2">
-                                                                <Clock className="h-3.5 w-3.5" /> In Progress
-                                                            </div>
-                                                        </SelectItem>
-                                                        <SelectItem
-                                                            value="resolved"
-                                                            className="text-green-600 focus:text-green-700 focus:bg-green-50"
-                                                        >
-                                                            <div className="flex items-center gap-2">
-                                                                <CheckCircle2 className="h-3.5 w-3.5" />{" "}
-                                                                Resolved
-                                                            </div>
-                                                        </SelectItem>
-                                                    </SelectContent>
-                                                </Select>
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -355,7 +294,6 @@ const ReportFromLearner = () => {
 
                             {Array.from({ length: totalPages }, (_, i) => i + 1)
                                 .filter((page) => {
-                                    // Show first, last, current, and adjacent pages
                                     return (
                                         page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1
                                     );

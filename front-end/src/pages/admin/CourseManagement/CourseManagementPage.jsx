@@ -1,14 +1,4 @@
-import {
-    AlertCircle,
-    BookOpen,
-    Check,
-    CheckCircle,
-    Download,
-    Eye,
-    Search,
-    X,
-    XCircle
-} from "lucide-react";
+import { AlertCircle, BookOpen, Check, CheckCircle, Download, Eye, Search, X, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -32,6 +22,7 @@ import { ToastHelper } from "@/helper/ToastHelper";
 import categoryService from "@/services/categoryService";
 import { approveCourse, getAllCourse, rejectCourse } from "@/services/courseService";
 import Swal from "sweetalert2";
+import * as XLSX from "xlsx";
 
 const CourseManagementPage = () => {
     const [search, setSearch] = useState("");
@@ -41,6 +32,7 @@ const CourseManagementPage = () => {
     const [isFirstLoad, setIsFirstLoad] = useState(true);
     const [rejectReason, setRejectReason] = useState("");
     const [showRejectModal, setShowRejectModal] = useState(false);
+
     const [selectedCourseId, setSelectedCourseId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [coursesPerPage, setCoursesPerPage] = useState(10);
@@ -260,6 +252,44 @@ const CourseManagementPage = () => {
                 return <span>{status}</span>;
         }
     };
+    const handleExportExcel = () => {
+        console.log("export exxcel")
+        // 1. Xác định dữ liệu cần export
+        const exportSource =
+            selectedCourses.length > 0
+                ? filteredCourses.filter(c => selectedCourses.includes(c._id))
+                : filteredCourses;
+
+        if (exportSource.length === 0) {
+            ToastHelper.error("No courses to export");
+            return;
+        }
+
+        // 2. Chuẩn hoá dữ liệu cho Excel
+        const exportData = exportSource.map((course, index) => ({
+            "No": index + 1,
+            "Title": course.title || "",
+            "Category": course.category?.name || "",
+            "Instructor": course.main_instructor?.username || "",
+            "Price": course.price != null ? formatCurrency(course.price) : "",
+            "Status": course.status || "",
+            "Created At": formatDateTime(course.createdAt),
+
+        }));
+
+        // 3. Tạo worksheet & workbook
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Courses");
+
+        // 4. Xuất file
+        const fileName =
+            selectedCourses.length > 0
+                ? `courses_selected_${Date.now()}.xlsx`
+                : `courses_${Date.now()}.xlsx`;
+
+        XLSX.writeFile(workbook, fileName);
+    };
 
     return (
         <div className="max-w-full mx-auto space-y-4 min-h-screen bg-gray-50/50">
@@ -313,9 +343,10 @@ const CourseManagementPage = () => {
                             <Button
                                 variant="outline"
                                 className="bg-white text-black hover:bg-gray-100"
-                                // onClick={handleReset}
+                                onClick={handleExportExcel}
                             >
-                                <Download /> Export
+                                <Download />
+                                Export
                             </Button>
                         </div>
                         <div className="relative border border-gray-200 rounded-md bg-white text-black">
@@ -373,9 +404,8 @@ const CourseManagementPage = () => {
                                     currentCourses.map((course) => (
                                         <TableRow
                                             key={course._id}
-                                            className={`hover:bg-gray-200 transition-colors cursor-pointer ${
-                                                selectedCourses.includes(course._id) ? "bg-gray-200" : ""
-                                            }`}
+                                            className={`hover:bg-gray-200 transition-colors cursor-pointer ${selectedCourses.includes(course._id) ? "bg-gray-200" : ""
+                                                }`}
                                             onClick={() =>
                                                 handleSelectOne(
                                                     course._id,
@@ -396,7 +426,7 @@ const CourseManagementPage = () => {
                                             <TableCell className="font-medium text-gray-900 max-w-[200px] overflow-hidden">
                                                 {course.title}
                                             </TableCell>
-                                            <TableCell>{course.category.name}</TableCell>
+                                            <TableCell>{course.category?.name}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Avatar className="h-8 w-8">

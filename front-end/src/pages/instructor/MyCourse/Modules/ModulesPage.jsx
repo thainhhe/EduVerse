@@ -352,7 +352,7 @@ const ModulesPage = () => {
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-3 mb-1">
-                                                        <h3 className="text-lg font-bold text-gray-900 truncate">
+                                                        <h3 className="text-lg font-bold text-gray-900 truncate line-clamp-1 max-w-[calc(100%-200px)]">
                                                             {module.name}
                                                         </h3>
                                                         <div className="flex items-center gap-2">
