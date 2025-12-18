@@ -459,7 +459,9 @@ const AdminDashboardPage = () => {
                                         <TableCell>
                                             <div className="flex items-center gap-1">
                                                 <span className="font-medium text-slate-900">
-                                                    {course.averageRating ?? course.rating ?? 0}
+                                                    {course.averageRating.toFixed(2) ??
+                                                        course.rating.toFixed(2) ??
+                                                        0}
                                                 </span>
                                                 <span className="text-yellow-500">⭐</span>
                                             </div>

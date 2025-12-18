@@ -14,6 +14,7 @@ import { getAllUsers, lockUser, unlockUser } from "@/services/userService";
 import Swal from "sweetalert2";
 import { AddNewUser } from "./AddNewUser";
 import * as XLSX from "xlsx";
+import { useAuth } from "@/hooks/useAuth";
 
 const UserManagementPage = () => {
     const [users, setUsers] = useState([]);

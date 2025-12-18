@@ -119,8 +119,8 @@ export function QuestionForm({ onAddQuestion }) {
                             value={type}
                             onChange={(e) => setType(e.target.value)}
                         >
-                            <option value="multiple-choice">Multiple Choice</option>
-                            <option value="checkbox">Checkbox (Multiple Answers)</option>
+                            <option value="multiple-choice">Single Choice</option>
+                            <option value="checkbox">Multiple Choice</option>
                             <option value="true-false">True / False</option>
                         </select>
                     </div>

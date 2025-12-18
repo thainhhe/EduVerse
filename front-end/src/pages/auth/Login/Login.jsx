@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import authService from "@/services/authService";
+import { ArrowLeft } from "lucide-react";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -120,6 +121,10 @@ const Login = () => {
           />
         </div>
         <div className="p-6 sm:p-8 lg:p-12 flex flex-col justify-center">
+          <div className="flex items-center gap-2 cursor-pointer py-2 px-1" onClick={() => navigate("/")}>
+            <ArrowLeft className="font-bold" size={17} />
+            <span className="font-bold">Back to Home</span>
+          </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-indigo-600 mb-6 text-center lg:text-left">
             Sign in
           </h2>
