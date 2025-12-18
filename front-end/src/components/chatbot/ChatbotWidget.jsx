@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { streamChatQuery } from "../../services/chatbotService";
-import Swal from "sweetalert2";
+import { ConfirmationHelper } from "../../helper/ConfirmationHelper";
+import { ToastHelper } from "../../helper/ToastHelper";
 
 const widgetBox = {
   position: "fixed",
@@ -56,7 +57,7 @@ const headerIconStyle = {
 export const ChatbotWidget = () => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { sender: "bot", text: "Chào bạn! Tôi có thể giúp gì cho bạn?" },
+    { sender: "bot", text: "Hello! How can I help you today?" },
   ]);
   const [value, setValue] = useState("");
   const [loading, setLoading] = useState(false);
@@ -371,50 +372,41 @@ export const ChatbotWidget = () => {
               />
               <strong style={{ fontSize: 16 }}>EduVerse Chatbot</strong>
             </div>
-            <button
-              onClick={() => {
-                Swal.fire({
-                  title: "Xác nhận xóa",
-                  text: "Bạn có chắc chắn muốn xóa tất cả lịch sử trò chuyện?",
-                  icon: "warning",
-                  showCancelButton: true,
-                  confirmButtonColor: "#4F39F6",
-                  cancelButtonColor: "#d33",
-                  confirmButtonText: "Xóa",
-                  cancelButtonText: "Hủy",
-                }).then((result) => {
-                  if (result.isConfirmed) {
-                    setMessages([
-                      {
-                        sender: "bot",
-                        text: "Chào bạn! Tôi có thể giúp gì cho bạn?",
-                      },
-                    ]);
-                    Swal.fire({
-                      title: "Đã xóa!",
-                      text: "Lịch sử trò chuyện đã được xóa.",
-                      icon: "success",
-                      confirmButtonColor: "#4F39F6",
-                      timer: 1500,
-                      showConfirmButton: false,
-                    });
-                  }
-                });
+            <ConfirmationHelper
+              trigger={
+                <button
+                  style={{
+                    background: "none",
+                    border: "none",
+                    fontSize: 20,
+                    cursor: "pointer",
+                    color: "#4F39F6",
+                    padding: 4,
+                    lineHeight: 1,
+                  }}
+                  aria-label="Clear chat"
+                  title="Clear chat history"
+                >
+                  &#9763;
+                </button>
+              }
+              title="Confirm Delete"
+              description="Are you sure you want to delete all chat history?"
+              confirmText="Delete"
+              cancelText="Cancel"
+              confirmBgColor="bg-red-500 hover:bg-red-600 text-white"
+              onConfirm={() => {
+                setMessages([
+                  {
+                    sender: "bot",
+                    text: "Hello! How can I help you today?",
+                  },
+                ]);
+                ToastHelper.success(
+                  "Chat history has been cleared successfully!"
+                );
               }}
-              style={{
-                background: "none",
-                border: "none",
-                fontSize: 20,
-                cursor: "pointer",
-                color: "#4F39F6",
-                padding: 4,
-                lineHeight: 1,
-              }}
-              aria-label="Clear chat"
-              title="Xóa lịch sử trò chuyện"
-            >
-              &#9763; {/* Biểu tượng xương chéo (hoặc dùng 'x') */}
-            </button>
+            />
           </div>
 
           <div
@@ -475,7 +467,7 @@ export const ChatbotWidget = () => {
               );
             })}
             {loading && (
-              <div style={{ fontStyle: "italic" }}>Bot đang trả lời...</div>
+              <div style={{ fontStyle: "italic" }}>Bot is typing...</div>
             )}
           </div>
 
@@ -486,7 +478,7 @@ export const ChatbotWidget = () => {
               value={value}
               onChange={(e) => setValue(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="Nhập tin nhắn..."
+              placeholder="Type your message..."
               style={{
                 flex: 1,
                 padding: "8px 10px",
@@ -509,7 +501,7 @@ export const ChatbotWidget = () => {
                 cursor: "pointer",
               }}
             >
-              Gửi
+              Send
             </button>
           </div>
         </div>
