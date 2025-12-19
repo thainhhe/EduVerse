@@ -85,6 +85,7 @@ const UserManagementPage = () => {
     const handleLockUser = async (userId) => {
         try {
             const res = await lockUser(userId);
+            console.log("res", res);
             if (res?.success) {
                 Swal.fire({
                     icon: "success",
