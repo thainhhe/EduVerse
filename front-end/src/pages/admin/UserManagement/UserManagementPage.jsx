@@ -14,6 +14,7 @@ import { getAllUsers, lockUser, unlockUser } from "@/services/userService";
 import Swal from "sweetalert2";
 import { AddNewUser } from "./AddNewUser";
 import * as XLSX from "xlsx";
+import { useAuth } from "@/hooks/useAuth";
 
 const UserManagementPage = () => {
     const [users, setUsers] = useState([]);
@@ -29,6 +30,7 @@ const UserManagementPage = () => {
 
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const { user } = useAuth();
 
     useEffect(() => {
         fetchUsers();
@@ -83,6 +85,7 @@ const UserManagementPage = () => {
     const handleLockUser = async (userId) => {
         try {
             const res = await lockUser(userId);
+            console.log("res", res);
             if (res?.success) {
                 Swal.fire({
                     icon: "success",
@@ -174,7 +177,7 @@ const UserManagementPage = () => {
         // 1. Xác định dữ liệu cần export
         const exportSource =
             selectedUsers.length > 0
-                ? filteredUsers.filter(u => selectedUsers.includes(u._id))
+                ? filteredUsers.filter((u) => selectedUsers.includes(u._id))
                 : filteredUsers;
 
         if (exportSource.length === 0) {
@@ -184,11 +187,11 @@ const UserManagementPage = () => {
 
         // 2. Chuẩn hoá dữ liệu cho Excel
         const exportData = exportSource.map((user, index) => ({
-            "No": index + 1,
-            "Username": user.username || "",
-            "Email": user.email || "",
-            "Role": user.role || "",
-            "Status": user.status || "",
+            No: index + 1,
+            Username: user.username || "",
+            Email: user.email || "",
+            Role: user.role || "",
+            Status: user.status || "",
             "Created At": formatDateTime(user.createdAt),
             "Last Login": formatDateTime(user.lastLogin),
         }));
@@ -200,13 +203,10 @@ const UserManagementPage = () => {
 
         // 4. Xuất file
         const fileName =
-            selectedUsers.length > 0
-                ? `users_selected_${Date.now()}.xlsx`
-                : `users_${Date.now()}.xlsx`;
+            selectedUsers.length > 0 ? `users_selected_${Date.now()}.xlsx` : `users_${Date.now()}.xlsx`;
 
         XLSX.writeFile(workbook, fileName);
     };
-
 
     return (
         <div className="min-h-screen bg-white">
@@ -237,7 +237,6 @@ const UserManagementPage = () => {
                                 </SelectContent>
                             </Select>
 
-
                             <Button
                                 variant="outline"
                                 className="bg-white text-black flex items-center hover:text-white hover:bg-indigo-600"
@@ -247,13 +246,15 @@ const UserManagementPage = () => {
                                 Export
                             </Button>
 
-                            <Button
-                                className="bg-white text-black flex items-center hover:text-white hover:bg-indigo-600"
-                                onClick={() => setOpenAddNewUser(true)}
-                            >
-                                <Plus className="h-4 w-4" />
-                                New User
-                            </Button>
+                            {user?.isSuperAdmin && (
+                                <Button
+                                    className="bg-white text-black flex items-center hover:text-white hover:bg-indigo-600"
+                                    onClick={() => setOpenAddNewUser(true)}
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    New User
+                                </Button>
+                            )}
                         </div>
                         <div className="relative">
                             <Search className="absolute left-2.5 top-3 h-4 w-4 text-gray-500" />
@@ -303,8 +304,9 @@ const UserManagementPage = () => {
                                     currentUsers.map((user) => (
                                         <TableRow
                                             key={user._id}
-                                            className={`hover:bg-gray-200 transition-colors cursor-pointer ${selectedUsers.includes(user._id) ? "bg-gray-200" : ""
-                                                }`}
+                                            className={`hover:bg-gray-200 transition-colors cursor-pointer ${
+                                                selectedUsers.includes(user._id) ? "bg-gray-200" : ""
+                                            }`}
                                             onClick={() =>
                                                 handleSelectOne(user._id, !selectedUsers.includes(user._id))
                                             }

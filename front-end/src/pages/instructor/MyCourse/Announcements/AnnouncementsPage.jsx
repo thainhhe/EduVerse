@@ -41,7 +41,7 @@ const AnnouncementsPage = () => {
                     // Filter notifications related to this course
                     // Assuming the link format is /course/{courseId} or similar
                     const courseNotifications = allNotifications.filter(
-                        (n) => n.link && n.link.includes(courseId)
+                        (n) => (n?.link && n?.link.includes(courseId)) || allNotifications
                     );
 
                     setAnnouncements(courseNotifications);

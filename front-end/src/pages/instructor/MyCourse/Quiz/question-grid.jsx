@@ -30,9 +30,9 @@ export function QuestionGrid({ questions, onDeleteQuestion }) {
                                                 className="text-xs rounded-sm border-gray-300"
                                             >
                                                 {question.type === "multiple-choice"
-                                                    ? "Multiple Choice"
+                                                    ? "Single Choice"
                                                     : question.type === "checkbox"
-                                                    ? "Multiple Answers"
+                                                    ? "Multiple Choice"
                                                     : "True/False"}
                                             </Badge>
                                         </div>

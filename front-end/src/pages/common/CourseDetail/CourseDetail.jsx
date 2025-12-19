@@ -22,6 +22,9 @@ import {
     Smartphone,
     Lock,
     LockIcon,
+    MoreHorizontal,
+    Edit3,
+    Trash2Icon,
 } from "lucide-react";
 import { getCourseById } from "@/services/courseService";
 import { useEffect, useState } from "react";
@@ -52,6 +55,7 @@ import { enrollmentService } from "@/services/enrollmentService";
 import { paymentService } from "@/services/paymentService";
 import { format } from "date-fns";
 import roomService from "@/services/roomService";
+import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 
 const CourseDetail = () => {
     const navigate = useNavigate();
@@ -96,11 +100,11 @@ const CourseDetail = () => {
                         setForum(resForum.data);
                     }
                 } else {
-                    setError("Không thể tải khóa học.");
+                    setError("Can't load course.");
                 }
             } catch (err) {
-                console.error("❌ Lỗi khi fetch dữ liệu:", err);
-                setError("Đã xảy ra lỗi khi tải dữ liệu.");
+                console.error("❌ Error when fetching data:", err);
+                setError("Can't load course.");
             } finally {
                 setLoading(false);
             }
@@ -143,7 +147,7 @@ const CourseDetail = () => {
 
     const handleSubmitReview = async () => {
         if (!rating || !comment.trim()) {
-            ToastHelper.error("Vui lòng nhập đủ số sao và bình luận!");
+            ToastHelper.error("Please enter a rating and comment!");
             return;
         }
 
@@ -160,7 +164,7 @@ const CourseDetail = () => {
                 res = await reviewService.updateReview(editingReviewId, reviewData);
                 if (res) {
                     setReviews((prev) => prev.map((r) => (r._id === editingReviewId ? res.data : r)));
-                    ToastHelper.success("Cập nhật đánh giá thành công!");
+                    ToastHelper.success("Update review successfully!");
                 }
             } else {
                 res = await reviewService.addReview(reviewData);
@@ -174,7 +178,7 @@ const CourseDetail = () => {
                         },
                     };
                     setReviews((prev) => [...prev, newReview]);
-                    ToastHelper.success(res?.message || "Thêm đánh giá thành công!");
+                    ToastHelper.success(res?.message || "Add review successfully!");
                 }
             }
 
@@ -185,7 +189,7 @@ const CourseDetail = () => {
             if (error.response?.status === 409) {
                 ToastHelper.error(error.response.data.message);
             } else {
-                ToastHelper.error("Có lỗi xảy ra khi gửi đánh giá!");
+                ToastHelper.error("Error adding/updating review!");
             }
             console.error("Error adding/updating review:", error);
         }
@@ -198,25 +202,25 @@ const CourseDetail = () => {
     };
 
     const handleDeleteReview = async (reviewId) => {
-        if (!confirm("Bạn có chắc muốn xóa đánh giá này không?")) return;
+
 
         try {
             const res = await reviewService.deleteReview(reviewId);
             if (res) {
                 setReviews((prev) => prev.filter((r) => r._id !== reviewId));
-                ToastHelper.success("Đã xóa đánh giá!");
+                ToastHelper.success("Delete review successfully!");
             } else {
-                ToastHelper.error(res?.message || "Không thể xóa đánh giá.");
+                ToastHelper.error(res?.message || "Can't delete review.");
             }
         } catch (err) {
             console.error("Error deleting review:", err);
-            ToastHelper.error("Có lỗi xảy ra khi xóa đánh giá!");
+            ToastHelper.error("Error deleting review!");
         }
     };
 
     const handleSubmitReport = async () => {
         if (!issueDescription.trim()) {
-            ToastHelper.error("Vui lòng nhập mô tả lỗi!");
+            ToastHelper.error("Please enter a description!");
             return;
         }
 
@@ -231,13 +235,13 @@ const CourseDetail = () => {
         try {
             const res = await reportService.createReport(data);
             if (res?.success) {
-                ToastHelper.success("Đã gửi báo cáo thành công!");
+                ToastHelper.success("Report sent successfully!");
                 setOpenReport(false);
                 setIssueDescription("");
                 setIssueTypeSelect("bug");
             }
         } catch (err) {
-            ToastHelper.error("Gửi báo cáo thất bại!");
+            ToastHelper.error("Error sending report!");
             console.error(err);
         }
     };
@@ -525,7 +529,7 @@ const CourseDetail = () => {
                             <TabsContent value="reviews">
                                 <Card>
                                     <CardHeader className="flex flex-row items-center justify-between">
-                                        <CardTitle>Student Reviews</CardTitle>
+                                        <CardTitle>Reviews</CardTitle>
                                         {isEnrolled && (
                                             <Dialog open={openReport} onOpenChange={setOpenReport}>
                                                 <DialogTrigger asChild>
@@ -591,7 +595,7 @@ const CourseDetail = () => {
                                     </CardHeader>
                                     <CardContent>
                                         {isEnrolled && !editingReviewId && (
-                                            <div className="mb-8 bg-gray-50 p-6 rounded-xl border border-gray-100">
+                                            <div className="mb-8 bg-gray-50 rounded-xl border border-gray-100">
                                                 <h3 className="font-semibold mb-4">Write a Review</h3>
                                                 <div className="space-y-4">
                                                     <StarRating value={rating} onChange={setRating} />
@@ -600,6 +604,7 @@ const CourseDetail = () => {
                                                         onChange={(e) => setComment(e.target.value)}
                                                         placeholder="Share your experience with this course..."
                                                         rows={3}
+                                                    // className="break-all whitespace-normal"
                                                     />
                                                     <Button
                                                         onClick={handleSubmitReview}
@@ -645,50 +650,54 @@ const CourseDetail = () => {
                                                                             <span className="text-gray-400 ml-2 text-xs">
                                                                                 {review.updatedAt
                                                                                     ? format(
-                                                                                          new Date(
-                                                                                              review.updatedAt
-                                                                                          ),
-                                                                                          "MMM dd, yyyy"
-                                                                                      )
-                                                                                    : ""}
+                                                                                        new Date(
+                                                                                            review.updatedAt
+                                                                                        ),
+                                                                                        "MMM dd, yyyy"
+                                                                                    )
+                                                                                    : formatDistanceToNow(
+                                                                                        new Date(
+                                                                                            review.createdAt
+                                                                                        ),
+                                                                                        {
+                                                                                            addSuffix: true,
+                                                                                            locale: enUS,
+                                                                                        }
+                                                                                    )}
                                                                             </span>
                                                                         </div>
                                                                     </div>
 
                                                                     {user?._id === review.userId?._id &&
                                                                         editingReviewId !== review._id && (
-                                                                            <DropdownMenu>
-                                                                                <DropdownMenuTrigger asChild>
-                                                                                    <Button
-                                                                                        variant="ghost"
-                                                                                        size="icon"
-                                                                                        className="h-8 w-8"
-                                                                                    >
-                                                                                        <MoreVertical className="h-4 w-4" />
-                                                                                    </Button>
-                                                                                </DropdownMenuTrigger>
-                                                                                <DropdownMenuContent align="end">
-                                                                                    <DropdownMenuItem
-                                                                                        onClick={() =>
-                                                                                            handleEditReview(
-                                                                                                review
-                                                                                            )
-                                                                                        }
-                                                                                    >
-                                                                                        Edit
-                                                                                    </DropdownMenuItem>
-                                                                                    <DropdownMenuItem
-                                                                                        onClick={() =>
-                                                                                            handleDeleteReview(
-                                                                                                review._id
-                                                                                            )
-                                                                                        }
-                                                                                        className="text-red-600"
-                                                                                    >
-                                                                                        Delete
-                                                                                    </DropdownMenuItem>
-                                                                                </DropdownMenuContent>
-                                                                            </DropdownMenu>
+                                                                            <div className="flex gap-4 items-center">
+                                                                                <button
+                                                                                    onClick={() =>
+                                                                                        handleEditReview(
+                                                                                            review
+                                                                                        )
+                                                                                    }
+                                                                                    className="text-blue-500 transition-all duration-300 hover:scale-125"
+                                                                                >
+                                                                                    <Edit3 size={17} />
+                                                                                </button>
+                                                                                <ConfirmationHelper
+                                                                                    trigger={
+                                                                                        <button className="text-red-500 transition-all duration-300 hover:scale-125">
+                                                                                            <Trash2Icon
+                                                                                                size={17}
+                                                                                            />
+                                                                                        </button>
+                                                                                    }
+                                                                                    title="Are you sure you want to delete this review?"
+                                                                                    description="This action cannot be undone."
+                                                                                    onConfirm={() =>
+                                                                                        handleDeleteReview(
+                                                                                            review._id
+                                                                                        )
+                                                                                    }
+                                                                                />
+                                                                            </div>
                                                                         )}
                                                                 </div>
 
@@ -726,7 +735,7 @@ const CourseDetail = () => {
                                                                         </div>
                                                                     </div>
                                                                 ) : (
-                                                                    <p className="text-gray-700 mt-3 leading-relaxed">
+                                                                    <p className="text-gray-700 mt-3 leading-relaxed break-all whitespace-pre-wrap">
                                                                         {review.comment}
                                                                     </p>
                                                                 )}
@@ -818,11 +827,11 @@ const CourseDetail = () => {
                                                                         <span>
                                                                             {room.startTime
                                                                                 ? format(
-                                                                                      new Date(
-                                                                                          room.startTime
-                                                                                      ),
-                                                                                      "MMM dd, yyyy HH:mm"
-                                                                                  )
+                                                                                    new Date(
+                                                                                        room.startTime
+                                                                                    ),
+                                                                                    "MMM dd, yyyy HH:mm"
+                                                                                )
                                                                                 : "No schedule"}
                                                                         </span>
                                                                     </div>
@@ -850,7 +859,7 @@ const CourseDetail = () => {
 
                                                             <div className="ml-4">
                                                                 {room.status === "ended" ||
-                                                                room.status === "pending" ? (
+                                                                    room.status === "pending" ? (
                                                                     <Button disabled variant="secondary">
                                                                         {room.status === "ended"
                                                                             ? "Ended"
@@ -862,7 +871,7 @@ const CourseDetail = () => {
                                                                         className="bg-indigo-600 hover:bg-indigo-700"
                                                                     >
                                                                         {room.password &&
-                                                                        room.password.trim() !== "" ? (
+                                                                            room.password.trim() !== "" ? (
                                                                             <>
                                                                                 <LockIcon className="w-4 h-4 mr-2" />
                                                                                 Join Now
@@ -1040,9 +1049,9 @@ const EnrollCard = ({ price, onEnroll, isEnrolled, course }) => {
                     {price === 0
                         ? "Free"
                         : new Intl.NumberFormat("vi-VN", {
-                              style: "currency",
-                              currency: "VND",
-                          }).format(price)}
+                            style: "currency",
+                            currency: "VND",
+                        }).format(price)}
                 </CardTitle>
                 {price > 0 && (
                     <CardDescription className="text-green-600 font-medium flex items-center gap-1">

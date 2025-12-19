@@ -507,21 +507,26 @@ const ModulesPage = () => {
                                                                 )}
                                                             >
                                                                 <div className="flex items-center justify-between gap-4">
-                                                                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                                    <div className="flex items-center gap-4 w-full max-w-[calc(100%-200px)] min-w-0">
                                                                         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-100 to-indigo-200 text-indigo-700 font-semibold text-sm flex-shrink-0">
                                                                             <ScrollText />
                                                                         </div>
                                                                         <div className="flex-1 min-w-0">
                                                                             <div className="flex items-center gap-2 mb-1">
-                                                                                <h4 className="font-semibold text-gray-900 truncate">
+                                                                                <h4 className="font-semibold text-gray-900 truncate max-w-[90%]">
                                                                                     {lesson.title}
                                                                                 </h4>
-                                                                                <span className="text-xs text-gray-500">
-                                                                                    {lessonQuizCounts[
-                                                                                        lesson.id
-                                                                                    ] ?? 0}{" "}
-                                                                                    quiz
-                                                                                </span>
+                                                                                <Badge
+                                                                                    variant="secondary"
+                                                                                    className="bg-purple-50 text-purple-700 border-purple-200 text-xs flex items-center gap-1"
+                                                                                >
+                                                                                    {
+                                                                                        lessonQuizCounts[
+                                                                                            lesson.id
+                                                                                        ]
+                                                                                    }
+                                                                                    <span>quizzes</span>
+                                                                                </Badge>
                                                                             </div>
                                                                             <p className="text-sm text-gray-600 line-clamp-1 break-all">
                                                                                 {lesson.content ||

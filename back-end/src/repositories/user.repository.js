@@ -171,7 +171,11 @@ const userRepository = {
     },
 
     banned: async (id) => {
-        return await User.findOneAndUpdate({ _id: id, status: "active" }, { status: "banned" }, { new: true })
+        return await User.findOneAndUpdate(
+            { _id: id, status: "active", isSuperAdmin: false },
+            { status: "banned" },
+            { new: true }
+        )
             .select("-password")
             .exec();
     },

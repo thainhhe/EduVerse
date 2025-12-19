@@ -1,4 +1,3 @@
-"use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +13,7 @@ import {
     MoreVertical,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { vi } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { Avatar } from "@radix-ui/react-avatar";
 import {
     DropdownMenu,
@@ -24,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ToastHelper } from "@/helper/ToastHelper";
 import { ReasonDialog } from "./ReasonDialog";
+import { ConfirmationHelper } from "@/helper/ConfirmationHelper";
 export default function CommentItem({ comment, level, forumId, userId, refresh }) {
     const [likes, setLikes] = useState(comment.likes || 0);
     const [userLiked, setUserLiked] = useState(false);
@@ -76,7 +76,6 @@ export default function CommentItem({ comment, level, forumId, userId, refresh }
 
     // 🟢 Xóa bình luận
     const handleDelete = async () => {
-        if (!window.confirm("Are you sure you want to delete this comment?")) return;
         try {
             const res = await fetch(`http://localhost:9999/api/v1/comment/${comment._id}`, {
                 method: "DELETE",
@@ -149,7 +148,7 @@ export default function CommentItem({ comment, level, forumId, userId, refresh }
     const isMyComment = comment.userId?._id === userId;
     const createdTime = formatDistanceToNow(new Date(comment.createdAt), {
         addSuffix: true,
-        locale: vi,
+        locale: enUS,
     });
 
     return (
@@ -193,22 +192,16 @@ export default function CommentItem({ comment, level, forumId, userId, refresh }
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-sm mt-1">{comment.content}</div>
+                            // <div className="text-sm mt-1">{comment.content}</div>
+                            <div className="text-sm mt-1 break-all whitespace-pre-wrap">
+                                {comment.content}
+                            </div>
+
                         )}
                     </div>
 
                     {/* Các nút thao tác */}
                     <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={toggleLike}
-                            className={`h-6 px-0 font-medium ${userLiked ? "text-blue-600" : ""}`}
-                        >
-                            <ThumbsUp className={`w-3.5 h-3.5 mr-1 ${userLiked ? "fill-current" : ""}`} />
-                            {likes > 0 && likes}
-                        </Button>
-
                         {!isEditing && (
                             <Button
                                 variant="ghost"
@@ -287,11 +280,18 @@ export default function CommentItem({ comment, level, forumId, userId, refresh }
                                     >
                                         <PenOffIcon className="w-4 h-4 mr-2" /> Edit comment
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        className="text-red-600 focus:text-red-700"
-                                        onClick={handleDelete}
-                                    >
-                                        <Trash2 className="w-4 h-4 mr-2" /> Delete comment
+                                    <DropdownMenuItem className="text-red-600 focus:text-red-700">
+                                        <ConfirmationHelper
+                                            title="Delete comment"
+                                            message="Are you sure you want to delete this comment?"
+                                            trigger={
+                                                <div className="flex items-center gap-2">
+                                                    <Trash2 className="w-4 h-4 mr-2" />
+                                                    Delete comment
+                                                </div>
+                                            }
+                                            onConfirm={handleDelete}
+                                        />
                                     </DropdownMenuItem>
                                 </>
                             ) : (
