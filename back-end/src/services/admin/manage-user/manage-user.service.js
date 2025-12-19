@@ -4,6 +4,7 @@ const { userRepository } = require("../../../repositories/user.repository");
 const { adminUserRepository } = require("../../../repositories/admin-user.repository");
 const { upLoadImage } = require("../../../utils/response.util");
 const { authHelper } = require("../../auth/auth.helper");
+const User = require("../../../models/User");
 
 const manage_user_service = {
     getAllUser: async () => {
@@ -108,7 +109,17 @@ const manage_user_service = {
 
     lockUser: async (id) => {
         try {
-            const result = await userRepository.update(id, { status: "banned" });
+            const result = await User.findOneAndUpdate(
+                { _id: id, isSuperAdmin: false },
+                { status: "banned" },
+                { new: true }
+            );
+            if (!result) {
+                return {
+                    status: system_enum.STATUS_CODE.NOT_FOUND,
+                    message: system_enum.SYSTEM_MESSAGE.FAIL_GET_DATA,
+                };
+            }
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: system_enum.SYSTEM_MESSAGE.SUCCESS,
@@ -121,7 +132,17 @@ const manage_user_service = {
 
     unlockUser: async (id) => {
         try {
-            const result = await userRepository.update(id, { status: "active" });
+            const result = await User.findOneAndUpdate(
+                { _id: id, isSuperAdmin: false },
+                { status: "active" },
+                { new: true }
+            );
+            if (!result) {
+                return {
+                    status: system_enum.STATUS_CODE.NOT_FOUND,
+                    message: system_enum.SYSTEM_MESSAGE.FAIL_GET_DATA,
+                };
+            }
             return {
                 status: system_enum.STATUS_CODE.OK,
                 message: system_enum.SYSTEM_MESSAGE.SUCCESS,
