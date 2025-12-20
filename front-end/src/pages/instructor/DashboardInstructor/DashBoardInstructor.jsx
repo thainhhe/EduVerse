@@ -158,11 +158,11 @@ const DashBoardInstructor = () => {
                         <SelectValue placeholder="Filter by" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="month">Tháng Hiện Tại</SelectItem>
-                        <SelectItem value="week">Tuần Hiện Tại</SelectItem>
-                        <SelectItem value="quarter">Quý Hiện Tại</SelectItem>
-                        <SelectItem value="year">Năm Hiện Tại</SelectItem>
-                        <SelectItem value="all">Toàn Bộ Thời Gian</SelectItem>
+                        <SelectItem value="month">This Month</SelectItem>
+                        <SelectItem value="week">This Week</SelectItem>
+                        <SelectItem value="quarter">This Quarter</SelectItem>
+                        <SelectItem value="year">This Year</SelectItem>
+                        <SelectItem value="all">All Time</SelectItem>
                     </SelectContent>
                 </Select>
             </div>

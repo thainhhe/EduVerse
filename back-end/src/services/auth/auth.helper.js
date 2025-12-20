@@ -19,13 +19,13 @@ const authHelper = {
             _id: data._id,
             id: data._id,
             username: data.username,
+            isSuperAdmin: data.isSuperAdmin,
             email: data.email,
             avatar: data.avatar !== null ? data.avatar : "",
             role: data.role || "learner",
             permissions: Array.isArray(data.permissions)
                 ? data.permissions.map((p) => (p.name ? p.name : p))
                 : [],
-            isSuperAdmin: !!data.isSuperAdmin,
             token: token_,
         };
     },

@@ -202,8 +202,6 @@ const CourseDetail = () => {
     };
 
     const handleDeleteReview = async (reviewId) => {
-
-
         try {
             const res = await reviewService.deleteReview(reviewId);
             if (res) {
@@ -604,7 +602,7 @@ const CourseDetail = () => {
                                                         onChange={(e) => setComment(e.target.value)}
                                                         placeholder="Share your experience with this course..."
                                                         rows={3}
-                                                    // className="break-all whitespace-normal"
+                                                        // className="break-all whitespace-normal"
                                                     />
                                                     <Button
                                                         onClick={handleSubmitReview}
@@ -650,20 +648,20 @@ const CourseDetail = () => {
                                                                             <span className="text-gray-400 ml-2 text-xs">
                                                                                 {review.updatedAt
                                                                                     ? format(
-                                                                                        new Date(
-                                                                                            review.updatedAt
-                                                                                        ),
-                                                                                        "MMM dd, yyyy"
-                                                                                    )
+                                                                                          new Date(
+                                                                                              review.updatedAt
+                                                                                          ),
+                                                                                          "MMM dd, yyyy"
+                                                                                      )
                                                                                     : formatDistanceToNow(
-                                                                                        new Date(
-                                                                                            review.createdAt
-                                                                                        ),
-                                                                                        {
-                                                                                            addSuffix: true,
-                                                                                            locale: enUS,
-                                                                                        }
-                                                                                    )}
+                                                                                          new Date(
+                                                                                              review.createdAt
+                                                                                          ),
+                                                                                          {
+                                                                                              addSuffix: true,
+                                                                                              locale: enUS,
+                                                                                          }
+                                                                                      )}
                                                                             </span>
                                                                         </div>
                                                                     </div>
@@ -827,11 +825,11 @@ const CourseDetail = () => {
                                                                         <span>
                                                                             {room.startTime
                                                                                 ? format(
-                                                                                    new Date(
-                                                                                        room.startTime
-                                                                                    ),
-                                                                                    "MMM dd, yyyy HH:mm"
-                                                                                )
+                                                                                      new Date(
+                                                                                          room.startTime
+                                                                                      ),
+                                                                                      "MMM dd, yyyy HH:mm"
+                                                                                  )
                                                                                 : "No schedule"}
                                                                         </span>
                                                                     </div>
@@ -859,7 +857,7 @@ const CourseDetail = () => {
 
                                                             <div className="ml-4">
                                                                 {room.status === "ended" ||
-                                                                    room.status === "pending" ? (
+                                                                room.status === "pending" ? (
                                                                     <Button disabled variant="secondary">
                                                                         {room.status === "ended"
                                                                             ? "Ended"
@@ -871,7 +869,7 @@ const CourseDetail = () => {
                                                                         className="bg-indigo-600 hover:bg-indigo-700"
                                                                     >
                                                                         {room.password &&
-                                                                            room.password.trim() !== "" ? (
+                                                                        room.password.trim() !== "" ? (
                                                                             <>
                                                                                 <LockIcon className="w-4 h-4 mr-2" />
                                                                                 Join Now
@@ -1049,15 +1047,10 @@ const EnrollCard = ({ price, onEnroll, isEnrolled, course }) => {
                     {price === 0
                         ? "Free"
                         : new Intl.NumberFormat("vi-VN", {
-                            style: "currency",
-                            currency: "VND",
-                        }).format(price)}
+                              style: "currency",
+                              currency: "VND",
+                          }).format(price)}
                 </CardTitle>
-                {price > 0 && (
-                    <CardDescription className="text-green-600 font-medium flex items-center gap-1">
-                        <Award className="w-4 h-4" /> 30-Day Money-Back Guarantee
-                    </CardDescription>
-                )}
             </CardHeader>
             <CardContent className="space-y-6">
                 {isEnrolled ? (

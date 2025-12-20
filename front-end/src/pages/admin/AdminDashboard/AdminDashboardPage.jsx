@@ -96,6 +96,7 @@ const AdminDashboardPage = () => {
                 });
 
                 setTopCourses(Array.isArray(popularCourses) ? popularCourses : []);
+                console.log("popularCourses", popularCourses);
             } catch (err) {
                 console.error("Failed to load admin dashboard:", err);
             } finally {
@@ -459,9 +460,7 @@ const AdminDashboardPage = () => {
                                         <TableCell>
                                             <div className="flex items-center gap-1">
                                                 <span className="font-medium text-slate-900">
-                                                    {course.averageRating.toFixed(2) ??
-                                                        course.rating.toFixed(2) ??
-                                                        0}
+                                                    {course.averageRating.toFixed(1) ?? 0}
                                                 </span>
                                                 <span className="text-yellow-500">⭐</span>
                                             </div>

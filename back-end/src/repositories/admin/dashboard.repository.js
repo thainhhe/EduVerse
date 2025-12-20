@@ -293,6 +293,19 @@ const DashboardRepository = {
                     $unwind: "$categoryDetails",
                 },
                 {
+                    $lookup: {
+                        from: "reviews",
+                        localField: "courseDetails._id",
+                        foreignField: "courseId",
+                        as: "reviews",
+                    },
+                },
+                {
+                    $addFields: {
+                        avgRatingCourse: { $ifNull: [{ $avg: "$reviews.rating" }, 0] },
+                    },
+                },
+                {
                     $project: {
                         _id: 0,
                         courseId: "$courseDetails._id",
@@ -300,7 +313,8 @@ const DashboardRepository = {
                         mainInstructor: "$instructorDetails.name",
                         category: "$categoryDetails.name",
                         enrollmentCount: 1,
-                        averageRating: "$courseDetails.rating",
+                        averageRating: "$avgRatingCourse",
+                        avgRatingCourse: 1,
                     },
                 }
             );

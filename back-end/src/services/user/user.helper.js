@@ -8,6 +8,7 @@ const userHelper = {
             email: data.email,
             avatar: data.avatar !== null ? data.avatar : "",
             role: data.role || "learner",
+            isSuperAdmin: data.isSuperAdmin,
             job_title: data.job_title || "",
             subject_instructor: data.subject_instructor || "",
             bio: data.bio || "",

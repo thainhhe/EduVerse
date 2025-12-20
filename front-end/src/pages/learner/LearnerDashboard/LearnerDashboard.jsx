@@ -80,7 +80,7 @@ const Dashboard = () => {
                                             <img
                                                 src={course.thumbnail || "/placeholder.svg"}
                                                 alt={course.title}
-                                                className="w-full h-40 object-cover"
+                                                className="w-full h-40 object-contain"
                                             />
                                             <CardContent className="p-6 flex flex-col flex-grow">
                                                 <div className="flex-grow">
