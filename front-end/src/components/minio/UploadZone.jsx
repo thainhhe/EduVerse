@@ -110,7 +110,7 @@ const UploadZone = ({ onUploadSuccess, data, type = "document" }) => {
                         <p className="secondary-text">
                             {uploadType === "document"
                                 ? "Supported: PDF, DOC, DOCX, TXT, XLS, XLSX"
-                                : "Supported: MP4, AVI, MOV"}
+                                : "Supported: MP4"}
                         </p>
                     </div>
                 )}

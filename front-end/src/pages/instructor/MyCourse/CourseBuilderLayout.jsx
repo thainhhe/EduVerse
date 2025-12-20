@@ -95,7 +95,7 @@ const BuilderInner = () => {
                                 )}
                             </>
                         )}
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-gray-100 px-3 py-1.5 rounded-full">
+                        {/* <div className="flex items-center gap-2 text-sm text-muted-foreground bg-gray-100 px-3 py-1.5 rounded-full">
                             <Clock className="text-green-600 w-4 h-4" />
                             <span>
                                 Last Updated:{" "}
@@ -103,7 +103,7 @@ const BuilderInner = () => {
                                     {sessionCourse?.lastUpdated ?? "—"}
                                 </span>
                             </span>
-                        </div>
+                        </div> */}
                     </div>
                 </header>
 

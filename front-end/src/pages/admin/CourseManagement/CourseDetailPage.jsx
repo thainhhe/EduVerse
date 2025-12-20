@@ -53,7 +53,18 @@ const CourseDetailPage = () => {
     const [selectedDocument, setSelectedDocument] = useState(null);
     const navigate = useNavigate();
 
-    const flagList = ["No flag", "Invalid content", "Inappropriate content", "Spam", "Other"];
+    const flagList = [
+        "No flag",
+        "Inappropriate Content",
+        "Misinformation",
+        "Copyright Violation",
+        "Spam / Promotional Content",
+        "Harassment / Hate Speech",
+        "Academic Misconduct",
+        "Safety / Legal Risk",
+        "Off-topic / Irrelevant",
+        "Low-quality Content",
+    ];
 
     const [flag, setFlag] = useState(course?.flag);
 

@@ -38,7 +38,7 @@ const Learner = ({ learner, index }) => {
                 </div>
             </div>
 
-            {/*Status */}
+            {/* Status
             <div className="flex-1 mt-3 md:mt-0 md:ml-6 flex flex-col items-start md:items-end w-full md:w-auto">
                 <Badge
                     variant="outline"
@@ -51,7 +51,7 @@ const Learner = ({ learner, index }) => {
                 >
                     {learner.grade}
                 </Badge>
-            </div>
+            </div> */}
         </div>
     );
 };
