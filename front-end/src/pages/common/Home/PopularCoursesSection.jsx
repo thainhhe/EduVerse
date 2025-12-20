@@ -94,7 +94,7 @@ const PopularCoursesSection = ({ courses: propsCourses, limit = 6 }) => {
                                     <img
                                         src={img}
                                         alt={title}
-                                        className="w-full h-48 object-cover rounded-t-2xl transform group-hover:scale-105 transition-transform duration-300"
+                                        className="w-full h-48 object-contain rounded-t-2xl transform group-hover:scale-105 transition-transform duration-300"
                                     />
                                 </div>
                                 <div className="flex-1 flex flex-col p-6">

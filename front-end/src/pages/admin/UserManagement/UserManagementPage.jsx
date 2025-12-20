@@ -26,7 +26,6 @@ const UserManagementPage = () => {
     const [statusFilter, setStatusFilter] = useState("all");
 
     const [openAddNewUser, setOpenAddNewUser] = useState(false);
-    const [openEditUser, setOpenEditUser] = useState(false);
 
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -34,6 +33,7 @@ const UserManagementPage = () => {
 
     useEffect(() => {
         fetchUsers();
+        console.log("user", user);
     }, []);
 
     const fetchUsers = async () => {

@@ -198,10 +198,11 @@ const Courses = () => {
                         <Button
                             variant={selectedCategory === "All" ? "default" : "outline"}
                             onClick={() => setSelectedCategory("All")}
-                            className={`whitespace-nowrap rounded-full px-6 transition-all duration-200 ${selectedCategory === "All"
+                            className={`whitespace-nowrap rounded-full px-6 transition-all duration-200 ${
+                                selectedCategory === "All"
                                     ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transform scale-105"
                                     : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
-                                }`}
+                            }`}
                         >
                             All
                         </Button>
@@ -211,10 +212,11 @@ const Courses = () => {
                                 key={category.id}
                                 variant={selectedCategory === category.id ? "default" : "outline"}
                                 onClick={() => setSelectedCategory(category.id)}
-                                className={`whitespace-nowrap rounded-full px-6 transition-all duration-200 ${selectedCategory === category.id
+                                className={`whitespace-nowrap rounded-full px-6 transition-all duration-200 ${
+                                    selectedCategory === category.id
                                         ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transform scale-105"
                                         : "bg-white hover:bg-gray-50 border-gray-200 text-gray-700"
-                                    }`}
+                                }`}
                             >
                                 {category.name}
                             </Button>
@@ -235,7 +237,7 @@ const Courses = () => {
                                     <img
                                         src={course?.thumbnail || "/placeholder.svg"}
                                         alt={course?.title}
-                                        className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-300"
+                                        className="w-full h-48 object-contain transform group-hover:scale-105 transition-transform duration-300"
                                     />
                                     {course?.flag && course.flag !== "No flag" && (
                                         <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-sm shadow-md">
@@ -244,14 +246,18 @@ const Courses = () => {
                                     )}
                                 </div>
                                 <CardContent className="p-4 flex flex-col flex-grow">
-                                    <h3 className="text-lg font-semibold mb-2">{course?.title}</h3>
-                                    <p className="text-sm text-gray-600 mb-4">
-                                        By{" "}
-                                        {course?.main_instructor?.username ||
-                                            course?.main_instructor?.name ||
-                                            course?.main_instructor ||
-                                            "Unknown"}
-                                    </p>
+                                    <h3 className="text-lg font-semibold mb-2 w-full truncate">
+                                        {course?.title}
+                                    </h3>
+                                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-4 w-full truncate">
+                                        <span>By</span>
+                                        <span className="text-indigo-500 font-semibold">
+                                            {course?.main_instructor?.username ||
+                                                course?.main_instructor?.name ||
+                                                course?.main_instructor ||
+                                                "Unknown"}
+                                        </span>
+                                    </div>
 
                                     <div className="flex items-center mb-4">
                                         {(() => {
@@ -260,22 +266,10 @@ const Courses = () => {
                                                 course?.reviewsCount ?? course?.totalEnrollments ?? 0;
                                             return (
                                                 <>
-                                                    {[...Array(5)].map((_, index) => {
-                                                        const ratingValue = index + 1;
-                                                        return (
-                                                            <FaRegStar
-                                                                key={index}
-                                                                className={
-                                                                    ratingValue <= Math.round(rating)
-                                                                        ? "text-yellow-400 text-base"
-                                                                        : "text-gray-300 text-base"
-                                                                }
-                                                            />
-                                                        );
-                                                    })}
+                                                    ⭐
                                                     <span className="ml-2 text-gray-500 text-sm">
                                                         {rating > 0 ? `${rating.toFixed(1)}` : "N/A"} (
-                                                        {reviewsCount})
+                                                        {reviewsCount} Reviews)
                                                     </span>
                                                 </>
                                             );
@@ -291,9 +285,9 @@ const Courses = () => {
                                                         : Number(course?.displayPrice ?? 0);
                                                 return priceVal
                                                     ? priceVal.toLocaleString("vi-VN", {
-                                                        style: "currency",
-                                                        currency: "VND",
-                                                    })
+                                                          style: "currency",
+                                                          currency: "VND",
+                                                      })
                                                     : "Free";
                                             })()}
                                         </span>
