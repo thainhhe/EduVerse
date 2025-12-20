@@ -93,7 +93,7 @@ const AnnouncementsPage = () => {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="mb-6 border rounded-xl p-4 shadow-sm bg-white mt-5">
+                    <div className="mb-6 mt-5 max-h-[400px] overflow-y-auto">
                         <div className="flex items-center gap-2 mb-4 font-bold">
                             <ChevronDown className="h-7 w-7 text-muted-foreground" />
                             Course Notifications ({announcements.length})

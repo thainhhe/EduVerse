@@ -221,7 +221,7 @@ const ReviewPage = () => {
                             </CardContent>
                         </Card>
                     ) : (
-                        <div className="space-y-4">
+                        <div className="space-y-4 max-h-[400px] overflow-y-auto">
                             {filteredReviews.map((review) => (
                                 <Card
                                     key={review._id}

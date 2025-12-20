@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, CheckCircle2, Circle, HelpCircle, Trophy, Ar
 import { completeLesson, uncompleteLesson } from "@/services/courseService";
 import { ToastHelper } from "@/helper/ToastHelper";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const LearningSidebar = ({ course, onSelectItem, selectedItem, userId, passedQuizzes }) => {
     const [expandedSections, setExpandedSections] = useState({});
@@ -44,7 +45,7 @@ const LearningSidebar = ({ course, onSelectItem, selectedItem, userId, passedQui
         e.stopPropagation();
         if (loadingLessonId) return;
 
-        const isCompleted = lesson.user_completed?.length > 0;
+        const isCompleted = lesson.user_completed?.includes(userId);
         setLoadingLessonId(lesson._id);
         setError("");
 
@@ -171,8 +172,7 @@ const LearningSidebar = ({ course, onSelectItem, selectedItem, userId, passedQui
                                     <div className="bg-gray-50/50 pb-2">
                                         {module.lessons?.map((lesson) => {
                                             const isSelected = selectedItem?.data?._id === lesson._id;
-                                            const isCompleted = lesson.user_completed?.length > 0;
-
+                                            const isCompleted = lesson.user_completed?.includes(userId);
                                             return (
                                                 <div key={lesson._id} className="relative">
                                                     <div

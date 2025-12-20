@@ -11,7 +11,6 @@ const LearnerList = () => {
     const [error, setError] = useState(null);
 
     const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState("all");
     const [progressFilter, setProgressFilter] = useState("all");
 
     const storageCourseId = typeof window !== "undefined" ? sessionStorage.getItem("currentCourseId") : null;
@@ -25,6 +24,7 @@ const LearnerList = () => {
             setError(null);
             try {
                 const res = await getUerInCourse(storageCourseId);
+                console.log("ress:", res?.data);
                 if (res.success) setLearners(res?.data || []);
             } catch (err) {
                 console.error(err);
@@ -55,7 +55,7 @@ const LearnerList = () => {
     }, [learners, search, progressFilter]);
 
     const total = learners.length;
-    const completedCount = learners.filter((l) => l.progress >= 1).length;
+    const completedCount = learners.filter((l) => l.progress === 100).length;
     const completionRate = total ? Math.round((completedCount / total) * 100) : 0;
 
     if (loading)

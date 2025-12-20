@@ -44,14 +44,12 @@ const Learner = ({ learner, index }) => {
                     variant="outline"
                     className={`capitalize px-3 py-1 text-sm rounded-full 
             ${
-                learner.status === "active"
+                learner.grade !== "Incomplete"
                     ? "border-green-500 text-green-600"
-                    : learner.status === "completed"
-                    ? "border-green-500 text-green-600"
-                    : "border-red-500 text-red-600"
+                    : "border-yellow-500 text-yellow-600"
             }`}
                 >
-                    {learner.status}
+                    {learner.grade}
                 </Badge>
             </div>
         </div>
